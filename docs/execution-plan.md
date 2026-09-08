@@ -5,6 +5,10 @@ Status: proposed backlog; no implementation or lifecycle gate completion implied
 All tasks below are **planned**, not started. Task IDs are local identifiers,
 not GitHub issue numbers. Dependencies name prerequisite tasks.
 
+Confirmed demo baseline (ADR 0004): three retailers, one store and 100 products
+each; 18 months of reproducible daily history; 28-day forecasts refreshed daily;
+seasonality, promotions and intermittent demand.
+
 ## Delivery approach
 
 Deliver a secure inventory screen first, then a complete simulated purchasing
@@ -106,7 +110,7 @@ demonstrates cloud-native behavior on the agreed Kubernetes environment.
 | Decision | Needed before | Planning treatment |
 | --- | --- | --- |
 | GitHub access and deployment runner isolation | SS-05/25 | GitHub Actions and dedicated self-hosted deployment runner are confirmed (ADR 0003); use hosted PR CI and prevent public PR code reaching the deployment runner |
-| Demo counts, horizon, calendar/currency and replenishment policies | SS-10/13/14 | Use design proposals as review inputs; do not invent approved numerical targets |
+| Calendar/currency and replenishment policies | SS-10/13/14 | Demo counts and horizon are accepted in ADR 0004; policy values remain to be decided |
 | External OIDC provider, local-account scope, public access | SS-09 | OIDC first; verify Duende license/feature entitlements for intended deployment |
 | PostgreSQL/MongoDB/Python/MLflow implementation versions | SS-03/06/19/21 | Pin supported versions after compatibility review |
 | Supplier formats | SS-21 | Start with the smallest format set that demonstrates provenance |
