@@ -24,8 +24,9 @@ Confirmed constraints: Duende IdentityServer; React/.NET; Dapper with PostgreSQL
 stored procedures/functions exclusively and Flyway migrations; RabbitMQ; OpenAPI
 and AsyncAPI; Terraform/Terragrunt; shared databases with strict tenant isolation
 and a path to dedicated tenant databases; Docker Desktop Kubernetes, 16 GB RAM
-and a 3-CPU planning envelope. MongoDB, Python/MLflow and the detailed domain
-choices remain design proposals to validate in SS-02.
+and a 3-CPU planning envelope. MongoDB for supplier documents, Python for
+forecasting/training/evaluation and MLflow for experiment/model management are
+confirmed (ADR 0008). Detailed domain policies remain to be resolved in SS-02.
 
 ## Milestone 0 — Reviewable project foundation
 
