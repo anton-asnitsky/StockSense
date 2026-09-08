@@ -1,0 +1,136 @@
+# StockSense execution plan
+
+Date: 2026-09-08. Planning baseline: system design v0.6 and owner decisions.
+Status: proposed backlog; no implementation or lifecycle gate completion implied.
+All tasks below are **planned**, not started. Task IDs are local identifiers,
+not GitHub issue numbers. Dependencies name prerequisite tasks.
+
+## Delivery approach
+
+Deliver a secure inventory screen first, then a complete simulated purchasing
+workflow, then trained models and an assistant. Add infrastructure when its slice
+needs it. Keep one implementation task in progress for the solo developer;
+independent documentation or contract review can proceed alongside it.
+
+Each task is a reviewable outcome, normally one PR. Split larger tasks into PRs
+before implementation, retaining their parent acceptance criteria. Do not assign
+calendar dates until the first slice provides evidence of delivery speed.
+
+Confirmed constraints: Duende IdentityServer; React/.NET; Dapper with PostgreSQL
+stored procedures/functions exclusively and Flyway migrations; RabbitMQ; OpenAPI
+and AsyncAPI; Terraform/Terragrunt; shared databases with strict tenant isolation
+and a path to dedicated tenant databases; Docker Desktop Kubernetes, 16 GB RAM
+and a 3-CPU planning envelope. MongoDB, Python/MLflow and the detailed domain
+choices remain design proposals to validate in SS-02.
+
+## Milestone 0 — Reviewable project foundation
+
+| ID | Task and output | Depends on | Done when |
+| --- | --- | --- | --- |
+| SS-01 | Publish the existing setup/design and Git policy in focused PRs | — | Intended GitHub account has repository access; existing uncommitted files are reviewed for secrets/generated content and split by purpose; main protection, squash settings and available checks are verified; merges have actual owner approval |
+| SS-02 | Reconcile AI-DLC requirements, stories, glossary, threat model and ADRs | — | Owner decisions and proposals are distinguished; inventory/purchasing journeys have acceptance criteria; tenant and identity trust boundaries are explicit; stale project guidance is corrected; actual review outcomes are recorded |
+| SS-03 | Establish application skeleton and local validation commands | SS-02 | React, .NET API/worker/identity and Python project boundaries exist; supported versions and dependencies are pinned; clean checkout builds; health endpoints and smoke checks run; no EF dependency is introduced |
+| SS-04 | Define initial OpenAPI/AsyncAPI contracts and validation | SS-02 | Inventory/import and job/message contracts include errors, authentication, tenant context and versioning; invalid examples fail validation; compatibility checks can run locally and later in CI |
+| SS-05 | Implement CI baseline and repository checks | SS-01, SS-03, SS-04 | Selected runner executes applicable builds/tests, contract validation, secret/dependency scanning and migration checks; actual check names are required on main; failures block merge |
+
+Exit evidence: reviewed baseline, reproducible skeleton and executable checks.
+SS-02–04 can progress locally while GitHub authentication blocks SS-01/05.
+
+## Milestone 1 — Authenticated tenant inventory
+
+| ID | Task and output | Depends on | Done when |
+| --- | --- | --- | --- |
+| SS-06 | Package minimal local Kubernetes infrastructure | SS-03 | Terraform/Terragrunt deploy PostgreSQL, API and identity prerequisites through Helm; local HTTPS, secrets, PVCs and probes work; state is untracked; node CPU/disk capacity and initial resources are measured |
+| SS-07 | Establish business database and tenant access foundation | SS-02, SS-06 | Flyway creates membership/placement and initial inventory schemas; application roles can execute approved routines but cannot query/write tables directly; Dapper adapters use parameterized routine calls; RLS and pooled-connection tests reject missing/cross-tenant context |
+| SS-08 | Build Duende persistence and key lifecycle | SS-03, SS-06 | Separate identity DB and Flyway chain exist; required configuration/grant/session stores use Dapper routines; identity roles cannot access business data; protected signing/data-protection keys survive restart; rotation and restore are verified |
+| SS-09 | Implement login, federation and BFF sessions | SS-07, SS-08 | Chosen external OIDC provider works; code/PKCE flow, secure cookies, CSRF, exact redirects, logout and server-side tokens are verified; membership revocation denies access despite an existing session; account-linking abuse and refresh replay are covered |
+| SS-10 | Create deterministic retail simulation and imports | SS-04, SS-07 | Seed/configuration reproduce sales, inventory and supplier terms; lost demand is separate from observed sales; invalid/duplicate imports are handled deterministically; inventory ledger conserves quantities and isolates tenants |
+| SS-11 | Deliver React inventory workflow | SS-09, SS-10 | User signs in, chooses an authorized retailer, imports data and views inventory with loading/error/empty states; another retailer's identifiers cannot expose or mutate data; keyboard navigation and core browser flow pass |
+
+Exit demo: sign in, import seeded data and inspect inventory for isolated retailers.
+SS-08/09 should be split into storage, key management and browser integration PRs
+if necessary; do not defer identity correctness until release.
+
+## Milestone 2 — Complete simulated purchasing journey
+
+| ID | Task and output | Depends on | Done when |
+| --- | --- | --- | --- |
+| SS-12 | Deliver RabbitMQ transport, outbox and inbox | SS-04, SS-06, SS-07 | Versioned AsyncAPI messages use durable queues, persistent publication and confirms; outbox publication, inbox deduplication, bounded retries and DLQ replay survive process/broker failures; acknowledgement follows business commit; tenant/job authority is verified |
+| SS-13 | Implement baseline demand forecast | SS-10, SS-12 | Seasonal-naive and moving-average runs are reproducible, tenant-scoped and versioned; temporal evaluation excludes future data; async status/results are visible; all persisted data uses approved routines or scoped APIs |
+| SS-14 | Implement deterministic replenishment and scenarios | SS-13 | Lead time, dated inbound stock, review period, safety stock, minimum orders and pack rounding have reviewed examples; stale input versions are detected; shortages and suggested quantities can be explained |
+| SS-15 | Implement purchasing state machine and approvals | SS-07, SS-12, SS-14 | Draft/submit/approve/receive operate through transactional routines; role checks and version checks are server-side; concurrent approvals and duplicate receipts yield one valid business effect; supplier delivery remains simulated |
+| SS-16 | Deliver purchasing UI and end-to-end demo | SS-11, SS-15 | Planner reviews shortage/scenario and drafts order; authorized manager approves; simulated receipt updates stock; stale/rejected actions have clear UI; the entire journey passes automated smoke verification |
+
+Exit demo: import → baseline forecast → shortage → draft → approve → receive.
+This is the first complete product milestone and precedes agent implementation.
+
+## Milestone 3 — ML/MLOps evidence
+
+| ID | Task and output | Depends on | Done when |
+| --- | --- | --- | --- |
+| SS-17 | Implement versioned datasets and scoped artifact access | SS-12, SS-13 | Immutable dataset/split metadata and artifact checksums are recorded; Python accesses business data via scoped APIs, not table SQL; local PVC artifacts have tenant-authorized access and a documented object-storage adapter boundary |
+| SS-18 | Train and evaluate one candidate model | SS-17 | Temporal backtests compare candidate with both baselines on identical scenarios; reproducible runs report forecast error and inventory/lost-demand tradeoffs; poor results are retained rather than claimed as improvements |
+| SS-19 | Deploy MLflow and Kubernetes training/forecast jobs | SS-06, SS-18 | Runs/models link to data/code/config; MLflow has isolated metadata and operator access; one active ML job respects the cluster budget; promotion is evidence-based; model rollback and failed-job recovery preserve result provenance |
+| SS-20 | Add forecast quality and freshness monitoring | SS-19 | UI/telemetry expose active model, forecast age, failures and evaluated quality; stale forecasts have explicit behavior; simulated drift is detected using a documented baseline and threshold |
+
+Exit evidence: baseline comparison, model/data cards, tracked run and rollback demo.
+
+## Milestone 4 — Supplier documents and constrained assistant
+
+| ID | Task and output | Depends on | Done when |
+| --- | --- | --- | --- |
+| SS-21 | Add supplier document ingestion and MongoDB | SS-06, SS-12, SS-16 | Selected formats are validated and versioned; MongoDB queries are tenant-scoped; extracted offers retain source provenance; accepted normalized terms enter PostgreSQL through routines; duplicate/invalid uploads are covered |
+| SS-22 | Implement typed domain tools and agent orchestration | SS-16, SS-21 | Tools expose authorized reads, calculations and draft proposals; LLM cannot set tenant context or approve orders; tool schemas/contracts, time/call/cost limits and failure behavior are explicit; secrets remain server-side |
+| SS-23 | Deliver assistant UI and adversarial evaluations | SS-20, SS-22 | Answers cite relevant source/data versions; missing evidence and provider failures are handled; evaluations cover prompt injection, cross-tenant access, fabricated evidence and approval escalation; final approval remains the authenticated manager's action |
+
+Exit demo: source-backed supplier comparison and draft proposal with a recorded
+evaluation report. SS-21/22 can proceed alongside ML work after purchasing works.
+
+## Milestone 5 — Operational proof and portfolio release
+
+| ID | Task and output | Depends on | Done when |
+| --- | --- | --- | --- |
+| SS-24 | Complete telemetry and resource verification | SS-19, SS-23 | Correlated traces/logs and bounded-cardinality metrics cover API, RabbitMQ, jobs and agent; full demo plus one ML job is measured within 16 GB/3 CPU; overhead and bottlenecks are documented |
+| SS-25 | Implement delivery and schema rollout pipeline | SS-05, SS-16 | CI publishes immutable images; Terraform/Terragrunt delivery uses protected state/locking for shared automation; Flyway jobs validate/migrate before rollout; failed migration blocks release; application rollback is tested against compatible schema |
+| SS-26 | Prove backup, restore and failure recovery | SS-19, SS-21, SS-25 | Restore PostgreSQL, identity/key material, MongoDB and artifacts into a clean environment; broker/worker failure and replay do not duplicate stock effects; measured recovery steps/times and limitations are recorded |
+| SS-27 | Exercise shared-to-dedicated tenant migration | SS-07, SS-12, SS-26 | Pause/drain one tenant, copy and validate data, switch placement generation, invalidate routing caches and reopen; stale jobs fail safely; isolation and reconciliation after post-cutover writes are verified; document document/artifact movement |
+| SS-28 | Package reproducible portfolio release | SS-23, SS-24, SS-26, SS-27 | Clean checkout setup/demo succeeds; diagrams, ADRs, acceptance evidence, data/model cards and five-minute walkthrough exist; release notes state synthetic-data limitations; owner approves release PR before versioned tag/image publication |
+
+Telemetry and backup design begin with each service; SS-24/26 integrate and prove
+them rather than introducing them for the first time. A managed-cloud deployment
+is a later backlog item until provider and budget are selected; initial release
+demonstrates cloud-native behavior on the agreed Kubernetes environment.
+
+## Decisions needed at the point of use
+
+| Decision | Needed before | Planning treatment |
+| --- | --- | --- |
+| CI runner and GitHub access | SS-05 | Keep checks runnable locally; Terraform/Terragrunt are delivery tools, not the CI runner |
+| Demo counts, horizon, calendar/currency and replenishment policies | SS-10/13/14 | Use design proposals as review inputs; do not invent approved numerical targets |
+| External OIDC provider, local-account scope, public access | SS-09 | OIDC first; verify Duende license/feature entitlements for intended deployment |
+| PostgreSQL/MongoDB/Python/MLflow implementation versions | SS-03/06/19/21 | Pin supported versions after compatibility review |
+| Supplier formats | SS-21 | Start with the smallest format set that demonstrates provenance |
+| LLM/model, evaluation criteria and spend cap | SS-22 | No billable integration until these are defined |
+| Remote Terraform state and deployment credentials | SS-25 | Needed before shared automated applies |
+| Cloud provider, hosted deployment budget and deadline | Later cloud increment | Not a prerequisite for the local release |
+
+## Definition of done and Git execution
+
+Before coding, link the task to a story/ADR and affected OpenAPI, AsyncAPI or
+database routine contracts. Record actual AI-DLC review outcomes; keep proposals
+distinct from owner decisions. At completion, attach relevant test/demo evidence,
+update operational instructions and note residual risks. A task is not complete
+merely because its code builds.
+
+Use branches such as `feat/ss-07-tenant-storage` and Conventional Commits. Review
+only task-related staged changes; preserve existing uncommitted work. Agents may
+commit and push; every merge needs explicit owner approval. Do not rewrite
+published history without approval. Never force-push main.
+
+The existing Git-policy branch is separate from this planning branch. Restore
+GitHub access before publishing PRs. Do not bundle the existing design/framework
+files into this plan's commit merely because they are currently untracked.
+
+References: [design](design.md), [brief](product-brief.md),
+[Duende decision](decisions/0002-identity-provider.md),
+[framework decision](decisions/0001-ai-dlc-framework.md).
