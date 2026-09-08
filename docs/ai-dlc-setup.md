@@ -102,3 +102,19 @@ Local doctor results and hook activation status are recorded in
 Windows activation note: prefer the native Codex startup hook review or `/hooks`.
 The shipped pre-seed with forward-slash paths did not activate hooks in this
 installation; native CLI trust did. See the dated activation verification.
+
+## Windows diagnostic command
+
+Run ./scripts/Check-AiDlc.ps1 for diagnostics with the runtime environment loaded.
+Add -CheckUpdates to refresh version metadata without installing an upgrade. The
+update check exports public certificates from the Windows trusted root stores
+to a temporary PEM file and uses the documented --ca-bundle option, preserving
+TLS verification. The temporary certificate file is removed afterward. Run from
+a normal Windows terminal: restricted shells may not see the Windows user PATH
+and can report a missing/interactive-only runtime despite a correct installation.
+
+The customized AGENTS.md warning remains while this lifecycle is active. The
+supported config refresh refuses active workflows, including runtime-recording
+changes; do not complete or reset the workflow merely to clear that warning.
+Reconcile the generated onboarding baseline after the workflow completes while
+preserving StockSense guidance and model/permission overrides.

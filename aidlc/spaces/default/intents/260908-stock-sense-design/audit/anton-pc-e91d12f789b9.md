@@ -278,3 +278,80 @@
 **Details**: 62 passed, 0 failed
 
 ---
+
+## Guardrail Loaded
+**Timestamp**: 2026-09-08T21:24:44Z
+**Event**: GUARDRAIL_LOADED
+**Scope**: all
+**Path**: .codex/aidlc-rules/
+**Rule count**: 7
+
+---
+
+## Health Check
+**Timestamp**: 2026-09-08T21:24:44Z
+**Event**: HEALTH_CHECKED
+**Request**: /aidlc --doctor
+**Details**: 62 passed, 0 failed
+
+---
+
+## Guardrail Loaded
+**Timestamp**: 2026-09-08T21:27:03Z
+**Event**: GUARDRAIL_LOADED
+**Scope**: all
+**Path**: .codex/aidlc-rules/
+**Rule count**: 7
+
+---
+
+## Health Check
+**Timestamp**: 2026-09-08T21:27:03Z
+**Event**: HEALTH_CHECKED
+**Request**: /aidlc --doctor
+**Details**: 62 passed, 0 failed
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-08T21:27:36Z
+**Event**: DECISION_RECORDED
+**Stage**: requirements-analysis
+**Decision**: Q8-Q10: initial performance target, local retention, and failed manual-review quota
+**Options**: Q8: 1-second p95 target or measure first; Q9: 7-day logs and 90-day audit or audit until reset; Q10: retain slot with free retry or refund once; Other
+
+---
+
+## Guardrail Loaded
+**Timestamp**: 2026-09-08T21:28:10Z
+**Event**: GUARDRAIL_LOADED
+**Scope**: all
+**Path**: .codex/aidlc-rules/
+**Rule count**: 7
+
+---
+
+## Health Check
+**Timestamp**: 2026-09-08T21:28:10Z
+**Event**: HEALTH_CHECKED
+**Request**: /aidlc --doctor
+**Details**: 63 passed, 0 failed
+
+---
+
+## Guardrail Loaded
+**Timestamp**: 2026-09-08T21:28:47Z
+**Event**: GUARDRAIL_LOADED
+**Scope**: all
+**Path**: .codex/aidlc-rules/
+**Rule count**: 7
+
+---
+
+## Health Check
+**Timestamp**: 2026-09-08T21:28:47Z
+**Event**: HEALTH_CHECKED
+**Request**: /aidlc --doctor
+**Details**: 63 passed, 0 failed
+
+---

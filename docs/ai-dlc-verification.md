@@ -91,3 +91,25 @@ actual requirements work. No gate was approved and no product artifact generated
 
 Use the native Codex startup hook-review screen (or /hooks) on each new machine
 instead of assuming the shipped trust template proves activation.
+
+## Warning remediation (2026-09-09)
+
+The update-cache warning was resolved using the documented CA-bundle option with
+Windows trusted public roots. The normal Windows download succeeded while the
+native default transport failed; TLS checks were retained and version 2.8.0 was
+confirmed current. scripts/Check-AiDlc.ps1 makes this workaround reproducible.
+
+A host diagnostic before committing records reports **63 passed, 2 warnings,
+0 failed**: customized AGENTS.md and new uncommitted audit records. The runtime
+PATH warning is absent in the host check. PowerShell syntax and the new
+Check-AiDlc.ps1 -CheckUpdates command were tested.
+
+The onboarding warning cannot currently be cleared through supported config
+refresh: both dry-run refresh and runtime-path recording refuse the active
+requirements workflow. No generated checksums, warning filters, lifecycle
+completion or approval records were falsified to remove it. The earlier auxiliary
+CLI hook warning remains unclassified; no full stage-gate validation is claimed.
+
+Requirements discovery resumed by reconciling the existing decisions and adding
+Q8-Q10 for response targets, retention and failed manual-review quota. No
+requirements artifact or gate approval is recorded before owner confirmation.
