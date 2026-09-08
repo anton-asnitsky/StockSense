@@ -47,7 +47,7 @@ SS-02–04 can progress locally while GitHub authentication blocks SS-01/05.
 | SS-06 | Package minimal local Kubernetes infrastructure | SS-03 | Terraform/Terragrunt deploy PostgreSQL, API and identity prerequisites through Helm; local HTTPS, secrets, PVCs and probes work; state is untracked; node CPU/disk capacity and initial resources are measured |
 | SS-07 | Establish business database and tenant access foundation | SS-02, SS-06 | Flyway creates membership/placement and initial inventory schemas; application roles can execute approved routines but cannot query/write tables directly; Dapper adapters use parameterized routine calls; RLS and pooled-connection tests reject missing/cross-tenant context |
 | SS-08 | Build Duende persistence and key lifecycle | SS-03, SS-06 | Separate identity DB and Flyway chain exist; required configuration/grant/session stores use Dapper routines; identity roles cannot access business data; protected signing/data-protection keys survive restart; rotation and restore are verified |
-| SS-09 | Implement login, federation and BFF sessions | SS-07, SS-08 | Chosen external OIDC provider works; code/PKCE flow, secure cookies, CSRF, exact redirects, logout and server-side tokens are verified; membership revocation denies access despite an existing session; account-linking abuse and refresh replay are covered |
+| SS-09 | Implement login, federation and BFF sessions | SS-07, SS-08 | Google federation and seeded local demo accounts work with local-only access; code/PKCE flow, secure cookies, CSRF, exact redirects, logout and server-side tokens are verified; membership revocation denies access despite an existing session; account-linking abuse and refresh replay are covered |
 | SS-10 | Create deterministic retail simulation and imports | SS-04, SS-07 | Seed/configuration reproduce sales, inventory and supplier terms; lost demand is separate from observed sales; invalid/duplicate imports are handled deterministically; inventory ledger conserves quantities and isolates tenants |
 | SS-11 | Deliver React inventory workflow | SS-09, SS-10 | User signs in, chooses an authorized retailer, imports data and views inventory with loading/error/empty states; another retailer's identifiers cannot expose or mutate data; keyboard navigation and core browser flow pass |
 
@@ -111,7 +111,7 @@ demonstrates cloud-native behavior on the agreed Kubernetes environment.
 | --- | --- | --- |
 | GitHub access and deployment runner isolation | SS-05/25 | GitHub Actions and dedicated self-hosted deployment runner are confirmed (ADR 0003); use hosted PR CI and prevent public PR code reaching the deployment runner |
 | Calendar/currency and replenishment policies | SS-10/13/14 | Demo counts and horizon are accepted in ADR 0004; policy values remain to be decided |
-| External OIDC provider, local-account scope, public access | SS-09 | OIDC first; verify Duende license/feature entitlements for intended deployment |
+| Google client registration and local redirect setup | SS-09 | Google federation, seeded local accounts and local-only access are confirmed (ADR 0005); configure credentials outside Git and verify both login paths |
 | PostgreSQL/MongoDB/Python/MLflow implementation versions | SS-03/06/19/21 | Pin supported versions after compatibility review |
 | Supplier formats | SS-21 | Start with the smallest format set that demonstrates provenance |
 | LLM/model, evaluation criteria and spend cap | SS-22 | No billable integration until these are defined |
