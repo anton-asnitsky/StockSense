@@ -79,9 +79,9 @@ if necessary; do not defer identity correctness until release.
 | --- | --- | --- | --- |
 | SS-12 | Deliver RabbitMQ transport, outbox and inbox | SS-04, SS-06, SS-07 | Versioned AsyncAPI messages use durable queues, persistent publication and confirms; outbox publication, inbox deduplication, bounded retries and DLQ replay survive process/broker failures; acknowledgement follows business commit; tenant/job authority is verified |
 | SS-13 | Implement baseline demand forecast | SS-10, SS-12 | Seasonal-naive and moving-average runs are reproducible, tenant-scoped and versioned; daily scheduling uses retailer-local dates with DST/idempotency coverage; temporal evaluation excludes future data; async status/results are visible; all persisted data uses approved routines or scoped APIs |
-| SS-14 | Implement deterministic replenishment and scenarios | SS-13 | Calendar-day lead times, dated inbound stock, review period, safety stock, minimum orders and pack rounding have reviewed examples; stale input versions are detected; shortages and suggested quantities can be explained |
+| SS-14 | Implement deterministic replenishment and scenarios | SS-13 | Daily review, calendar-day lead times, dated inbound stock, configurable buffer-day safety stock with retailer defaults/product overrides, minimum orders and pack rounding have reviewed examples; buffer defaults follow simulation (ADR 0011); stale input versions are detected; shortages and suggested quantities can be explained |
 | SS-15 | Implement purchasing state machine and approvals | SS-07, SS-12, SS-14 | Draft/submit/approve/receive operate through transactional routines; role checks and version checks are server-side; concurrent approvals and duplicate receipts yield one valid business effect; supplier delivery remains simulated |
-| SS-16 | Deliver purchasing UI and end-to-end demo | SS-11, SS-15 | Planner reviews shortage/scenario and drafts order; authorized manager approves; simulated receipt updates stock; stale/rejected actions have clear UI; the entire journey passes automated smoke verification |
+| SS-16 | Deliver purchasing UI and end-to-end demo | SS-11, SS-15, SS-35 | Planner reviews shortage/scenario and drafts order; authorized manager approves; simulated receipt updates stock; stale/rejected actions have clear UI; the entire journey passes automated smoke verification |
 
 Exit demo: import → baseline forecast → shortage → draft → approve → receive.
 This is the first complete product milestone and precedes agent implementation.
@@ -136,13 +136,19 @@ count toward the local resource cap.
 | SS-33 | Deploy Qdrant and vector ingestion | SS-21, SS-30 | Persistent Qdrant instance deployed; IaC/PVC/credentials and isolation strategy verified; RabbitMQ drives versioned chunk/embedding upserts and deletion; job control uses SQL routines; retries/reindexing reconcile to authoritative source versions |
 | SS-34 | Integrate and evaluate authorized RAG | SS-22, SS-33 | Retrieval adapter enforces tenant/document authorization; representative queries measure retrieval recall and citations; prompt injection, cross-tenant, stale/deleted-source cases pass; embedding model and cost limits are explicit; vector restore/rebuild is demonstrated |
 
+## On-demand inventory review
+
+| ID | Task and output | Depends on | Done when |
+| --- | --- | --- | --- |
+| SS-35 | Add quota-limited manual inventory review | SS-11, SS-12, SS-14 | Finalized tenant/day quota is enforced atomically with job/outbox creation using SQL routines; OpenAPI/AsyncAPI describe request/status/job; worker uses latest inventory/terms and valid forecast without retraining; UI shows progress, freshness and allowance; concurrent users, retries, exhaustion, local-day reset and isolation pass tests |
+
 ## Decisions needed at the point of use
 
 | Decision | Needed before | Planning treatment |
 | --- | --- | --- |
 | GitHub access and deployment runner isolation | SS-05/25 | GitHub Actions and dedicated self-hosted deployment runner are confirmed (ADR 0003); use hosted PR CI and prevent public PR code reaching the deployment runner |
 | Embedding model and Qdrant isolation layout | SS-33 | Qdrant selected; determine model, dimensions and collection strategy; verify isolation, resource use and retrieval quality |
-| Replenishment policy values | SS-14 | Demo baseline is accepted in ADR 0004; retailer currency/time zone, local-day scheduling and calendar-day lead times are accepted in ADR 0010; safety-stock values remain open |
+| Buffer-day defaults and manual-review quota | SS-14/35 | Daily review, buffer-day policy and manager approval accepted in ADR 0011; compare buffer defaults in simulation; three manual requests per retailer/local day is proposed pending owner agreement |
 | Google client registration and local redirect setup | SS-09 | Google federation, seeded local accounts and local-only access are confirmed (ADR 0005); configure credentials outside Git and verify both login paths |
 | PostgreSQL/MongoDB/Python/MLflow implementation versions | SS-03/06/19/21 | Pin supported versions after compatibility review |
 | CSV schema and document processing limits | SS-21 | CSV and text-based PDF are confirmed (ADR 0009); define schema, limits and explicit unsupported-scan handling |
