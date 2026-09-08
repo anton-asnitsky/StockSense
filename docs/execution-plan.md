@@ -45,7 +45,7 @@ SS-02–04 can progress locally while GitHub authentication blocks SS-01/05.
 These tasks extend the backlog without renumbering existing task IDs. Their
 position in the dependency graph, rather than numeric ID, determines execution.
 Vault is confirmed in ADR 0006. Redis and standalone vector storage are confirmed
-in ADR 0007; Qdrant is proposed pending owner selection.
+in ADR 0007; Qdrant is the selected vector database.
 
 | ID | Task and output | Depends on | Done when |
 | --- | --- | --- | --- |
@@ -126,13 +126,13 @@ Vault deployment/integration is part of the foundation, not deferred to release.
 
 ## Cache and RAG additions
 
-These tasks extend existing IDs. Redis is selected; the standalone vector product
-must be selected before SS-33. Both services count toward the local resource cap.
+These tasks extend existing IDs. Redis and Qdrant are selected. Both services
+count toward the local resource cap.
 
 | ID | Task and output | Depends on | Done when |
 | --- | --- | --- | --- |
 | SS-32 | Deploy Redis and implement application caching | SS-11, SS-30 | IaC, Vault credentials, ACLs and bounded memory/TTL work; tenant-scoped versioned keys, invalidation and stale-fill handling pass tests; outage/cold-start fallback preserves correctness; purchasing and authorization remain authoritative |
-| SS-33 | Deploy standalone vector service and ingestion | SS-21, SS-30 | Product selected; IaC/PVC/credentials and isolation strategy verified; RabbitMQ drives versioned chunk/embedding upserts and deletion; job control uses SQL routines; retries/reindexing reconcile to authoritative source versions |
+| SS-33 | Deploy Qdrant and vector ingestion | SS-21, SS-30 | Persistent Qdrant instance deployed; IaC/PVC/credentials and isolation strategy verified; RabbitMQ drives versioned chunk/embedding upserts and deletion; job control uses SQL routines; retries/reindexing reconcile to authoritative source versions |
 | SS-34 | Integrate and evaluate authorized RAG | SS-22, SS-33 | Retrieval adapter enforces tenant/document authorization; representative queries measure retrieval recall and citations; prompt injection, cross-tenant, stale/deleted-source cases pass; embedding model and cost limits are explicit; vector restore/rebuild is demonstrated |
 
 ## Decisions needed at the point of use
@@ -140,7 +140,7 @@ must be selected before SS-33. Both services count toward the local resource cap
 | Decision | Needed before | Planning treatment |
 | --- | --- | --- |
 | GitHub access and deployment runner isolation | SS-05/25 | GitHub Actions and dedicated self-hosted deployment runner are confirmed (ADR 0003); use hosted PR CI and prevent public PR code reaching the deployment runner |
-| Standalone vector product and embedding model | SS-33 | Qdrant recommended for evaluation; pgvector superseded; verify isolation, resource use and retrieval quality |
+| Embedding model and Qdrant isolation layout | SS-33 | Qdrant selected; determine model, dimensions and collection strategy; verify isolation, resource use and retrieval quality |
 | Calendar/currency and replenishment policies | SS-10/13/14 | Demo counts and horizon are accepted in ADR 0004; policy values remain to be decided |
 | Google client registration and local redirect setup | SS-09 | Google federation, seeded local accounts and local-only access are confirmed (ADR 0005); configure credentials outside Git and verify both login paths |
 | PostgreSQL/MongoDB/Python/MLflow implementation versions | SS-03/06/19/21 | Pin supported versions after compatibility review |

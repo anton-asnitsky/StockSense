@@ -1,13 +1,14 @@
 # ADR 0007: Redis cache and standalone vector storage
 
 Date: 2026-09-08
-Status: Redis and standalone vector storage accepted; vector product pending.
+Status: Accepted. The owner selected Redis and subsequently accepted Qdrant.
 
 ## Decision
 
 Use Redis for application caching. Use a separately deployed vector database for
-RAG, superseding the earlier Valkey and pgvector proposals. Qdrant is recommended
-for evaluation, not yet selected by the owner.
+RAG, superseding the earlier Valkey and pgvector proposals. Qdrant is the selected
+standalone vector database. Deploy one persistent instance initially through
+Terraform/Terragrunt with Vault-managed credentials.
 
 ## Cache design
 
@@ -28,7 +29,7 @@ keys outside the evictable application-cache instance.
 The service stores embeddings and source/chunk/version metadata. A trusted backend
 retrieval adapter applies tenant and document authorization on every search and
 mutation. Tenant filtering alone is not a database-enforced equivalent of SQL RLS.
-For Qdrant evaluation, compare shared-collection payload filtering with per-tenant
+During Qdrant implementation, compare shared-collection payload filtering with per-tenant
 collections for the three-retailer demo; never accept arbitrary collection names
 or search filters from a client. Credentials and privileged operations remain
 server-side. Validate authorized retrieval before any chunk enters an LLM prompt.
@@ -43,6 +44,6 @@ Evaluate retrieval recall, citation accuracy, stale/deleted documents and tenant
 leakage. Add the vector service and Redis to the resource budget before deployment;
 do not claim they fit the remaining CPU/memory without measurement.
 
-## Reference for proposed vector product
+## Reference
 
 [Qdrant multitenancy](https://qdrant.tech/documentation/manage-data/multitenancy/)
