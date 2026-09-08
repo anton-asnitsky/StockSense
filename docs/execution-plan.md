@@ -102,7 +102,7 @@ Exit evidence: baseline comparison, model/data cards, tracked run and rollback d
 | ID | Task and output | Depends on | Done when |
 | --- | --- | --- | --- |
 | SS-21 | Add supplier document ingestion and MongoDB | SS-06, SS-12, SS-16 | CSV offers and text-based PDF catalogs/terms are validated and versioned (ADR 0009); scans/OCR are deferred; MongoDB queries are tenant-scoped; extracted offers retain source provenance; accepted normalized terms enter PostgreSQL through routines; duplicate/invalid uploads are covered |
-| SS-22 | Implement typed domain tools and agent orchestration | SS-16, SS-21 | Tools expose authorized reads, calculations and draft proposals; LLM cannot set tenant context or approve orders; tool schemas/contracts, time/call/cost limits and failure behavior are explicit; secrets remain server-side |
+| SS-22 | Implement typed domain tools and agent orchestration | SS-16, SS-21, SS-36 | Tools expose authorized reads, calculations and draft proposals; LLM cannot set tenant context or approve orders; tool schemas/contracts, time/call/cost limits and failure behavior are explicit; secrets remain server-side |
 | SS-23 | Deliver assistant UI and adversarial evaluations | SS-20, SS-22, SS-34 | Answers cite relevant source/data versions; missing evidence and provider failures are handled; evaluations cover prompt injection, cross-tenant access, fabricated evidence and approval escalation; final approval remains the authenticated manager's action |
 
 Exit demo: source-backed supplier comparison and draft proposal with a recorded
@@ -142,6 +142,17 @@ count toward the local resource cap.
 | --- | --- | --- | --- |
 | SS-35 | Add quota-limited manual inventory review | SS-11, SS-12, SS-14 | Three manual reviews per retailer per local calendar day, shared across users and excluding scheduled reviews, are enforced atomically with job/outbox creation using SQL routines; OpenAPI/AsyncAPI describe request/status/job; worker uses latest inventory/terms and valid forecast without retraining; UI shows progress, freshness and allowance; concurrent users, retries, exhaustion, local-day reset and isolation pass tests |
 
+## Local LLM and external integration boundary
+
+| ID | Task and output | Depends on | Done when |
+| --- | --- | --- | --- |
+| SS-36 | Implement local LLM adapter and provider contract | SS-03, SS-30 | Hardware/placement and model are selected from measured latency, memory and tool-use quality; local adapter satisfies capability-aware contract tests; external adapter extension point and configuration/fixtures cover Bedrock integration without assuming API compatibility; cancellation, errors and no automatic remote fallback are verified |
+
+Local inference is required for the initial release (ADR 0012). Its resource
+allocation must be explicitly resolved before model deployment; do not increase
+the Kubernetes budget or assume host resources without agreement. Embeddings
+remain a separate choice. No external API provisioning is implied.
+
 ## Decisions needed at the point of use
 
 | Decision | Needed before | Planning treatment |
@@ -152,7 +163,8 @@ count toward the local resource cap.
 | Google client registration and local redirect setup | SS-09 | Google federation, seeded local accounts and local-only access are confirmed (ADR 0005); configure credentials outside Git and verify both login paths |
 | PostgreSQL/MongoDB/Python/MLflow implementation versions | SS-03/06/19/21 | Pin supported versions after compatibility review |
 | CSV schema and document processing limits | SS-21 | CSV and text-based PDF are confirmed (ADR 0009); define schema, limits and explicit unsupported-scan handling |
-| LLM/model, evaluation criteria and spend cap | SS-22 | No billable integration until these are defined |
+| Local inference hardware/runtime/model and placement | SS-36 | Local generation selected; GPU/VRAM and host versus existing Kubernetes allocation require clarification; benchmark before selecting model |
+| External adapter activation and spend cap | Optional external integration | Prepare for APIs such as Bedrock; require explicit configuration/credentials and budget before external calls |
 | Vault secret injection mechanism and key integration | SS-30 | Select workload delivery/rotation behavior and account for all supporting resources |
 | Remote Terraform state and deployment credentials | SS-25 | Needed before shared automated applies |
 | Cloud provider, hosted deployment budget and deadline | Later cloud increment | Not a prerequisite for the local release |
