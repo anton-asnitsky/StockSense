@@ -140,7 +140,7 @@ count toward the local resource cap.
 
 | ID | Task and output | Depends on | Done when |
 | --- | --- | --- | --- |
-| SS-35 | Add quota-limited manual inventory review | SS-11, SS-12, SS-14 | Finalized tenant/day quota is enforced atomically with job/outbox creation using SQL routines; OpenAPI/AsyncAPI describe request/status/job; worker uses latest inventory/terms and valid forecast without retraining; UI shows progress, freshness and allowance; concurrent users, retries, exhaustion, local-day reset and isolation pass tests |
+| SS-35 | Add quota-limited manual inventory review | SS-11, SS-12, SS-14 | Three manual reviews per retailer per local calendar day, shared across users and excluding scheduled reviews, are enforced atomically with job/outbox creation using SQL routines; OpenAPI/AsyncAPI describe request/status/job; worker uses latest inventory/terms and valid forecast without retraining; UI shows progress, freshness and allowance; concurrent users, retries, exhaustion, local-day reset and isolation pass tests |
 
 ## Decisions needed at the point of use
 
@@ -148,7 +148,7 @@ count toward the local resource cap.
 | --- | --- | --- |
 | GitHub access and deployment runner isolation | SS-05/25 | GitHub Actions and dedicated self-hosted deployment runner are confirmed (ADR 0003); use hosted PR CI and prevent public PR code reaching the deployment runner |
 | Embedding model and Qdrant isolation layout | SS-33 | Qdrant selected; determine model, dimensions and collection strategy; verify isolation, resource use and retrieval quality |
-| Buffer-day defaults and manual-review quota | SS-14/35 | Daily review, buffer-day policy and manager approval accepted in ADR 0011; compare buffer defaults in simulation; three manual requests per retailer/local day is proposed pending owner agreement |
+| Buffer-day defaults | SS-14 | Compare defaults in simulation; daily review, buffer-day policy, manager approval and three manual reviews per retailer/local day are confirmed in ADR 0011 |
 | Google client registration and local redirect setup | SS-09 | Google federation, seeded local accounts and local-only access are confirmed (ADR 0005); configure credentials outside Git and verify both login paths |
 | PostgreSQL/MongoDB/Python/MLflow implementation versions | SS-03/06/19/21 | Pin supported versions after compatibility review |
 | CSV schema and document processing limits | SS-21 | CSV and text-based PDF are confirmed (ADR 0009); define schema, limits and explicit unsupported-scan handling |

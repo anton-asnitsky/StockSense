@@ -1,8 +1,7 @@
 # ADR 0011: Replenishment policy and on-demand inventory review
 
 Date: 2026-09-08
-Status: Policy accepted; owner requested limited daily manual reviews.
-The numerical manual-review limit remains proposed, not approved.
+Status: Accepted, including three manual reviews per retailer per local day.
 
 ## Replenishment decision
 
@@ -20,9 +19,9 @@ committed inventory and supplier terms using the latest valid forecast. This is
 not a request to retrain a model. Missing or stale forecasts must be reported
 explicitly using the existing freshness policy.
 
-Proposed initial limit: three accepted manual review requests per retailer per
+Confirmed initial limit: three accepted manual review requests per retailer per
 retailer-local calendar day, shared across its users. Scheduled daily reviews do
-not consume this quota. The owner has not yet approved the number or quota scope.
+not consume this quota. The owner confirmed the number and shared retailer scope.
 
 The API enforces authorization and the quota atomically through PostgreSQL routines;
 Redis may display remaining quota but is not its authority. Quota consumption,
@@ -46,4 +45,4 @@ versions at purchase approval; review output does not reserve inventory.
 SS-14 implements accepted replenishment behavior. SS-35 implements on-demand
 requests, quotas, worker processing and UI. Acceptance includes concurrent requests,
 multiple users, duplicate clicks, broker retries, quota exhaustion, local midnight,
-tenant isolation and stale forecasts. Finalize quota settings before SS-35.
+tenant isolation and stale forecasts. The daily quota is fixed at three for v1.
