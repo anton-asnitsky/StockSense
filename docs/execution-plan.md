@@ -44,7 +44,8 @@ SS-02–04 can progress locally while GitHub authentication blocks SS-01/05.
 
 These tasks extend the backlog without renumbering existing task IDs. Their
 position in the dependency graph, rather than numeric ID, determines execution.
-Vault is confirmed in ADR 0006; pgvector and Valkey remain proposals.
+Vault is confirmed in ADR 0006. Redis and standalone vector storage are confirmed
+in ADR 0007; Qdrant is proposed pending owner selection.
 
 | ID | Task and output | Depends on | Done when |
 | --- | --- | --- | --- |
@@ -101,7 +102,7 @@ Exit evidence: baseline comparison, model/data cards, tracked run and rollback d
 | --- | --- | --- | --- |
 | SS-21 | Add supplier document ingestion and MongoDB | SS-06, SS-12, SS-16 | Selected formats are validated and versioned; MongoDB queries are tenant-scoped; extracted offers retain source provenance; accepted normalized terms enter PostgreSQL through routines; duplicate/invalid uploads are covered |
 | SS-22 | Implement typed domain tools and agent orchestration | SS-16, SS-21 | Tools expose authorized reads, calculations and draft proposals; LLM cannot set tenant context or approve orders; tool schemas/contracts, time/call/cost limits and failure behavior are explicit; secrets remain server-side |
-| SS-23 | Deliver assistant UI and adversarial evaluations | SS-20, SS-22 | Answers cite relevant source/data versions; missing evidence and provider failures are handled; evaluations cover prompt injection, cross-tenant access, fabricated evidence and approval escalation; final approval remains the authenticated manager's action |
+| SS-23 | Deliver assistant UI and adversarial evaluations | SS-20, SS-22, SS-34 | Answers cite relevant source/data versions; missing evidence and provider failures are handled; evaluations cover prompt injection, cross-tenant access, fabricated evidence and approval escalation; final approval remains the authenticated manager's action |
 
 Exit demo: source-backed supplier comparison and draft proposal with a recorded
 evaluation report. SS-21/22 can proceed alongside ML work after purchasing works.
@@ -110,7 +111,7 @@ evaluation report. SS-21/22 can proceed alongside ML work after purchasing works
 
 | ID | Task and output | Depends on | Done when |
 | --- | --- | --- | --- |
-| SS-24 | Complete telemetry and resource verification | SS-19, SS-23, SS-30 | Correlated traces/logs and bounded-cardinality metrics cover API, RabbitMQ, jobs and agent; full demo plus one ML job is measured within 16 GB/3 CPU; overhead and bottlenecks are documented |
+| SS-24 | Complete telemetry and resource verification | SS-19, SS-23, SS-30, SS-32, SS-33 | Correlated traces/logs and bounded-cardinality metrics cover API, RabbitMQ, jobs and agent; full demo plus one ML job is measured within 16 GB/3 CPU; overhead and bottlenecks are documented |
 | SS-25 | Implement delivery and schema rollout pipeline | SS-05, SS-16 | GitHub Actions publishes immutable images; a dedicated self-hosted runner deploys only trusted revisions to Docker Desktop; Terraform/Terragrunt delivery uses protected state/locking for shared automation; Flyway jobs validate/migrate before rollout; failed migration blocks release; application rollback is tested against compatible schema |
 | SS-26 | Prove backup, restore and failure recovery | SS-19, SS-21, SS-25, SS-31 | Restore PostgreSQL, identity/key material, MongoDB and artifacts into a clean environment; broker/worker failure and replay do not duplicate stock effects; measured recovery steps/times and limitations are recorded |
 | SS-27 | Exercise shared-to-dedicated tenant migration | SS-07, SS-12, SS-26 | Pause/drain one tenant, copy and validate data, switch placement generation, invalidate routing caches and reopen; stale jobs fail safely; isolation and reconciliation after post-cutover writes are verified; document document/artifact movement |
@@ -123,11 +124,23 @@ demonstrates cloud-native behavior on the agreed Kubernetes environment.
 
 Vault deployment/integration is part of the foundation, not deferred to release.
 
+## Cache and RAG additions
+
+These tasks extend existing IDs. Redis is selected; the standalone vector product
+must be selected before SS-33. Both services count toward the local resource cap.
+
+| ID | Task and output | Depends on | Done when |
+| --- | --- | --- | --- |
+| SS-32 | Deploy Redis and implement application caching | SS-11, SS-30 | IaC, Vault credentials, ACLs and bounded memory/TTL work; tenant-scoped versioned keys, invalidation and stale-fill handling pass tests; outage/cold-start fallback preserves correctness; purchasing and authorization remain authoritative |
+| SS-33 | Deploy standalone vector service and ingestion | SS-21, SS-30 | Product selected; IaC/PVC/credentials and isolation strategy verified; RabbitMQ drives versioned chunk/embedding upserts and deletion; job control uses SQL routines; retries/reindexing reconcile to authoritative source versions |
+| SS-34 | Integrate and evaluate authorized RAG | SS-22, SS-33 | Retrieval adapter enforces tenant/document authorization; representative queries measure retrieval recall and citations; prompt injection, cross-tenant, stale/deleted-source cases pass; embedding model and cost limits are explicit; vector restore/rebuild is demonstrated |
+
 ## Decisions needed at the point of use
 
 | Decision | Needed before | Planning treatment |
 | --- | --- | --- |
 | GitHub access and deployment runner isolation | SS-05/25 | GitHub Actions and dedicated self-hosted deployment runner are confirmed (ADR 0003); use hosted PR CI and prevent public PR code reaching the deployment runner |
+| Standalone vector product and embedding model | SS-33 | Qdrant recommended for evaluation; pgvector superseded; verify isolation, resource use and retrieval quality |
 | Calendar/currency and replenishment policies | SS-10/13/14 | Demo counts and horizon are accepted in ADR 0004; policy values remain to be decided |
 | Google client registration and local redirect setup | SS-09 | Google federation, seeded local accounts and local-only access are confirmed (ADR 0005); configure credentials outside Git and verify both login paths |
 | PostgreSQL/MongoDB/Python/MLflow implementation versions | SS-03/06/19/21 | Pin supported versions after compatibility review |
