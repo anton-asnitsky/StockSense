@@ -102,7 +102,7 @@ Exit evidence: baseline comparison, model/data cards, tracked run and rollback d
 | ID | Task and output | Depends on | Done when |
 | --- | --- | --- | --- |
 | SS-21 | Add supplier document ingestion and MongoDB | SS-06, SS-12, SS-16 | CSV offers and text-based PDF catalogs/terms are validated and versioned (ADR 0009); scans/OCR are deferred; MongoDB queries are tenant-scoped; extracted offers retain source provenance; accepted normalized terms enter PostgreSQL through routines; duplicate/invalid uploads are covered |
-| SS-22 | Implement typed domain tools and agent orchestration | SS-16, SS-21, SS-36 | Tools expose authorized reads, calculations and draft proposals; LLM cannot set tenant context or approve orders; tool schemas/contracts, time/call/cost limits and failure behavior are explicit; secrets remain server-side |
+| SS-22 | Implement Python Strands service and domain tools | SS-16, SS-21, SS-36 | Strands service exposes StockSense OpenAPI contracts and authenticated domain-tool calls; tools expose authorized reads, calculations and draft proposals; LLM cannot set tenant context or approve orders; tool schemas/contracts, time/call/cost limits and failure behavior are explicit; secrets remain server-side |
 | SS-23 | Deliver assistant UI and adversarial evaluations | SS-20, SS-22, SS-34 | Answers cite relevant source/data versions; missing evidence and provider failures are handled; evaluations cover prompt injection, cross-tenant access, fabricated evidence and approval escalation; final approval remains the authenticated manager's action |
 
 Exit demo: source-backed supplier comparison and draft proposal with a recorded
@@ -144,9 +144,12 @@ count toward the local resource cap.
 
 ## Local LLM and external integration boundary
 
+Strands Agents in Python is selected (ADR 0014). Keep StockSense API contracts
+independent of framework types; use Strands provider abstractions internally.
+
 | ID | Task and output | Depends on | Done when |
 | --- | --- | --- | --- |
-| SS-36 | Implement local LLM adapter and provider contract | SS-03, SS-30 | Portable CPU and optional accelerated profiles are validated; hardware/placement and model are selected from measured latency, memory and tool-use quality; local adapter satisfies capability-aware contract tests; external adapter extension point and configuration/fixtures cover Bedrock integration without assuming API compatibility; cancellation, errors and no automatic remote fallback are verified |
+| SS-36 | Integrate Strands model providers and local inference | SS-03, SS-30 | Portable CPU and optional accelerated profiles are validated; hardware/placement and model are selected from measured latency, memory and tool-use quality; Strands local provider satisfies capability-aware contract tests (ADR 0014); external adapter extension point and configuration/fixtures cover Bedrock integration without assuming API compatibility; cancellation, errors and no automatic remote fallback are verified |
 
 Local inference is required for the initial release (ADR 0012). Its resource
 allocation must be explicitly resolved before model deployment; do not increase

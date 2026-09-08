@@ -61,3 +61,10 @@ selected model or capacity guarantee.
 Reviewer reproducibility (ADR 0013) constrains runtime selection: the owner GPU
 is optional acceleration. Validate a real CPU inference profile and scripted,
 versioned setup; do not require reviewers to have that GPU or private credentials.
+
+## Framework refinement
+
+ADR 0014 selects Strands Agents in Python. Implement the provider boundary using
+Strands provider abstractions and narrow application adapters where needed, not
+a duplicate general-purpose SDK. StockSense-owned API contracts isolate callers
+from framework types. Domain authorization and capability tests remain required.
