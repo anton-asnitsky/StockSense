@@ -39,8 +39,8 @@ must produce a clear unavailable/degraded response, not an unapproved external c
 
 ## Embeddings and execution
 
-This decision selects local generation, not a specific embedding model. Resolve
-embedding provider/model separately in SS-33 and version dimensions/preprocessing;
+This decision selects local generation, not a specific embedding model. ADR 0015 approves EmbeddingGemma and Qwen as candidates; evaluate in SS-33/34
+and version dimensions/preprocessing;
 a model change may require Qdrant reindexing.
 
 SS-36 establishes the interface, local adapter and hardware-based model evaluation.
