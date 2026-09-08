@@ -40,13 +40,29 @@ choices remain design proposals to validate in SS-02.
 Exit evidence: reviewed baseline, reproducible skeleton and executable checks.
 SS-02–04 can progress locally while GitHub authentication blocks SS-01/05.
 
+## Secrets foundation — required before application credentials
+
+These tasks extend the backlog without renumbering existing task IDs. Their
+position in the dependency graph, rather than numeric ID, determines execution.
+Vault is confirmed in ADR 0006; pgvector and Valkey remain proposals.
+
+| ID | Task and output | Depends on | Done when |
+| --- | --- | --- | --- |
+| SS-29 | Deploy persistent Vault with IaC | SS-06 | Pinned Helm chart and Terraform/Terragrunt deploy TLS-enabled Vault with persistent integrated storage; no dev mode; deployment/configuration states are separate; full resource budget is recalculated including injection components |
+| SS-30 | Bootstrap Vault and integrate workloads | SS-29 | Initialization/unseal material is protected outside cluster/Git; root token is retired after scoped admin setup; Kubernetes auth binds policies to workload identities; chosen injection mechanism delivers credentials without Terraform-state exposure; unauthorized workloads are denied |
+| SS-31 | Verify secrets rotation and disaster recovery | SS-30, SS-09, SS-12 | Consumers handle rotation and reload/renewal; sealed Vault and expired credentials fail safely; protected snapshot restoration and key recovery work in a clean environment; measured recovery procedure is documented |
+
+SS-06 provisions infrastructure using a protected bootstrap credential procedure;
+SS-30 then provisions workload secret access before SS-07/08 configure application
+stores. Do not make Vault initialization depend on application database availability.
+
 ## Milestone 1 — Authenticated tenant inventory
 
 | ID | Task and output | Depends on | Done when |
 | --- | --- | --- | --- |
 | SS-06 | Package minimal local Kubernetes infrastructure | SS-03 | Terraform/Terragrunt deploy PostgreSQL, API and identity prerequisites through Helm; local HTTPS, secrets, PVCs and probes work; state is untracked; node CPU/disk capacity and initial resources are measured |
-| SS-07 | Establish business database and tenant access foundation | SS-02, SS-06 | Flyway creates membership/placement and initial inventory schemas; application roles can execute approved routines but cannot query/write tables directly; Dapper adapters use parameterized routine calls; RLS and pooled-connection tests reject missing/cross-tenant context |
-| SS-08 | Build Duende persistence and key lifecycle | SS-03, SS-06 | Separate identity DB and Flyway chain exist; required configuration/grant/session stores use Dapper routines; identity roles cannot access business data; protected signing/data-protection keys survive restart; rotation and restore are verified |
+| SS-07 | Establish business database and tenant access foundation | SS-02, SS-06, SS-30 | Flyway creates membership/placement and initial inventory schemas; application roles can execute approved routines but cannot query/write tables directly; Dapper adapters use parameterized routine calls; RLS and pooled-connection tests reject missing/cross-tenant context |
+| SS-08 | Build Duende persistence and key lifecycle | SS-03, SS-06, SS-30 | Separate identity DB and Flyway chain exist; required configuration/grant/session stores use Dapper routines; identity roles cannot access business data; protected signing/data-protection keys survive restart; rotation and restore are verified |
 | SS-09 | Implement login, federation and BFF sessions | SS-07, SS-08 | Google federation and seeded local demo accounts work with local-only access; code/PKCE flow, secure cookies, CSRF, exact redirects, logout and server-side tokens are verified; membership revocation denies access despite an existing session; account-linking abuse and refresh replay are covered |
 | SS-10 | Create deterministic retail simulation and imports | SS-04, SS-07 | Seed/configuration reproduce sales, inventory and supplier terms; lost demand is separate from observed sales; invalid/duplicate imports are handled deterministically; inventory ledger conserves quantities and isolates tenants |
 | SS-11 | Deliver React inventory workflow | SS-09, SS-10 | User signs in, chooses an authorized retailer, imports data and views inventory with loading/error/empty states; another retailer's identifiers cannot expose or mutate data; keyboard navigation and core browser flow pass |
@@ -94,9 +110,9 @@ evaluation report. SS-21/22 can proceed alongside ML work after purchasing works
 
 | ID | Task and output | Depends on | Done when |
 | --- | --- | --- | --- |
-| SS-24 | Complete telemetry and resource verification | SS-19, SS-23 | Correlated traces/logs and bounded-cardinality metrics cover API, RabbitMQ, jobs and agent; full demo plus one ML job is measured within 16 GB/3 CPU; overhead and bottlenecks are documented |
+| SS-24 | Complete telemetry and resource verification | SS-19, SS-23, SS-30 | Correlated traces/logs and bounded-cardinality metrics cover API, RabbitMQ, jobs and agent; full demo plus one ML job is measured within 16 GB/3 CPU; overhead and bottlenecks are documented |
 | SS-25 | Implement delivery and schema rollout pipeline | SS-05, SS-16 | GitHub Actions publishes immutable images; a dedicated self-hosted runner deploys only trusted revisions to Docker Desktop; Terraform/Terragrunt delivery uses protected state/locking for shared automation; Flyway jobs validate/migrate before rollout; failed migration blocks release; application rollback is tested against compatible schema |
-| SS-26 | Prove backup, restore and failure recovery | SS-19, SS-21, SS-25 | Restore PostgreSQL, identity/key material, MongoDB and artifacts into a clean environment; broker/worker failure and replay do not duplicate stock effects; measured recovery steps/times and limitations are recorded |
+| SS-26 | Prove backup, restore and failure recovery | SS-19, SS-21, SS-25, SS-31 | Restore PostgreSQL, identity/key material, MongoDB and artifacts into a clean environment; broker/worker failure and replay do not duplicate stock effects; measured recovery steps/times and limitations are recorded |
 | SS-27 | Exercise shared-to-dedicated tenant migration | SS-07, SS-12, SS-26 | Pause/drain one tenant, copy and validate data, switch placement generation, invalidate routing caches and reopen; stale jobs fail safely; isolation and reconciliation after post-cutover writes are verified; document document/artifact movement |
 | SS-28 | Package reproducible portfolio release | SS-23, SS-24, SS-26, SS-27 | Clean checkout setup/demo succeeds; diagrams, ADRs, acceptance evidence, data/model cards and five-minute walkthrough exist; release notes state synthetic-data limitations; owner approves release PR before versioned tag/image publication |
 
@@ -104,6 +120,8 @@ Telemetry and backup design begin with each service; SS-24/26 integrate and prov
 them rather than introducing them for the first time. A managed-cloud deployment
 is a later backlog item until provider and budget are selected; initial release
 demonstrates cloud-native behavior on the agreed Kubernetes environment.
+
+Vault deployment/integration is part of the foundation, not deferred to release.
 
 ## Decisions needed at the point of use
 
@@ -115,6 +133,7 @@ demonstrates cloud-native behavior on the agreed Kubernetes environment.
 | PostgreSQL/MongoDB/Python/MLflow implementation versions | SS-03/06/19/21 | Pin supported versions after compatibility review |
 | Supplier formats | SS-21 | Start with the smallest format set that demonstrates provenance |
 | LLM/model, evaluation criteria and spend cap | SS-22 | No billable integration until these are defined |
+| Vault secret injection mechanism and key integration | SS-30 | Select workload delivery/rotation behavior and account for all supporting resources |
 | Remote Terraform state and deployment credentials | SS-25 | Needed before shared automated applies |
 | Cloud provider, hosted deployment budget and deadline | Later cloud increment | Not a prerequisite for the local release |
 
