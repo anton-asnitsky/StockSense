@@ -116,7 +116,7 @@ evaluation report. SS-21/22 can proceed alongside ML work after purchasing works
 | SS-25 | Implement delivery and schema rollout pipeline | SS-05, SS-16 | GitHub Actions publishes immutable images; a dedicated self-hosted runner deploys only trusted revisions to Docker Desktop; Terraform/Terragrunt delivery uses protected state/locking for shared automation; Flyway jobs validate/migrate before rollout; failed migration blocks release; application rollback is tested against compatible schema |
 | SS-26 | Prove backup, restore and failure recovery | SS-19, SS-21, SS-25, SS-31 | Restore PostgreSQL, identity/key material, MongoDB and artifacts into a clean environment; broker/worker failure and replay do not duplicate stock effects; measured recovery steps/times and limitations are recorded |
 | SS-27 | Exercise shared-to-dedicated tenant migration | SS-07, SS-12, SS-26 | Pause/drain one tenant, copy and validate data, switch placement generation, invalidate routing caches and reopen; stale jobs fail safely; isolation and reconciliation after post-cutover writes are verified; document document/artifact movement |
-| SS-28 | Package reproducible portfolio release | SS-23, SS-24, SS-26, SS-27 | Clean checkout setup/demo succeeds; diagrams, ADRs, acceptance evidence, data/model cards and five-minute walkthrough exist; release notes state synthetic-data limitations; owner approves release PR before versioned tag/image publication |
+| SS-28 | Package reproducible portfolio release | SS-23, SS-24, SS-26, SS-27 | Clean-environment reviewer setup/demo succeeds without owner secrets, cached models or AMD GPU; scripted prerequisites/downloads/bootstrap, local login and real CPU inference are verified (ADR 0013); diagrams, ADRs, acceptance evidence, data/model cards and five-minute walkthrough exist; release notes state synthetic-data limitations; owner approves release PR before versioned tag/image publication |
 
 Telemetry and backup design begin with each service; SS-24/26 integrate and prove
 them rather than introducing them for the first time. A managed-cloud deployment
@@ -146,7 +146,7 @@ count toward the local resource cap.
 
 | ID | Task and output | Depends on | Done when |
 | --- | --- | --- | --- |
-| SS-36 | Implement local LLM adapter and provider contract | SS-03, SS-30 | Hardware/placement and model are selected from measured latency, memory and tool-use quality; local adapter satisfies capability-aware contract tests; external adapter extension point and configuration/fixtures cover Bedrock integration without assuming API compatibility; cancellation, errors and no automatic remote fallback are verified |
+| SS-36 | Implement local LLM adapter and provider contract | SS-03, SS-30 | Portable CPU and optional accelerated profiles are validated; hardware/placement and model are selected from measured latency, memory and tool-use quality; local adapter satisfies capability-aware contract tests; external adapter extension point and configuration/fixtures cover Bedrock integration without assuming API compatibility; cancellation, errors and no automatic remote fallback are verified |
 
 Local inference is required for the initial release (ADR 0012). Its resource
 allocation must be explicitly resolved before model deployment; do not increase

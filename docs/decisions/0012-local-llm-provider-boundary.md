@@ -57,3 +57,7 @@ RAM/CPU, latency and tool correctness. These are evaluation settings, not a
 selected model or capacity guarantee.
 
 [llama.cpp build backends](https://github.com/ggml-org/llama.cpp/blob/master/docs/build.md)
+
+Reviewer reproducibility (ADR 0013) constrains runtime selection: the owner GPU
+is optional acceleration. Validate a real CPU inference profile and scripted,
+versioned setup; do not require reviewers to have that GPU or private credentials.
