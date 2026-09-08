@@ -31,7 +31,7 @@ choices remain design proposals to validate in SS-02.
 | SS-02 | Reconcile AI-DLC requirements, stories, glossary, threat model and ADRs | — | Owner decisions and proposals are distinguished; inventory/purchasing journeys have acceptance criteria; tenant and identity trust boundaries are explicit; stale project guidance is corrected; actual review outcomes are recorded |
 | SS-03 | Establish application skeleton and local validation commands | SS-02 | React, .NET API/worker/identity and Python project boundaries exist; supported versions and dependencies are pinned; clean checkout builds; health endpoints and smoke checks run; no EF dependency is introduced |
 | SS-04 | Define initial OpenAPI/AsyncAPI contracts and validation | SS-02 | Inventory/import and job/message contracts include errors, authentication, tenant context and versioning; invalid examples fail validation; compatibility checks can run locally and later in CI |
-| SS-05 | Implement CI baseline and repository checks | SS-01, SS-03, SS-04 | Selected runner executes applicable builds/tests, contract validation, secret/dependency scanning and migration checks; actual check names are required on main; failures block merge |
+| SS-05 | Implement CI baseline and repository checks | SS-01, SS-03, SS-04 | GitHub Actions executes applicable builds/tests, contract validation, secret/dependency scanning and migration checks; actual check names are required on main; failures block merge |
 
 Exit evidence: reviewed baseline, reproducible skeleton and executable checks.
 SS-02–04 can progress locally while GitHub authentication blocks SS-01/05.
@@ -91,7 +91,7 @@ evaluation report. SS-21/22 can proceed alongside ML work after purchasing works
 | ID | Task and output | Depends on | Done when |
 | --- | --- | --- | --- |
 | SS-24 | Complete telemetry and resource verification | SS-19, SS-23 | Correlated traces/logs and bounded-cardinality metrics cover API, RabbitMQ, jobs and agent; full demo plus one ML job is measured within 16 GB/3 CPU; overhead and bottlenecks are documented |
-| SS-25 | Implement delivery and schema rollout pipeline | SS-05, SS-16 | CI publishes immutable images; Terraform/Terragrunt delivery uses protected state/locking for shared automation; Flyway jobs validate/migrate before rollout; failed migration blocks release; application rollback is tested against compatible schema |
+| SS-25 | Implement delivery and schema rollout pipeline | SS-05, SS-16 | GitHub Actions publishes immutable images; a dedicated self-hosted runner deploys only trusted revisions to Docker Desktop; Terraform/Terragrunt delivery uses protected state/locking for shared automation; Flyway jobs validate/migrate before rollout; failed migration blocks release; application rollback is tested against compatible schema |
 | SS-26 | Prove backup, restore and failure recovery | SS-19, SS-21, SS-25 | Restore PostgreSQL, identity/key material, MongoDB and artifacts into a clean environment; broker/worker failure and replay do not duplicate stock effects; measured recovery steps/times and limitations are recorded |
 | SS-27 | Exercise shared-to-dedicated tenant migration | SS-07, SS-12, SS-26 | Pause/drain one tenant, copy and validate data, switch placement generation, invalidate routing caches and reopen; stale jobs fail safely; isolation and reconciliation after post-cutover writes are verified; document document/artifact movement |
 | SS-28 | Package reproducible portfolio release | SS-23, SS-24, SS-26, SS-27 | Clean checkout setup/demo succeeds; diagrams, ADRs, acceptance evidence, data/model cards and five-minute walkthrough exist; release notes state synthetic-data limitations; owner approves release PR before versioned tag/image publication |
@@ -105,7 +105,7 @@ demonstrates cloud-native behavior on the agreed Kubernetes environment.
 
 | Decision | Needed before | Planning treatment |
 | --- | --- | --- |
-| CI runner and GitHub access | SS-05 | Keep checks runnable locally; Terraform/Terragrunt are delivery tools, not the CI runner |
+| GitHub access and deployment runner isolation | SS-05/25 | GitHub Actions and dedicated self-hosted deployment runner are confirmed (ADR 0003); use hosted PR CI and prevent public PR code reaching the deployment runner |
 | Demo counts, horizon, calendar/currency and replenishment policies | SS-10/13/14 | Use design proposals as review inputs; do not invent approved numerical targets |
 | External OIDC provider, local-account scope, public access | SS-09 | OIDC first; verify Duende license/feature entitlements for intended deployment |
 | PostgreSQL/MongoDB/Python/MLflow implementation versions | SS-03/06/19/21 | Pin supported versions after compatibility review |
