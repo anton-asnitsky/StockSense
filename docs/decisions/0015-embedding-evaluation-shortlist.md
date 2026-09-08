@@ -22,7 +22,7 @@ clean-environment reviewer test. Do not require the owner's credentials.
 ## Controlled evaluation
 
 SS-33 prepares versioned document chunks and separate Qdrant collections for each
-model/configuration. Initially compare the default vector dimensions: 768 for
+retailer and model/configuration (ADR 0018). Initially compare the default vector dimensions: 768 for
 EmbeddingGemma and 1024 for Qwen. Lower-dimensional variants are later experiments.
 Even equal-dimensional outputs from different models are not interchangeable.
 Query vectors must use the same model/configuration as their target index.

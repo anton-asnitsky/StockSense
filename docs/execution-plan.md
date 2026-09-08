@@ -133,7 +133,7 @@ count toward the local resource cap.
 | ID | Task and output | Depends on | Done when |
 | --- | --- | --- | --- |
 | SS-32 | Deploy Redis and implement application caching | SS-11, SS-30 | IaC, Vault credentials, ACLs and bounded memory/TTL work; tenant-scoped versioned keys, invalidation and stale-fill handling pass tests; outage/cold-start fallback preserves correctness; purchasing and authorization remain authoritative |
-| SS-33 | Deploy Qdrant and vector ingestion | SS-21, SS-30 | Persistent Qdrant instance deployed with separate versioned indexes for EmbeddingGemma-300M and Qwen3-Embedding-0.6B evaluation (ADR 0015); IaC/PVC/credentials and isolation strategy verified; RabbitMQ drives versioned chunk/embedding upserts and deletion; job control uses SQL routines; retries/reindexing reconcile to authoritative source versions |
+| SS-33 | Deploy Qdrant and vector ingestion | SS-21, SS-30 | Persistent Qdrant instance deployed with separate collections per retailer and embedding-model/configuration version (ADR 0018), including both evaluation candidates; IaC/PVC/credentials and isolation strategy verified; RabbitMQ drives versioned chunk/embedding upserts and deletion; job control uses SQL routines; retries/reindexing reconcile to authoritative source versions |
 | SS-34 | Integrate and evaluate authorized RAG | SS-22, SS-33 | Retrieval adapter enforces tenant/document authorization; both approved embedding candidates are compared on held-out English queries/documents for retrieval quality, citations, CPU latency and memory; language-aware fixtures support future multilingual/cross-language evaluation; prompt injection, cross-tenant, stale/deleted-source cases pass; embedding model and cost limits are explicit; vector restore/rebuild is demonstrated |
 
 ## On-demand inventory review
@@ -162,7 +162,7 @@ remain a separate choice. No external API provisioning is implied.
 | --- | --- | --- |
 | GitHub access and deployment runner isolation | SS-05/25 | GitHub Actions and dedicated self-hosted deployment runner are confirmed (ADR 0003); use hosted PR CI and prevent public PR code reaching the deployment runner |
 | Embedding default | SS-33/34 | English is the initial supported language; compare EmbeddingGemma-300M and Qwen3-Embedding-0.6B on English retrieval; keep multilingual extensibility and defer additional language acceptance (ADR 0015) |
-| Qdrant tenant isolation layout | SS-33 | Verify collection strategy and authorized retrieval; keep model/configuration indexes separate |
+| Qdrant active-index routing and lifecycle | SS-33 | Separate collections per retailer and embedding version are confirmed (ADR 0018); implement server-owned routing, validated cutover, deletion reconciliation and rollback |
 | Buffer-day defaults | SS-14 | Compare defaults in simulation; daily review, buffer-day policy, manager approval and three manual reviews per retailer/local day are confirmed in ADR 0011 |
 | Google client registration and local redirect setup | SS-09 | Google federation, seeded local accounts and local-only access are confirmed (ADR 0005); configure credentials outside Git and verify both login paths |
 | PostgreSQL/MongoDB/Python/MLflow implementation versions | SS-03/06/19/21 | Pin supported versions after compatibility review |

@@ -29,8 +29,8 @@ keys outside the evictable application-cache instance.
 The service stores embeddings and source/chunk/version metadata. A trusted backend
 retrieval adapter applies tenant and document authorization on every search and
 mutation. Tenant filtering alone is not a database-enforced equivalent of SQL RLS.
-During Qdrant implementation, compare shared-collection payload filtering with per-tenant
-collections for the three-retailer demo; never accept arbitrary collection names
+ADR 0018 selects separate collections per retailer and embedding-model version
+for the three-retailer demo; never accept arbitrary collection names
 or search filters from a client. Credentials and privileged operations remain
 server-side. Validate authorized retrieval before any chunk enters an LLM prompt.
 
