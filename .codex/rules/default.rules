@@ -1,0 +1,3 @@
+# StockSense: permit only the installed native framework engine prefix.
+# Git writes and other commands retain the host's approval policy.
+prefix_rule(pattern = ["aidlc", "engine"], decision = "allow")
