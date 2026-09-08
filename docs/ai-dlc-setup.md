@@ -96,5 +96,9 @@ those installations have not been tested in this project.
 
 Native installation passed upstream checksums and available provenance checks.
 Local doctor results and hook activation status are recorded in
-[setup verification](ai-dlc-verification.md). A running CLI conversation with
-trusted hooks is still needed to verify the full agent lifecycle end to end.
+[setup verification](ai-dlc-verification.md). Hook activation and diagnostics were verified in a fresh CLI session on
+2026-09-09. Full stage/review/approval execution remains to be validated.
+
+Windows activation note: prefer the native Codex startup hook review or `/hooks`.
+The shipped pre-seed with forward-slash paths did not activate hooks in this
+installation; native CLI trust did. See the dated activation verification.
