@@ -8,7 +8,9 @@ Status: Owner approved EmbeddingGemma and Qwen as candidates.
 Evaluate `google/embeddinggemma-300m` and `Qwen/Qwen3-Embedding-0.6B` for local
 RAG embeddings. This approves the two candidates, not a production winner or
 simultaneous use of both models for every query. BGE is not in this shortlist.
-The initial document/query language scope remains open.
+The owner requires multilingual documents and queries. The named languages for
+the initial demo remain to be selected; multilingual does not imply verified
+coverage of every language.
 
 Start with CPU inference for the reviewer profile. Pin model revisions, runtime,
 precision, pooling, normalization and query/document formatting. Follow each
@@ -26,8 +28,9 @@ Query vectors must use the same model/configuration as their target index.
 
 SS-34 evaluates both on the same held-out supplier questions, relevance labels
 and authorized corpus. Include product identifiers, lead times, pack sizes,
-minimum orders, ambiguous questions and missing evidence. Add language-specific
-and cross-language cases once supported languages are agreed.
+minimum orders, ambiguous questions and missing evidence. Evaluate same-language and cross-language retrieval, preserving original source
+text and citations. Report results separately by language and query/document
+language pair. Select named languages before constructing evaluation fixtures.
 
 Record Recall@k and ranking quality, query latency, ingestion throughput, RAM,
 download footprint and downstream citation correctness. Keep retrieval settings
