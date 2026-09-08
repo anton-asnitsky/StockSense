@@ -65,8 +65,8 @@ stores. Do not make Vault initialization depend on application database availabi
 | SS-06 | Package minimal local Kubernetes infrastructure | SS-03 | Terraform/Terragrunt deploy PostgreSQL, API and identity prerequisites through Helm; local HTTPS, secrets, PVCs and probes work; reviewer selects backend through configuration with local state as the default (ADR 0016); state is untracked; node CPU/disk capacity and initial resources are measured |
 | SS-07 | Establish business database and tenant access foundation | SS-02, SS-06, SS-30 | Flyway creates membership/placement and initial inventory schemas; application roles can execute approved routines but cannot query/write tables directly; Dapper adapters use parameterized routine calls; RLS and pooled-connection tests reject missing/cross-tenant context |
 | SS-08 | Build Duende persistence and key lifecycle | SS-03, SS-06, SS-30 | Separate identity DB and Flyway chain exist; required configuration/grant/session stores use Dapper routines; identity roles cannot access business data; protected signing/data-protection keys survive restart; rotation and restore are verified |
-| SS-09 | Implement login, federation and BFF sessions | SS-07, SS-08 | Google federation and seeded local demo accounts work with local-only access; code/PKCE flow, secure cookies, CSRF, exact redirects, logout and server-side tokens are verified; membership revocation denies access despite an existing session; account-linking abuse and refresh replay are covered |
-| SS-10 | Create deterministic retail simulation and imports | SS-04, SS-07 | Seed/configuration reproduce sales, inventory and supplier terms; imports enforce retailer currency and local-day boundaries (ADR 0010); lost demand is separate from observed sales; invalid/duplicate imports are handled deterministically; inventory ledger conserves quantities and isolates tenants |
+| SS-09 | Implement login, federation and BFF sessions | SS-07, SS-08, SS-37 | Google federation and seeded local demo accounts work with local-only access; code/PKCE flow, secure cookies, CSRF, exact redirects, logout and server-side tokens are verified; membership revocation denies access despite an existing session; account-linking abuse and refresh replay are covered |
+| SS-10 | Create deterministic retail simulation and imports | SS-04, SS-07, SS-37 | Seed/configuration reproduce sales, inventory and supplier terms; imports enforce retailer currency and local-day boundaries (ADR 0010); lost demand is separate from observed sales; invalid/duplicate imports are handled deterministically; inventory ledger conserves quantities and isolates tenants |
 | SS-11 | Deliver React inventory workflow | SS-09, SS-10 | User signs in, chooses an authorized retailer, imports data and views inventory with loading/error/empty states; another retailer's identifiers cannot expose or mutate data; keyboard navigation and core browser flow pass |
 
 Exit demo: sign in, import seeded data and inspect inventory for isolated retailers.
@@ -112,9 +112,9 @@ evaluation report. SS-21/22 can proceed alongside ML work after purchasing works
 
 | ID | Task and output | Depends on | Done when |
 | --- | --- | --- | --- |
-| SS-24 | Complete telemetry and resource verification | SS-19, SS-23, SS-30, SS-32, SS-33 | Correlated traces/logs and bounded-cardinality metrics cover API, RabbitMQ, jobs and agent; full demo plus one ML job is measured within 16 GB/3 CPU; overhead and bottlenecks are documented |
+| SS-24 | Complete telemetry and resource verification | SS-19, SS-23, SS-30, SS-32, SS-33, SS-38 | Correlated traces/logs and bounded-cardinality metrics cover API, RabbitMQ, jobs and agent; OpenSearch, Dashboards and ingestion overhead are included; full demo plus one ML job is measured within 16 GB/3 CPU; overhead and bottlenecks are documented |
 | SS-25 | Implement delivery and schema rollout pipeline | SS-05, SS-16 | GitHub Actions publishes immutable images; a dedicated self-hosted runner deploys only trusted revisions to Docker Desktop; Terraform/Terragrunt delivery consistently uses the reviewer-selected backend; local default uses durable access-restricted state outside job workspaces with serialized applies and local locking (ADR 0016); Flyway jobs validate/migrate before rollout; failed migration blocks release; application rollback is tested against compatible schema |
-| SS-26 | Prove backup, restore and failure recovery | SS-19, SS-21, SS-25, SS-31 | Restore PostgreSQL, identity/key material, MongoDB and artifacts into a clean environment; broker/worker failure and replay do not duplicate stock effects; measured recovery steps/times and limitations are recorded |
+| SS-26 | Prove backup, restore and failure recovery | SS-19, SS-21, SS-25, SS-31, SS-38 | Restore authoritative audit records and rebuild OpenSearch audit indexes; restore PostgreSQL, identity/key material, MongoDB and artifacts into a clean environment; broker/worker failure and replay do not duplicate stock effects; measured recovery steps/times and limitations are recorded |
 | SS-27 | Exercise shared-to-dedicated tenant migration | SS-07, SS-12, SS-26 | Pause/drain one tenant, copy and validate data, switch placement generation, invalidate routing caches and reopen; stale jobs fail safely; isolation and reconciliation after post-cutover writes are verified; document document/artifact movement |
 | SS-28 | Package reproducible portfolio release | SS-23, SS-24, SS-26, SS-27 | Clean-environment reviewer setup/demo succeeds without owner secrets, cached models or AMD GPU; scripted prerequisites/downloads/bootstrap, local login and real CPU inference are verified (ADR 0013); diagrams, ADRs, acceptance evidence, data/model cards and five-minute walkthrough exist; release notes state synthetic-data limitations; owner approves release PR before versioned tag/image publication |
 
@@ -156,6 +156,16 @@ allocation must be explicitly resolved before model deployment; do not increase
 the Kubernetes budget or assume host resources without agreement. Embeddings
 remain a separate choice. No external API provisioning is implied.
 
+## Logging and business auditing
+
+OpenSearch/Dashboards and transactional PostgreSQL auditing are confirmed in ADR
+0019. Audit recording begins in the foundation; search is integrated separately.
+
+| ID | Task and output | Depends on | Done when |
+| --- | --- | --- | --- |
+| SS-37 | Establish transactional business auditing | SS-04, SS-07 | Flyway and execute-only routines establish tenant-scoped append-only audit records; business mutation, audit and outbox commit atomically; failure rolls back mutation; OpenAPI/AsyncAPI define audit contracts; rejected attempts have a separate recording path; isolation, rollback and runtime update/delete denial pass tests; each subsequent mutation task includes audit coverage |
+| SS-38 | Deploy OpenSearch investigations and audit projection | SS-12, SS-30, SS-37 | IaC deploys pinned persistent OpenSearch/Dashboards with Vault-managed credentials; structured logs are ingested with bounded buffering and loss counters; audit worker deduplicates by event ID; outages, retries, DLQ replay, indexing lag and tenant-restricted search are verified; redaction, separate index permissions/retention and disk limits are documented; dashboards are operator-only |
+
 ## Decisions needed at the point of use
 
 | Decision | Needed before | Planning treatment |
@@ -171,6 +181,7 @@ remain a separate choice. No external API provisioning is implied.
 | External adapter activation and spend cap | Optional external integration | Prepare for APIs such as Bedrock; require explicit configuration/credentials and budget before external calls |
 | Consumer secret reload and Duende key integration | SS-30/31 | Vault Secrets Operator is selected (ADR 0017); specify reload/rollout behavior per consumer and verify Kubernetes Secret access/at-rest protection |
 | Reviewer backend selection and credentials | SS-06/25 | Local is the default, not mandatory (ADR 0016); reviewer may configure remote state; document inputs, locking, backups and deliberate migration |
+| Log/audit retention, ingestion components and metrics/trace storage | SS-38/24 | OpenSearch/Dashboards and PostgreSQL audit authority are selected (ADR 0019); resolve retention, disk/backlog limits and remaining telemetry components, then measure the complete stack |
 | Cloud provider, hosted deployment budget and deadline | Later cloud increment | Not a prerequisite for the local release |
 
 ## Definition of done and Git execution
