@@ -20,7 +20,8 @@ commands for development and times when the deployment machine is offline.
   not an approved repository creation. Labels alone do not provide isolation.
 - Deploy reviewed revisions and immutable images; serialize infrastructure applies.
   Preserve the owner's merge approval rule. Migration failure blocks rollout.
-- Remote Terraform state/locking, runner operating environment, credential storage
+- Local Terraform state is confirmed in ADR 0016; state paths/backups, runner
+  operating environment, credential storage
   and deployment trigger details remain implementation decisions to resolve.
 - Runner execution consumes machine resources; measure it against the agreed
   local budget and avoid competing builds/training during deployment.
