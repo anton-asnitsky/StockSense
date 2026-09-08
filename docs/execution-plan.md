@@ -101,7 +101,7 @@ Exit evidence: baseline comparison, model/data cards, tracked run and rollback d
 
 | ID | Task and output | Depends on | Done when |
 | --- | --- | --- | --- |
-| SS-21 | Add supplier document ingestion and MongoDB | SS-06, SS-12, SS-16 | Selected formats are validated and versioned; MongoDB queries are tenant-scoped; extracted offers retain source provenance; accepted normalized terms enter PostgreSQL through routines; duplicate/invalid uploads are covered |
+| SS-21 | Add supplier document ingestion and MongoDB | SS-06, SS-12, SS-16 | CSV offers and text-based PDF catalogs/terms are validated and versioned (ADR 0009); scans/OCR are deferred; MongoDB queries are tenant-scoped; extracted offers retain source provenance; accepted normalized terms enter PostgreSQL through routines; duplicate/invalid uploads are covered |
 | SS-22 | Implement typed domain tools and agent orchestration | SS-16, SS-21 | Tools expose authorized reads, calculations and draft proposals; LLM cannot set tenant context or approve orders; tool schemas/contracts, time/call/cost limits and failure behavior are explicit; secrets remain server-side |
 | SS-23 | Deliver assistant UI and adversarial evaluations | SS-20, SS-22, SS-34 | Answers cite relevant source/data versions; missing evidence and provider failures are handled; evaluations cover prompt injection, cross-tenant access, fabricated evidence and approval escalation; final approval remains the authenticated manager's action |
 
@@ -145,7 +145,7 @@ count toward the local resource cap.
 | Calendar/currency and replenishment policies | SS-10/13/14 | Demo counts and horizon are accepted in ADR 0004; policy values remain to be decided |
 | Google client registration and local redirect setup | SS-09 | Google federation, seeded local accounts and local-only access are confirmed (ADR 0005); configure credentials outside Git and verify both login paths |
 | PostgreSQL/MongoDB/Python/MLflow implementation versions | SS-03/06/19/21 | Pin supported versions after compatibility review |
-| Supplier formats | SS-21 | Start with the smallest format set that demonstrates provenance |
+| CSV schema and document processing limits | SS-21 | CSV and text-based PDF are confirmed (ADR 0009); define schema, limits and explicit unsupported-scan handling |
 | LLM/model, evaluation criteria and spend cap | SS-22 | No billable integration until these are defined |
 | Vault secret injection mechanism and key integration | SS-30 | Select workload delivery/rotation behavior and account for all supporting resources |
 | Remote Terraform state and deployment credentials | SS-25 | Needed before shared automated applies |
