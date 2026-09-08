@@ -163,7 +163,7 @@ remain a separate choice. No external API provisioning is implied.
 | Google client registration and local redirect setup | SS-09 | Google federation, seeded local accounts and local-only access are confirmed (ADR 0005); configure credentials outside Git and verify both login paths |
 | PostgreSQL/MongoDB/Python/MLflow implementation versions | SS-03/06/19/21 | Pin supported versions after compatibility review |
 | CSV schema and document processing limits | SS-21 | CSV and text-based PDF are confirmed (ADR 0009); define schema, limits and explicit unsupported-scan handling |
-| Local inference hardware/runtime/model and placement | SS-36 | Local generation selected; GPU/VRAM and host versus existing Kubernetes allocation require clarification; benchmark before selecting model |
+| Local inference hardware/runtime/model and placement | SS-36 | Local generation selected; RX 6700 XT with 12 GB VRAM confirmed by owner; runtime support, host versus Kubernetes placement and host RAM/CPU allocation remain open; benchmark before selecting model |
 | External adapter activation and spend cap | Optional external integration | Prepare for APIs such as Bedrock; require explicit configuration/credentials and budget before external calls |
 | Vault secret injection mechanism and key integration | SS-30 | Select workload delivery/rotation behavior and account for all supporting resources |
 | Remote Terraform state and deployment credentials | SS-25 | Needed before shared automated applies |

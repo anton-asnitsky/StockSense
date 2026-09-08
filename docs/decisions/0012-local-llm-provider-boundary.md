@@ -11,7 +11,9 @@ external-LLM-first design. Bedrock is not yet a provisioned or selected cloud
 deployment. Do not silently fall back to a remote provider.
 
 The local runtime, model, quantization and host-versus-Kubernetes placement remain
-open pending hardware and resource information. Do not assume a GPU or increase
+open pending runtime validation and placement agreement. The owner reports an
+AMD Radeon RX 6700 XT with 12 GB dedicated VRAM. This is hardware information,
+not confirmation of GPU passthrough or extra host RAM/CPU allocation. Do not increase
 the existing 16 GB/3-CPU Kubernetes allocation. Validate latency, memory, tool use
 and retrieval-grounded answers on the actual machine before choosing the model.
 
@@ -44,3 +46,14 @@ a model change may require Qdrant reindexing.
 SS-36 establishes the interface, local adapter and hardware-based model evaluation.
 SS-22 integrates it with the agent. SS-24 verifies the full deployment resource
 budget, including inference. External integration remains optional until enabled.
+
+## Hardware evaluation proposal
+
+Evaluate native Windows llama.cpp with Vulkan for this GPU before choosing a
+runtime or model. Host serving remains a proposal; validate Kubernetes-to-host
+connectivity and access controls if selected. Benchmark a quantized 7B–8B-class
+model first with bounded context/concurrency, measuring actual free VRAM, host
+RAM/CPU, latency and tool correctness. These are evaluation settings, not a
+selected model or capacity guarantee.
+
+[llama.cpp build backends](https://github.com/ggml-org/llama.cpp/blob/master/docs/build.md)
