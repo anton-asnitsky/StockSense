@@ -27,8 +27,8 @@ Terraform resources/data sources that persist them in state. Sensitive marking
 does not prevent state storage. Keep state, plans and bootstrap outputs out of Git.
 
 Bind workload access to specific Kubernetes service accounts/namespaces with
-least-privilege Vault policies. Select an injection mechanism during implementation
-and include its resource footprint. Verify rotation, renewal/reload behavior and
+least-privilege Vault policies. Vault Secrets Operator is selected (ADR 0017),
+synchronizing values into Kubernetes Secrets. Include its resource footprint. Verify rotation, renewal/reload behavior and
 failure handling for each consumer. Dynamic database credentials are a future
 option, not required for the first release.
 

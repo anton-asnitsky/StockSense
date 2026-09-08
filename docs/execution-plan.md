@@ -51,7 +51,7 @@ in ADR 0007; Qdrant is the selected vector database.
 | ID | Task and output | Depends on | Done when |
 | --- | --- | --- | --- |
 | SS-29 | Deploy persistent Vault with IaC | SS-06 | Pinned Helm chart and Terraform/Terragrunt deploy TLS-enabled Vault with persistent integrated storage; no dev mode; deployment/configuration states are separate; full resource budget is recalculated including injection components |
-| SS-30 | Bootstrap Vault and integrate workloads | SS-29 | Initialization/unseal material is protected outside cluster/Git; root token is retired after scoped admin setup; Kubernetes auth binds policies to workload identities; chosen injection mechanism delivers credentials without Terraform-state exposure; unauthorized workloads are denied |
+| SS-30 | Bootstrap Vault and integrate workloads | SS-29 | Initialization/unseal material is protected outside cluster/Git; root token is retired after scoped admin setup; Kubernetes auth binds policies to workload identities; Vault Secrets Operator synchronizes credentials to scoped Kubernetes Secrets without Terraform-state exposure (ADR 0017); consumers have explicit reload/rollout behavior; unauthorized workloads are denied |
 | SS-31 | Verify secrets rotation and disaster recovery | SS-30, SS-09, SS-12 | Consumers handle rotation and reload/renewal; sealed Vault and expired credentials fail safely; protected snapshot restoration and key recovery work in a clean environment; measured recovery procedure is documented |
 
 SS-06 provisions infrastructure using a protected bootstrap credential procedure;
@@ -169,7 +169,7 @@ remain a separate choice. No external API provisioning is implied.
 | CSV schema and document processing limits | SS-21 | CSV and text-based PDF are confirmed (ADR 0009); define schema, limits and explicit unsupported-scan handling |
 | Local inference hardware/runtime/model and placement | SS-36 | Local generation selected; RX 6700 XT with 12 GB VRAM confirmed by owner; runtime support, host versus Kubernetes placement and host RAM/CPU allocation remain open; benchmark before selecting model |
 | External adapter activation and spend cap | Optional external integration | Prepare for APIs such as Bedrock; require explicit configuration/credentials and budget before external calls |
-| Vault secret injection mechanism and key integration | SS-30 | Select workload delivery/rotation behavior and account for all supporting resources |
+| Consumer secret reload and Duende key integration | SS-30/31 | Vault Secrets Operator is selected (ADR 0017); specify reload/rollout behavior per consumer and verify Kubernetes Secret access/at-rest protection |
 | Reviewer backend selection and credentials | SS-06/25 | Local is the default, not mandatory (ADR 0016); reviewer may configure remote state; document inputs, locking, backups and deliberate migration |
 | Cloud provider, hosted deployment budget and deadline | Later cloud increment | Not a prerequisite for the local release |
 
