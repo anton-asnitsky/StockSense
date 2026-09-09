@@ -1,7 +1,7 @@
 # User stories plan and questions
 
 Date: 2026-09-09
-Status: Planning; awaiting story organization choice.
+Status: Epic/feature/story hierarchy selected; proposed grouping awaits confirmation.
 Source: approved requirements-analysis/requirements.md in this intent.
 
 ## Persona development approach
@@ -38,7 +38,10 @@ B. Persona groups: planner, manager, operator and reviewer, with cross-links
    showing the end-to-end workflows.
 X. Other (please specify)
 
-[Answer]:
+[Answer]: Other: Let's separate the features into the groups of epics. And the feature we'll spit to the user stories.
+
+Interpretation: organize the backlog as epics containing features, with each
+feature decomposed into user stories. Workflow ordering remains a delivery view.
 
 ## Collaboration and output plan
 
@@ -47,3 +50,34 @@ independent design/development/quality contributions, integrate them, and run
 the independent product review. Publish stories.md, personas.md, this assessment,
 traceability.json and the three contribution files. Story count follows the
 selected organization and acceptance coverage, not an arbitrary quota.
+
+## Epic and feature structure
+
+See `epic-feature-map.md` for the proposed groups and existing SS task mappings.
+Epic IDs are EP01-EP10; feature IDs are FE01.01-style keys. Stories retain USx.y
+IDs and explicitly identify their parent feature and epic. Criteria retain
+ACx.y.z IDs. Existing requirements and SS task IDs are preserved, not renumbered.
+Epics group outcomes, features define capabilities and stories define small,
+testable user outcomes. Epics are not sequential release gates.
+
+## Consolidated Summary Confirmation
+
+- Organize work as epics -> features -> user stories, as requested by the owner.
+- Proposed epics: access and tenancy; inventory and demo data; supplier information;
+  forecasting and ML; replenishment; purchasing; evidence-backed assistant;
+  local platform and delivery; observability and recovery; portfolio experience.
+- Use the four established human roles: planner, manager, operator and reviewer.
+  Services remain supporting actors with explicitly bounded authority.
+- Preserve all approved requirements and SS task IDs. Each feature has a stable ID;
+  each story names its parent feature, requirement IDs and testable acceptance criteria.
+- Retain workflow-based delivery slices across epics. Required initial-release
+  capabilities remain required even if they ship after the first inventory demo.
+- Have design, development and quality specialists contribute to the story drafts,
+  then independently review the integrated result. Story count follows decomposition.
+
+Does this all look correct before I generate the user stories and personas?
+
+- Looks correct
+- Request changes
+
+[Answer]:
