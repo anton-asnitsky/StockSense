@@ -1,6 +1,6 @@
 # StockSense design discovery
 
-Status: Q1-Q7 answered; subsequent owner decisions recorded below. Q8-Q10 accepted by the owner on 2026-09-09; consolidated confirmation pending.
+Status: Q1-Q7 answered; subsequent owner decisions recorded below. Q8-Q10 accepted by the owner on 2026-09-09; consolidated summary confirmed by the owner.
 The owner requested questions in chat; answers will be captured here.
 
 ## Q1. Retail domain
@@ -217,4 +217,4 @@ Does this all look correct before I generate the requirements artifact?
 - Looks correct
 - Request changes
 
-[Answer]:
+[Answer]: Looks correct
