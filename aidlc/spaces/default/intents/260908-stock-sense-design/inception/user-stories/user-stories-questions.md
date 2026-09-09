@@ -60,14 +60,30 @@ ACx.y.z IDs. Existing requirements and SS task IDs are preserved, not renumbered
 Epics group outcomes, features define capabilities and stories define small,
 testable user outcomes. Epics are not sequential release gates.
 
+## Q2: Explicit assistant and agentic flows
+
+Proposal: rename EP07 to AI assistant and agentic workflows and expose inventory
+investigation, supplier comparison, replenishment assistance, proposal drafting,
+execution/recovery and evaluation/auditing. Keep local inference and RAG as
+supporting capabilities, Strands as the coordinator and domain services as the
+authority. Scheduled processing remains deterministic; managers retain approval.
+
+[Answer]: Cool. Approved
+
+This records approval of the EP07 refinement, not completion of User Stories.
+
 ## Consolidated Summary Confirmation
 
 - Organize work as epics -> features -> user stories, as requested by the owner.
 - Proposed epics: access and tenancy; inventory and demo data; supplier information;
-  forecasting and ML; replenishment; purchasing; evidence-backed assistant;
+  forecasting and ML; replenishment; purchasing; AI assistant and agentic workflows;
   local platform and delivery; observability and recovery; portfolio experience.
 - Use the four established human roles: planner, manager, operator and reviewer.
   Services remain supporting actors with explicitly bounded authority.
+- EP07 explicitly covers investigation, supplier comparison, replenishment
+  assistance, draft proposals, execution/recovery and evaluation/auditing, supported
+  by local inference and RAG. Domain services enforce authority and calculations;
+  the assistant cannot approve purchases or bypass manual-review quotas.
 - Preserve all approved requirements and SS task IDs. Each feature has a stable ID;
   each story names its parent feature, requirement IDs and testable acceptance criteria.
 - Retain workflow-based delivery slices across epics. Required initial-release

@@ -31,10 +31,34 @@ ownership or a substitute for delivery dependencies.
 | EP04 Demand forecasting and ML lifecycle | FE04.01 Versioned daily baseline forecasts; FE04.02 Datasets, temporal evaluation and outcome measures; FE04.03 Candidate training and MLflow tracking; FE04.04 Promotion, rollback, quality and freshness | SS-13, SS-17, SS-18, SS-19, SS-20 |
 | EP05 Replenishment planning | FE05.01 Daily shortage and quantity calculations; FE05.02 Product buffers and scenario comparison; FE05.03 Quota-limited manual review and status UI | SS-14, SS-35 |
 | EP06 Controlled purchasing and receipts | FE06.01 Draft and submit proposals; FE06.02 Manager approval, rejection and cancellation; FE06.03 Partial/full simulated receipts and stock reconciliation | SS-15, SS-16 |
-| EP07 Evidence-backed assistant | FE07.01 Local inference and optional external-provider boundary; FE07.02 Tenant-authorized vector ingestion and retrieval; FE07.03 Strands tools and cited explanations; FE07.04 Retrieval and agent safety evaluations | SS-22, SS-23, SS-33, SS-34, SS-36 |
+| EP07 AI assistant and agentic workflows | FE07.01 Local inference and optional external-provider boundary; FE07.02 Tenant-authorized vector ingestion and retrieval; FE07.03 Strands orchestration, tools and cited explanations; FE07.04 Agent evaluation and auditing; FE07.05 Inventory investigation; FE07.06 Supplier comparison; FE07.07 Replenishment assistance; FE07.08 Purchase proposal drafting; FE07.09 Workflow execution and recovery | SS-22, SS-23, SS-33, SS-34, SS-35, SS-36, SS-37 |
 | EP08 Local platform and delivery | FE08.01 Reproducible application skeleton; FE08.02 OpenAPI/AsyncAPI contracts and reliable messaging; FE08.03 Kubernetes and Terraform/Terragrunt setup; FE08.04 Vault and workload credentials; FE08.05 CI and trusted deployment | SS-03, SS-04, SS-05, SS-06, SS-12, SS-25, SS-29, SS-30 |
 | EP09 Observability, audit and recovery | FE09.01 Transactional audit and authorized audit search; FE09.02 Operational telemetry and resource validation; FE09.03 Backup, restore and secrets recovery; FE09.04 Shared-to-dedicated tenant migration | SS-24, SS-26, SS-27, SS-31, SS-37, SS-38 |
 | EP10 Reviewer experience and portfolio evidence | FE10.01 Clean-checkout setup and demo; FE10.02 Versioned walkthrough, evaluation evidence and limitations | SS-28 |
+
+## EP07: AI assistant and agentic workflows
+
+Owner approved this refinement on 2026-09-09. Existing feature IDs FE07.01-04
+are retained; FE07.05-09 make the user-facing flows and recovery explicit.
+Local inference and RAG support the flows rather than defining their user value.
+
+| Feature | Flow and required boundary |
+| --- | --- |
+| FE07.05 Inventory investigation | Interpret the planner's question, read authorized inventory/forecast data through domain tools, and explain shortages with cited versions. Missing or stale inputs produce explicit limitations. |
+| FE07.06 Supplier comparison | Retrieve authorized source documents and normalized terms, compare eligible offers through deterministic domain tools, and cite supporting evidence. Unvalidated document text cannot override authoritative terms. |
+| FE07.07 Replenishment assistance | Gather current inputs, invoke deterministic replenishment/scenario tools, and explain quantities and constraints. A requested manual review uses the existing authorized action and shared quota; it does not retrain models or bypass job deduplication. |
+| FE07.08 Purchase proposal drafting | Interpret planner intent, validate inputs through domain services, create a draft and return it for human review. Submission/approval remain explicit human purchasing actions; the agent cannot approve or send orders. |
+| FE07.09 Workflow execution and recovery | Track tool execution, enforce configured limits, support cancellation, handle failures and report incomplete outcomes. Mutating tool retries reuse their idempotency key or reconcile the previous result before retrying, preventing duplicate drafts or review charges. |
+| FE07.04 Agent evaluation and auditing | Evaluate tool choice, grounding, tenant isolation, prompt injection and forbidden actions; retain authorized action/outcome records through the existing audit system. Do not log hidden reasoning, credentials or full prompts by default. |
+
+Strands coordinates the assistant flows in Python. The .NET domain services own
+authorization, calculations and purchasing invariants; authenticated managers
+retain approval authority. All REST and async boundaries retain OpenAPI/AsyncAPI
+contracts. Scheduled forecasts and daily inventory reviews remain deterministic
+background workflows; the assistant may explain results or request an authorized
+manual review. This grouping does not mandate multiple cooperating agents or
+introduce autonomous purchasing. Detailed stories trace FR9, FR14-FR17.1 and
+applicable security, messaging and observability NFRs to the approved baseline.
 
 ## Cross-cutting obligations
 
