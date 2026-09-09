@@ -1,6 +1,6 @@
 # StockSense design discovery
 
-Status: Q1-Q7 answered; subsequent owner decisions recorded below. Q8-Q10 pending.
+Status: Q1-Q7 answered; subsequent owner decisions recorded below. Q8-Q10 accepted by the owner on 2026-09-09; consolidated confirmation pending.
 The owner requested questions in chat; answers will be captured here.
 
 ## Q1. Retail domain
@@ -135,7 +135,7 @@ A. Adopt p95 under 1 second with five users as the initial target
 B. Measure the first slice before setting a numeric acceptance target
 X. Other (please specify)
 
-[Answer]:
+[Answer]: A. Adopt p95 under 1 second with five users as the initial target
 
 ## Q9. Local log and business-audit retention
 
@@ -149,7 +149,7 @@ A. Operational logs: 7 days; business audit: 90 days
 B. Operational logs: 7 days; business audit: retained until explicit demo reset
 X. Other (please specify)
 
-[Answer]:
+[Answer]: A. Operational logs: 7 days; business audit: 90 days
 
 ## Q10. Quota treatment after a failed manual review
 
@@ -161,5 +161,60 @@ before acceptance never consume a slot.
 A. Keep the slot consumed; retry/replay the same accepted job without another charge
 B. Refund once on terminal failure; a new accepted request then consumes a slot
 X. Other (please specify)
+
+[Answer]: A. Keep the slot consumed; retry/replay the same accepted job without another charge
+
+Owner reply for Q8-Q10: "Accepted", in response to the three proposed defaults
+in chat. This accepts these defaults, not a lifecycle completion gate.
+
+## Consolidated Summary Confirmation
+
+- StockSense is a portfolio application for non-perishable specialty retail,
+  helping planners forecast demand and propose replenishment with manager approval.
+- Multiple retailers are isolated from the start using shared storage with strict
+  tenant boundaries and a path to dedicated tenant databases; no physical sharding
+  requirement is inferred from the original wording.
+- Initial demo: three retailers, one store and 100 products each; reproducible
+  synthetic sales/inventory/supplier data with 18 months of daily history and
+  daily refreshed 28-day forecasts. No real supplier purchasing or payments.
+- Docker Desktop Kubernetes is the initial deployment; cloud-native portability
+  remains required. The cluster budget is 16 GB RAM and 3 CPU units, reflecting
+  25% of the reported 12-core host. Full-stack fit must be demonstrated.
+- React/.NET, PostgreSQL, Dapper/Npgsql routine-only access, Flyway, RabbitMQ,
+  OpenAPI/AsyncAPI, MongoDB, Redis, Python ML and MLflow are selected.
+- Duende IdentityServer supports Google federation and seeded local demo accounts;
+  local access, server-enforced tenant membership and manager purchasing approval.
+- Terraform/Terragrunt and Helm deploy infrastructure; GitHub Actions supplies
+  CI/CD with trusted local deployment execution. Terraform state defaults to local,
+  with reviewer choice of backend. Vault and Vault Secrets Operator handle secrets.
+- Supplier input is CSV and text-based PDF; OCR is deferred. Retailers have one
+  currency/time zone each, with UTC timestamps and calendar-day supplier lead times.
+- Daily replenishment considers supplier constraints and configurable buffer-day
+  safety stock. Three accepted manual reviews per retailer/local day are shared
+  across users, excluding scheduled reviews; duplicate requests reuse the job.
+- A failed accepted manual review retains its slot; retry/replay of that job does
+  not consume another. Rejected-before-acceptance requests do not consume quota.
+- Python Strands supports local generation initially and optional external providers
+  such as Bedrock, with no automatic external fallback. Reviewers need real local
+  CPU inference without owner secrets or the owner RX 6700 XT 12 GB GPU.
+- Qdrant collections are isolated per retailer and embedding configuration; evaluate
+  EmbeddingGemma-300M and Qwen3-Embedding-0.6B. English first, multilingual extension
+  supported by the design; exact default models and artifacts follow evaluation.
+- OpenSearch/Dashboards support logs and audit search; PostgreSQL owns transactional
+  business audits projected through outbox/RabbitMQ. Defaults are 7 days of logs
+  and 90 days of audit in PostgreSQL and OpenSearch; retention is configurable.
+- Ordinary inventory/purchasing reads target p95 under 1 second with five concurrent
+  local users, seeded data and a warmed stack. LLM generation/startup are separate.
+- Commit/push is authorized on working branches; every merge needs owner approval.
+  Formal requirements generation does not approve implementation or deployment.
+- Remaining implementation decisions include model/runtime/placement benchmarks,
+  disk capacity, backup expiry/recovery targets, remaining telemetry storage,
+  upload limits, buffer defaults, runner isolation and identity key integration.
+  No numerical values or owner approval are invented for these open items.
+
+Does this all look correct before I generate the requirements artifact?
+
+- Looks correct
+- Request changes
 
 [Answer]:
