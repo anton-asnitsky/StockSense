@@ -116,7 +116,8 @@ delivery -> inventory update and evaluation.
 
 ## Architecture proposal
 
-- React and TypeScript frontend; ASP.NET Core modular backend with Dapper/Npgsql
+- React and TypeScript frontend using Ant Design components and Vite for development
+  and production builds (owner decision, 2026-09-09); ASP.NET Core modular backend with Dapper/Npgsql
   calling stored procedures/functions, with Flyway-managed database migrations.
 - PostgreSQL owns inventory, purchasing, normalized supplier terms and forecasts.
 - MongoDB holds heterogeneous supplier submissions, extraction and validation

@@ -20,7 +20,7 @@ Each task is a reviewable outcome, normally one PR. Split larger tasks into PRs
 before implementation, retaining their parent acceptance criteria. Do not assign
 calendar dates until the first slice provides evidence of delivery speed.
 
-Confirmed constraints: Duende IdentityServer; React/.NET; Dapper with PostgreSQL
+Confirmed constraints: Duende IdentityServer; React/TypeScript with Ant Design and Vite; .NET; Dapper with PostgreSQL
 stored procedures/functions exclusively and Flyway migrations; RabbitMQ; OpenAPI
 and AsyncAPI; Terraform/Terragrunt; shared databases with strict tenant isolation
 and a path to dedicated tenant databases; Docker Desktop Kubernetes, 16 GB RAM
@@ -34,7 +34,7 @@ confirmed (ADR 0008). Detailed domain policies remain to be resolved in SS-02.
 | --- | --- | --- | --- |
 | SS-01 | Publish the existing setup/design and Git policy in focused PRs | — | Intended GitHub account has repository access; existing uncommitted files are reviewed for secrets/generated content and split by purpose; main protection, squash settings and available checks are verified; merges have actual owner approval |
 | SS-02 | Reconcile AI-DLC requirements, stories, glossary, threat model and ADRs | — | Owner decisions and proposals are distinguished; inventory/purchasing journeys have acceptance criteria; tenant and identity trust boundaries are explicit; stale project guidance is corrected; actual review outcomes are recorded |
-| SS-03 | Establish application skeleton and local validation commands | SS-02 | React, .NET API/worker/identity and Python project boundaries exist; supported versions and dependencies are pinned; clean checkout builds; health endpoints and smoke checks run; no EF dependency is introduced |
+| SS-03 | Establish application skeleton and local validation commands | SS-02 | React/TypeScript frontend scaffolded with Vite and Ant Design, .NET API/worker/identity and Python project boundaries exist; frontend development and production builds run and an Ant Design component renders; supported versions and dependencies are pinned; clean checkout builds; health endpoints and smoke checks run; no EF dependency is introduced |
 | SS-04 | Define initial OpenAPI/AsyncAPI contracts and validation | SS-02 | Inventory/import and job/message contracts include errors, authentication, tenant context and versioning; invalid examples fail validation; compatibility checks can run locally and later in CI |
 | SS-05 | Implement CI baseline and repository checks | SS-01, SS-03, SS-04 | GitHub Actions executes applicable builds/tests, contract validation, secret/dependency scanning and migration checks; actual check names are required on main; failures block merge |
 

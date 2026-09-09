@@ -160,12 +160,18 @@ API deployment. Serve the compiled React application from that deployment locall
 to reduce containers and simplify cookie authentication. A cloud deployment can
 move static assets to a CDN without changing business APIs.
 
+The frontend uses Ant Design as its component library and Vite for the development
+server and production build (owner decision, 2026-09-09). The Vite development
+server is a development tool; the local deployment serves its compiled static
+assets through ASP.NET Core as described above. Pin compatible dependency versions
+during application scaffolding and verify the existing BFF authentication flow.
+
 The outbox relay runs inside the .NET worker deployment; it is not an additional
 always-on deployment. RabbitMQ transports asynchronous work and domain events.
 
 | Component | Responsibility |
 | --- | --- |
-| React + TypeScript | Worklist, forecasts, inventory timeline, scenario comparison, order review, assistant evidence |
+| React + TypeScript + Ant Design; Vite | Worklist, forecasts, inventory timeline, scenario comparison, order review, assistant evidence |
 | ASP.NET Core + Dapper/Npgsql | HTTP APIs, authentication, authorization, validation, transactions, typed database routine calls and agent tools |
 | Duende IdentityServer | OIDC/OAuth authentication, SSO, MFA and identity federation; custom Dapper stores and a Flyway-managed identity database |
 | Flyway | PostgreSQL schema, routine, RLS policy and grant migrations |

@@ -101,7 +101,7 @@ These carry forward existing owner decisions, not newly inferred approvals.
 
 - Three isolated retailers, one store and 100 products each; 18 months of
   reproducible synthetic daily history; daily refreshed 28-day forecasts.
-- React/.NET; Dapper/Npgsql through PostgreSQL routines only; Flyway migrations.
+- React/TypeScript with Ant Design components and Vite (owner update, 2026-09-09); .NET; Dapper/Npgsql through PostgreSQL routines only; Flyway migrations.
 - RabbitMQ with OpenAPI REST and AsyncAPI messaging contracts.
 - Duende IdentityServer; Google federation and seeded local accounts; local access.
 - Terraform/Terragrunt infrastructure; GitHub Actions; reviewer-selectable state
@@ -180,7 +180,7 @@ in chat. This accepts these defaults, not a lifecycle completion gate.
 - Docker Desktop Kubernetes is the initial deployment; cloud-native portability
   remains required. The cluster budget is 16 GB RAM and 3 CPU units, reflecting
   25% of the reported 12-core host. Full-stack fit must be demonstrated.
-- React/.NET, PostgreSQL, Dapper/Npgsql routine-only access, Flyway, RabbitMQ,
+- React/TypeScript with Ant Design components and Vite; .NET, PostgreSQL, Dapper/Npgsql routine-only access, Flyway, RabbitMQ,
   OpenAPI/AsyncAPI, MongoDB, Redis, Python ML and MLflow are selected.
 - Duende IdentityServer supports Google federation and seeded local demo accounts;
   local access, server-enforced tenant membership and manager purchasing approval.
@@ -218,3 +218,13 @@ Does this all look correct before I generate the requirements artifact?
 - Request changes
 
 [Answer]: Looks correct
+
+## Owner revision: frontend stack (2026-09-09)
+
+[Answer]: UI should use Ant Design components library + Vite
+
+The owner subsequently selected `Request Changes`. This explicitly amends the
+previously confirmed summary: React and TypeScript remain selected, Ant Design
+is the component library, and Vite supplies frontend development/build tooling.
+The earlier `Looks correct` answer records the prior summary confirmation; it
+does not constitute approval of the revised requirements or close review findings.

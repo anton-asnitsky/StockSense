@@ -2,8 +2,10 @@
 
 Date: 2026-09-09
 Stage: requirements-analysis
-Status: Draft for independent review and owner stage approval.
+Status: Draft amended by owner request; revised review and stage approval pending.
 Input summary: owner confirmed `Looks correct`; receipt recorded by AI-DLC.
+Revision: owner requested Ant Design + Vite and selected `Request Changes` on
+2026-09-09. This frontend amendment supersedes the earlier stack summary.
 Scope: classic; standard depth and test strategy.
 
 ## Intent analysis
@@ -37,6 +39,8 @@ evaluation. Failed model candidates remain part of the evidence.
   accepted technology and policy decisions; refer to each ADR number below.
 - S7: `CONTRIBUTING.md`: accepted Git rules and publication authority.
 - S8: `docs/execution-plan.md`: planned tasks SS-01 through SS-38.
+- S9: `requirements-analysis-questions.md`, owner frontend revision (2026-09-09):
+  Ant Design component library and Vite development/build tooling.
 
 The original generated `project-description.json` contains only `Let's`; it is
 insufficient as a standalone product description. It is retained as historical
@@ -142,6 +146,12 @@ states observable acceptance evidence, not a claim that a test already exists.
 - C10: Formal requirements approval does not authorize real orders, cloud spending,
   deployments or silently skipping later lifecycle approvals.
 
+- C11: The frontend shall use React and TypeScript with Ant Design as its UI
+  component library and Vite for development and production builds (S9; SS-03/11).
+  Acceptance evidence: a clean checkout starts the development server, renders an
+  Ant Design component, and produces a production build served by the local
+  ASP.NET Core deployment. Pin compatible dependency versions during SS-03.
+
 ## Assumptions & Open Questions
 
 Assumptions below are disclosed implementation premises, not owner-selected
@@ -190,6 +200,9 @@ contract/routine checks, measured performance/resources and clean-environment
 setup/recovery evidence. Every OQ must be resolved before its affected task ships.
 The owner may review this requirements baseline with those later decisions explicit;
 approval does not make their unknown values known.
+
+Revision note: the review below evaluated the pre-amendment artifact. Findings
+R-01 through R-04 remain open; this frontend amendment does not resolve them.
 
 ## Review
 
