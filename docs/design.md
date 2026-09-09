@@ -340,18 +340,29 @@ with retailer defaults and product overrides selected through simulation (ADR 00
 not claim a calibrated service-level guarantee. Forecast intervals and probabilistic
 service-level policies are later extensions.
 
-Order lifecycle:
+Order lifecycle (owner purchasing choice, 2026-09-09):
 
 ```text
-Draft -> Submitted -> Approved -> Sent (simulated) -> PartiallyReceived -> Received
+Draft -> Submitted -> Approved -> PartiallyReceived -> Received
                    -> Rejected
-Draft / Submitted -> Cancelled
+Submitted / Approved -> Cancelled (only before any receipt)
+Approved -> Received (full receipt)
 ```
 
+Planners create/edit drafts and submit; managers approve/reject submitted proposals
+and cancel submitted/approved orders before receipt. Authorized planners/managers
+record receipts. Submitted and approved commercial lines are locked; corrections
+require a new linked draft and fresh approval. Rejected/Cancelled/Received are
+terminal. Cancellation after partial receipt, returns and over-receipt are deferred.
+Simulation dispatch is metadata rather than a separate purchasing state.
+
 Approval revalidates offer validity, prices, quantities, permissions and inventory
-snapshot. A material difference returns a conflict requiring a revised proposal.
-An approved order's commercial lines are immutable; changes create a revision.
-Receipts use an idempotency key and atomically update receipt, order and inventory.
+snapshot. A material difference returns a conflict requiring a new proposal.
+Receipts use an idempotency key and atomically update receipt, order, inventory
+and audit/outbox. Positive per-line quantities and cumulative approved limits are
+enforced across concurrent distinct receipts; a changed payload under a reused
+key fails. Cancel/receipt races serialize. The requirements FR7/FR8 transition table
+and FR3/FR12 evaluation definitions are the detailed acceptance source.
 
 Illustrative API surface:
 

@@ -1,6 +1,6 @@
 # StockSense design discovery
 
-Status: Q1-Q7 answered; subsequent owner decisions recorded below. Q8-Q10 accepted by the owner on 2026-09-09; consolidated summary confirmed by the owner.
+Status: Q1-Q7 answered; subsequent owner decisions recorded below. Q8-Q10 accepted by the owner on 2026-09-09; prior consolidated summary confirmed; revised summary awaiting confirmation.
 The owner requested questions in chat; answers will be captured here.
 
 ## Q1. Retail domain
@@ -167,6 +167,36 @@ X. Other (please specify)
 Owner reply for Q8-Q10: "Accepted", in response to the three proposed defaults
 in chat. This accepts these defaults, not a lifecycle completion gate.
 
+## Owner revision: frontend stack (2026-09-09)
+
+[Answer]: UI should use Ant Design components library + Vite
+
+The owner subsequently selected `Request Changes`. This explicitly amends the
+previously confirmed summary: React and TypeScript remain selected, Ant Design
+is the component library, and Vite supplies frontend development/build tooling.
+The earlier `Looks correct` answer records the prior summary confirmation; it
+does not constitute approval of the revised requirements or close review findings.
+
+## Owner purchasing policy and review repair (2026-09-09)
+
+The owner requested: "Now resolve four gaps".
+
+Question: Include manager rejection, cancellation before any receipt, and partial
+receipts? Planners edit drafts only; submitted/approved lines are locked; managers
+approve/reject submitted proposals or cancel submitted/approved orders before
+receipt; authorized planners/managers record receipts; cumulative receipts never
+exceed approved quantities.
+
+[Answer]: Use these purchasing rules (Recommended)
+
+R-02 carries forward ADR 0004's separate sales/lost-demand truth; proposed evaluation
+definitions use MAE/WAPE, per-retailer lost-demand rates and average daily on-hand
+value, with explicit zero-demand handling and common simulation fixtures. R-03
+restores ADR 0011 daily review, buffer precedence and status/quota UI. R-04 makes
+ADR 0005 logout and no-email-auto-link checks mandatory. These repairs are submitted
+for review; this answer is not requirements-stage approval.
+
+
 ## Consolidated Summary Confirmation
 
 - StockSense is a portfolio application for non-perishable specialty retail,
@@ -212,19 +242,22 @@ in chat. This accepts these defaults, not a lifecycle completion gate.
   upload limits, buffer defaults, runner isolation and identity key integration.
   No numerical values or owner approval are invented for these open items.
 
+- Purchasing includes manager rejection, cancellation of submitted/approved orders
+  before any receipt, locked submitted/approved lines, and partial/full receipts
+  by authorized planners/managers. Cumulative receipts cannot exceed approved lines.
+- Evaluation preserves observed sales and lost demand separately. Proposed measures:
+  MAE/WAPE against held-out synthetic true demand, lost-demand totals/rates, and
+  average daily closing on-hand value per retailer/currency. Zero denominators
+  display N/A; models share evaluation dates and exogenous simulation scenarios.
+- Daily replenishment runs independently of daily forecasts. Product buffer settings
+  override retailer defaults. The UI displays review times, input versions, job
+  status, remaining manual allowance and reset time; failed accepted jobs keep slots.
+- Identity verification explicitly includes logout/session invalidation and tests
+  preventing automatic account linking or inherited membership by matching email.
+
 Does this all look correct before I generate the requirements artifact?
 
 - Looks correct
 - Request changes
 
-[Answer]: Looks correct
-
-## Owner revision: frontend stack (2026-09-09)
-
-[Answer]: UI should use Ant Design components library + Vite
-
-The owner subsequently selected `Request Changes`. This explicitly amends the
-previously confirmed summary: React and TypeScript remain selected, Ant Design
-is the component library, and Vite supplies frontend development/build tooling.
-The earlier `Looks correct` answer records the prior summary confirmation; it
-does not constitute approval of the revised requirements or close review findings.
+[Answer]:

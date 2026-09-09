@@ -204,3 +204,15 @@ files into this plan's commit merely because they are currently untracked.
 References: [design](design.md), [brief](product-brief.md),
 [Duende decision](decisions/0002-identity-provider.md),
 [framework decision](decisions/0001-ai-dlc-framework.md).
+
+## Requirements review amendments (2026-09-09)
+
+These add acceptance coverage to existing tasks; task completion is not claimed.
+
+- SS-09: FR1 and ADR 0005 require logout/session replay and safe account-linking tests.
+- SS-10/17/18: FR3/FR12 require separate sales/lost-demand truth, stockout fixtures,
+  common temporal backtests and the defined error/lost-demand/inventory-value measures.
+- SS-14/35: FR6 and FR9.4/FR9.5 require product buffer precedence, daily replenishment
+  scheduling and planner-visible review status, input versions, quota and reset time.
+- SS-15/16: FR7/FR8 require the owner-selected transition matrix, locked submitted
+  lines, partial receipts, cumulative quantity bounds and cancellation/receipt races.

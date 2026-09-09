@@ -39,6 +39,8 @@ evaluation. Failed model candidates remain part of the evidence.
   accepted technology and policy decisions; refer to each ADR number below.
 - S7: `CONTRIBUTING.md`: accepted Git rules and publication authority.
 - S8: `docs/execution-plan.md`: planned tasks SS-01 through SS-38.
+- S10: `requirements-analysis-questions.md`, owner purchasing-policy selection
+  (2026-09-09); explicit authorization to resolve review findings R-01 through R-04.
 - S9: `requirements-analysis-questions.md`, owner frontend revision (2026-09-09):
   Ant Design component library and Vite development/build tooling.
 
@@ -74,22 +76,24 @@ states observable acceptance evidence, not a claim that a test already exists.
 
 | ID | Requirement | Acceptance evidence, including failure/boundary cases | Source / planned tasks |
 | --- | --- | --- | --- |
-| FR1 | The system shall authenticate local demo users and support Google OIDC federation through Duende IdentityServer. | Seeded local login works without Google credentials; configured federation works; invalid login, callback/state and expired-session cases cannot grant access. | S2; ADRs 0002, 0005; SS-08/09 |
+| FR1 | The system shall authenticate local demo users and support Google OIDC federation through Duende IdentityServer, without automatic account linking by matching email. | Both login paths and every acceptance item in ADR 0005 are mandatory: a Google identity with the same email as an existing local user must not acquire that account or its memberships; invalid callbacks/expired sessions fail; logout invalidates the StockSense BFF session and replay of its old cookie cannot authorize a request. Account-linking tests cover a verified authorized linkage and deny email-only, unauthenticated and wrong-account linkage. Logout does not promise to end the upstream Google session. | S2; ADRs 0002, 0005; SS-08/09 |
 | FR2 | The backend shall authorize every business request against the user's current retailer membership and role. | Authorized retailer access succeeds; substituted retailer/entity IDs, missing tenant context and revoked memberships are denied, including with a still-valid session. | S1/S2; SS-07/09/11 |
-| FR3 | The system shall generate and import reproducible synthetic sales, inventory and supplier data for the agreed demo. | Same seed/configuration reproduces the dataset; all three retailers and declared history are present; invalid and duplicate imports have explicit outcomes without duplicate stock effects. | S1/S2/S4; ADR 0004; SS-10 |
+| FR3 | The system shall generate and import reproducible synthetic sales, inventory and supplier data, preserving observed sales and lost demand separately. | Same seed/configuration reproduces all three retailers and history; invalid/duplicate imports have explicit outcomes without duplicate stock effects. A stockout fixture with demand 10 and available stock 6 records sales 6 and lost demand 4, not demand 6. Zero-demand days record both as zero. Synthetic true demand equals sales plus lost demand and is retained as evaluation truth, not leaked into model inputs. | S1/S2/S4; ADR 0004; SS-10/17 |
 | FR4 | The planner shall inspect inventory and stock-movement history within the selected authorized retailer. | Inventory view exposes current quantities and history with loading/empty/error states; receipts and adjustments reconcile to the ledger; cross-retailer lookup fails. | S4/S5; SS-10/11 |
 | FR5 | The system shall produce daily, versioned 28-day demand forecasts and expose run status and freshness. | Results identify model/data/configuration versions; repeated scheduling for a retailer-local date does not create duplicate business effects; failed or stale runs are visible rather than presented as current. | S2/S4; ADRs 0004, 0010; SS-13/20 |
-| FR6 | Replenishment calculations shall use inventory position, forecast demand, dated inbound stock, supplier lead time, minimum order quantities, pack sizes and configurable buffer-day safety stock. | Reviewed examples demonstrate shortages and quantities, including zero demand, pack rounding and minimum orders; inventory/term version changes invalidate stale proposals before approval. | S2/S5; ADR 0011; SS-14/15 |
-| FR7 | Planners shall compare replenishment scenarios and create draft proposals; the backend shall enforce draft/submit/approve/receive purchasing transitions. | Valid transitions complete; invalid transitions and concurrent approvals fail safely; an authorized manager must approve before simulated fulfillment. | S2/S4/S5; SS-14/15/16 |
-| FR8 | Simulated supplier delivery and receipt shall update stock exactly once per accepted receipt operation. | Duplicate message/request and restart/replay scenarios produce one ledger effect; unauthorized, invalid or repeated receipt operations cannot inflate inventory. | S4/S5; SS-12/15/16 |
+| FR6 | Replenishment shall use inventory position, forecast demand, dated inbound stock, supplier lead time, minimum order quantities, pack sizes and configurable buffer-day safety stock. | Product buffer overrides take precedence over retailer defaults; products without overrides inherit the retailer setting. Fixtures cover an explicit zero-day override, no override, zero demand, pack rounding and minimum orders. Inventory/term version changes invalidate stale proposals before approval. Numerical buffer defaults remain OQ3. | S2/S5; ADR 0011; SS-14/15 |
+| FR7 | Planners shall compare scenarios and create/edit drafts; purchasing shall enforce the permitted transitions and actors below, including rejection and cancellation before any receipt. | Submitted/approved lines cannot be edited. An authorized manager approves/rejects a submitted proposal or cancels a submitted/approved order before any receipt. Invalid transitions and concurrent changes fail atomically; every purchase requires manager approval. | S2/S10; SS-14/15/16 |
+| FR8 | Authorized planners/managers shall record partial or full simulated receipts against approved quantities, exactly once per accepted operation. | Every received quantity is positive and cumulative receipts per line cannot exceed its approved quantity, even with distinct receipt IDs and concurrent requests. Receipt, order status, stock ledger and audit/outbox changes commit atomically. For an approved line of 10, receive 6 then 4; reject 6 then 5. Duplicate replay changes nothing; changed payload with the same key fails. Cancelled/rejected/unapproved orders cannot receive. | S4/S10; SS-12/15/16 |
 | FR9 | The system shall provide on-demand inventory review with three accepted requests per retailer per local calendar day, shared by all its users. | First three distinct accepted requests consume slots atomically; a fourth is denied; concurrent requests cannot exceed the quota; scheduled reviews are excluded; local-day/DST boundaries are tested. | S2/S3; ADR 0011; SS-35 |
 | FR9.1 | Only one review shall be active per retailer; duplicate requests shall return the existing job. | Concurrent duplicate requests reuse the job and do not spend multiple slots; authority is checked before returning job details. | S2; ADR 0011; SS-35 |
 | FR9.2 | Failed accepted reviews shall retain their consumed slot; retry/replay of the same job shall not consume another slot. | Failure followed by retry preserves quota count; requests rejected before acceptance consume nothing. Retries operate on the original accepted job across local-day boundaries. | S3 Q10; SS-35 |
 | FR9.3 | Manual review shall use current inventory/terms and a valid forecast, without triggering model retraining. | Job evidence identifies the input versions; no valid forecast produces an explicit unavailable/failure outcome, not invented demand. The precise validity threshold remains OQ2. | S2; ADR 0011; SS-35 |
+| FR9.4 | Each retailer shall receive a scheduled daily inventory/replenishment review, independently of daily forecast production. | One logical scheduled review per retailer-local date recomputes suggestions; scheduler retries/restarts do not duplicate effects or consume manual allowance. Serialize scheduled and manual execution to retain one active review per retailer; retain a due scheduled job for execution after the active job ends. Record local date, trigger, input versions and outcome; unavailable forecasts yield explicit status. | S2; ADR 0011; SS-14/35 |
+| FR9.5 | The planner UI shall expose manual review and current review status for the authorized retailer. | Display last successful review time, forecast/inventory/supplier-input versions, active/queued job and outcome, remaining allowance and next reset time in the retailer time zone. Display never-run/failure/unavailable states explicitly. Quota exhaustion disables the action with an explanation; server-side authorization/quota checks still apply. Failed accepted jobs keep their slot and retry the same job, as FR9.2 requires. | S2/S3; ADR 0011; SS-11/35 |
 | FR10 | Supplier ingestion shall accept CSV offers and text-based PDF catalogs/terms, preserve source versions and report extraction/validation errors. | Supported fixtures retain source/page provenance; malformed CSV, scans and partially extractable PDFs produce explicit outcomes; unvalidated terms do not silently become authoritative. | S2; ADRs 0008, 0009; SS-21 |
 | FR10.1 | MongoDB shall retain supplier submissions/extraction records; accepted normalized terms shall enter PostgreSQL through authorized routines. | Each accepted term traces to its source version; duplicate jobs are idempotent; access to documents and normalized data is tenant-scoped. | S2; ADR 0008; SS-21 |
 | FR11 | The system shall enforce one currency and one time zone per retailer, with UTC timestamps and retailer-local aggregation/scheduling. | Mismatched-currency offers are rejected; no implicit FX conversion occurs; date-boundary and DST fixtures preserve scheduling and quota semantics; lead times use calendar days. | S2; ADR 0010; SS-10/13/14/35 |
-| FR12 | The ML workflow shall compare at least one trained candidate with seasonal-naive and moving-average baselines using reproducible temporal backtests. | Splits exclude future data leakage; identical simulated conditions support forecast and inventory comparisons; reports retain unsuccessful candidates and state synthetic-data limits. | S2/S4/S5; ADR 0008; SS-17/18 |
+| FR12 | The ML workflow shall compare a trained candidate with seasonal-naive and moving-average baselines through reproducible temporal backtests and the evaluation definitions below. | Splits exclude future-data leakage; identical exogenous demand/supply scenarios support comparisons. Reports include uncensored synthetic demand truth, observed sales and lost demand separately, MAE, WAPE with zero-denominator handling, and inventory value per retailer/currency. Retain unsuccessful candidates and synthetic-data limitations. | S2/S4/S5; ADRs 0004, 0008; SS-17/18 |
 | FR13 | MLflow and job metadata shall connect datasets, code, configuration, model versions, evaluations, promotion and rollback. | A result is traceable to a recorded run; failed jobs recover explicitly; promotion has evaluation evidence; rollback selects a known model and preserves prior provenance. | S2/S4; ADR 0008; SS-19/20 |
 | FR14 | The assistant shall explain recommendations with authorized evidence and invoke bounded tools for reads, deterministic calculations and draft proposals. | Responses cite applicable source/data versions; missing evidence is disclosed; injected instructions, tenant switching, fabricated citations and attempts to approve orders are rejected in evaluation. | S2/S4; ADR 0014; SS-22/23 |
 | FR15 | Generation shall run locally initially through Python Strands, with an extension boundary for explicitly configured external providers such as Bedrock. | A real CPU inference path works without owner GPU/secrets; provider failures are explicit; no automatic external fallback occurs; optional external configuration preserves StockSense API contracts. | S2; ADRs 0012-0014; SS-36 |
@@ -100,6 +104,64 @@ states observable acceptance evidence, not a claim that a test already exists.
 | FR18 | Operational logs and searchable audits shall be available through OpenSearch/Dashboards, with operator-only dashboards initially and tenant-authorized business audit APIs. | Correlation connects API, job/message and agent operations; ordinary users cannot access operator-wide searches; required audit recording remains independent of optional telemetry delivery. | S2; ADR 0019; SS-24/38 |
 | FR19 | Redis shall provide disposable tenant-scoped application caching without becoming authoritative for permissions, orders or review quotas. | Cache outage, cold start and stale-fill/invalidation scenarios preserve business correctness; cache keys and access cannot mix retailers. | S2; ADR 0007; SS-32 |
 | FR20 | Operators shall demonstrate backup/restore, message replay, application/model rollback and migration of one tenant from shared to dedicated storage. | Restore into a clean environment, reconcile record counts/stock/provenance, rebuild audit/vector projections, switch tenant placement, and reject stale jobs/routing after cutover. Document movement of documents and artifacts. | S1/S2/S4/S5; SS-26/27 |
+
+### Purchasing transitions and receipt boundaries (FR7/FR8)
+
+Owner-selected purchasing policy (S10). Tenant membership, role and expected order
+version are checked by the backend on every command. Manager users may also carry
+the planner role; manager approval never follows from agent/service authority.
+
+| From | Action and actor | To / invariant |
+| --- | --- | --- |
+| None | Planner creates proposal | Draft |
+| Draft | Planner edits or submits | Draft or Submitted; submit locks commercial lines |
+| Submitted | Manager approves after revalidation | Approved |
+| Submitted | Manager rejects | Rejected, terminal; correction requires a new linked draft |
+| Submitted / Approved | Manager cancels, provided no receipt has committed | Cancelled, terminal |
+| Approved | Planner/manager records valid receipt | PartiallyReceived if any line remains outstanding; Received if all lines are fulfilled |
+| PartiallyReceived | Planner/manager records valid receipt | PartiallyReceived or Received by the same line-completion rule |
+
+All unlisted transitions are denied, including cancellation after any partial
+receipt and receipt after Received. A no-change replay of an already accepted
+idempotency key returns the original result without a new transition. No draft
+cancellation, reopen, return, over-receipt tolerance or post-receipt cancellation
+is included in v1. A replacement draft links to its source and requires fresh
+submission and approval; it cannot mutate approved lines or silently replace an
+active order. Simulation dispatch is delivery metadata, not a separate state or
+permission to bypass approval. Serialize cancel/receipt races so only a valid
+result commits; validate all receipt lines before committing any part of a receipt.
+For multiple lines, fulfilling one line alone cannot mark the whole order Received.
+
+### Evaluation definitions (FR3/FR12)
+
+These are the proposed acceptance definitions for the revised requirements,
+subject to the requirements approval gate; no measured improvement is claimed.
+
+- Evaluation unit: retailer, product, forecast origin and horizon day (1-28).
+  Score only complete held-out horizons on the same origins/products for all
+  candidates; publish dates, sample counts, missing-data exclusions and versions.
+  Report each retailer separately and equal-weight daily observations within it.
+- Forecast target y is generated true demand (observed sales + lost demand).
+  Training features use only observations available at forecast time; simulator
+  latent demand is reserved as evaluation truth. Report MAE = sum(abs(y - forecast))
+  / number of observations, in units/day, and WAPE = 100 * sum(abs(y - forecast))
+  / sum(y). Zero-demand observations remain in MAE. If sum(y) is zero, WAPE is
+  N/A with a zero-demand flag, never zero or infinity; MAE still reports false demand.
+- Inventory-policy evaluation uses a chronological simulation once per scenario,
+  not one summed simulation per overlapping forecast origin. All candidates use
+  the same exogenous true demand, initial stock, supplier constraints, lead times,
+  review/ordering policy and cost fixture; only the forecast changes. Report total
+  lost units and lost-demand rate = 100 * lost units / true demand units. A zero
+  denominator is N/A; show zero lost units separately.
+- Inventory value is daily closing on-hand units multiplied by a fixed versioned
+  unit acquisition-cost fixture for each product, summed across that retailer.
+  Report its arithmetic mean across all evaluated calendar days (including zero
+  stock days). Exclude inbound stock and sales revenue. Report in the retailer's
+  currency, with no aggregation across currencies; this is a simulation measure,
+  not an accounting valuation claim.
+- Hand-check fixtures: demand 10, forecast 8 gives MAE 2 and WAPE 20%; stock 6
+  against demand 10 yields 4 lost units and 40% lost-demand rate. Demand 0 and
+  forecast 2 gives MAE 2, WAPE N/A. Closing inventory values 12 and 8 yield mean 10.
 
 ## Non-functional requirements
 
@@ -201,8 +263,8 @@ setup/recovery evidence. Every OQ must be resolved before its affected task ship
 The owner may review this requirements baseline with those later decisions explicit;
 approval does not make their unknown values known.
 
-Revision note: the review below evaluated the pre-amendment artifact. Findings
-R-01 through R-04 remain open; this frontend amendment does not resolve them.
+Revision note: this draft addresses R-01 through R-04. The review below describes
+the earlier baseline; independent verification of these repairs is pending.
 
 ## Review
 
