@@ -3,9 +3,10 @@
 Date: 2026-09-09
 Stage: requirements-analysis
 Status: Draft amended by owner request; revised review and stage approval pending.
-Input summary: owner confirmed `Looks correct`; receipt recorded by AI-DLC.
-Revision: owner requested Ant Design + Vite and selected `Request Changes` on
-2026-09-09. This frontend amendment supersedes the earlier stack summary.
+Input summary: owner confirmed the revised summary with `Confirmed` on 2026-09-09;
+recorded as `Looks correct` for the AI-DLC summary checkpoint.
+Revision: owner requested Ant Design + Vite and resolution of R-01 through R-04.
+The revised summary was confirmed on 2026-09-09; independent review is pending.
 Scope: classic; standard depth and test strategy.
 
 ## Intent analysis
@@ -134,8 +135,8 @@ For multiple lines, fulfilling one line alone cannot mark the whole order Receiv
 
 ### Evaluation definitions (FR3/FR12)
 
-These are the proposed acceptance definitions for the revised requirements,
-subject to the requirements approval gate; no measured improvement is claimed.
+These acceptance definitions are included in the owner-confirmed revised summary;
+requirements-stage approval remains pending. No measured improvement is claimed.
 
 - Evaluation unit: retailer, product, forecast origin and horizon day (1-28).
   Score only complete held-out horizons on the same origins/products for all
@@ -266,22 +267,24 @@ approval does not make their unknown values known.
 Revision note: this draft addresses R-01 through R-04. The review below describes
 the earlier baseline; independent verification of these repairs is pending.
 
+
 ## Review
 
-**Verdict:** NOT-READY
+**Verdict:** READY
 **Reviewer:** aidlc-product-lead-agent
-**Date:** 2026-09-09T04:56:59Z
+**Date:** 2026-09-09T05:50:52Z
 **Iteration:** 1
+**Request Challenge:** review:91563683dd018b7f92137c2cd3084e41
 
 ### Findings
 
 | ID | Severity | Location | Finding | Required action | Status |
 |---|---|---|---|---|---|
-| R-01 | Major | aidlc/spaces/default/intents/260908-stock-sense-design/inception/requirements-analysis/requirements.md > FR7 and FR8 | "Valid transitions" and "invalid" receipts have no defined state/quantity rules. The draft design proposes rejection, cancellation, partial receipt and immutable approved lines, but these are neither selected nor explicitly deferred here. Distinct receipt IDs could over-receive an order while satisfying the stated per-operation idempotency check. | Define the initial permitted transitions and actors, treatment of approved-line edits, and receipt quantity limits. Explicitly include or defer rejection, cancellation and partial receipt; add acceptance examples for invalid transitions and cumulative over-receipt. Do not silently adopt the draft design's proposals. | New |
-| R-02 | Major | aidlc/spaces/default/intents/260908-stock-sense-design/inception/requirements-analysis/requirements.md > FR3, FR12 and Intent analysis | The intent promises measurement of lost demand, but FR3/FR12 omit ADR 0004's explicit requirement to preserve observed sales separately from lost demand. They also leave the forecast-error and inventory-value measures undefined. A reproducible comparison using stockout-censored sales alone could satisfy the rows while misrepresenting the stated business outcome. | Carry the separate sales/lost-demand requirement into acceptance evidence with a stockout fixture. Define the reported error and inventory measures, aggregation and zero-demand handling, or register their selection as a decision required before evaluation implementation. No improvement percentage needs to be promised. | New |
-| R-03 | Major | aidlc/spaces/default/intents/260908-stock-sense-design/inception/requirements-analysis/requirements.md > FR6 and FR9-FR9.3 | ADR 0011 requires daily inventory review, retailer buffer defaults with product overrides, and a UI showing last successful review, input versions, active job, remaining allowance and reset time. FR6/FR9 specify calculations and quota enforcement but omit these observable capabilities; daily forecasts in FR5 do not require daily replenishment review. Backend-only manual review could pass these rows. | Add traceable acceptance evidence for scheduled daily replenishment, retailer/product buffer precedence, and the named planner-visible review status and quota fields. Preserve Q10's confirmed failed-job charging policy. | New |
-| R-04 | Minor | aidlc/spaces/default/intents/260908-stock-sense-design/inception/requirements-analysis/requirements.md > FR1 and NFR5 | The authentication acceptance list omits ADR 0005's explicit prohibition on automatic account linking by matching email and its logout/account-linking tests. The cited ADR supplies a workaround, but downstream tests derived only from these rows can miss this identity boundary. | Explicitly carry ADR 0005's no-email-auto-link rule and logout/account-linking acceptance into the downstream identity criteria, or make the ADR acceptance section an explicit required part of FR1 verification. | New |
+| R-01 | Major | aidlc/spaces/default/intents/260908-stock-sense-design/inception/requirements-analysis/requirements.md > FR7, FR8 and Purchasing transitions and receipt boundaries (FR7/FR8) | The prior transition/receipt ambiguity is resolved. The owner-selected matrix defines actors, locked lines, rejection, pre-receipt cancellation, partial/full receipts and terminal states. Positive cumulative line limits apply across distinct IDs and concurrent receipts; 6+4 succeeds and 6+5 fails against 10 approved units. Atomic validation and cancel/receipt races are covered. | None; carry the transition matrix, forbidden transitions and receipt fixtures into SS-15/16 acceptance tests. | Resolved |
+| R-02 | Major | aidlc/spaces/default/intents/260908-stock-sense-design/inception/requirements-analysis/requirements.md > FR3, FR12 and Evaluation definitions (FR3/FR12) | The prior evaluation gap is resolved. Sales and lost demand are separate, with a 10-demand/6-stock fixture. MAE, WAPE, lost-demand totals/rates and average daily closing on-hand value now define targets, aggregation, currency, matched scenarios and zero denominators. The definitions distinguish temporal forecast scoring from chronological inventory simulation and prohibit latent-demand feature leakage. | None; carry the formulas and hand-check fixtures into SS-10/17/18 and retain synthetic-data limitations. | Resolved |
+| R-03 | Major | aidlc/spaces/default/intents/260908-stock-sense-design/inception/requirements-analysis/requirements.md > FR6 and FR9-FR9.5 | The prior replenishment coverage gap is resolved. Daily scheduled replenishment is independent of forecast production, shares the single-active-review constraint and preserves due work. Product buffers override retailer defaults, including an explicit zero override. The UI includes review time, input versions, job/outcome, allowance, reset time and unavailable states. FR9.2 preserves Q10 charging and same-job retry behavior across day boundaries. | None; carry this coverage into SS-14/35 and the planner UI tests; resolve OQ2/OQ3 before the affected implementation as already required. | Resolved |
+| R-04 | Minor | aidlc/spaces/default/intents/260908-stock-sense-design/inception/requirements-analysis/requirements.md > FR1 and NFR5 | The prior identity acceptance omission is resolved in FR1. All ADR 0005 acceptance items are explicitly mandatory, including no email-based automatic linking, denied membership inheritance, authorized linkage and rejected unsafe linkage. Logout invalidates the BFF session and old-cookie replay fails; upstream Google logout is explicitly outside that promise. | None; carry FR1 and ADR 0005 acceptance into SS-09 verification alongside NFR5. | Resolved |
 
 ### Summary
 
-The baseline clearly bounds the local portfolio release and distinguishes confirmed choices from open decisions. Three Major findings leave purchasing behavior, outcome evaluation and confirmed replenishment capabilities insufficiently testable; this single advisory pass returns those findings for owner triage without changing scope or initiating a repair loop.
+All four prior findings are resolved against the revised requirements, confirmed questions and cited ADRs; the execution-plan amendments preserve their downstream task coverage. No new approval-relevant defects were found in this advisory pass; the documented implementation decisions remain open until their stated points of use, and READY does not record owner stage approval.
