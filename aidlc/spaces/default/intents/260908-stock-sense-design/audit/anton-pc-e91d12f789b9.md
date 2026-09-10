@@ -2695,3 +2695,604 @@
 **Stage**: domain-design
 
 ---
+
+## Human Turn
+**Timestamp**: 2026-09-10T15:19:58Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Gate Approved
+**Timestamp**: 2026-09-10T15:20:20Z
+**Event**: GATE_APPROVED
+**Stage**: domain-design
+**User Input**: Approve
+
+---
+
+## Stage Completion
+**Timestamp**: 2026-09-10T15:20:20Z
+**Event**: STAGE_COMPLETED
+**Stage**: domain-design
+**Validation Basis**: {"graphContract":"sha256:4e5ba0b6334a8c25f8dea5929cee93c113f34e58b422ef110b998ef5ff29e179","inputs":[{"artifact":"requirements","contentHash":"sha256:2482650712402ff82cf163391a47cd43156c3f534b45854a8e285ea03c2f722a","instanceCount":1,"presentCount":1,"producer":"requirements-analysis","required":true,"structureHash":"sha256:9eb5d12227af31d264720cd6dae82baeb7822e5854c57e6ccdc810008a867735"},{"artifact":"stories","contentHash":"sha256:6b136bd860e9b10dd026a641eecab51b898b032dd5acbd0162a3ee4824703eec","instanceCount":1,"presentCount":1,"producer":"user-stories","required":false,"structureHash":"sha256:294f317cf8345e6d42ff4483bc5fb560fb26ae681bdfd418652c408a62618296"}],"outputs":[{"artifact":"components","contentHash":"sha256:dfa03461f7fa8c6f4282912b1ee99b23f658c33517511564c9f096cdf2ac1dd4","instanceCount":1,"presentCount":1,"producer":"domain-design","required":true,"structureHash":"sha256:57ab64ce37e252e46faba88081ea76852494df58c126b49aa885a851caa386f1"},{"artifact":"decisions","contentHash":"sha256:797eb20d31ebaf7efd19a19825fc4992816fd2c838b513079e338f2e3e02c02d","instanceCount":1,"presentCount":1,"producer":"domain-design","required":true,"structureHash":"sha256:c187820f6aff3df357e4b8ec11415a4a55d9d8115a2fffacce0b7485d9b5d3f6"},{"artifact":"traceability","contentHash":"sha256:2494d1222baa3d6743973a8cbdb1547184ea7134457c38e11a48ff3d9d0c6997","instanceCount":1,"presentCount":1,"producer":"domain-design","required":true,"structureHash":"sha256:01ecfe4222515ea4de384d2034bee76a87d533a8c8b1b0e84998112769aadd4c"}],"projectType":"brownfield","schema":3}
+**Details**: Stage Domain Design approved by gate
+
+---
+
+## Stage Start
+**Timestamp**: 2026-09-10T15:20:20Z
+**Event**: STAGE_STARTED
+**Stage**: units-generation
+**Agent**: aidlc-architect-agent
+
+---
+
+## Session Compacted
+**Timestamp**: 2026-09-10T15:22:56Z
+**Event**: SESSION_COMPACTED
+**Current Stage**: units-generation
+**State Validity**: valid
+
+---
+
+## Error Logged
+**Timestamp**: 2026-09-10T15:26:12Z
+**Event**: ERROR_LOGGED
+**Tool**: aidlc-log
+**Command**: aidlc-log engine log decision --help
+**Error**: --help expects a value, got end of arguments.
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-09-10T15:27:02Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/units-generation/units-generation-questions.md
+**Context**: inception > units-generation > units-generation-questions.md
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-10T15:27:12Z
+**Event**: DECISION_RECORDED
+**Stage**: units-generation
+**Decision**: I've created 8 focused unit-boundary questions. How would you like to answer them?
+**Options**: Guide me,I'll edit the file,Chat,Other
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T15:29:01Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-10T15:29:25Z
+**Event**: QUESTION_ANSWERED
+**Stage**: units-generation
+**Details**: Guide me
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-10T15:29:38Z
+**Event**: DECISION_RECORDED
+**Stage**: units-generation
+**Decision**: Which overall packaging strategy should govern the first StockSense release on the 16 GB, 3 CPU local Kubernetes target?
+**Options**: A. Hybrid portfolio architecture (Recommended),B. Coarse architecture,C. Fine architecture,X. Other (please specify)
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T15:32:15Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T15:32:31Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/units-generation/units-generation-questions.md
+**Context**: inception > units-generation > units-generation-questions.md
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-10T15:32:39Z
+**Event**: QUESTION_ANSWERED
+**Stage**: units-generation
+**Details**: A. Hybrid portfolio architecture: separate units at runtime, technology, security, and scaling boundaries; retain approved logical modules inside coarser services where separation adds little value (Recommended)
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-10T15:32:48Z
+**Event**: DECISION_RECORDED
+**Stage**: units-generation
+**Decision**: How should the transactional .NET business capabilities be packaged without creating a cyclic unit dependency graph?
+**Options**: A. Foundational Retail Data service plus separate Planning and Purchasing service (Recommended),B. One Retail Operations service,C. One service per logical component,X. Other (please specify)
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T15:45:08Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T15:45:24Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/units-generation/units-generation-questions.md
+**Context**: inception > units-generation > units-generation-questions.md
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-10T15:45:32Z
+**Event**: QUESTION_ANSWERED
+**Stage**: units-generation
+**Details**: A. Use a foundational Retail Data service for Tenant Directory, Inventory, and Demand History, and a separate Planning and Purchasing service for Replenishment and Purchasing (Recommended)
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-10T15:45:42Z
+**Event**: DECISION_RECORDED
+**Stage**: units-generation
+**Decision**: How should the separate Model Lifecycle and Forecasting components be deployed initially?
+**Options**: A. One ML and Forecasting service with separate internal modules (Recommended),B. Separate Model Lifecycle and Forecasting services,C. Combine them with Supplier Knowledge into one Intelligence service,X. Other (please specify)
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T15:46:22Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T15:46:38Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/units-generation/units-generation-questions.md
+**Context**: inception > units-generation > units-generation-questions.md
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-10T15:46:46Z
+**Event**: QUESTION_ANSWERED
+**Stage**: units-generation
+**Details**: B. Separate Model Lifecycle and Forecasting services from the first release
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-10T15:46:55Z
+**Event**: DECISION_RECORDED
+**Stage**: units-generation
+**Decision**: Where should Supplier Knowledge live given its MongoDB, Qdrant, document extraction, provenance, and embedding workflows?
+**Options**: A. Separate Supplier Knowledge service (Recommended),B. Include it in ML and Forecasting,C. Include it in Retail Data,X. Other (please specify)
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T15:47:24Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T15:47:39Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/units-generation/units-generation-questions.md
+**Context**: inception > units-generation > units-generation-questions.md
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-10T15:47:46Z
+**Event**: QUESTION_ANSWERED
+**Stage**: units-generation
+**Details**: A. A separate Supplier Knowledge service that owns ingestion, accepted-term provenance, and authorized retrieval (Recommended)
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-10T15:47:56Z
+**Event**: DECISION_RECORDED
+**Stage**: units-generation
+**Decision**: How should the React browser application reach backend services while preserving the approved backend-for-frontend session boundary?
+**Options**: A. Dedicated Web BFF service (Recommended),B. Embed the BFF in Planning and Purchasing,C. Direct browser calls to every backend service,X. Other (please specify)
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T15:48:25Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T15:48:40Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/units-generation/units-generation-questions.md
+**Context**: inception > units-generation > units-generation-questions.md
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-10T15:48:47Z
+**Event**: QUESTION_ANSWERED
+**Stage**: units-generation
+**Details**: A. Create a dedicated Web BFF service; the React UI calls only the BFF, which enforces the session, retailer context, and API composition (Recommended)
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-10T15:48:57Z
+**Event**: DECISION_RECORDED
+**Stage**: units-generation
+**Decision**: How should the authoritative OpenAPI and AsyncAPI contracts be packaged for Construction?
+**Options**: A. Dedicated Contracts specification unit (Recommended),B. Contracts only inside owning services,C. Shared runtime contract library,X. Other (please specify)
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T15:49:21Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T15:49:35Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/units-generation/units-generation-questions.md
+**Context**: inception > units-generation > units-generation-questions.md
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-10T15:49:43Z
+**Event**: QUESTION_ANSWERED
+**Stage**: units-generation
+**Details**: A. Create a dedicated Contracts specification unit consumed by every service and the UI (Recommended)
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-10T15:49:52Z
+**Event**: DECISION_RECORDED
+**Stage**: units-generation
+**Decision**: How should Terraform/Terragrunt, Helm, local Kubernetes setup, seeded scenarios, verification, and reviewer evidence be grouped?
+**Options**: A. One Platform and Demo packaging unit (Recommended),B. Separate Platform Infrastructure and Demo Evidence units,C. Keep assets inside each application unit,X. Other (please specify)
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T15:50:33Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T15:50:47Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/units-generation/units-generation-questions.md
+**Context**: inception > units-generation > units-generation-questions.md
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-10T15:50:55Z
+**Event**: QUESTION_ANSWERED
+**Stage**: units-generation
+**Details**: B. Split Platform Infrastructure and Demo Evidence into two packaging units
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-10T15:51:04Z
+**Event**: DECISION_RECORDED
+**Stage**: units-generation
+**Decision**: How much safe parallelism should the unit dependency graph preserve without selecting a preferred implementation order?
+**Options**: A. Preserve all safe parallel branches (Recommended),B. Add conservative predecessor dependencies,C. Maximize independence even with duplicated adapters,X. Other (please specify)
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T15:51:39Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T15:52:26Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/units-generation/units-generation-questions.md
+**Context**: inception > units-generation > units-generation-questions.md
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-10T15:52:34Z
+**Event**: QUESTION_ANSWERED
+**Stage**: units-generation
+**Details**: A. Preserve all safe parallel branches; units depend only on contracts or capabilities they actually consume (Recommended)
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-10T15:52:43Z
+**Event**: DECISION_RECORDED
+**Stage**: units-generation
+**Decision**: Does the proposed 13-unit decomposition correctly define the scope for Units Generation?
+**Options**: Approve Plan,Revise Plan,Other
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T15:53:06Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T15:53:21Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/units-generation/units-generation-questions.md
+**Context**: inception > units-generation > units-generation-questions.md
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-10T15:53:29Z
+**Event**: QUESTION_ANSWERED
+**Stage**: units-generation
+**Details**: Approve Plan
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T15:53:49Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/units-generation/units-generation-questions.md
+**Context**: inception > units-generation > units-generation-questions.md
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-10T15:57:57Z
+**Event**: DECISION_RECORDED
+**Stage**: units-generation
+**Decision**: Does this all look correct before I generate the artifact?
+**Options**: Looks correct,Request changes
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/260908-stock-sense-design/inception/units-generation/units-generation-questions.md
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T16:16:35Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T16:16:56Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/units-generation/units-generation-questions.md
+**Context**: inception > units-generation > units-generation-questions.md
+
+---
+
+## Summary Confirmation Recorded
+**Timestamp**: 2026-09-10T16:17:04Z
+**Event**: SUMMARY_CONFIRMATION_RECORDED
+**Stage**: units-generation
+**Details**: Looks correct
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/260908-stock-sense-design/inception/units-generation/units-generation-questions.md
+**Questions SHA-256**: 9fa559f127c458248489ede60de7497f474d4c0cb250d4c0943f775a5e4e1121
+**Hash Scope**: confirmed-content-v1
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-09-10T16:21:01Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/units-generation/unit-of-work.md
+**Context**: inception > units-generation > unit-of-work.md
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-09-10T16:21:03Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/units-generation/unit-of-work-dependency.md
+**Context**: inception > units-generation > unit-of-work-dependency.md
+
+---
+
+## Error Logged
+**Timestamp**: 2026-09-10T16:25:37Z
+**Event**: ERROR_LOGGED
+**Tool**: aidlc-log
+**Command**: aidlc-log engine log review --stage units-generation --reviewer aidlc-architecture-reviewer-agent --iteration 1
+**Error**: Cannot start review for "units-generation": this stage's output document <project-dir>\aidlc\spaces\default\intents\260908-stock-sense-design\inception\units-generation\unit-of-work-story-map.md was not saved after the confirmed answers. Save the document after confirmation, then continue.
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T16:26:11Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/units-generation/unit-of-work-story-map.md
+**Context**: inception > units-generation > unit-of-work-story-map.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T16:26:14Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/units-generation/traceability.json
+**Context**: inception > units-generation > traceability.json
+
+---
+
+## Review Requested
+**Timestamp**: 2026-09-10T16:26:36Z
+**Event**: REVIEW_REQUESTED
+**Stage**: units-generation
+**Reviewer**: aidlc-architecture-reviewer-agent
+**Iteration**: 1
+**Artifact Fingerprint**: sha256:6a7f37a2874f891eaba9bd0739f0824503df94d6fd39df6aa884133dc812b247
+**Review Appendix Artifact**: inception/units-generation/unit-of-work.md
+**Review Appendix Offset**: 13874
+**Review Appendix Prior Digest**: none
+**Review Appendix Prior Length**: 0
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T16:27:06Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Review Requested
+**Timestamp**: 2026-09-10T16:34:35Z
+**Event**: REVIEW_REQUESTED
+**Stage**: units-generation
+**Reviewer**: aidlc-architecture-reviewer-agent
+**Iteration**: 1
+**Retry**: pending-request
+**Artifact Fingerprint**: sha256:6a7f37a2874f891eaba9bd0739f0824503df94d6fd39df6aa884133dc812b247
+**Review Appendix Artifact**: inception/units-generation/unit-of-work.md
+**Review Appendix Offset**: 13874
+**Review Appendix Prior Digest**: none
+**Review Appendix Prior Length**: 0
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T16:35:02Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Review Completed
+**Timestamp**: 2026-09-10T16:41:36Z
+**Event**: REVIEW_COMPLETED
+**Stage**: units-generation
+**Reviewer**: aidlc-architecture-reviewer-agent
+**Iteration**: 1
+**Verdict**: NOT-READY
+**Request Fingerprint**: sha256:6a7f37a2874f891eaba9bd0739f0824503df94d6fd39df6aa884133dc812b247
+**Artifact Fingerprint**: sha256:6a7f37a2874f891eaba9bd0739f0824503df94d6fd39df6aa884133dc812b247
+**Review Appendix Artifact**: inception/units-generation/unit-of-work.md
+**Review Appendix Offset**: 13874
+**Review Appendix Prior Digest**: none
+**Review Appendix Prior Length**: 0
+
+---
+
+## Memory Empty
+**Timestamp**: 2026-09-10T16:42:25Z
+**Event**: MEMORY_EMPTY
+**Stage**: domain-design
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-10T16:42:49Z
+**Event**: DECISION_RECORDED
+**Stage**: units-generation
+**Decision**: Anything to add for next time?
+**Options**: Free-text learning,Nothing to add
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T16:43:29Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Session Resume
+**Timestamp**: 2026-09-10T16:43:42Z
+**Event**: SESSION_RESUMED
+**Source**: resume
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T16:43:46Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-10T16:44:01Z
+**Event**: QUESTION_ANSWERED
+**Stage**: units-generation
+**Details**: Nothing to add
+
+---
+
+## Stage Awaiting Approval
+**Timestamp**: 2026-09-10T16:46:37Z
+**Event**: STAGE_AWAITING_APPROVAL
+**Stage**: units-generation
+
+---
+
+## Guardrail Loaded
+**Timestamp**: 2026-09-10T16:47:51Z
+**Event**: GUARDRAIL_LOADED
+**Scope**: all
+**Path**: .codex/aidlc-rules/
+**Rule count**: 7
+
+---
+
+## Health Check
+**Timestamp**: 2026-09-10T16:47:51Z
+**Event**: HEALTH_CHECKED
+**Request**: /aidlc --doctor
+**Details**: 61 passed, 0 failed
+
+---
