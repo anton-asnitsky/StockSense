@@ -2,7 +2,7 @@
 
 Date: 2026-09-10
 Stage: Domain Design
-Status: In progress
+Status: Awaiting consolidated summary confirmation
 Mode: Guided, one question at a time
 
 This stage defines logical code components, their responsibilities, owned entities,
@@ -28,7 +28,7 @@ How should the initial domain be divided into logical components?
   or aggregate, maximizing isolation at the cost of many dependencies.
 - X. Other (please specify)
 
-[Answer]:
+[Answer]: A. Business-capability components (Recommended) — confirmed 2026-09-10; **Mode:** guided
 
 ## Q2. Identity, membership, and retailer ownership
 
@@ -44,7 +44,7 @@ Which component should own retailer membership and role assignments?
   retailer records.
 - X. Other (please specify)
 
-[Answer]:
+[Answer]: A. Tenant Directory owns retailers, memberships, roles, retailer configuration, and store placement; Identity Access owns accounts, credentials, federation, and sessions (Recommended) — confirmed 2026-09-10; **Mode:** guided
 
 ## Q3. Product catalog ownership
 
@@ -58,7 +58,7 @@ Where should the initial product catalog live?
 - C. Supplier Knowledge owns products together with offers and terms.
 - X. Other (please specify)
 
-[Answer]:
+[Answer]: A. Inventory owns products, stock positions, and stock movements, with a documented extraction path for a richer Catalog component (Recommended) — confirmed 2026-09-10; **Mode:** guided
 
 ## Q4. Supplier documents and retrieval
 
@@ -73,7 +73,7 @@ How should supplier source documents and retrieval responsibilities be divided?
   and Assistant.
 - X. Other (please specify)
 
-[Answer]:
+[Answer]: A. Supplier Knowledge owns source documents, extraction, validation, accepted terms, and authorized retrieval indexing; Assistant owns conversations and tool orchestration and consumes retrieval results (Recommended) — confirmed 2026-09-10; **Mode:** guided
 
 ## Q5. Forecasting and model lifecycle
 
@@ -88,7 +88,7 @@ How should operational forecasts be separated from ML experimentation?
   infrastructure concern without a domain component.
 - X. Other (please specify)
 
-[Answer]:
+[Answer]: A. Forecasting owns forecast requests, runs, results, versions, and freshness; Model Lifecycle owns datasets, experiments, evaluations, candidate registrations, and promotions (Recommended) — confirmed 2026-09-10; **Mode:** guided
 
 ## Q6. Replenishment and purchasing ownership
 
@@ -102,7 +102,7 @@ Should recommendation generation and purchase execution remain separate domains?
   transactional component.
 - X. Other (please specify)
 
-[Answer]:
+[Answer]: A. Replenishment owns reviews, scenarios, recommendations, evidence snapshots, and manual-review allowance; Purchasing owns proposals, orders, approval/rejection/cancellation transitions, and receipts (Recommended) — confirmed 2026-09-10; **Mode:** guided
 
 ## Q7. Audit ownership
 
@@ -117,7 +117,7 @@ How should authoritative audit writing and searchable audit history be modeled?
   component.
 - X. Other (please specify)
 
-[Answer]:
+[Answer]: A. Each business component writes its own authoritative audit and outbox records in the same transaction; Audit Evidence owns ingestion status, the rebuildable search projection, and tenant-scoped audit queries (Recommended) — confirmed 2026-09-10; **Mode:** guided
 
 ## Q8. Cross-component interaction rule
 
@@ -132,7 +132,7 @@ Which default should govern component communication?
   workflows that could otherwise complete synchronously.
 - X. Other (please specify)
 
-[Answer]:
+[Answer]: A. Use explicit synchronous contracts for immediate commands and queries, and domain events for asynchronous propagation; prohibit shared data access across owners (Recommended) — confirmed 2026-09-10; **Mode:** guided
 
 ## Q9. Web experience and reviewer evidence
 
@@ -148,17 +148,71 @@ the logical design?
   scripts outside the logical component model.
 - X. Other (please specify)
 
-[Answer]:
+[Answer]: A. Web Experience owns the role-aware UI shell, view composition, and workflow state without owning business entities; Demo Evidence owns reproducible scenarios, setup verification, and evidence manifests (Recommended) — confirmed 2026-09-10; **Mode:** guided
+
+## Q10. Demand-history ownership
+
+Sales observations, lost demand, promotions, and synthetic true demand feed both
+forecasting and model evaluation but are not inventory ledger records. Which
+component should own them?
+
+- A. Add a Demand History component (Recommended) — it owns demand observations,
+  promotion observations, demand-import batches, and protected synthetic evaluation
+  truth. Inventory remains responsible for products, stock, and movements.
+- B. Inventory owns demand history together with products and stock records.
+- C. Forecasting owns imported demand history as part of its input data.
+- X. Other (please specify)
+
+[Answer]: A. Add a Demand History component that owns demand observations, promotion observations, demand-import batches, and protected synthetic evaluation truth (Recommended) — confirmed 2026-09-10; **Mode:** guided
 
 ## Mandatory ambiguity scan
 
-- Component names and exact entity inventories depend on the answers above.
+- All discovered business-data families now have a proposed single owner.
+- Retailer configuration in Tenant Directory covers currency, time zone, stores,
+  memberships, roles, and storage placement. Replenishment owns planning-policy
+  settings such as buffer-day defaults and product overrides.
+- Each business component owns its append-only authoritative audit records and
+  outbox entries. Audit Evidence owns the derived search projection, indexing
+  checkpoints, replay status, and authorized audit-query model.
+- Accepted synthetic records enter their owning business components; Demo Evidence
+  owns scenario definitions, generation runs, setup verification, and portfolio
+  evidence manifests.
 - Deployment topology remains intentionally deferred to Units Generation.
 - Infrastructure products remain external dependencies or adapters, not domain
   entities.
-- Metrics/traces storage, retention durations, document limits, and exact model
-  provider selection remain later implementation decisions unless they alter a
-  component boundary.
+- Metrics/traces storage, retention schedules, document-processing limits, and the
+  exact model provider remain later decisions because they do not alter the agreed
+  logical boundaries.
+
+## Consolidated design summary
+
+1. Use business-capability components and allow Units Generation to combine them
+   into a smaller number of deployables.
+2. Identity Access owns authentication accounts, credentials, federation, and
+   sessions. Tenant Directory owns retailers, memberships, roles, retailer
+   configuration, stores, and storage placement.
+3. Inventory owns products, stock positions, and stock movements, with a documented
+   extraction path for a future richer Catalog component.
+4. Demand History separately owns sales, lost demand, promotions, import batches,
+   and protected synthetic evaluation truth.
+5. Supplier Knowledge owns source documents, extraction, validation, normalized
+   accepted terms, provenance, and authorized retrieval indexing. Assistant consumes
+   retrieval through its contract.
+6. Forecasting owns operational forecast requests, runs, results, versions, and
+   freshness. Model Lifecycle owns datasets, experiments, evaluations, candidates,
+   promotions, and rollbacks.
+7. Replenishment owns scheduled/manual reviews, quotas, scenarios,
+   recommendations, evidence snapshots, and planning-policy settings. Purchasing
+   owns proposals, orders, approvals, rejections, cancellations, and receipts.
+8. Each business component commits its business change, local audit entry, and
+   outbox entry atomically. Audit Evidence builds and serves the authorized,
+   rebuildable search projection.
+9. Components use synchronous contracts for immediate commands and queries and
+   RabbitMQ events for asynchronous propagation. Cross-component storage access is
+   prohibited.
+10. Web Experience owns UI composition and client workflow state without business
+    entities. Demo Evidence owns reproducible scenarios, setup verification, and
+    evidence manifests.
 
 ## Consolidated Summary Confirmation
 
