@@ -3296,3 +3296,35 @@
 **Details**: 61 passed, 0 failed
 
 ---
+
+## Human Turn
+**Timestamp**: 2026-09-10T16:51:00Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Gate Approved
+**Timestamp**: 2026-09-10T16:51:15Z
+**Event**: GATE_APPROVED
+**Stage**: units-generation
+**User Input**: Approve
+
+---
+
+## Stage Completion
+**Timestamp**: 2026-09-10T16:51:15Z
+**Event**: STAGE_COMPLETED
+**Stage**: units-generation
+**Validation Basis**: {"graphContract":"sha256:baf39a0a351356930786ca985bbb7c5893e8db3e93715525a8e909b629765ee7","inputs":[{"artifact":"components","contentHash":"sha256:dfa03461f7fa8c6f4282912b1ee99b23f658c33517511564c9f096cdf2ac1dd4","instanceCount":1,"presentCount":1,"producer":"domain-design","required":true,"structureHash":"sha256:57ab64ce37e252e46faba88081ea76852494df58c126b49aa885a851caa386f1"},{"artifact":"decisions","contentHash":"sha256:797eb20d31ebaf7efd19a19825fc4992816fd2c838b513079e338f2e3e02c02d","instanceCount":1,"presentCount":1,"producer":"domain-design","required":false,"structureHash":"sha256:c187820f6aff3df357e4b8ec11415a4a55d9d8115a2fffacce0b7485d9b5d3f6"},{"artifact":"requirements","contentHash":"sha256:2482650712402ff82cf163391a47cd43156c3f534b45854a8e285ea03c2f722a","instanceCount":1,"presentCount":1,"producer":"requirements-analysis","required":true,"structureHash":"sha256:9eb5d12227af31d264720cd6dae82baeb7822e5854c57e6ccdc810008a867735"},{"artifact":"stories","contentHash":"sha256:6b136bd860e9b10dd026a641eecab51b898b032dd5acbd0162a3ee4824703eec","instanceCount":1,"presentCount":1,"producer":"user-stories","required":false,"structureHash":"sha256:294f317cf8345e6d42ff4483bc5fb560fb26ae681bdfd418652c408a62618296"}],"outputs":[{"artifact":"traceability","contentHash":"sha256:cf128a33844bbefe50edabead0fa604e4326613503b46d170ec3c5f62c3158d6","instanceCount":1,"presentCount":1,"producer":"units-generation","required":true,"structureHash":"sha256:8e7d15b1194fb6eff3f385eb4d6f47eaff4083c1b61a5567671a8bc59a077b0a"},{"artifact":"unit-of-work-dependency","contentHash":"sha256:61414b0f5cffd25f6b35eafe35e89433836fbaf3663935fcea35a926aadab748","instanceCount":1,"presentCount":1,"producer":"units-generation","required":true,"structureHash":"sha256:2c6c3041f51eb0756193dc7ce204f9dfc251a14ed93906e23ce9f00c799a9840"},{"artifact":"unit-of-work-story-map","contentHash":"sha256:b7f805af79dc76642e76d46b8f2c72692616f8739df71d0ccc2a6f6371b096c8","instanceCount":1,"presentCount":1,"producer":"units-generation","required":true,"structureHash":"sha256:7ebd2036ca48811df35e3fe8523c4b6ea26d78794f4a8dd9625f16f2c0cae5ad"},{"artifact":"unit-of-work","contentHash":"sha256:0ffd1fa686bf1d11ee7cb5520f2bbe1ae2011090f432916621934c96c71f43c4","instanceCount":1,"presentCount":1,"producer":"units-generation","required":true,"structureHash":"sha256:8b662b136cc61bf1eee5888fe143746c09a3a6adb97bb124d5f75e8861afb3f7"}],"projectType":"brownfield","schema":3}
+**Details**: Stage Units Generation approved by gate
+
+---
+
+## Stage Start
+**Timestamp**: 2026-09-10T16:51:15Z
+**Event**: STAGE_STARTED
+**Stage**: contract-design
+**Agent**: aidlc-architect-agent
+
+---
