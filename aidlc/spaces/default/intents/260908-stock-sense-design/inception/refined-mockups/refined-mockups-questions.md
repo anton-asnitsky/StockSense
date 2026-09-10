@@ -121,4 +121,4 @@ There are 63 approved stories, including operational and API-focused work that d
 - Looks correct
 - Request changes
 
-[Answer]:
+[Answer]: Looks correct
