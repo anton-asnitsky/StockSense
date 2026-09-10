@@ -2,7 +2,7 @@
 
 Date: 2026-09-09
 Stage: Refined Mockups
-Status: Awaiting answers
+Status: Awaiting consolidated summary confirmation
 
 The classic lifecycle intentionally skipped rough mockups. These questions establish the interaction direction directly from the approved requirements and user stories. Confirmed constraints already carried forward: React with TypeScript, Vite, Ant Design, English-first UI, role and retailer isolation, explicit loading/empty/error/stale states, and human approval for purchasing actions.
 
@@ -15,7 +15,7 @@ StockSense spans planning, purchasing, assistance, and operational evidence. Whi
 - C. Dashboard hub — each area starts from dashboard cards, with less persistent navigation.
 - X. Other (please specify)
 
-[Answer]:
+[Answer]: A. Role-aware left sidebar with a top retailer/context bar (Recommended) — 2026-09-09T13:25:35Z; **Mode:** guided
 
 ## Q2. Default landing experience
 
@@ -26,7 +26,7 @@ The first authenticated screen determines what planners notice first. What shoul
 - C. Assistant workspace — conversation and suggested actions lead the experience.
 - X. Other (please specify)
 
-[Answer]:
+[Answer]: A. Exception-focused operations dashboard (Recommended) — 2026-09-09T13:27:40Z; **Mode:** guided
 
 ## Q3. Data workspace interaction
 
@@ -37,7 +37,7 @@ Inventory, forecasts, recommendations, suppliers, and purchase orders all need d
 - C. Card grids with modal details — visually lighter, but less efficient for comparison and high-density work.
 - X. Other (please specify)
 
-[Answer]:
+[Answer]: A. Tables with filters and a right-side detail drawer (Recommended) — 2026-09-10T08:04:47Z; **Mode:** guided
 
 ## Q4. Purchase review workspace
 
@@ -48,7 +48,7 @@ Managers must inspect evidence, approve or reject proposals, cancel eligible ord
 - C. Separate list and full-page order views — conventional navigation with maximum detail space.
 - X. Other (please specify)
 
-[Answer]:
+[Answer]: A. Master-detail review queue (Recommended) — 2026-09-10T08:10:30Z; **Mode:** guided
 
 ## Q5. Assistant placement
 
@@ -59,7 +59,7 @@ The assistant explains evidence, opens governed views, and prepares actions that
 - C. Embedded prompts inside each workflow only — highly contextual, without a general conversation workspace.
 - X. Other (please specify)
 
-[Answer]:
+[Answer]: A. Collapsible assistant panel plus a full workspace (Recommended) — 2026-09-10T08:12:48Z; **Mode:** guided
 
 ## Q6. Responsive scope
 
@@ -70,7 +70,7 @@ The portfolio demo is expected to run primarily on a development workstation, wh
 - C. Full functional parity from 360px upward — highest reach, with significantly more design and test scope for dense planning flows.
 - X. Other (please specify)
 
-[Answer]:
+[Answer]: A. Full desktop and tablet workflows, with mobile read/review essentials (Recommended) — 2026-09-10T08:14:14Z; **Mode:** guided
 
 ## Q7. Accessibility target
 
@@ -81,7 +81,7 @@ The approved stories require keyboard operation, visible focus, meaningful label
 - C. Explicit story obligations only — narrower formal claim, though less compelling for a portfolio review.
 - X. Other (please specify)
 
-[Answer]:
+[Answer]: A. WCAG 2.2 Level AA (Recommended) — 2026-09-10T08:15:29Z; **Mode:** guided
 
 ## Q8. Visual direction and information density
 
@@ -92,7 +92,7 @@ The design must feel credible for specialty-retail operations while keeping fore
 - C. Retail-friendly dashboard — warmer palette, larger cards, and more visual storytelling at the cost of some density.
 - X. Other (please specify)
 
-[Answer]:
+[Answer]: A. Professional analytical (Recommended) — 2026-09-10T08:20:55Z; **Mode:** guided
 
 ## Q9. Charting approach
 
@@ -103,7 +103,7 @@ Forecast comparison, inventory trajectories, and evaluation evidence need access
 - C. No additional chart library initially — use Ant Design statistics, progress components, and accessible tables until implementation validates a chart need.
 - X. Other (please specify)
 
-[Answer]:
+[Answer]: A. Ant Design Charts (Recommended) — 2026-09-10T08:22:18Z; **Mode:** guided
 
 ## Q10. Mockup coverage depth
 
@@ -113,5 +113,12 @@ There are 63 approved stories, including operational and API-focused work that d
 - B. One distinct screen or state diagram for every story — maximum explicit coverage with a much larger, repetitive artifact.
 - C. Walking-skeleton journey only — deepest detail for import through receipt, deferring later forecast, assistant, and operations UX.
 - X. Other (please specify)
+
+[Answer]: A. Complete key journeys plus reusable screen/state patterns (Recommended) — 2026-09-10T08:26:42Z; **Mode:** guided
+
+## Consolidated Summary Confirmation
+
+- Looks correct
+- Request changes
 
 [Answer]:

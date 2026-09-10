@@ -1398,3 +1398,367 @@
 **Options**: Guide me,I'll edit the file,Chat
 
 ---
+
+## Human Turn
+**Timestamp**: 2026-09-09T11:55:53Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-09T11:56:07Z
+**Event**: QUESTION_ANSWERED
+**Stage**: refined-mockups
+**Details**: Guide me
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-09T11:56:20Z
+**Event**: DECISION_RECORDED
+**Stage**: refined-mockups
+**Decision**: Which primary navigation model should organize StockSense planning, purchasing, assistance, and operational evidence?
+**Options**: A. Role-aware left sidebar with a top retailer/context bar (Recommended),B. Top navigation,C. Dashboard hub,X. Other (please specify)
+
+---
+
+## Session Resume
+**Timestamp**: 2026-09-09T13:25:01Z
+**Event**: SESSION_RESUMED
+**Source**: resume
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-09T13:25:04Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-09T13:25:19Z
+**Event**: QUESTION_ANSWERED
+**Stage**: refined-mockups
+**Details**: A. Role-aware left sidebar with a top retailer/context bar (Recommended)
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-09T13:25:52Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/refined-mockups/refined-mockups-questions.md
+**Context**: inception > refined-mockups > refined-mockups-questions.md
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-09T13:26:04Z
+**Event**: DECISION_RECORDED
+**Stage**: refined-mockups
+**Decision**: What should the first authenticated StockSense screen emphasize for planners?
+**Options**: A. Exception-focused operations dashboard (Recommended),B. Inventory workspace,C. Assistant workspace,X. Other (please specify)
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-09T13:27:19Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-09T13:27:30Z
+**Event**: QUESTION_ANSWERED
+**Stage**: refined-mockups
+**Details**: A. Exception-focused operations dashboard (Recommended)
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-09T13:27:54Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/refined-mockups/refined-mockups-questions.md
+**Context**: inception > refined-mockups > refined-mockups-questions.md
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-09T13:28:05Z
+**Event**: DECISION_RECORDED
+**Stage**: refined-mockups
+**Decision**: Which interaction pattern should be the default for dense inventory, forecast, recommendation, supplier, and order data?
+**Options**: A. Tables with filters and a right-side detail drawer (Recommended),B. Tables with dedicated detail pages,C. Card grids with modal details,X. Other (please specify)
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T08:04:15Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-10T08:04:34Z
+**Event**: QUESTION_ANSWERED
+**Stage**: refined-mockups
+**Details**: A. Tables with filters and a right-side detail drawer (Recommended)
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T08:05:06Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/refined-mockups/refined-mockups-questions.md
+**Context**: inception > refined-mockups > refined-mockups-questions.md
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-10T08:05:20Z
+**Event**: DECISION_RECORDED
+**Stage**: refined-mockups
+**Decision**: Which layout should managers use to inspect purchasing evidence and approve, reject, cancel, or follow partial receipts?
+**Options**: A. Master-detail review queue (Recommended),B. Step-by-step review wizard,C. Separate list and full-page order views,X. Other (please specify)
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T08:10:06Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-10T08:10:19Z
+**Event**: QUESTION_ANSWERED
+**Stage**: refined-mockups
+**Details**: A. Master-detail review queue (Recommended)
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T08:10:48Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/refined-mockups/refined-mockups-questions.md
+**Context**: inception > refined-mockups > refined-mockups-questions.md
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-10T08:11:01Z
+**Event**: DECISION_RECORDED
+**Stage**: refined-mockups
+**Decision**: How should users access the governed StockSense assistant?
+**Options**: A. Collapsible assistant panel plus a full workspace (Recommended),B. Dedicated assistant page only,C. Embedded prompts inside each workflow only,X. Other (please specify)
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T08:12:25Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-10T08:12:36Z
+**Event**: QUESTION_ANSWERED
+**Stage**: refined-mockups
+**Details**: A. Collapsible assistant panel plus a full workspace (Recommended)
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T08:13:05Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/refined-mockups/refined-mockups-questions.md
+**Context**: inception > refined-mockups > refined-mockups-questions.md
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-10T08:13:18Z
+**Event**: DECISION_RECORDED
+**Stage**: refined-mockups
+**Decision**: What responsive behavior should the first StockSense release promise?
+**Options**: A. Full desktop and tablet workflows with mobile read/review essentials (Recommended),B. Full desktop and tablet workflows only,C. Full functional parity from 360px upward,X. Other (please specify)
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T08:13:48Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-10T08:14:02Z
+**Event**: QUESTION_ANSWERED
+**Stage**: refined-mockups
+**Details**: A. Full desktop and tablet workflows with mobile read/review essentials (Recommended)
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T08:14:32Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/refined-mockups/refined-mockups-questions.md
+**Context**: inception > refined-mockups > refined-mockups-questions.md
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-10T08:14:46Z
+**Event**: DECISION_RECORDED
+**Stage**: refined-mockups
+**Decision**: Which accessibility conformance target should the StockSense design adopt?
+**Options**: A. WCAG 2.2 Level AA (Recommended),B. WCAG 2.1 Level AA,C. Explicit approved-story obligations only,X. Other (please specify)
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T08:15:03Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-10T08:15:17Z
+**Event**: QUESTION_ANSWERED
+**Stage**: refined-mockups
+**Details**: A. WCAG 2.2 Level AA (Recommended)
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T08:15:45Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/refined-mockups/refined-mockups-questions.md
+**Context**: inception > refined-mockups > refined-mockups-questions.md
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-10T08:15:59Z
+**Event**: DECISION_RECORDED
+**Stage**: refined-mockups
+**Decision**: Which visual direction should guide the StockSense Ant Design theme and information density?
+**Options**: A. Professional analytical (Recommended),B. Dense operations console,C. Retail-friendly dashboard,X. Other (please specify)
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T08:20:29Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-10T08:20:43Z
+**Event**: QUESTION_ANSWERED
+**Stage**: refined-mockups
+**Details**: A. Professional analytical (Recommended)
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T08:21:12Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/refined-mockups/refined-mockups-questions.md
+**Context**: inception > refined-mockups > refined-mockups-questions.md
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-10T08:21:26Z
+**Event**: DECISION_RECORDED
+**Stage**: refined-mockups
+**Decision**: Which charting approach should support forecast comparison, inventory trajectories, and evaluation evidence?
+**Options**: A. Ant Design Charts (Recommended),B. Apache ECharts,C. No additional chart library initially,X. Other (please specify)
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T08:21:48Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-10T08:22:07Z
+**Event**: QUESTION_ANSWERED
+**Stage**: refined-mockups
+**Details**: A. Ant Design Charts (Recommended)
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T08:22:36Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/refined-mockups/refined-mockups-questions.md
+**Context**: inception > refined-mockups > refined-mockups-questions.md
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-10T08:22:49Z
+**Event**: DECISION_RECORDED
+**Stage**: refined-mockups
+**Decision**: How detailed should the Refined Mockups artifacts be across the 63 approved stories?
+**Options**: A. Complete key journeys plus reusable screen/state patterns (Recommended),B. One distinct screen or state diagram for every story,C. Walking-skeleton journey only,X. Other (please specify)
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-10T08:26:01Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-10T08:26:29Z
+**Event**: QUESTION_ANSWERED
+**Stage**: refined-mockups
+**Details**: A. Complete key journeys plus reusable screen/state patterns (Recommended)
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-10T08:27:01Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/inception/refined-mockups/refined-mockups-questions.md
+**Context**: inception > refined-mockups > refined-mockups-questions.md
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-10T08:27:39Z
+**Event**: DECISION_RECORDED
+**Stage**: refined-mockups
+**Decision**: Does this all look correct before I generate the artifact?
+**Options**: Looks correct,Request changes
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/260908-stock-sense-design/inception/refined-mockups/refined-mockups-questions.md
+
+---
