@@ -1951,6 +1951,8 @@ async function loadDelegate(tool: string): Promise<DelegateModule | null> {
       return import("./aidlc-runner-gen.ts");
     case TOOLS.runtime:
       return import("./aidlc-runtime.ts");
+    case TOOLS.reviewBrief:
+      return import("./aidlc-review-brief.ts");
     case TOOLS.sensor:
       return import("./aidlc-sensor.ts");
     case TOOLS.sensorClaimSources:
