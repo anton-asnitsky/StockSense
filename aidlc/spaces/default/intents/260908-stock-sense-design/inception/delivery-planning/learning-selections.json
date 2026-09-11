@@ -1,0 +1,15 @@
+{
+  "stage_slug": "delivery-planning",
+  "space": "default",
+  "intent": "260908-stock-sense-design",
+  "selections": [
+    {
+      "candidate_id": "user-branch-per-story",
+      "type": "learning",
+      "scope": "project",
+      "heading": "Corrections",
+      "text": "Manage each user story on its own short-lived branch and pull request; treat Bolts as delivery milestones, and deliver shared cross-story prerequisites through separate focused branches.",
+      "source": "user_addition"
+    }
+  ]
+}

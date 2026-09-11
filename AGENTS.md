@@ -100,14 +100,23 @@ Commit the `aidlc/` workspace tree — the record (state, the per-clone audit sh
 - Follow `CONTRIBUTING.md` for Git operations. The owner permits commits and
   pushes on working branches; every merge needs explicit owner approval.
   Preserve unrelated work and inspect staged changes before committing.
+- Development work uses the project-local specialist roster and dispatch
+  contract in `docs/development-agent-team.md`. The main session coordinates
+  all specialists, integrates their work, and preserves one owner approval
+  stream; subagents never delegate further.
+- Before every AI-DLC approval gate, use
+  `stocksense-aidlc-process-steward-agent` for an independent read-only check of
+  lifecycle receipts, traceability, document freshness, implementation drift,
+  and internal consistency. Resolve blocking or major findings before opening
+  the gate, or present the unresolved finding explicitly to the owner.
 
 - Read `docs/product-brief.md`, `docs/decisions/0001-ai-dlc-framework.md`, and
   `aidlc/spaces/default/memory/project.md` before planning project work.
 - Read `docs/ai-dlc-setup.md` for the local runtime and activation instructions.
-- The framework is installed. An initial intent exists at
-  `aidlc/spaces/default/intents/260908-stock-sense-design/`, with requirements
-  analysis in progress; no requirements gate approval is recorded. Resume and
-  reconcile the existing record with the brief rather than creating a duplicate.
+- The framework is installed and an existing intent lives at
+  `aidlc/spaces/default/intents/260908-stock-sense-design/`. Resolve its current
+  lifecycle position from `aidlc-state.md` and the audit receipts, then resume
+  that record rather than creating a duplicate.
 - Existing conversation decisions remain valid. Distinguish requirements from
   proposals and unresolved assumptions; do not invent owner approvals.
 - Use classic scope with standard depth/test strategy for the initial lifecycle.

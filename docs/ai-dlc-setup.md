@@ -53,11 +53,13 @@ For local engine commands use `./scripts/aidlc.ps1 doctor --json` or
 `./scripts/aidlc.ps1 engine orchestrate help`. These commands do not need an LLM.
 
 An initial intent now exists at
-`aidlc/spaces/default/intents/260908-stock-sense-design/`; requirements analysis
-is in progress and its gate has not been approved. The original generated record
-contains incomplete project metadata (including the title "Let's"); preserve its
-history and reconcile it through the engine when resuming. The design and ADRs
-record subsequent owner decisions, not completed lifecycle gates.
+`aidlc/spaces/default/intents/260908-stock-sense-design/`. Its current lifecycle
+position is recorded in `aidlc-state.md` and the intent audit; setup documentation
+does not duplicate that changing status. The original generated record contains
+incomplete project metadata (including the title "Let's"); preserve its history
+and reconcile it through the engine when resuming. The design and ADRs record
+owner decisions, while lifecycle completion remains authoritative in engine-owned
+state and gate receipts.
 
 Resume the workflow with:
 

@@ -99,3 +99,4 @@ under the owner's instruction to choose and install the best-fitting framework
 
 <!-- Project-specific corrections from human feedback. -->
 <!-- Format: NEVER/ALWAYS [behavior] (learned [date]) -->
+- Manage each user story on its own short-lived branch and pull request; treat Bolts as delivery milestones, and deliver shared cross-story prerequisites through separate focused branches. (learned 2026-09-11) <!-- cid:260908-stock-sense-design:delivery-planning:2dd8a0fbb60d7cee2cbd21abf049e86270f479c74ed892a92e5f8ca08bd228be -->

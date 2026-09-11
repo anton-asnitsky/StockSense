@@ -1,0 +1,9 @@
+**NOT READY** — one major documentation blocker remains.
+
+- **Major — blocker:** [README.md:93](D:/Git/StockSense/README.md:93) says the supported review path “runs” on Kubernetes and describes infrastructure and CPU inference as available. [README.md:12](D:/Git/StockSense/README.md:12) also implies application code and infrastructure already exist. Construction remains pending. Restore an explicit implementation-status statement and describe these capabilities as planned; the “Evidence planned” table alone does not qualify these claims.
+- **Minor — nonblocking:** [CONTRIBUTING.md:39](D:/Git/StockSense/CONTRIBUTING.md:39) requires squash merging all approved PRs, while line 40 permits retaining story commits. Explicitly scope the squash requirement to Bolt-to-`main` merges.
+- **Advisory:** All ten specialist Markdown/TOML pairs in [`.codex/agents`](D:/Git/StockSense/.codex/agents) are complete, have matching instruction bodies, and are not ignored. They are **tracking-ready but currently untracked**; [README.md:124](D:/Git/StockSense/README.md:124) calls them tracked.
+
+Otherwise verified: story → Bolt → `main` topology agrees across the reviewed files and with org Bolt squash policy. Prior Delivery Planning findings remain resolved: entry criteria precede affected implementation, unit acceptance is unambiguous, and onboarding defers lifecycle status to state/audit. No new lifecycle approval claim was found.
+
+`git diff --check` passed. Doctor was not rerun; the recorded **61 passed, 4 advisories, 0 failures** was retained as prior evidence. No files or lifecycle state were edited.

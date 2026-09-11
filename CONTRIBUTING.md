@@ -9,6 +9,15 @@ every merge requires the owner's explicit approval.
 - Keep `main` deployable. Make changes on short-lived branches and merge by PR;
   do not commit or push changes directly to `main`.
 - Use descriptive `feat/`, `fix/`, `docs/` or `chore/` branch names.
+- Implement each user story on its own short-lived branch and submit it through
+  its own PR. Include the story ID in the branch name, for example
+  `feat/us4-1-import-inventory`. One branch has one primary user story.
+- Create each story branch from its current Bolt integration branch and target
+  that Bolt branch with the story PR. When several stories need a shared contract
+  or foundation change, deliver that prerequisite in a separate focused child
+  branch and merge it before the dependent story branches.
+- After all included stories are integrated and the runnable Bolt passes its
+  required checks, squash-merge the owner-approved Bolt branch into `main`.
 - Keep each branch and PR focused on one coherent change. Avoid unrelated cleanup.
 - Preserve existing working-tree changes. Never discard, overwrite or include
   unrelated files merely to obtain a clean tree.
@@ -20,13 +29,16 @@ every merge requires the owner's explicit approval.
 - Review the staged diff before committing. Stage specific files or hunks;
   do not sweep existing work into a commit.
 - A PR explains the problem, resulting behavior, relevant validation and material
-  limitations. Link related AI-DLC requirements, decisions or acceptance criteria.
+  limitations. Link its user story, AI-DLC requirements, decisions, acceptance
+  criteria, and validation evidence.
 - Require applicable build, tests, contract validation and security checks before
   merging. Documentation-only changes need relevant documentation checks, not
   unrelated application tests. Record what ran; do not claim missing checks passed.
 - Obtain explicit owner merge approval. Do not enable auto-merge or otherwise
   merge on the owner's behalf without that approval for the concrete PR.
-- Squash merge approved PRs and delete their merged branches.
+- Story PRs may retain their individual commits while integrating into a Bolt.
+  Squash-merge each completed, approved Bolt PR into `main` as one trunk commit,
+  then delete its merged Bolt and story branches.
 
 ## History, repository contents and releases
 
