@@ -9,7 +9,7 @@
 - **State Version**: 8
 - **Active Agent**: aidlc-architect-agent
 - **Worktree Path**:
-- **Bolt Refs**:
+- **Bolt Refs**: [runnable-retail-walking-skeleton]
 - **Practices Affirmed Timestamp**:
 
 ## Scope Configuration
@@ -34,6 +34,7 @@
 - **Revision Count**: 1
 
 - **Unit Ownership**: solo
+- **Skeleton Stance**: on
 ## Phase Progress
 <!-- Status values: Pending, Active, Verified, Skipped -->
 
@@ -95,7 +96,7 @@ Per unit: [TBD]
 - **Current Stage**: functional-design
 - **Next Stage**: nfr-requirements
 - **Status**: Running
-- **Last Updated**: 2026-09-11T02:44:51Z
+- **Last Updated**: 2026-09-11T09:57:11Z
 
 ## Session Resume Point
 - **Last Completed Stage**: delivery-planning
