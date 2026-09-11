@@ -1,0 +1,1228 @@
+{
+  "schema_version": "1.0",
+  "stage": "domain-design",
+  "generated_on": "2026-09-10",
+  "sources": {
+    "requirements": "../requirements-analysis/requirements.md",
+    "stories": "../user-stories/stories.md",
+    "decisions": "decisions.md",
+    "component_model": "components.md"
+  },
+  "upstream_ids": [
+    "US1.1",
+    "US1.2",
+    "US1.3",
+    "US1.4",
+    "US1.5",
+    "US2.1",
+    "US2.2",
+    "US2.3",
+    "US2.4",
+    "US2.5",
+    "US3.1",
+    "US3.2",
+    "US3.3",
+    "US4.1",
+    "US4.2",
+    "US4.3",
+    "US4.4",
+    "US4.5",
+    "US4.6",
+    "US4.7",
+    "US5.1",
+    "US5.2",
+    "US5.3",
+    "US5.4",
+    "US5.5",
+    "US6.1",
+    "US6.2",
+    "US6.3",
+    "US6.4",
+    "US6.5",
+    "US6.6",
+    "US7.1",
+    "US7.2",
+    "US7.3",
+    "US7.4",
+    "US7.5",
+    "US7.6",
+    "US7.7",
+    "US7.8",
+    "US7.9",
+    "US7.10",
+    "US7.11",
+    "US7.12",
+    "US8.1",
+    "US8.2",
+    "US8.3",
+    "US8.4",
+    "US8.5",
+    "US8.6",
+    "US8.7",
+    "US8.8",
+    "US9.1",
+    "US9.2",
+    "US9.3",
+    "US9.4",
+    "US9.5",
+    "US9.6",
+    "US9.7",
+    "US9.8",
+    "US9.9",
+    "US9.10",
+    "US10.1",
+    "US10.2"
+  ],
+  "coverage": [
+    {
+      "id": "US1.1",
+      "status": "OK",
+      "target": "IdentityAccess, IdentityAccess.UserAccount, IdentityAccess.UserSession"
+    },
+    {
+      "id": "US1.2",
+      "status": "OK",
+      "target": "IdentityAccess, IdentityAccess.ExternalIdentity, IdentityAccess.UserAccount"
+    },
+    {
+      "id": "US1.3",
+      "status": "OK",
+      "target": "IdentityAccess, IdentityAccess.UserSession"
+    },
+    {
+      "id": "US1.4",
+      "status": "OK",
+      "target": "TenantDirectory, TenantDirectory.Retailer, TenantDirectory.Membership"
+    },
+    {
+      "id": "US1.5",
+      "status": "OK",
+      "target": "IdentityAccess, IdentityAccess.UserAccount, IdentityAccess.SigningKeyVersion"
+    },
+    {
+      "id": "US2.1",
+      "status": "OK",
+      "target": "DemoEvidence, DemoEvidence.DemoScenario, DemoEvidence.DatasetGenerationRun"
+    },
+    {
+      "id": "US2.2",
+      "status": "OK",
+      "target": "Inventory, Inventory.InventoryImportBatch, Inventory.InventoryPosition, Inventory.StockMovement"
+    },
+    {
+      "id": "US2.3",
+      "status": "OK",
+      "target": "Inventory, Inventory.Product, Inventory.InventoryPosition, Inventory.StockMovement"
+    },
+    {
+      "id": "US2.4",
+      "status": "OK",
+      "target": "Inventory, Inventory.InventoryPosition"
+    },
+    {
+      "id": "US2.5",
+      "status": "OK",
+      "target": "DemandHistory, DemandHistory.DemandImportBatch, DemandHistory.DemandObservation"
+    },
+    {
+      "id": "US3.1",
+      "status": "OK",
+      "target": "SupplierKnowledge, SupplierKnowledge.SupplierSubmission, SupplierKnowledge.SupplierOffer"
+    },
+    {
+      "id": "US3.2",
+      "status": "OK",
+      "target": "SupplierKnowledge, SupplierKnowledge.SupplierSubmission, SupplierKnowledge.ExtractionRecord"
+    },
+    {
+      "id": "US3.3",
+      "status": "OK",
+      "target": "SupplierKnowledge, SupplierKnowledge.AcceptedSupplierTerm, SupplierKnowledge.SupplierOffer"
+    },
+    {
+      "id": "US4.1",
+      "status": "OK",
+      "target": "Forecasting, Forecasting.ForecastRequest, Forecasting.ForecastRun, Forecasting.ForecastSeries"
+    },
+    {
+      "id": "US4.2",
+      "status": "OK",
+      "target": "ModelLifecycle, ModelLifecycle.DatasetVersion, ModelLifecycle.ModelVersion"
+    },
+    {
+      "id": "US4.3",
+      "status": "OK",
+      "target": "ModelLifecycle, ModelLifecycle.EvaluationRun, ModelLifecycle.DatasetVersion, ModelLifecycle.ModelCandidate"
+    },
+    {
+      "id": "US4.4",
+      "status": "OK",
+      "target": "ModelLifecycle, ModelLifecycle.ExperimentRun, ModelLifecycle.ModelCandidate"
+    },
+    {
+      "id": "US4.5",
+      "status": "OK",
+      "target": "ModelLifecycle, ModelLifecycle.ModelPromotion, ModelLifecycle.ModelVersion"
+    },
+    {
+      "id": "US4.6",
+      "status": "OK",
+      "target": "Forecasting, Forecasting.ForecastRun, Forecasting.ForecastSeries"
+    },
+    {
+      "id": "US4.7",
+      "status": "OK",
+      "target": "ModelLifecycle, ModelLifecycle.EvaluationRun"
+    },
+    {
+      "id": "US5.1",
+      "status": "OK",
+      "target": "Replenishment, Replenishment.PlanningPolicy, Replenishment.ProductPlanningOverride, Replenishment.ReplenishmentRecommendation, Replenishment.EvidenceSnapshot"
+    },
+    {
+      "id": "US5.2",
+      "status": "OK",
+      "target": "Replenishment, Replenishment.ReviewJob, Replenishment.ReplenishmentRecommendation"
+    },
+    {
+      "id": "US5.3",
+      "status": "OK",
+      "target": "Replenishment, Replenishment.ReplenishmentScenario, Replenishment.ReplenishmentRecommendation, Replenishment.EvidenceSnapshot"
+    },
+    {
+      "id": "US5.4",
+      "status": "OK",
+      "target": "Replenishment, Replenishment.ReviewJob, Replenishment.ManualReviewAllowance"
+    },
+    {
+      "id": "US5.5",
+      "status": "OK",
+      "target": "Replenishment, Replenishment.ReviewJob, Replenishment.ManualReviewAllowance, Replenishment.EvidenceSnapshot"
+    },
+    {
+      "id": "US6.1",
+      "status": "OK",
+      "target": "Purchasing, Purchasing.PurchaseProposal, Purchasing.PurchaseProposalLine"
+    },
+    {
+      "id": "US6.2",
+      "status": "OK",
+      "target": "Purchasing, Purchasing.PurchaseProposal, Purchasing.PurchaseProposalLine"
+    },
+    {
+      "id": "US6.3",
+      "status": "OK",
+      "target": "Purchasing, Purchasing.PurchaseProposal, Purchasing.PurchaseOrder, Purchasing.PurchaseOrderLine"
+    },
+    {
+      "id": "US6.4",
+      "status": "OK",
+      "target": "Purchasing, Purchasing.PurchaseOrder"
+    },
+    {
+      "id": "US6.5",
+      "status": "OK",
+      "target": "Purchasing, Purchasing.PurchaseOrder, Purchasing.PurchaseOrderLine, Purchasing.Receipt, Purchasing.ReceiptLine"
+    },
+    {
+      "id": "US6.6",
+      "status": "OK",
+      "target": "Purchasing, Purchasing.PurchaseOrder, Purchasing.PurchaseOrderLine, Purchasing.Receipt, Purchasing.ReceiptLine"
+    },
+    {
+      "id": "US7.1",
+      "status": "OK",
+      "target": "Assistant, Assistant.Conversation, Assistant.ConversationTurn"
+    },
+    {
+      "id": "US7.2",
+      "status": "OK",
+      "target": "SupplierKnowledge, SupplierKnowledge.RetrievalIndexVersion, SupplierKnowledge.DocumentChunk"
+    },
+    {
+      "id": "US7.3",
+      "status": "OK",
+      "target": "SupplierKnowledge, SupplierKnowledge.RetrievalIndexVersion"
+    },
+    {
+      "id": "US7.4",
+      "status": "OK",
+      "target": "Assistant, Assistant.Conversation, Assistant.ConversationTurn, Assistant.ToolInvocation"
+    },
+    {
+      "id": "US7.5",
+      "status": "OK",
+      "target": "Assistant, Assistant.ToolInvocation, Assistant.Citation"
+    },
+    {
+      "id": "US7.6",
+      "status": "OK",
+      "target": "Assistant, Assistant.ToolInvocation, Assistant.Citation"
+    },
+    {
+      "id": "US7.7",
+      "status": "OK",
+      "target": "Assistant, Assistant.ToolInvocation, Assistant.Citation"
+    },
+    {
+      "id": "US7.8",
+      "status": "OK",
+      "target": "Assistant, Assistant.ToolInvocation, Assistant.Citation"
+    },
+    {
+      "id": "US7.9",
+      "status": "OK",
+      "target": "Assistant, Assistant.AssistantActionDraft, Assistant.ToolInvocation"
+    },
+    {
+      "id": "US7.10",
+      "status": "OK",
+      "target": "Assistant, Assistant.AssistantActionDraft, Assistant.ToolInvocation"
+    },
+    {
+      "id": "US7.11",
+      "status": "OK",
+      "target": "Assistant, Assistant.Conversation, Assistant.ConversationTurn, Assistant.ToolInvocation"
+    },
+    {
+      "id": "US7.12",
+      "status": "OK",
+      "target": "SupplierKnowledge, SupplierKnowledge.RetrievalIndexVersion, SupplierKnowledge.DocumentChunk"
+    },
+    {
+      "id": "US8.1",
+      "status": "OK",
+      "target": "DemoEvidence, DemoEvidence.SetupVerificationRun, DemoEvidence.EvidenceManifest"
+    },
+    {
+      "id": "US8.2",
+      "status": "OK",
+      "target": "DemoEvidence, DemoEvidence.EvidenceManifest"
+    },
+    {
+      "id": "US8.3",
+      "status": "OK",
+      "target": "DemoEvidence, DemoEvidence.SetupVerificationRun"
+    },
+    {
+      "id": "US8.4",
+      "status": "OK",
+      "target": "DemoEvidence, DemoEvidence.SetupVerificationRun"
+    },
+    {
+      "id": "US8.5",
+      "status": "OK",
+      "target": "DemoEvidence, DemoEvidence.SetupVerificationRun"
+    },
+    {
+      "id": "US8.6",
+      "status": "OK",
+      "target": "DemoEvidence, DemoEvidence.SetupVerificationRun, DemoEvidence.EvidenceManifest"
+    },
+    {
+      "id": "US8.7",
+      "status": "OK",
+      "target": "DemoEvidence, DemoEvidence.EvidenceManifest"
+    },
+    {
+      "id": "US8.8",
+      "status": "OK",
+      "target": "DemoEvidence, DemoEvidence.SetupVerificationRun, DemoEvidence.EvidenceManifest"
+    },
+    {
+      "id": "US9.1",
+      "status": "OK",
+      "target": "AuditEvidence, AuditEvidence.AuditProjection, AuditEvidence.IndexCheckpoint"
+    },
+    {
+      "id": "US9.2",
+      "status": "OK",
+      "target": "AuditEvidence, AuditEvidence.AuditProjection"
+    },
+    {
+      "id": "US9.3",
+      "status": "OK",
+      "target": "AuditEvidence, AuditEvidence.AuditProjection, AuditEvidence.IndexCheckpoint, AuditEvidence.ReplayRequest"
+    },
+    {
+      "id": "US9.4",
+      "status": "OK",
+      "target": "DemoEvidence, DemoEvidence.SetupVerificationRun, DemoEvidence.EvidenceManifest"
+    },
+    {
+      "id": "US9.5",
+      "status": "OK",
+      "target": "AuditEvidence, AuditEvidence.RetentionRun, AuditEvidence.AuditProjection"
+    },
+    {
+      "id": "US9.6",
+      "status": "OK",
+      "target": "DemoEvidence, DemoEvidence.SetupVerificationRun, DemoEvidence.EvidenceManifest"
+    },
+    {
+      "id": "US9.7",
+      "status": "OK",
+      "target": "IdentityAccess, IdentityAccess.SigningKeyVersion"
+    },
+    {
+      "id": "US9.8",
+      "status": "OK",
+      "target": "TenantDirectory, TenantDirectory.RetailerPlacement"
+    },
+    {
+      "id": "US9.9",
+      "status": "OK",
+      "target": "DemoEvidence, DemoEvidence.SetupVerificationRun"
+    },
+    {
+      "id": "US9.10",
+      "status": "OK",
+      "target": "DemoEvidence, DemoEvidence.SetupVerificationRun"
+    },
+    {
+      "id": "US10.1",
+      "status": "OK",
+      "target": "DemoEvidence, DemoEvidence.DemoScenario, DemoEvidence.SetupVerificationRun"
+    },
+    {
+      "id": "US10.2",
+      "status": "OK",
+      "target": "DemoEvidence, DemoEvidence.EvidenceManifest"
+    }
+  ],
+  "reverse": [],
+  "coverage_summary": {
+    "expected_story_count": 63,
+    "mapped_story_count": 63,
+    "unmapped_story_ids": [],
+    "duplicate_story_ids": []
+  },
+  "story_mappings": [
+    {
+      "story_id": "US1.1",
+      "primary_component": "IdentityAccess",
+      "owned_entities": [
+        "UserAccount",
+        "UserSession"
+      ],
+      "supporting_components": [
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US1.2",
+      "primary_component": "IdentityAccess",
+      "owned_entities": [
+        "ExternalIdentity",
+        "UserAccount"
+      ],
+      "supporting_components": [
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US1.3",
+      "primary_component": "IdentityAccess",
+      "owned_entities": [
+        "UserSession"
+      ],
+      "supporting_components": [
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US1.4",
+      "primary_component": "TenantDirectory",
+      "owned_entities": [
+        "Retailer",
+        "Membership"
+      ],
+      "supporting_components": [
+        "IdentityAccess",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US1.5",
+      "primary_component": "IdentityAccess",
+      "owned_entities": [
+        "UserAccount",
+        "SigningKeyVersion"
+      ],
+      "supporting_components": [
+        "DemoEvidence"
+      ]
+    },
+    {
+      "story_id": "US2.1",
+      "primary_component": "DemoEvidence",
+      "owned_entities": [
+        "DemoScenario",
+        "DatasetGenerationRun"
+      ],
+      "supporting_components": [
+        "TenantDirectory",
+        "Inventory",
+        "DemandHistory",
+        "SupplierKnowledge"
+      ]
+    },
+    {
+      "story_id": "US2.2",
+      "primary_component": "Inventory",
+      "owned_entities": [
+        "InventoryImportBatch",
+        "InventoryPosition",
+        "StockMovement"
+      ],
+      "supporting_components": [
+        "TenantDirectory",
+        "AuditEvidence",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US2.3",
+      "primary_component": "Inventory",
+      "owned_entities": [
+        "Product",
+        "InventoryPosition",
+        "StockMovement"
+      ],
+      "supporting_components": [
+        "TenantDirectory",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US2.4",
+      "primary_component": "Inventory",
+      "owned_entities": [
+        "InventoryPosition"
+      ],
+      "supporting_components": [
+        "TenantDirectory",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US2.5",
+      "primary_component": "DemandHistory",
+      "owned_entities": [
+        "DemandImportBatch",
+        "DemandObservation"
+      ],
+      "supporting_components": [
+        "Inventory",
+        "AuditEvidence",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US3.1",
+      "primary_component": "SupplierKnowledge",
+      "owned_entities": [
+        "SupplierSubmission",
+        "SupplierOffer"
+      ],
+      "supporting_components": [
+        "Inventory",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US3.2",
+      "primary_component": "SupplierKnowledge",
+      "owned_entities": [
+        "SupplierSubmission",
+        "ExtractionRecord"
+      ],
+      "supporting_components": [
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US3.3",
+      "primary_component": "SupplierKnowledge",
+      "owned_entities": [
+        "AcceptedSupplierTerm",
+        "SupplierOffer"
+      ],
+      "supporting_components": [
+        "Inventory",
+        "AuditEvidence",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US4.1",
+      "primary_component": "Forecasting",
+      "owned_entities": [
+        "ForecastRequest",
+        "ForecastRun",
+        "ForecastSeries"
+      ],
+      "supporting_components": [
+        "DemandHistory",
+        "ModelLifecycle"
+      ]
+    },
+    {
+      "story_id": "US4.2",
+      "primary_component": "ModelLifecycle",
+      "owned_entities": [
+        "DatasetVersion",
+        "ModelVersion"
+      ],
+      "supporting_components": [
+        "DemandHistory",
+        "DemoEvidence"
+      ]
+    },
+    {
+      "story_id": "US4.3",
+      "primary_component": "ModelLifecycle",
+      "owned_entities": [
+        "EvaluationRun",
+        "DatasetVersion",
+        "ModelCandidate"
+      ],
+      "supporting_components": [
+        "DemandHistory",
+        "DemoEvidence"
+      ]
+    },
+    {
+      "story_id": "US4.4",
+      "primary_component": "ModelLifecycle",
+      "owned_entities": [
+        "ExperimentRun",
+        "ModelCandidate"
+      ],
+      "supporting_components": [
+        "DemoEvidence"
+      ]
+    },
+    {
+      "story_id": "US4.5",
+      "primary_component": "ModelLifecycle",
+      "owned_entities": [
+        "ModelPromotion",
+        "ModelVersion"
+      ],
+      "supporting_components": [
+        "AuditEvidence",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US4.6",
+      "primary_component": "Forecasting",
+      "owned_entities": [
+        "ForecastRun",
+        "ForecastSeries"
+      ],
+      "supporting_components": [
+        "ModelLifecycle",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US4.7",
+      "primary_component": "ModelLifecycle",
+      "owned_entities": [
+        "EvaluationRun"
+      ],
+      "supporting_components": [
+        "Inventory",
+        "SupplierKnowledge",
+        "DemoEvidence"
+      ]
+    },
+    {
+      "story_id": "US5.1",
+      "primary_component": "Replenishment",
+      "owned_entities": [
+        "PlanningPolicy",
+        "ProductPlanningOverride",
+        "ReplenishmentRecommendation",
+        "EvidenceSnapshot"
+      ],
+      "supporting_components": [
+        "Inventory",
+        "SupplierKnowledge",
+        "Forecasting"
+      ]
+    },
+    {
+      "story_id": "US5.2",
+      "primary_component": "Replenishment",
+      "owned_entities": [
+        "ReviewJob",
+        "ReplenishmentRecommendation"
+      ],
+      "supporting_components": [
+        "Forecasting",
+        "AuditEvidence"
+      ]
+    },
+    {
+      "story_id": "US5.3",
+      "primary_component": "Replenishment",
+      "owned_entities": [
+        "ReplenishmentScenario",
+        "ReplenishmentRecommendation",
+        "EvidenceSnapshot"
+      ],
+      "supporting_components": [
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US5.4",
+      "primary_component": "Replenishment",
+      "owned_entities": [
+        "ReviewJob",
+        "ManualReviewAllowance"
+      ],
+      "supporting_components": [
+        "TenantDirectory",
+        "AuditEvidence",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US5.5",
+      "primary_component": "Replenishment",
+      "owned_entities": [
+        "ReviewJob",
+        "ManualReviewAllowance",
+        "EvidenceSnapshot"
+      ],
+      "supporting_components": [
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US6.1",
+      "primary_component": "Purchasing",
+      "owned_entities": [
+        "PurchaseProposal",
+        "PurchaseProposalLine"
+      ],
+      "supporting_components": [
+        "Replenishment",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US6.2",
+      "primary_component": "Purchasing",
+      "owned_entities": [
+        "PurchaseProposal",
+        "PurchaseProposalLine"
+      ],
+      "supporting_components": [
+        "AuditEvidence",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US6.3",
+      "primary_component": "Purchasing",
+      "owned_entities": [
+        "PurchaseProposal",
+        "PurchaseOrder",
+        "PurchaseOrderLine"
+      ],
+      "supporting_components": [
+        "TenantDirectory",
+        "AuditEvidence",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US6.4",
+      "primary_component": "Purchasing",
+      "owned_entities": [
+        "PurchaseOrder"
+      ],
+      "supporting_components": [
+        "AuditEvidence",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US6.5",
+      "primary_component": "Purchasing",
+      "owned_entities": [
+        "PurchaseOrder",
+        "PurchaseOrderLine",
+        "Receipt",
+        "ReceiptLine"
+      ],
+      "supporting_components": [
+        "Inventory",
+        "AuditEvidence",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US6.6",
+      "primary_component": "Purchasing",
+      "owned_entities": [
+        "PurchaseOrder",
+        "PurchaseOrderLine",
+        "Receipt",
+        "ReceiptLine"
+      ],
+      "supporting_components": [
+        "Inventory",
+        "AuditEvidence",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US7.1",
+      "primary_component": "Assistant",
+      "owned_entities": [
+        "Conversation",
+        "ConversationTurn"
+      ],
+      "supporting_components": [
+        "DemoEvidence",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US7.2",
+      "primary_component": "SupplierKnowledge",
+      "owned_entities": [
+        "RetrievalIndexVersion",
+        "DocumentChunk"
+      ],
+      "supporting_components": [
+        "Assistant",
+        "TenantDirectory"
+      ]
+    },
+    {
+      "story_id": "US7.3",
+      "primary_component": "SupplierKnowledge",
+      "owned_entities": [
+        "RetrievalIndexVersion"
+      ],
+      "supporting_components": [
+        "Assistant",
+        "DemoEvidence"
+      ]
+    },
+    {
+      "story_id": "US7.4",
+      "primary_component": "Assistant",
+      "owned_entities": [
+        "Conversation",
+        "ConversationTurn",
+        "ToolInvocation"
+      ],
+      "supporting_components": [
+        "TenantDirectory",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US7.5",
+      "primary_component": "Assistant",
+      "owned_entities": [
+        "ToolInvocation",
+        "Citation"
+      ],
+      "supporting_components": [
+        "AuditEvidence",
+        "DemoEvidence"
+      ]
+    },
+    {
+      "story_id": "US7.6",
+      "primary_component": "Assistant",
+      "owned_entities": [
+        "ToolInvocation",
+        "Citation"
+      ],
+      "supporting_components": [
+        "Inventory",
+        "Forecasting",
+        "Replenishment",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US7.7",
+      "primary_component": "Assistant",
+      "owned_entities": [
+        "ToolInvocation",
+        "Citation"
+      ],
+      "supporting_components": [
+        "SupplierKnowledge",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US7.8",
+      "primary_component": "Assistant",
+      "owned_entities": [
+        "ToolInvocation",
+        "Citation"
+      ],
+      "supporting_components": [
+        "Replenishment",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US7.9",
+      "primary_component": "Assistant",
+      "owned_entities": [
+        "AssistantActionDraft",
+        "ToolInvocation"
+      ],
+      "supporting_components": [
+        "Replenishment",
+        "AuditEvidence",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US7.10",
+      "primary_component": "Assistant",
+      "owned_entities": [
+        "AssistantActionDraft",
+        "ToolInvocation"
+      ],
+      "supporting_components": [
+        "Purchasing",
+        "AuditEvidence",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US7.11",
+      "primary_component": "Assistant",
+      "owned_entities": [
+        "Conversation",
+        "ConversationTurn",
+        "ToolInvocation"
+      ],
+      "supporting_components": [
+        "DemoEvidence",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US7.12",
+      "primary_component": "SupplierKnowledge",
+      "owned_entities": [
+        "RetrievalIndexVersion",
+        "DocumentChunk"
+      ],
+      "supporting_components": [
+        "Assistant",
+        "AuditEvidence"
+      ]
+    },
+    {
+      "story_id": "US8.1",
+      "primary_component": "DemoEvidence",
+      "owned_entities": [
+        "SetupVerificationRun",
+        "EvidenceManifest"
+      ],
+      "supporting_components": [
+        "IdentityAccess",
+        "TenantDirectory",
+        "Inventory",
+        "DemandHistory",
+        "SupplierKnowledge",
+        "ModelLifecycle",
+        "Forecasting",
+        "Replenishment",
+        "Purchasing",
+        "Assistant",
+        "AuditEvidence",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US8.2",
+      "primary_component": "DemoEvidence",
+      "owned_entities": [
+        "EvidenceManifest"
+      ],
+      "supporting_components": [
+        "IdentityAccess",
+        "TenantDirectory",
+        "Inventory",
+        "DemandHistory",
+        "SupplierKnowledge",
+        "ModelLifecycle",
+        "Forecasting",
+        "Replenishment",
+        "Purchasing",
+        "Assistant",
+        "AuditEvidence"
+      ]
+    },
+    {
+      "story_id": "US8.3",
+      "primary_component": "DemoEvidence",
+      "owned_entities": [
+        "SetupVerificationRun"
+      ],
+      "supporting_components": [
+        "IdentityAccess",
+        "TenantDirectory",
+        "Inventory",
+        "SupplierKnowledge",
+        "ModelLifecycle",
+        "Forecasting",
+        "Replenishment",
+        "Purchasing",
+        "Assistant",
+        "AuditEvidence",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US8.4",
+      "primary_component": "DemoEvidence",
+      "owned_entities": [
+        "SetupVerificationRun"
+      ],
+      "supporting_components": [
+        "IdentityAccess",
+        "TenantDirectory",
+        "Inventory",
+        "SupplierKnowledge",
+        "Assistant",
+        "AuditEvidence"
+      ]
+    },
+    {
+      "story_id": "US8.5",
+      "primary_component": "DemoEvidence",
+      "owned_entities": [
+        "SetupVerificationRun"
+      ],
+      "supporting_components": [
+        "SupplierKnowledge",
+        "ModelLifecycle",
+        "Forecasting",
+        "Replenishment",
+        "Purchasing",
+        "AuditEvidence"
+      ]
+    },
+    {
+      "story_id": "US8.6",
+      "primary_component": "DemoEvidence",
+      "owned_entities": [
+        "SetupVerificationRun",
+        "EvidenceManifest"
+      ],
+      "supporting_components": [
+        "TenantDirectory"
+      ]
+    },
+    {
+      "story_id": "US8.7",
+      "primary_component": "DemoEvidence",
+      "owned_entities": [
+        "EvidenceManifest"
+      ],
+      "supporting_components": [
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US8.8",
+      "primary_component": "DemoEvidence",
+      "owned_entities": [
+        "SetupVerificationRun",
+        "EvidenceManifest"
+      ],
+      "supporting_components": [
+        "WebExperience",
+        "AuditEvidence"
+      ]
+    },
+    {
+      "story_id": "US9.1",
+      "primary_component": "AuditEvidence",
+      "owned_entities": [
+        "AuditProjection",
+        "IndexCheckpoint"
+      ],
+      "supporting_components": [
+        "TenantDirectory",
+        "Inventory",
+        "DemandHistory",
+        "SupplierKnowledge",
+        "ModelLifecycle",
+        "Forecasting",
+        "Replenishment",
+        "Purchasing",
+        "Assistant"
+      ]
+    },
+    {
+      "story_id": "US9.2",
+      "primary_component": "AuditEvidence",
+      "owned_entities": [
+        "AuditProjection"
+      ],
+      "supporting_components": [
+        "TenantDirectory",
+        "WebExperience"
+      ]
+    },
+    {
+      "story_id": "US9.3",
+      "primary_component": "AuditEvidence",
+      "owned_entities": [
+        "AuditProjection",
+        "IndexCheckpoint",
+        "ReplayRequest"
+      ],
+      "supporting_components": [
+        "DemoEvidence"
+      ]
+    },
+    {
+      "story_id": "US9.4",
+      "primary_component": "DemoEvidence",
+      "owned_entities": [
+        "SetupVerificationRun",
+        "EvidenceManifest"
+      ],
+      "supporting_components": [
+        "AuditEvidence"
+      ]
+    },
+    {
+      "story_id": "US9.5",
+      "primary_component": "AuditEvidence",
+      "owned_entities": [
+        "RetentionRun",
+        "AuditProjection"
+      ],
+      "supporting_components": [
+        "DemoEvidence"
+      ]
+    },
+    {
+      "story_id": "US9.6",
+      "primary_component": "DemoEvidence",
+      "owned_entities": [
+        "SetupVerificationRun",
+        "EvidenceManifest"
+      ],
+      "supporting_components": [
+        "AuditEvidence",
+        "TenantDirectory",
+        "Inventory",
+        "DemandHistory",
+        "SupplierKnowledge",
+        "ModelLifecycle",
+        "Forecasting",
+        "Replenishment",
+        "Purchasing",
+        "Assistant"
+      ]
+    },
+    {
+      "story_id": "US9.7",
+      "primary_component": "IdentityAccess",
+      "owned_entities": [
+        "SigningKeyVersion"
+      ],
+      "supporting_components": [
+        "DemoEvidence",
+        "AuditEvidence"
+      ]
+    },
+    {
+      "story_id": "US9.8",
+      "primary_component": "TenantDirectory",
+      "owned_entities": [
+        "RetailerPlacement"
+      ],
+      "supporting_components": [
+        "DemoEvidence",
+        "AuditEvidence"
+      ]
+    },
+    {
+      "story_id": "US9.9",
+      "primary_component": "DemoEvidence",
+      "owned_entities": [
+        "SetupVerificationRun"
+      ],
+      "supporting_components": [
+        "IdentityAccess",
+        "TenantDirectory",
+        "Inventory",
+        "DemandHistory",
+        "Forecasting",
+        "Replenishment",
+        "Purchasing",
+        "AuditEvidence"
+      ]
+    },
+    {
+      "story_id": "US9.10",
+      "primary_component": "DemoEvidence",
+      "owned_entities": [
+        "SetupVerificationRun"
+      ],
+      "supporting_components": [
+        "SupplierKnowledge",
+        "ModelLifecycle",
+        "AuditEvidence"
+      ]
+    },
+    {
+      "story_id": "US10.1",
+      "primary_component": "DemoEvidence",
+      "owned_entities": [
+        "DemoScenario",
+        "SetupVerificationRun"
+      ],
+      "supporting_components": [
+        "WebExperience",
+        "IdentityAccess",
+        "TenantDirectory",
+        "Inventory",
+        "DemandHistory",
+        "SupplierKnowledge",
+        "Forecasting",
+        "Replenishment",
+        "Purchasing",
+        "Assistant",
+        "AuditEvidence"
+      ]
+    },
+    {
+      "story_id": "US10.2",
+      "primary_component": "DemoEvidence",
+      "owned_entities": [
+        "EvidenceManifest"
+      ],
+      "supporting_components": [
+        "AuditEvidence",
+        "WebExperience"
+      ]
+    }
+  ]
+}
+

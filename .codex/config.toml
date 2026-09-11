@@ -1,0 +1,7 @@
+# StockSense AI-DLC integration; inherit the user's model and provider.
+# Keep permissions and network policy under host/user control.
+[shell_environment_policy]
+set = { AIDLC_RULES_DIR = "aidlc/spaces/default/memory" }
+
+[agents]
+max_depth = 1
