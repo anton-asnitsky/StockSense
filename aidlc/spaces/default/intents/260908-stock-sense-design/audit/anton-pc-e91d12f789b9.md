@@ -5768,3 +5768,625 @@
 **Run floor**: STAGE_STARTED:2026-09-11T02:44:51Z#1
 
 ---
+
+## Human Turn
+**Timestamp**: 2026-09-11T10:11:51Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Unit Started
+**Timestamp**: 2026-09-11T10:16:04Z
+**Event**: UNIT_STARTED
+**Stage**: functional-design
+**Unit**: identity-access
+**Run floor**: STAGE_STARTED:2026-09-11T02:44:51Z#1
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-11T10:16:44Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-09-11T10:26:18Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: stocksense-security-identity-agent
+**Agent ID**: 01a08ff8-1f26-7863-8c67-1f14a0d4f7fb
+**Message**: The accepted architecture is clear; six owner-facing behavior choices remain. U3 owns accounts, linking, sessions, machine credentials, keys, and identity audit, while retailer authority remains with 
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-09-11T10:27:27Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/functional-design-questions.md
+**Context**: construction > identity-access > functional-design > functional-design-questions.md
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-11T10:28:05Z
+**Event**: DECISION_RECORDED
+**Stage**: functional-design
+**Decision**: How would you like to complete the Identity Access Functional Design questions?
+**Options**: Guide me,I'll edit the file,Chat
+**Unit**: identity-access
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-11T18:34:20Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-11T18:34:42Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/functional-design-questions.md
+**Context**: construction > identity-access > functional-design > functional-design-questions.md
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-11T18:34:55Z
+**Event**: QUESTION_ANSWERED
+**Stage**: functional-design
+**Details**: Guide me
+**Unit**: identity-access
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-11T18:35:12Z
+**Event**: DECISION_RECORDED
+**Stage**: functional-design
+**Decision**: What should happen when Google authenticates an identity with no existing issuer-subject link?
+**Options**: Require explicit local-authenticated linking,Use an operator invitation,Create an account without memberships,Other
+**Unit**: identity-access
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-11T18:36:44Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-11T18:36:59Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/functional-design-questions.md
+**Context**: construction > identity-access > functional-design > functional-design-questions.md
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-11T18:37:11Z
+**Event**: QUESTION_ANSWERED
+**Stage**: functional-design
+**Details**: Accepted Q1: deny unlinked Google access and account creation; require local sign-in, reauthentication, and a short-lived explicit linking callback; reject identities linked elsewhere; no self-service unlinking in v1.
+**Unit**: identity-access
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-11T18:37:21Z
+**Event**: DECISION_RECORDED
+**Stage**: functional-design
+**Decision**: Which initial browser session and token lifecycle should StockSense enforce?
+**Options**: 30-minute idle and 8-hour absolute session,60-minute idle and 12-hour absolute session,No refresh tokens,Other
+**Unit**: identity-access
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-11T18:39:54Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-11T18:40:09Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/functional-design-questions.md
+**Context**: construction > identity-access > functional-design > functional-design-questions.md
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-11T18:40:22Z
+**Event**: QUESTION_ANSWERED
+**Stage**: functional-design
+**Details**: Accepted Q2: 30-minute idle and 8-hour absolute BFF session; 10-minute access tokens; one-time rotating refresh tokens bounded by the session; reuse revokes the session; no remember-me; account disable, credential reset, and identity-link changes revoke all account sessions.
+**Unit**: identity-access
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-11T18:40:32Z
+**Event**: DECISION_RECORDED
+**Stage**: functional-design
+**Decision**: How should signing and data-protection keys rotate and recover?
+**Options**: 90-day versioned rotation with bounded retention,30-day rotation with seven-day overlap,Operator-only rotation with manual retirement,Other
+**Unit**: identity-access
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-11T18:43:53Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-11T18:44:09Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/functional-design-questions.md
+**Context**: construction > identity-access > functional-design > functional-design-questions.md
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-11T18:44:22Z
+**Event**: QUESTION_ANSWERED
+**Stage**: functional-design
+**Details**: Accepted Q3: rotate versioned signing and data-protection keys every 90 days; retain prior material for all still-valid tokens/sessions plus clock skew; protect persistence and external backups with Vault-backed encryption; fail closed and require controlled replacement and reauthentication after unrecoverable loss.
+**Unit**: identity-access
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-11T18:44:32Z
+**Event**: DECISION_RECORDED
+**Stage**: functional-design
+**Decision**: Which local demo identities and credential policy should the reproducible profile provide?
+**Options**: Four focused personas with generated credentials,Three personas with reviewer-supplied credentials,One broad administrator,Other
+**Unit**: identity-access
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-11T18:45:53Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-11T18:46:09Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/functional-design-questions.md
+**Context**: construction > identity-access > functional-design > functional-design-questions.md
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-11T18:46:21Z
+**Event**: QUESTION_ANSWERED
+**Stage**: functional-design
+**Details**: Accepted Q4: seed planner-only, manager-plus-planner, multi-retailer planner, and operator-without-membership identities; generate per-environment passwords with protected one-time disclosure; operator-controlled reset; no signup/email reset; 15-minute lock after five failures.
+**Unit**: identity-access
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-11T18:46:32Z
+**Event**: DECISION_RECORDED
+**Stage**: functional-design
+**Decision**: What should happen after authentication for zero, one, or multiple current retailer memberships?
+**Options**: No-access, auto-select one, explicitly select many,Always require explicit selection,Treat zero memberships as authentication failure,Other
+**Unit**: identity-access
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-11T18:49:02Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-11T18:49:17Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/functional-design-questions.md
+**Context**: construction > identity-access > functional-design > functional-design-questions.md
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-11T18:49:30Z
+**Event**: QUESTION_ANSWERED
+**Stage**: functional-design
+**Details**: Accepted Q5: authentication remains separate from membership; zero memberships show no-access guidance; one auto-selects; multiple require explicit selection; stale/revoked selection clears before business calls; late responses and uncertain mutations cannot cross context or auto-resubmit.
+**Unit**: identity-access
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-11T18:49:41Z
+**Event**: DECISION_RECORDED
+**Stage**: functional-design
+**Decision**: How should optional Google federation coexist with the clean local reviewer path?
+**Options**: Optional real Google with independent local login and owner smoke evidence,Require every reviewer to configure Google,Use only a local mock in the default profile,Other
+**Unit**: identity-access
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-11T18:50:22Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-11T18:50:50Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/functional-design-questions.md
+**Context**: construction > identity-access > functional-design > functional-design-questions.md
+
+---
+
+## Session Compacted
+**Timestamp**: 2026-09-11T18:50:55Z
+**Event**: SESSION_COMPACTED
+**Current Stage**: functional-design
+**State Validity**: valid
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-11T18:52:17Z
+**Event**: QUESTION_ANSWERED
+**Stage**: functional-design
+**Details**: Agreed Q6: pin exact identity/app/callback URIs; show Google only when configured; preserve secret-free local login; real Google smoke evidence is owner-run.
+**Unit**: identity-access
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-11T18:52:27Z
+**Event**: DECISION_RECORDED
+**Stage**: functional-design
+**Decision**: Which concrete limits should replace the remaining short-lived and clock-skew terms?
+**Options**: 10-minute linking and five-minute skew,Five-minute linking and two-minute skew,No repository defaults,Other
+**Unit**: identity-access
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-11T18:53:44Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-11T18:54:08Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/functional-design-questions.md
+**Context**: construction > identity-access > functional-design > functional-design-questions.md
+
+---
+
+## Question Answered
+**Timestamp**: 2026-09-11T18:54:20Z
+**Event**: QUESTION_ANSWERED
+**Stage**: functional-design
+**Details**: Agreed Q7: 10-minute Google-linking transaction, five-minute validation clock skew, and prior-key retention derived from the 10-minute token and 8-hour session lifetimes.
+**Unit**: identity-access
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-11T18:54:53Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Guardrail Loaded
+**Timestamp**: 2026-09-11T18:58:51Z
+**Event**: GUARDRAIL_LOADED
+**Scope**: all
+**Path**: .codex/aidlc-rules/
+**Rule count**: 7
+
+---
+
+## Health Check
+**Timestamp**: 2026-09-11T18:58:51Z
+**Event**: HEALTH_CHECKED
+**Request**: /aidlc --doctor
+**Details**: 61 passed, 0 failed
+
+---
+
+## Guardrail Loaded
+**Timestamp**: 2026-09-11T18:59:24Z
+**Event**: GUARDRAIL_LOADED
+**Scope**: all
+**Path**: .codex/aidlc-rules/
+**Rule count**: 7
+
+---
+
+## Health Check
+**Timestamp**: 2026-09-11T18:59:24Z
+**Event**: HEALTH_CHECKED
+**Request**: /aidlc --doctor
+**Details**: 61 passed, 0 failed
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-11T19:00:10Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-09-11T19:00:44Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: stocksense-aidlc-process-steward-agent
+**Agent ID**: 01a091d2-7c37-7e41-918e-8132d584bb34
+**Message**: - **Major — lifecycle validity drift:** `aidlc engine status` reports `requirements-analysis`, `user-stories`, `refined-mockups`, `domain-design`, `units-generation`, `contract-design`, and `delivery-
+
+---
+
+## Guardrail Loaded
+**Timestamp**: 2026-09-11T19:01:21Z
+**Event**: GUARDRAIL_LOADED
+**Scope**: all
+**Path**: .codex/aidlc-rules/
+**Rule count**: 7
+
+---
+
+## Health Check
+**Timestamp**: 2026-09-11T19:01:21Z
+**Event**: HEALTH_CHECKED
+**Request**: /aidlc --doctor
+**Details**: 61 passed, 0 failed
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-11T19:02:35Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-09-11T19:02:46Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: stocksense-aidlc-process-steward-agent
+**Agent ID**: 01a091d2-7c37-7e41-918e-8132d584bb34
+**Message**: No blocking or major findings. Q1–Q7 each have matching decision and answer receipts, and the consolidated summary contains no concrete contradiction, stale decision, or unresolved ambiguity.\n\n**READY
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-11T19:02:58Z
+**Event**: DECISION_RECORDED
+**Stage**: functional-design
+**Decision**: Does this all look correct before I generate the Identity Access Functional Design artifacts?
+**Options**: Looks correct,Request changes
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/functional-design-questions.md
+**Unit**: identity-access
+
+---
+
+## Session Resume
+**Timestamp**: 2026-09-11T19:36:57Z
+**Event**: SESSION_RESUMED
+**Source**: resume
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-11T19:37:00Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-11T19:37:19Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/functional-design-questions.md
+**Context**: construction > identity-access > functional-design > functional-design-questions.md
+
+---
+
+## Summary Confirmation Recorded
+**Timestamp**: 2026-09-11T19:37:27Z
+**Event**: SUMMARY_CONFIRMATION_RECORDED
+**Stage**: functional-design
+**Details**: Looks correct
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/functional-design-questions.md
+**Questions SHA-256**: bc0e93444bfca5351873d290807ee98ed05eb4a2562fff669c79912785d681b8
+**Hash Scope**: confirmed-content-v1
+**Unit**: identity-access
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-09-11T19:41:52Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/entities.md
+**Context**: construction > identity-access > functional-design > entities.md
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-09-11T19:43:34Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/rules.md
+**Context**: construction > identity-access > functional-design > rules.md
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-09-11T19:45:18Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/functional-spec.md
+**Context**: construction > identity-access > functional-design > functional-spec.md
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-09-11T19:46:11Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/traceability.json
+**Context**: construction > identity-access > functional-design > traceability.json
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-11T19:47:58Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/entities.md
+**Context**: construction > identity-access > functional-design > entities.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-11T19:48:01Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/rules.md
+**Context**: construction > identity-access > functional-design > rules.md
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-11T19:48:04Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/traceability.json
+**Context**: construction > identity-access > functional-design > traceability.json
+
+---
+
+## Review Requested
+**Timestamp**: 2026-09-11T19:49:37Z
+**Event**: REVIEW_REQUESTED
+**Stage**: functional-design
+**Reviewer**: aidlc-architecture-reviewer-agent
+**Unit**: identity-access
+**Iteration**: 1
+**Artifact Fingerprint**: sha256:331174b9e61496671473406b150228084fb7dd0c9303b4f637a9886cc1c43a0b
+**Review Appendix Artifact**: construction/identity-access/functional-design/functional-spec.md
+**Review Appendix Offset**: 33355
+**Review Appendix Prior Digest**: none
+**Review Appendix Prior Length**: 0
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-09-11T19:50:43Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/.aidlc-reviewer-dispatch.json
+**Context**: .aidlc-reviewer-dispatch.json
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-11T19:50:54Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-11T19:58:18Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-09-11T19:59:37Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/functional-spec.md
+**Context**: construction > identity-access > functional-design > functional-spec.md
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-09-11T19:59:45Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: aidlc-architecture-reviewer-agent
+**Agent ID**: 01a09205-cf68-7e51-8d62-ba9cda5e37f8
+**Message**: **Reviewer:** aidlc-architecture-reviewer-agent\n\n**Verdict:** NOT-READY\n\nAppended the required terminal `## Review` section to [functional-spec.md](<project-dir>\aidlc\spaces\default\intents\26090
+
+---
+
+## Review Completed
+**Timestamp**: 2026-09-11T20:00:27Z
+**Event**: REVIEW_COMPLETED
+**Stage**: functional-design
+**Reviewer**: aidlc-architecture-reviewer-agent
+**Unit**: identity-access
+**Iteration**: 1
+**Verdict**: NOT-READY
+**Request Fingerprint**: sha256:331174b9e61496671473406b150228084fb7dd0c9303b4f637a9886cc1c43a0b
+**Artifact Fingerprint**: sha256:1a0c2881ed410ea9b7c10d71975fb3754deccaa51c183b35d53635b3e7c03800
+**Review Appendix Artifact**: construction/identity-access/functional-design/functional-spec.md
+**Review Appendix Offset**: 33355
+**Review Appendix Prior Digest**: none
+**Review Appendix Prior Length**: 0
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-09-11T20:01:34Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/identity-access/functional-design/memory.md
+**Context**: construction > identity-access > functional-design > memory.md
+
+---
+
+## Unit Completed
+**Timestamp**: 2026-09-11T20:01:47Z
+**Event**: UNIT_COMPLETED
+**Stage**: functional-design
+**Unit**: identity-access
+**Run floor**: STAGE_STARTED:2026-09-11T02:44:51Z#1
+
+---
