@@ -1,0 +1,838 @@
+{
+  "stage": "functional-design",
+  "unit": "web-application",
+  "decision_basis": "confirmed Web Application Functional Design Q1-Q10 and consolidated summary confirmation recorded on 2026-09-16",
+  "upstream_ids": [
+    "AC1.1.1",
+    "AC1.1.2",
+    "AC1.1.3",
+    "AC1.1.4",
+    "AC1.2.1",
+    "AC1.2.2",
+    "AC1.2.3",
+    "AC1.3.1",
+    "AC1.3.2",
+    "AC1.3.3",
+    "AC1.4.1",
+    "AC1.4.2",
+    "AC1.4.3",
+    "AC1.4.4",
+    "AC1.4.5",
+    "AC2.2.1",
+    "AC2.2.2",
+    "AC2.2.3",
+    "AC2.2.4",
+    "AC2.3.1",
+    "AC2.3.2",
+    "AC2.3.3",
+    "AC2.4.1",
+    "AC2.4.2",
+    "AC2.4.3",
+    "AC2.5.1",
+    "AC2.5.2",
+    "AC2.5.3",
+    "AC3.1.1",
+    "AC3.1.2",
+    "AC3.1.3",
+    "AC3.1.4",
+    "AC3.2.1",
+    "AC3.2.2",
+    "AC3.2.3",
+    "AC3.2.4",
+    "AC3.3.1",
+    "AC3.3.2",
+    "AC3.3.3",
+    "AC4.5.1",
+    "AC4.5.2",
+    "AC4.5.3",
+    "AC4.6.1",
+    "AC4.6.2",
+    "AC4.6.3",
+    "AC5.3.1",
+    "AC5.3.2",
+    "AC5.3.3",
+    "AC5.4.1",
+    "AC5.4.2",
+    "AC5.4.3",
+    "AC5.4.4",
+    "AC5.4.5",
+    "AC5.4.6",
+    "AC5.4.7",
+    "AC5.5.1",
+    "AC5.5.2",
+    "AC5.5.3",
+    "AC5.5.4",
+    "AC5.5.5",
+    "AC6.1.1",
+    "AC6.1.2",
+    "AC6.1.3",
+    "AC6.1.4",
+    "AC6.2.1",
+    "AC6.2.2",
+    "AC6.2.3",
+    "AC6.3.1",
+    "AC6.3.2",
+    "AC6.3.3",
+    "AC6.3.4",
+    "AC6.3.5",
+    "AC6.4.1",
+    "AC6.4.2",
+    "AC6.4.3",
+    "AC6.5.1",
+    "AC6.5.2",
+    "AC6.5.3",
+    "AC6.5.4",
+    "AC6.5.5",
+    "AC6.5.6",
+    "AC6.6.1",
+    "AC6.6.2",
+    "AC6.6.3",
+    "AC6.6.4",
+    "AC7.1.1",
+    "AC7.1.2",
+    "AC7.1.3",
+    "AC7.4.1",
+    "AC7.4.2",
+    "AC7.4.3",
+    "AC7.4.4",
+    "AC7.6.1",
+    "AC7.6.2",
+    "AC7.6.3",
+    "AC7.7.1",
+    "AC7.7.2",
+    "AC7.7.3",
+    "AC7.8.1",
+    "AC7.8.2",
+    "AC7.8.3",
+    "AC7.9.1",
+    "AC7.9.2",
+    "AC7.9.3",
+    "AC7.10.1",
+    "AC7.10.2",
+    "AC7.10.3",
+    "AC7.10.4",
+    "AC7.11.1",
+    "AC7.11.2",
+    "AC7.11.3",
+    "AC7.11.4",
+    "AC8.1.1",
+    "AC8.1.2",
+    "AC8.1.3",
+    "AC8.2.1",
+    "AC8.2.2",
+    "AC8.2.3",
+    "AC8.3.1",
+    "AC8.3.2",
+    "AC8.3.3",
+    "AC8.7.1",
+    "AC8.7.2",
+    "AC8.7.3",
+    "AC8.8.1",
+    "AC8.8.2",
+    "AC8.8.3",
+    "AC9.2.1",
+    "AC9.2.2",
+    "AC9.2.3",
+    "AC10.1.1",
+    "AC10.1.2",
+    "AC10.1.3",
+    "AC10.1.4",
+    "AC10.2.1",
+    "AC10.2.2",
+    "AC10.2.3",
+    "AC10.2.4"
+  ],
+  "coverage": [
+    {
+      "id": "AC1.1.1",
+      "status": "OK",
+      "target": "BR1.1"
+    },
+    {
+      "id": "AC1.1.2",
+      "status": "OK",
+      "target": "BR1.1"
+    },
+    {
+      "id": "AC1.1.3",
+      "status": "OK",
+      "target": "BR1.1"
+    },
+    {
+      "id": "AC1.1.4",
+      "status": "OK",
+      "target": "BR1.1"
+    },
+    {
+      "id": "AC1.2.1",
+      "status": "OK",
+      "target": "BR1.2"
+    },
+    {
+      "id": "AC1.2.2",
+      "status": "OK",
+      "target": "BR1.2"
+    },
+    {
+      "id": "AC1.2.3",
+      "status": "OK",
+      "target": "BR1.2"
+    },
+    {
+      "id": "AC1.3.1",
+      "status": "OK",
+      "target": "BR1.3"
+    },
+    {
+      "id": "AC1.3.2",
+      "status": "OK",
+      "target": "BR1.3"
+    },
+    {
+      "id": "AC1.3.3",
+      "status": "OK",
+      "target": "BR1.3"
+    },
+    {
+      "id": "AC1.4.1",
+      "status": "OK",
+      "target": "BR1.4"
+    },
+    {
+      "id": "AC1.4.2",
+      "status": "OK",
+      "target": "BR1.4"
+    },
+    {
+      "id": "AC1.4.3",
+      "status": "OK",
+      "target": "BR1.4"
+    },
+    {
+      "id": "AC1.4.4",
+      "status": "OK",
+      "target": "BR1.4"
+    },
+    {
+      "id": "AC1.4.5",
+      "status": "OK",
+      "target": "BR1.4"
+    },
+    {
+      "id": "AC2.2.1",
+      "status": "OK",
+      "target": "BR2.2"
+    },
+    {
+      "id": "AC2.2.2",
+      "status": "OK",
+      "target": "BR2.2"
+    },
+    {
+      "id": "AC2.2.3",
+      "status": "OK",
+      "target": "BR2.2"
+    },
+    {
+      "id": "AC2.2.4",
+      "status": "OK",
+      "target": "BR2.2"
+    },
+    {
+      "id": "AC2.3.1",
+      "status": "OK",
+      "target": "BR2.3"
+    },
+    {
+      "id": "AC2.3.2",
+      "status": "OK",
+      "target": "BR2.3"
+    },
+    {
+      "id": "AC2.3.3",
+      "status": "OK",
+      "target": "BR2.3"
+    },
+    {
+      "id": "AC2.4.1",
+      "status": "OK",
+      "target": "BR2.4"
+    },
+    {
+      "id": "AC2.4.2",
+      "status": "OK",
+      "target": "BR2.4"
+    },
+    {
+      "id": "AC2.4.3",
+      "status": "OK",
+      "target": "BR2.4"
+    },
+    {
+      "id": "AC2.5.1",
+      "status": "OK",
+      "target": "BR2.5"
+    },
+    {
+      "id": "AC2.5.2",
+      "status": "OK",
+      "target": "BR2.5"
+    },
+    {
+      "id": "AC2.5.3",
+      "status": "OK",
+      "target": "BR2.5"
+    },
+    {
+      "id": "AC3.1.1",
+      "status": "OK",
+      "target": "BR3.1"
+    },
+    {
+      "id": "AC3.1.2",
+      "status": "OK",
+      "target": "BR3.1"
+    },
+    {
+      "id": "AC3.1.3",
+      "status": "OK",
+      "target": "BR3.1"
+    },
+    {
+      "id": "AC3.1.4",
+      "status": "OK",
+      "target": "BR3.1"
+    },
+    {
+      "id": "AC3.2.1",
+      "status": "OK",
+      "target": "BR3.2"
+    },
+    {
+      "id": "AC3.2.2",
+      "status": "OK",
+      "target": "BR3.2"
+    },
+    {
+      "id": "AC3.2.3",
+      "status": "OK",
+      "target": "BR3.2"
+    },
+    {
+      "id": "AC3.2.4",
+      "status": "OK",
+      "target": "BR3.2"
+    },
+    {
+      "id": "AC3.3.1",
+      "status": "OK",
+      "target": "BR3.3"
+    },
+    {
+      "id": "AC3.3.2",
+      "status": "OK",
+      "target": "BR3.3"
+    },
+    {
+      "id": "AC3.3.3",
+      "status": "OK",
+      "target": "BR3.3"
+    },
+    {
+      "id": "AC4.5.1",
+      "status": "OK",
+      "target": "BR4.5"
+    },
+    {
+      "id": "AC4.5.2",
+      "status": "OK",
+      "target": "BR4.5"
+    },
+    {
+      "id": "AC4.5.3",
+      "status": "OK",
+      "target": "BR4.5"
+    },
+    {
+      "id": "AC4.6.1",
+      "status": "OK",
+      "target": "BR4.6"
+    },
+    {
+      "id": "AC4.6.2",
+      "status": "OK",
+      "target": "BR4.6"
+    },
+    {
+      "id": "AC4.6.3",
+      "status": "OK",
+      "target": "BR4.6"
+    },
+    {
+      "id": "AC5.3.1",
+      "status": "OK",
+      "target": "BR5.3"
+    },
+    {
+      "id": "AC5.3.2",
+      "status": "OK",
+      "target": "BR5.3"
+    },
+    {
+      "id": "AC5.3.3",
+      "status": "OK",
+      "target": "BR5.3"
+    },
+    {
+      "id": "AC5.4.1",
+      "status": "OK",
+      "target": "BR5.4"
+    },
+    {
+      "id": "AC5.4.2",
+      "status": "OK",
+      "target": "BR5.4"
+    },
+    {
+      "id": "AC5.4.3",
+      "status": "OK",
+      "target": "BR5.4"
+    },
+    {
+      "id": "AC5.4.4",
+      "status": "OK",
+      "target": "BR5.4"
+    },
+    {
+      "id": "AC5.4.5",
+      "status": "OK",
+      "target": "BR5.4"
+    },
+    {
+      "id": "AC5.4.6",
+      "status": "OK",
+      "target": "BR5.4"
+    },
+    {
+      "id": "AC5.4.7",
+      "status": "OK",
+      "target": "BR5.4"
+    },
+    {
+      "id": "AC5.5.1",
+      "status": "OK",
+      "target": "BR5.5"
+    },
+    {
+      "id": "AC5.5.2",
+      "status": "OK",
+      "target": "BR5.5"
+    },
+    {
+      "id": "AC5.5.3",
+      "status": "OK",
+      "target": "BR5.5"
+    },
+    {
+      "id": "AC5.5.4",
+      "status": "OK",
+      "target": "BR5.5"
+    },
+    {
+      "id": "AC5.5.5",
+      "status": "OK",
+      "target": "BR5.5"
+    },
+    {
+      "id": "AC6.1.1",
+      "status": "OK",
+      "target": "BR6.1"
+    },
+    {
+      "id": "AC6.1.2",
+      "status": "OK",
+      "target": "BR6.1"
+    },
+    {
+      "id": "AC6.1.3",
+      "status": "OK",
+      "target": "BR6.1"
+    },
+    {
+      "id": "AC6.1.4",
+      "status": "OK",
+      "target": "BR6.1"
+    },
+    {
+      "id": "AC6.2.1",
+      "status": "OK",
+      "target": "BR6.2"
+    },
+    {
+      "id": "AC6.2.2",
+      "status": "OK",
+      "target": "BR6.2"
+    },
+    {
+      "id": "AC6.2.3",
+      "status": "OK",
+      "target": "BR6.2"
+    },
+    {
+      "id": "AC6.3.1",
+      "status": "OK",
+      "target": "BR6.3"
+    },
+    {
+      "id": "AC6.3.2",
+      "status": "OK",
+      "target": "BR6.3"
+    },
+    {
+      "id": "AC6.3.3",
+      "status": "OK",
+      "target": "BR6.3"
+    },
+    {
+      "id": "AC6.3.4",
+      "status": "OK",
+      "target": "BR6.3"
+    },
+    {
+      "id": "AC6.3.5",
+      "status": "OK",
+      "target": "BR6.3"
+    },
+    {
+      "id": "AC6.4.1",
+      "status": "OK",
+      "target": "BR6.4"
+    },
+    {
+      "id": "AC6.4.2",
+      "status": "OK",
+      "target": "BR6.4"
+    },
+    {
+      "id": "AC6.4.3",
+      "status": "OK",
+      "target": "BR6.4"
+    },
+    {
+      "id": "AC6.5.1",
+      "status": "OK",
+      "target": "BR6.5"
+    },
+    {
+      "id": "AC6.5.2",
+      "status": "OK",
+      "target": "BR6.5"
+    },
+    {
+      "id": "AC6.5.3",
+      "status": "OK",
+      "target": "BR6.5"
+    },
+    {
+      "id": "AC6.5.4",
+      "status": "OK",
+      "target": "BR6.5"
+    },
+    {
+      "id": "AC6.5.5",
+      "status": "OK",
+      "target": "BR6.5"
+    },
+    {
+      "id": "AC6.5.6",
+      "status": "OK",
+      "target": "BR6.5"
+    },
+    {
+      "id": "AC6.6.1",
+      "status": "OK",
+      "target": "BR6.6"
+    },
+    {
+      "id": "AC6.6.2",
+      "status": "OK",
+      "target": "BR6.6"
+    },
+    {
+      "id": "AC6.6.3",
+      "status": "OK",
+      "target": "BR6.6"
+    },
+    {
+      "id": "AC6.6.4",
+      "status": "OK",
+      "target": "BR6.6"
+    },
+    {
+      "id": "AC7.1.1",
+      "status": "OK",
+      "target": "BR7.1"
+    },
+    {
+      "id": "AC7.1.2",
+      "status": "OK",
+      "target": "BR7.1"
+    },
+    {
+      "id": "AC7.1.3",
+      "status": "OK",
+      "target": "BR7.1"
+    },
+    {
+      "id": "AC7.4.1",
+      "status": "OK",
+      "target": "BR7.4"
+    },
+    {
+      "id": "AC7.4.2",
+      "status": "OK",
+      "target": "BR7.4"
+    },
+    {
+      "id": "AC7.4.3",
+      "status": "OK",
+      "target": "BR7.4"
+    },
+    {
+      "id": "AC7.4.4",
+      "status": "OK",
+      "target": "BR7.4"
+    },
+    {
+      "id": "AC7.6.1",
+      "status": "OK",
+      "target": "BR7.6"
+    },
+    {
+      "id": "AC7.6.2",
+      "status": "OK",
+      "target": "BR7.6"
+    },
+    {
+      "id": "AC7.6.3",
+      "status": "OK",
+      "target": "BR7.6"
+    },
+    {
+      "id": "AC7.7.1",
+      "status": "OK",
+      "target": "BR7.7"
+    },
+    {
+      "id": "AC7.7.2",
+      "status": "OK",
+      "target": "BR7.7"
+    },
+    {
+      "id": "AC7.7.3",
+      "status": "OK",
+      "target": "BR7.7"
+    },
+    {
+      "id": "AC7.8.1",
+      "status": "OK",
+      "target": "BR7.8"
+    },
+    {
+      "id": "AC7.8.2",
+      "status": "OK",
+      "target": "BR7.8"
+    },
+    {
+      "id": "AC7.8.3",
+      "status": "OK",
+      "target": "BR7.8"
+    },
+    {
+      "id": "AC7.9.1",
+      "status": "OK",
+      "target": "BR7.9"
+    },
+    {
+      "id": "AC7.9.2",
+      "status": "OK",
+      "target": "BR7.9"
+    },
+    {
+      "id": "AC7.9.3",
+      "status": "OK",
+      "target": "BR7.9"
+    },
+    {
+      "id": "AC7.10.1",
+      "status": "OK",
+      "target": "BR7.10"
+    },
+    {
+      "id": "AC7.10.2",
+      "status": "OK",
+      "target": "BR7.10"
+    },
+    {
+      "id": "AC7.10.3",
+      "status": "OK",
+      "target": "BR7.10"
+    },
+    {
+      "id": "AC7.10.4",
+      "status": "OK",
+      "target": "BR7.10"
+    },
+    {
+      "id": "AC7.11.1",
+      "status": "OK",
+      "target": "BR7.11"
+    },
+    {
+      "id": "AC7.11.2",
+      "status": "OK",
+      "target": "BR7.11"
+    },
+    {
+      "id": "AC7.11.3",
+      "status": "OK",
+      "target": "BR7.11"
+    },
+    {
+      "id": "AC7.11.4",
+      "status": "OK",
+      "target": "BR7.11"
+    },
+    {
+      "id": "AC8.1.1",
+      "status": "OK",
+      "target": "BR8.1"
+    },
+    {
+      "id": "AC8.1.2",
+      "status": "OK",
+      "target": "BR8.1"
+    },
+    {
+      "id": "AC8.1.3",
+      "status": "OK",
+      "target": "BR8.1"
+    },
+    {
+      "id": "AC8.2.1",
+      "status": "OK",
+      "target": "BR8.2"
+    },
+    {
+      "id": "AC8.2.2",
+      "status": "OK",
+      "target": "BR8.2"
+    },
+    {
+      "id": "AC8.2.3",
+      "status": "OK",
+      "target": "BR8.2"
+    },
+    {
+      "id": "AC8.3.1",
+      "status": "OK",
+      "target": "BR8.3"
+    },
+    {
+      "id": "AC8.3.2",
+      "status": "OK",
+      "target": "BR8.3"
+    },
+    {
+      "id": "AC8.3.3",
+      "status": "OK",
+      "target": "BR8.3"
+    },
+    {
+      "id": "AC8.7.1",
+      "status": "OK",
+      "target": "BR8.7"
+    },
+    {
+      "id": "AC8.7.2",
+      "status": "OK",
+      "target": "BR8.7"
+    },
+    {
+      "id": "AC8.7.3",
+      "status": "OK",
+      "target": "BR8.7"
+    },
+    {
+      "id": "AC8.8.1",
+      "status": "OK",
+      "target": "BR8.8"
+    },
+    {
+      "id": "AC8.8.2",
+      "status": "OK",
+      "target": "BR8.8"
+    },
+    {
+      "id": "AC8.8.3",
+      "status": "OK",
+      "target": "BR8.8"
+    },
+    {
+      "id": "AC9.2.1",
+      "status": "OK",
+      "target": "BR9.2"
+    },
+    {
+      "id": "AC9.2.2",
+      "status": "OK",
+      "target": "BR9.2"
+    },
+    {
+      "id": "AC9.2.3",
+      "status": "OK",
+      "target": "BR9.2"
+    },
+    {
+      "id": "AC10.1.1",
+      "status": "OK",
+      "target": "BR10.1"
+    },
+    {
+      "id": "AC10.1.2",
+      "status": "OK",
+      "target": "BR10.1"
+    },
+    {
+      "id": "AC10.1.3",
+      "status": "OK",
+      "target": "BR10.1"
+    },
+    {
+      "id": "AC10.1.4",
+      "status": "OK",
+      "target": "BR10.1"
+    },
+    {
+      "id": "AC10.2.1",
+      "status": "OK",
+      "target": "BR10.2"
+    },
+    {
+      "id": "AC10.2.2",
+      "status": "OK",
+      "target": "BR10.2"
+    },
+    {
+      "id": "AC10.2.3",
+      "status": "OK",
+      "target": "BR10.2"
+    },
+    {
+      "id": "AC10.2.4",
+      "status": "OK",
+      "target": "BR10.2"
+    }
+  ],
+  "reverse": []
+}

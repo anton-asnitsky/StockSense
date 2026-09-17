@@ -1,0 +1,15 @@
+{
+  "stage_slug": "functional-design",
+  "space": "default",
+  "intent": "260908-stock-sense-design",
+  "selections": [
+    {
+      "candidate_id": "c1",
+      "type": "learning",
+      "scope": "project",
+      "heading": "Corrections",
+      "text": "Treat logical unit boundaries and deployment boundaries separately when an invariant requires one transaction. U4 Retail Data and U8 Planning/Purchasing retain separate entities, schemas, and ports while sharing one v1 deployment for atomic receipts.",
+      "source": "orchestrator"
+    }
+  ]
+}

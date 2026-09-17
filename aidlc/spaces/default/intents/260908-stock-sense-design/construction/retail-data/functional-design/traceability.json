@@ -1,0 +1,694 @@
+{
+  "stage": "functional-design",
+  "unit": "retail-data",
+  "decision_basis": "confirmed Retail Data Functional Design answers dated 2026-09-12",
+  "upstream_ids": [
+    "AC1.4.1",
+    "AC1.4.2",
+    "AC1.4.3",
+    "AC1.4.4",
+    "AC1.4.5",
+    "AC2.1.1",
+    "AC2.1.2",
+    "AC2.1.3",
+    "AC2.2.1",
+    "AC2.2.2",
+    "AC2.2.3",
+    "AC2.2.4",
+    "AC2.3.1",
+    "AC2.3.2",
+    "AC2.3.3",
+    "AC2.4.1",
+    "AC2.4.2",
+    "AC2.4.3",
+    "AC2.5.1",
+    "AC2.5.2",
+    "AC2.5.3",
+    "AC3.1.1",
+    "AC3.1.2",
+    "AC3.1.3",
+    "AC3.1.4",
+    "AC3.3.1",
+    "AC3.3.2",
+    "AC3.3.3",
+    "AC4.1.1",
+    "AC4.1.2",
+    "AC4.1.3",
+    "AC4.2.1",
+    "AC4.2.2",
+    "AC4.2.3",
+    "AC4.3.1",
+    "AC4.3.2",
+    "AC4.3.3",
+    "AC4.3.4",
+    "AC4.7.1",
+    "AC4.7.2",
+    "AC4.7.3",
+    "AC5.1.1",
+    "AC5.1.2",
+    "AC5.1.3",
+    "AC5.1.4",
+    "AC5.4.1",
+    "AC5.4.2",
+    "AC5.4.3",
+    "AC5.4.4",
+    "AC5.4.5",
+    "AC5.4.6",
+    "AC5.4.7",
+    "AC6.3.1",
+    "AC6.3.2",
+    "AC6.3.3",
+    "AC6.3.4",
+    "AC6.3.5",
+    "AC6.5.1",
+    "AC6.5.2",
+    "AC6.5.3",
+    "AC6.5.4",
+    "AC6.5.5",
+    "AC6.5.6",
+    "AC6.6.1",
+    "AC6.6.2",
+    "AC6.6.3",
+    "AC6.6.4",
+    "AC7.2.1",
+    "AC7.2.2",
+    "AC7.2.3",
+    "AC7.4.1",
+    "AC7.4.2",
+    "AC7.4.3",
+    "AC7.4.4",
+    "AC7.6.1",
+    "AC7.6.2",
+    "AC7.6.3",
+    "AC8.1.1",
+    "AC8.1.2",
+    "AC8.1.3",
+    "AC8.2.1",
+    "AC8.2.2",
+    "AC8.2.3",
+    "AC8.3.1",
+    "AC8.3.2",
+    "AC8.3.3",
+    "AC8.4.1",
+    "AC8.4.2",
+    "AC8.4.3",
+    "AC8.5.1",
+    "AC8.5.2",
+    "AC8.5.3",
+    "AC8.6.1",
+    "AC8.6.2",
+    "AC8.6.3",
+    "AC9.1.1",
+    "AC9.1.2",
+    "AC9.1.3",
+    "AC9.2.1",
+    "AC9.2.2",
+    "AC9.2.3",
+    "AC9.6.1",
+    "AC9.6.2",
+    "AC9.6.3",
+    "AC9.8.1",
+    "AC9.8.2",
+    "AC9.8.3",
+    "AC9.9.1",
+    "AC9.9.2",
+    "AC9.9.3",
+    "AC10.1.1",
+    "AC10.1.2",
+    "AC10.1.3",
+    "AC10.1.4"
+  ],
+  "coverage": [
+    {
+      "id": "AC1.4.1",
+      "status": "OK",
+      "target": "BR1.1, BR1.2, BR1.3, BR1.4, BR1.5, BR1.6, BR1.7, BR1.8, BR1.11, BR5.1, BR6.2, BR9.3"
+    },
+    {
+      "id": "AC1.4.2",
+      "status": "OK",
+      "target": "BR1.1, BR1.2, BR1.3, BR1.4, BR1.5, BR1.6, BR1.7, BR1.8, BR1.11, BR5.1, BR6.2, BR9.3"
+    },
+    {
+      "id": "AC1.4.3",
+      "status": "OK",
+      "target": "BR1.1, BR1.2, BR1.3, BR1.4, BR1.5, BR1.6, BR1.7, BR1.8, BR1.11, BR5.1, BR6.2, BR9.3"
+    },
+    {
+      "id": "AC1.4.4",
+      "status": "OK",
+      "target": "BR1.1, BR1.2, BR1.3, BR1.4, BR1.5, BR1.6, BR1.7, BR1.8, BR1.11, BR5.1, BR6.2, BR9.3"
+    },
+    {
+      "id": "AC1.4.5",
+      "status": "OK",
+      "target": "BR1.1, BR1.2, BR1.3, BR1.4, BR1.5, BR1.6, BR1.7, BR1.8, BR1.11, BR5.1, BR6.2, BR9.3"
+    },
+    {
+      "id": "AC2.1.1",
+      "status": "OK",
+      "target": "BR2.3, BR2.10, BR4.3, BR4.5, BR4.6, BR4.7, BR9.1, BR9.2"
+    },
+    {
+      "id": "AC2.1.2",
+      "status": "OK",
+      "target": "BR2.3, BR2.10, BR4.3, BR4.5, BR4.7, BR9.1, BR9.2"
+    },
+    {
+      "id": "AC2.1.3",
+      "status": "OK",
+      "target": "BR2.3, BR2.10, BR4.3, BR4.5, BR4.7, BR9.1, BR9.2"
+    },
+    {
+      "id": "AC2.2.1",
+      "status": "OK",
+      "target": "BR2.1, BR2.2, BR2.4, BR2.5, BR2.6, BR2.7, BR3.1, BR3.2, BR3.3, BR3.4, BR3.5, BR3.6, BR3.7, BR7.1, BR9.3"
+    },
+    {
+      "id": "AC2.2.2",
+      "status": "OK",
+      "target": "BR2.1, BR2.2, BR2.4, BR2.5, BR2.6, BR2.7, BR3.1, BR3.2, BR3.3, BR3.4, BR3.5, BR3.6, BR3.7, BR7.1, BR9.3"
+    },
+    {
+      "id": "AC2.2.3",
+      "status": "OK",
+      "target": "BR2.1, BR2.2, BR2.4, BR2.5, BR2.6, BR2.7, BR3.1, BR3.2, BR3.3, BR3.4, BR3.5, BR3.6, BR3.7, BR7.1, BR9.3"
+    },
+    {
+      "id": "AC2.2.4",
+      "status": "OK",
+      "target": "BR2.1, BR2.2, BR2.4, BR2.5, BR2.6, BR2.7, BR3.1, BR3.2, BR3.3, BR3.4, BR3.5, BR3.6, BR3.7, BR7.1, BR9.3"
+    },
+    {
+      "id": "AC2.3.1",
+      "status": "OK",
+      "target": "BR1.2, BR2.4, BR2.5, BR2.8, BR2.12, BR5.4, BR9.3"
+    },
+    {
+      "id": "AC2.3.2",
+      "status": "OK",
+      "target": "BR1.2, BR2.4, BR2.5, BR2.8, BR2.12, BR5.4, BR9.3"
+    },
+    {
+      "id": "AC2.3.3",
+      "status": "OK",
+      "target": "BR1.2, BR2.4, BR2.5, BR2.8, BR2.12, BR5.4, BR9.3"
+    },
+    {
+      "id": "AC2.4.1",
+      "status": "OK",
+      "target": "BR5.1, BR5.2, BR5.3, BR5.4"
+    },
+    {
+      "id": "AC2.4.2",
+      "status": "OK",
+      "target": "BR5.1, BR5.2, BR5.3, BR5.4"
+    },
+    {
+      "id": "AC2.4.3",
+      "status": "OK",
+      "target": "BR5.1, BR5.2, BR5.3, BR5.4"
+    },
+    {
+      "id": "AC2.5.1",
+      "status": "OK",
+      "target": "BR1.2, BR3.1, BR3.2, BR3.3, BR3.4, BR3.5, BR3.6, BR3.7, BR4.1, BR4.2, BR4.3, BR4.4, BR4.8"
+    },
+    {
+      "id": "AC2.5.2",
+      "status": "OK",
+      "target": "BR1.2, BR3.1, BR3.2, BR3.3, BR3.4, BR3.5, BR3.6, BR3.7, BR4.1, BR4.2, BR4.3, BR4.4, BR4.8"
+    },
+    {
+      "id": "AC2.5.3",
+      "status": "OK",
+      "target": "BR1.2, BR3.1, BR3.2, BR3.3, BR3.4, BR3.5, BR3.6, BR3.7, BR4.1, BR4.2, BR4.3, BR4.4, BR4.8"
+    },
+    {
+      "id": "AC3.1.1",
+      "status": "OK",
+      "target": "BR2.10, BR3.7, BR3.8, BR6.6, BR7.4, BR9.4"
+    },
+    {
+      "id": "AC3.1.2",
+      "status": "OK",
+      "target": "BR2.10, BR3.7, BR3.8, BR6.6, BR7.4, BR9.4"
+    },
+    {
+      "id": "AC3.1.3",
+      "status": "OK",
+      "target": "BR2.10, BR3.7, BR3.8, BR6.6, BR7.4, BR9.4"
+    },
+    {
+      "id": "AC3.1.4",
+      "status": "OK",
+      "target": "BR2.10, BR3.7, BR3.8, BR6.6, BR7.4, BR9.4"
+    },
+    {
+      "id": "AC3.3.1",
+      "status": "OK",
+      "target": "BR2.10, BR2.11, BR3.8, BR6.6"
+    },
+    {
+      "id": "AC3.3.2",
+      "status": "OK",
+      "target": "BR2.10, BR2.11, BR3.8, BR6.6"
+    },
+    {
+      "id": "AC3.3.3",
+      "status": "OK",
+      "target": "BR2.10, BR2.11, BR3.8, BR6.6"
+    },
+    {
+      "id": "AC4.1.1",
+      "status": "OK",
+      "target": "BR4.5, BR4.8, BR6.1, BR6.2, BR9.2, BR9.3"
+    },
+    {
+      "id": "AC4.1.2",
+      "status": "OK",
+      "target": "BR4.5, BR4.8, BR6.1, BR6.2, BR9.2, BR9.3"
+    },
+    {
+      "id": "AC4.1.3",
+      "status": "OK",
+      "target": "BR4.5, BR4.8, BR6.1, BR6.2, BR9.2, BR9.3"
+    },
+    {
+      "id": "AC4.2.1",
+      "status": "OK",
+      "target": "BR4.4, BR4.8, BR6.1, BR6.2, BR6.4, BR6.7"
+    },
+    {
+      "id": "AC4.2.2",
+      "status": "OK",
+      "target": "BR4.4, BR4.8, BR6.1, BR6.2, BR6.4, BR6.7"
+    },
+    {
+      "id": "AC4.2.3",
+      "status": "OK",
+      "target": "BR4.4, BR4.8, BR6.1, BR6.2, BR6.4, BR6.7"
+    },
+    {
+      "id": "AC4.3.1",
+      "status": "OK",
+      "target": "BR4.3, BR4.4, BR4.7, BR6.1, BR6.7, BR6.8"
+    },
+    {
+      "id": "AC4.3.2",
+      "status": "OK",
+      "target": "BR4.3, BR4.4, BR4.7, BR6.1, BR6.7, BR6.8"
+    },
+    {
+      "id": "AC4.3.3",
+      "status": "OK",
+      "target": "BR4.3, BR4.4, BR4.7, BR6.1, BR6.7, BR6.8"
+    },
+    {
+      "id": "AC4.3.4",
+      "status": "OK",
+      "target": "BR4.3, BR4.4, BR4.7, BR6.1, BR6.7, BR6.8"
+    },
+    {
+      "id": "AC4.7.1",
+      "status": "OK",
+      "target": "BR2.9, BR2.10, BR4.7, BR6.1, BR6.3, BR6.7, BR6.8"
+    },
+    {
+      "id": "AC4.7.2",
+      "status": "OK",
+      "target": "BR2.9, BR2.10, BR4.7, BR6.1, BR6.3, BR6.7, BR6.8"
+    },
+    {
+      "id": "AC4.7.3",
+      "status": "OK",
+      "target": "BR2.9, BR2.10, BR4.7, BR6.1, BR6.3, BR6.7, BR6.8"
+    },
+    {
+      "id": "AC5.1.1",
+      "status": "OK",
+      "target": "BR1.9, BR2.7, BR2.9, BR6.1, BR6.2, BR6.3"
+    },
+    {
+      "id": "AC5.1.2",
+      "status": "OK",
+      "target": "BR1.9, BR2.7, BR2.9, BR6.1, BR6.2, BR6.3"
+    },
+    {
+      "id": "AC5.1.3",
+      "status": "OK",
+      "target": "BR1.9, BR2.7, BR2.9, BR6.1, BR6.2, BR6.3"
+    },
+    {
+      "id": "AC5.1.4",
+      "status": "OK",
+      "target": "BR1.9, BR2.7, BR2.9, BR6.1, BR6.2, BR6.3"
+    },
+    {
+      "id": "AC5.4.1",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.9, BR1.11, BR4.5, BR6.1, BR6.3, BR7.1, BR7.4"
+    },
+    {
+      "id": "AC5.4.2",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.9, BR1.11, BR4.5, BR6.1, BR6.3, BR7.1, BR7.4"
+    },
+    {
+      "id": "AC5.4.3",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.9, BR1.11, BR4.5, BR6.1, BR6.3, BR7.1, BR7.4"
+    },
+    {
+      "id": "AC5.4.4",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.9, BR1.11, BR4.5, BR6.1, BR6.3, BR7.1, BR7.4"
+    },
+    {
+      "id": "AC5.4.5",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.9, BR1.11, BR4.5, BR6.1, BR6.3, BR7.1, BR7.4"
+    },
+    {
+      "id": "AC5.4.6",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.9, BR1.11, BR4.5, BR6.1, BR6.3, BR7.1, BR7.4"
+    },
+    {
+      "id": "AC5.4.7",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.9, BR1.11, BR4.5, BR6.1, BR6.3, BR7.1, BR7.4"
+    },
+    {
+      "id": "AC6.3.1",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.8, BR1.11, BR2.7, BR2.9, BR6.3, BR7.1"
+    },
+    {
+      "id": "AC6.3.2",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.8, BR1.11, BR2.7, BR2.9, BR6.3, BR7.1"
+    },
+    {
+      "id": "AC6.3.3",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.8, BR1.11, BR2.7, BR2.9, BR6.3, BR7.1"
+    },
+    {
+      "id": "AC6.3.4",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.8, BR1.11, BR2.7, BR2.9, BR6.3, BR7.1"
+    },
+    {
+      "id": "AC6.3.5",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.8, BR1.11, BR2.7, BR2.9, BR6.3, BR7.1"
+    },
+    {
+      "id": "AC6.5.1",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.9, BR1.11, BR2.3, BR2.4, BR2.7, BR2.12, BR7.1, BR9.5, BR9.6"
+    },
+    {
+      "id": "AC6.5.2",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.9, BR1.11, BR2.3, BR2.4, BR2.7, BR2.12, BR7.1, BR9.5, BR9.6"
+    },
+    {
+      "id": "AC6.5.3",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.9, BR1.11, BR2.3, BR2.4, BR2.7, BR2.12, BR7.1, BR9.5, BR9.6"
+    },
+    {
+      "id": "AC6.5.4",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.9, BR1.11, BR2.3, BR2.4, BR2.7, BR2.12, BR7.1, BR9.5, BR9.6"
+    },
+    {
+      "id": "AC6.5.5",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.9, BR1.11, BR2.3, BR2.4, BR2.7, BR2.12, BR7.1, BR9.5, BR9.6"
+    },
+    {
+      "id": "AC6.5.6",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.9, BR1.11, BR2.3, BR2.4, BR2.7, BR2.12, BR7.1, BR9.5, BR9.6"
+    },
+    {
+      "id": "AC6.6.1",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.9, BR1.11, BR2.3, BR2.4, BR2.7, BR2.12, BR7.1, BR9.5, BR9.6"
+    },
+    {
+      "id": "AC6.6.2",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.9, BR1.11, BR2.3, BR2.4, BR2.7, BR2.12, BR7.1, BR9.5, BR9.6"
+    },
+    {
+      "id": "AC6.6.3",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.9, BR1.11, BR2.3, BR2.4, BR2.7, BR2.12, BR7.1, BR9.5, BR9.6"
+    },
+    {
+      "id": "AC6.6.4",
+      "status": "OK",
+      "target": "BR1.1, BR1.6, BR1.9, BR1.11, BR2.3, BR2.4, BR2.7, BR2.12, BR7.1, BR9.5, BR9.6"
+    },
+    {
+      "id": "AC7.2.1",
+      "status": "OK",
+      "target": "BR1.2, BR1.4, BR3.8, BR6.2, BR6.6, BR7.4, BR7.6"
+    },
+    {
+      "id": "AC7.2.2",
+      "status": "OK",
+      "target": "BR1.2, BR1.4, BR3.8, BR6.2, BR6.6, BR7.4, BR7.6"
+    },
+    {
+      "id": "AC7.2.3",
+      "status": "OK",
+      "target": "BR1.2, BR1.4, BR3.8, BR6.2, BR6.6, BR7.4, BR7.6"
+    },
+    {
+      "id": "AC7.4.1",
+      "status": "OK",
+      "target": "BR1.1, BR1.2, BR1.6, BR6.2, BR6.5, BR9.3, BR9.4"
+    },
+    {
+      "id": "AC7.4.2",
+      "status": "OK",
+      "target": "BR1.1, BR1.2, BR1.6, BR6.2, BR6.5, BR9.3, BR9.4"
+    },
+    {
+      "id": "AC7.4.3",
+      "status": "OK",
+      "target": "BR1.1, BR1.2, BR1.6, BR6.2, BR6.5, BR9.3, BR9.4"
+    },
+    {
+      "id": "AC7.4.4",
+      "status": "OK",
+      "target": "BR1.1, BR1.2, BR1.6, BR6.2, BR6.5, BR9.3, BR9.4"
+    },
+    {
+      "id": "AC7.6.1",
+      "status": "OK",
+      "target": "BR1.2, BR2.5, BR6.1, BR6.2, BR6.5, BR9.3"
+    },
+    {
+      "id": "AC7.6.2",
+      "status": "OK",
+      "target": "BR1.2, BR2.5, BR6.1, BR6.2, BR6.5, BR9.3"
+    },
+    {
+      "id": "AC7.6.3",
+      "status": "OK",
+      "target": "BR1.2, BR2.5, BR6.1, BR6.2, BR6.5, BR9.3"
+    },
+    {
+      "id": "AC8.1.1",
+      "status": "OK",
+      "target": "BR1.3, BR2.4, BR3.1, BR9.1, BR9.4, BR9.5, BR9.6"
+    },
+    {
+      "id": "AC8.1.2",
+      "status": "OK",
+      "target": "BR1.3, BR2.4, BR3.1, BR9.1, BR9.4, BR9.5, BR9.6"
+    },
+    {
+      "id": "AC8.1.3",
+      "status": "OK",
+      "target": "BR1.3, BR2.4, BR3.1, BR9.1, BR9.4, BR9.5, BR9.6"
+    },
+    {
+      "id": "AC8.2.1",
+      "status": "OK",
+      "target": "BR7.5, BR9.4"
+    },
+    {
+      "id": "AC8.2.2",
+      "status": "OK",
+      "target": "BR7.5, BR9.4"
+    },
+    {
+      "id": "AC8.2.3",
+      "status": "OK",
+      "target": "BR7.5, BR9.4"
+    },
+    {
+      "id": "AC8.3.1",
+      "status": "OK",
+      "target": "BR8.5, BR9.1, BR9.3"
+    },
+    {
+      "id": "AC8.3.2",
+      "status": "OK",
+      "target": "BR8.5, BR9.1, BR9.3"
+    },
+    {
+      "id": "AC8.3.3",
+      "status": "OK",
+      "target": "BR8.5, BR9.1, BR9.3"
+    },
+    {
+      "id": "AC8.4.1",
+      "status": "OK",
+      "target": "BR1.3, BR1.4, BR6.4, BR7.5"
+    },
+    {
+      "id": "AC8.4.2",
+      "status": "OK",
+      "target": "BR1.3, BR1.4, BR6.4, BR7.5"
+    },
+    {
+      "id": "AC8.4.3",
+      "status": "OK",
+      "target": "BR1.3, BR1.4, BR6.4, BR7.5"
+    },
+    {
+      "id": "AC8.5.1",
+      "status": "OK",
+      "target": "BR7.1, BR7.3, BR7.4, BR7.5"
+    },
+    {
+      "id": "AC8.5.2",
+      "status": "OK",
+      "target": "BR7.1, BR7.3, BR7.4, BR7.5"
+    },
+    {
+      "id": "AC8.5.3",
+      "status": "OK",
+      "target": "BR7.1, BR7.3, BR7.4, BR7.5"
+    },
+    {
+      "id": "AC8.6.1",
+      "status": "OK",
+      "target": "BR8.2, BR8.5"
+    },
+    {
+      "id": "AC8.6.2",
+      "status": "OK",
+      "target": "BR8.2, BR8.5"
+    },
+    {
+      "id": "AC8.6.3",
+      "status": "OK",
+      "target": "BR8.2, BR8.5"
+    },
+    {
+      "id": "AC9.1.1",
+      "status": "OK",
+      "target": "BR7.1, BR7.2, BR7.8"
+    },
+    {
+      "id": "AC9.1.2",
+      "status": "OK",
+      "target": "BR7.1, BR7.2, BR7.8"
+    },
+    {
+      "id": "AC9.1.3",
+      "status": "OK",
+      "target": "BR7.1, BR7.2, BR7.8"
+    },
+    {
+      "id": "AC9.2.1",
+      "status": "OK",
+      "target": "BR6.2, BR7.6, BR7.7, BR7.8"
+    },
+    {
+      "id": "AC9.2.2",
+      "status": "OK",
+      "target": "BR6.2, BR7.6, BR7.7, BR7.8"
+    },
+    {
+      "id": "AC9.2.3",
+      "status": "OK",
+      "target": "BR6.2, BR7.6, BR7.7, BR7.8"
+    },
+    {
+      "id": "AC9.6.1",
+      "status": "OK",
+      "target": "BR7.3, BR7.4, BR8.5, BR8.6"
+    },
+    {
+      "id": "AC9.6.2",
+      "status": "OK",
+      "target": "BR7.3, BR7.4, BR8.5, BR8.6"
+    },
+    {
+      "id": "AC9.6.3",
+      "status": "OK",
+      "target": "BR7.3, BR7.4, BR8.5, BR8.6"
+    },
+    {
+      "id": "AC9.8.1",
+      "status": "OK",
+      "target": "BR1.9, BR1.10, BR8.1, BR8.2, BR8.3, BR8.4, BR5.1, BR5.3"
+    },
+    {
+      "id": "AC9.8.2",
+      "status": "OK",
+      "target": "BR1.9, BR1.10, BR8.1, BR8.2, BR8.3, BR8.4, BR5.1, BR5.3"
+    },
+    {
+      "id": "AC9.8.3",
+      "status": "OK",
+      "target": "BR1.9, BR1.10, BR8.1, BR8.2, BR8.3, BR8.4, BR5.1, BR5.3"
+    },
+    {
+      "id": "AC9.9.1",
+      "status": "OK",
+      "target": "BR8.5, BR8.6, BR8.7, BR8.8"
+    },
+    {
+      "id": "AC9.9.2",
+      "status": "OK",
+      "target": "BR8.5, BR8.6, BR8.7, BR8.8"
+    },
+    {
+      "id": "AC9.9.3",
+      "status": "OK",
+      "target": "BR8.5, BR8.6, BR8.7, BR8.8"
+    },
+    {
+      "id": "AC10.1.1",
+      "status": "OK",
+      "target": "BR2.12, BR6.1, BR9.1, BR9.2, BR9.3, BR9.4, BR9.5"
+    },
+    {
+      "id": "AC10.1.2",
+      "status": "OK",
+      "target": "BR2.12, BR6.1, BR9.1, BR9.2, BR9.3, BR9.4, BR9.5"
+    },
+    {
+      "id": "AC10.1.3",
+      "status": "OK",
+      "target": "BR2.12, BR6.1, BR9.1, BR9.2, BR9.3, BR9.4, BR9.5"
+    },
+    {
+      "id": "AC10.1.4",
+      "status": "OK",
+      "target": "BR2.12, BR6.1, BR9.1, BR9.2, BR9.3, BR9.4, BR9.5"
+    }
+  ],
+  "reverse": []
+}

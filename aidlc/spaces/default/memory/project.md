@@ -100,3 +100,4 @@ under the owner's instruction to choose and install the best-fitting framework
 <!-- Project-specific corrections from human feedback. -->
 <!-- Format: NEVER/ALWAYS [behavior] (learned [date]) -->
 - Manage each user story on its own short-lived branch and pull request; treat Bolts as delivery milestones, and deliver shared cross-story prerequisites through separate focused branches. (learned 2026-09-11) <!-- cid:260908-stock-sense-design:delivery-planning:2dd8a0fbb60d7cee2cbd21abf049e86270f479c74ed892a92e5f8ca08bd228be -->
+- Treat logical unit boundaries and deployment boundaries separately when an invariant requires one transaction. U4 Retail Data and U8 Planning/Purchasing retain separate entities, schemas, and ports while sharing one v1 deployment for atomic receipts. (learned 2026-09-16) <!-- cid:260908-stock-sense-design:functional-design:704a5d08ae8cd31df12acda1d953cdc1872af03a8608e88007fad28a603b8bf7 -->
