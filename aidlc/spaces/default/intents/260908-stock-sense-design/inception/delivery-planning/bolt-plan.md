@@ -1,8 +1,9 @@
 # StockSense Bolt plan
 
-Date: 2026-09-11
+Date: 2026-09-25
 Stage: Delivery Planning
-Status: Generated from the confirmed Delivery Planning summary
+Status: Reconciled with the approved C01-C27 contract, including C07/C10/C13 finalization and product-set rules
+Summary confirmation: Looks correct (2026-09-25)
 
 ## Purpose and sources
 
@@ -15,6 +16,7 @@ Sources: `requirements.md`, `stories.md`, `mockups.md`, `components.md`, `unit-o
 - Bolt 1 is the approved **walking skeleton**, a minimal end-to-end slice that touches the essential layers and proves they work together.
 - A large unit may receive a thin increment in an early Bolt and completion work later. The unit has one owner and is complete only when its full responsibilities and dependency-backed integrations satisfy the final Definition of Done.
 - A contract-backed test double may prove a consumer path early. It never counts an unfinished provider or integration as complete.
+- U14 owns reusable broker mechanics for its approved consumers. U3 and U4 stay upstream bootstrap publishers with service-owned C23-conformant adapters; they do not acquire U14 dependencies. Domain units retain message meaning, authorization, outbox/inbox state, and atomic business effects. U15 coordinates recovery; each participant retains its own state, checkpoint, and generation guard.
 - The unit DAG remains authoritative. A Bolt may start only the portions whose dependencies are available through completed providers or explicit U1 contracts and test doubles.
 - Controlled parallel work is limited to dependency-ready units with disjoint files. Resource-heavy cluster, ML, model, recovery, and performance checks run serially within the 16 GB RAM and 3 CPU budget.
 - Every Bolt leaves the repository buildable, testable, deployable at its demonstrated scope, and traceable to the pinned Git revision.
@@ -23,13 +25,13 @@ Sources: `requirements.md`, `stories.md`, `mockups.md`, `components.md`, `unit-o
 
 | Bolt | Name | Primary unit increments | Expected outcome |
 | --- | --- | --- | --- |
-| 1 | Runnable retail walking skeleton | U1, U2, U3, U4, U8, U10, U11, U12, U13 | One safe end-to-end purchasing journey runs locally |
-| 2 | Platform trust, isolation, and tenant mobility | U1, U2, U3, U4, U10, U13 | Isolation, secrets, placement migration, and resource fit are proven |
-| 3 | Supplier knowledge and retrieval | U5 with U4/U10-U13 integration | Supplier evidence is ingested, indexed, cited, and rebuildable |
-| 4 | Reproducible model lifecycle and forecasting | U6, U7 with U4/U5/U10-U13 integration | Models and forecasts are reproducible, governed, and observable |
-| 5 | Complete replenishment and governed purchasing | U8 with U4/U5/U7/U10-U13 integration | Planning and purchasing rules survive stale data, retries, and races |
-| 6 | Safe agentic assistance | U9 with U4/U5/U7/U8/U10-U13 integration | A local agent explains and drafts actions without gaining authority |
-| 7 | Portfolio evidence, operations, and clean-room release | U2, U10-U13 across the assembled system | A reviewer reproduces and verifies the complete portfolio |
+| 1 | Runnable retail walking skeleton | U1, U2, U3, U4, U8, U10-U14 thin increments, excluding U15 | One safe end-to-end purchasing journey runs locally with U3/U4 service-owned publishers and U14-backed U10 consumption |
+| 2 | Platform trust, isolation, and tenant mobility | U1-U4, U10, U13, U14 completion; U15 foundation | Isolation, secrets, placement migration, broker conformance, and resource fit are proven |
+| 3 | Supplier knowledge and retrieval | U5 with U4/U10-U13 and U15 participant integration | Supplier evidence is ingested, indexed, cited, and rebuildable |
+| 4 | Reproducible model lifecycle and forecasting | U6, U7 with U4/U5/U10-U13 and U15 participant integration | Models and forecasts are reproducible, governed, and observable |
+| 5 | Complete replenishment and governed purchasing | U8 with U4/U5/U7/U10-U13 and U15 participant integration | Planning and purchasing rules survive stale data, retries, and races |
+| 6 | Safe agentic assistance | U9 with U4/U5/U7/U8/U10-U13 and U15 participant integration | A local agent explains and drafts actions without gaining authority |
+| 7 | Portfolio evidence, operations, and clean-room release | U2, U10-U13, U15 across the assembled system | A reviewer reproduces the portfolio and verifies complete recovery |
 
 ## Unit final acceptance map
 
@@ -37,25 +39,45 @@ Early Bolts may deliver contract-backed slices of a unit, but each Unit of Work 
 
 | Unit | Final acceptance Bolt | Outstanding work before final acceptance |
 | --- | --- | --- |
-| U1 Contracts | 2 | Canonical package, validation, compatibility policy, examples, and generated-client inputs for every approved boundary |
+| U1 Contracts | 2 | Source-bound canonical release package covering C01-C27, required kinds and sidecars, validated digests, compatibility/evidence results, generated-output manifests, C07's typed shared-transaction port and fixtures, and C10/C13 typed history/product-set schemas |
 | U2 Platform Infrastructure | 7 | All runtime packaging, trusted delivery, recovery, resource evidence, and clean-checkout operation against the assembled system |
-| U3 Identity Access | 2 | Local identity, BFF/OIDC integration, persistent keys, machine identity, negative tests, and optional Google seam |
-| U4 Retail Data | 2 | Tenant/placement authority, inventory/demand behavior, routine/RLS enforcement, cache degradation, and tenant extraction |
+| U3 Identity Access | 2 | Local identity, BFF/OIDC integration, persistent keys, machine identity, global/tenant audit publishing, revocable platform-Operator grant and C02 check, C24 participant behavior, negative tests, and optional Google seam |
+| U4 Retail Data | 2 | Tenant/placement authority, inventory/demand behavior, routine/RLS enforcement, service-owned audit publishing, cache degradation, and tenant extraction |
 | U5 Supplier Knowledge | 3 | Ingestion, provenance, accepted terms, retrieval, deletion reconciliation, and embedding comparison |
-| U6 Model Lifecycle | 4 | Leakage-safe datasets, baselines/candidates, evaluation, MLflow lineage, promotion, rollback, and immutable artifacts |
-| U7 Forecasting | 4 | Idempotent production, 28-day series, promoted-model serving, freshness, and unavailable/failure behavior |
+| U6 Model Lifecycle | 4 | Leakage-safe datasets, baselines/candidates, evaluation, MLflow lineage, immutable artifacts, fenced C07 finalization, pin/drain coordination, and atomic promotion/rollback with evaluation-lease completion |
+| U7 Forecasting | 4 | Idempotent production, immutable run/pin/request/attempt binding, same-transaction publication and pin closure, typed run history, bounded product-set coverage, 28-day series, freshness, and unavailable/failure behavior |
 | U8 Planning and Purchasing | 5 | Reviews/quotas/scenarios, evidence, purchasing transitions, concurrency, idempotency, and receipt invariants |
 | U9 Assistant | 6 | Local Strands/Qwen operation, citations, safe tools, recovery, provider seam, and adversarial evaluation |
-| U10 Audit Evidence | 7 | Every U3-U9 publisher integrated, with query authorization, lag, replay, retention, and rebuild evidence |
-| U11 Web BFF | 7 | Every user-facing provider integrated with session, tenant, CSRF, error, and composition behavior |
-| U12 Web Application | 7 | Every approved browser journey and state integrated, accessible, and evidenced |
+| U10 Audit Evidence | 7 | Every U3-U9 and U15 publisher integrated, with tenant/global query authorization, fresh U3 platform-grant checks, lag, replay, retention, and rebuild evidence |
+| U11 Web BFF | 7 | Every user-facing provider integrated with session, tenant, CSRF, distinct no-store platform audit route, error, and composition behavior |
+| U12 Web Application | 7 | Every approved browser journey and state, including the separate platform-operations audit view, integrated, accessible, and evidenced |
 | U13 Demo Evidence | 7 | Clean-room scenario, measurements, recovery limits, traceability, and immutable evidence for the assembled system |
+| U14 Messaging Platform | 2 | AsyncAPI-aligned envelope; .NET/Python adapters; publisher confirms, retry/DLQ/replay, duplicate, ordering, size, and telemetry conformance |
+| U15 Recovery Coordination | 7 | Authoritative run state, eleven-participant registration and deadlines, checkpoint closure, signed manifest verification, fencing, reconciliation, operator control, and terminal outcomes |
+
+## U15 participant rollout
+
+Each participant owns its durable checkpoint and monotonic generation guard. U15 coordinates the roster and barriers but cannot treat a fixture as a registered participant at final acceptance. The C26 roster fixes these eleven participants and their deadline classes:
+
+| C26 class | Participant | Owning unit | First integrated Bolt |
+| --- | --- | --- | ---: |
+| A | identity-access | U3 | 2 |
+| A | tenant-directory | U4 | 2 |
+| B | inventory | U4 | 2 |
+| B | purchasing | U8 | 5 |
+| C | demand-history | U4 | 2 |
+| C | supplier-knowledge | U5 | 3 |
+| C | model-lifecycle | U6 | 4 |
+| C | forecasting | U7 | 4 |
+| C | replenishment | U8 | 5 |
+| C | assistant | U9 | 6 |
+| C | audit-evidence | U10 | 7 |
 
 ## Bolt 1 — Runnable retail walking skeleton
 
 **Walking skeleton:** Yes.
 
-**Included units:** Thin increments of U1 Contracts, U2 Platform Infrastructure, U3 Identity Access, U4 Retail Data, U8 Planning and Purchasing, U11 Web BFF, U12 Web Application, and U13 Demo Evidence, plus a minimal generic U10 Audit Evidence projection. U5 Supplier Knowledge and U7 Forecasting behavior is represented only by U1-conformant deterministic fixtures.
+**Included units:** Thin increments of U1 Contracts, U2 Platform Infrastructure, U3 Identity Access, U4 Retail Data, U8 Planning and Purchasing, U11 Web BFF, U12 Web Application, U13 Demo Evidence, and U14 Messaging Platform, plus a minimal generic U10 Audit Evidence projection. U5 Supplier Knowledge, U7 Forecasting, and U15 Recovery Coordination behavior is represented only by U1-conformant deterministic fixtures.
 
 **Definition of Done:**
 
@@ -64,8 +86,9 @@ Early Bolts may deliver contract-backed slices of a unit, but each Unit of Work 
 - A deterministic inventory file is imported through U11/U4, validated, persisted through Dapper/Npgsql stored routines, and shown in the Ant Design UI.
 - A deterministic baseline produces a replenishment recommendation and purchase draft.
 - A manager approves the draft; an authorized user records a simulated receipt; stock, audit, and outbox effects commit atomically.
-- RabbitMQ carries the authoritative audit event to a minimal idempotent U10 projection with correlation evidence.
+- U3 emits redacted retailerless identity decisions through the closed C01 global identity-audit envelope; U4 emits tenant audit events with real retailer and placement context. Their service-owned publisher/outbox adapters meet the applicable C23 profile without a U14 dependency. RabbitMQ delivers through U14's thin U10 consumer/inbox adapter to a minimal idempotent projection with correlation evidence; final global-read authorization follows in Bolt 2.
 - Contract, migration, unit, integration, tenant-negative, and smoke checks for this slice pass; no direct SQL, cross-unit storage access, cloud credential, external LLM, or GPU is required.
+- U1's thin contract package is a `candidate` bound to an immutable Git `sourceRevision`. Included canonical documents and governed sidecars identify their owner, boundary IDs, version, path, and verified `sha256:` digest; the demonstrated clients are generated from validated inputs before integration.
 
 **Confidence hypothesis:** The selected architecture can complete one safe business journey within the local resource envelope before ML, RAG, and agent complexity are introduced.
 
@@ -75,7 +98,7 @@ Early Bolts may deliver contract-backed slices of a unit, but each Unit of Work 
 
 **Walking skeleton:** No.
 
-**Included units:** Final acceptance work for U1, U3, and U4; foundation and hardening increments for U2, U10, and U13. U2, U10, and U13 remain open until Bolt 7 because their final evidence depends on the assembled system.
+**Included units:** Final acceptance work for U1, U3, U4, and U14; foundation and hardening increments for U2, U10, U13, and U15. U2, U10, U13, and U15 remain open until Bolt 7 because their final evidence depends on the assembled system.
 
 **Definition of Done:**
 
@@ -83,18 +106,22 @@ Early Bolts may deliver contract-backed slices of a unit, but each Unit of Work 
 - Duende local accounts, BFF/PKCE, machine scopes/audiences, key persistence/rotation seams, and explicit Google-linking rules pass negative tests.
 - Tenant boundaries hold across HTTP, stored routines/RLS, pooled connections, messages, caches, documents, vectors, artifacts, and audit queries.
 - One retailer moves from shared placement to a dedicated database without stale jobs, routing generations, or cross-tenant exposure.
+- U14 passes .NET/Python envelope, publisher-confirm, retry/DLQ/replay, duplicate, ordering, payload-size, and telemetry conformance tests. U3/U4 service-owned publisher adapters separately pass every applicable C22 fixture against the same protocol version; U13 records their results alongside U14's package evidence. U15 establishes routine-backed run state, registration, fencing, retailer-Operator authority, and the U3/U4 participant path used by tenant migration; the complete participant roster is deferred to Bolt 7.
+- U3 provisions a revocable human platform-Operator grant and serves the C02 current-grant check. U10's distinct C17 global identity-audit query validates the BFF-held delegated human token and checks that grant for every page. U11/U12 expose the separate no-store C18 platform view. Retailer-only Operators, machine principals, revoked grants, wrong audience/client/scope, unavailable U3 checks, and tenant-query leakage are denied in tests.
+- U1 publishes a validated `release` manifest with exactly one C01-C27 coverage row per boundary, the fixed canonical-kind and governed-sidecar policy, clean reconstruction from `sourceRevision`, generated-output manifests for declared consumers, compatibility assessments, validation runs, and evidence records. Later provider changes require a newly validated package version.
+- U3 Identity Access and U4 Tenant Directory provide C24's durable synchronous bootstrap behavior; U15 consumes it. Contract tests cover required `X-Correlation-ID` and `Idempotency-Key`, exact durable `200` replay, typed `401`/`403`/`409`/`422`/`503` problems, close without a matching checkpoint, late prepare after abort, changed-payload idempotency conflicts, and `503 RECOVERY_PERSISTENCE_UNAVAILABLE` without a fabricated durable result. A participant `200` cannot complete the coordinator's recovery run.
 - Secret synchronization and workload-scoped credential reload are demonstrated without secrets in Git or Terraform state.
 - Measured sustained and peak workload fit within 16 GB RAM and 3 CPU or produce an explicit failed/limited result requiring owner review.
 
-**Confidence hypothesis:** Isolation, secrets, routing generations, and local resource limits can support the distributed design without a later platform rewrite.
+**Confidence hypothesis:** Isolation, secrets, routing generations, shared broker conformance, foundational recovery fencing, and local resource limits can support the distributed design without a later platform rewrite.
 
-**Expected demo:** Run cross-tenant attacks, migrate one retailer placement, rotate a workload secret, inspect audit isolation, and display measured cluster usage.
+**Expected demo:** Run cross-tenant and retailer-only Operator attacks, migrate one retailer placement, rotate a workload secret, inspect isolated tenant and platform audit views, and display measured cluster usage.
 
 ## Bolt 3 — Supplier knowledge and retrieval
 
 **Walking skeleton:** No.
 
-**Included units:** U5 Supplier Knowledge, with contract integration increments in U4, U10, U11, U12, and U13.
+**Included units:** U5 Supplier Knowledge, with contract integration increments in U4, U10, U11, U12, U13, and U15's U5 participant registration/checkpoint/generation guard.
 
 **Definition of Done:**
 
@@ -113,7 +140,7 @@ Early Bolts may deliver contract-backed slices of a unit, but each Unit of Work 
 
 **Walking skeleton:** No.
 
-**Included units:** U6 Model Lifecycle and U7 Forecasting, with U4/U5 data contracts and U10-U13 evidence integrations.
+**Included units:** U6 Model Lifecycle and U7 Forecasting, with U4/U5 data contracts, U10-U13 evidence integrations, and U15 participant registration/checkpoint/generation guards for U6/U7.
 
 **Definition of Done:**
 
@@ -122,6 +149,9 @@ Early Bolts may deliver contract-backed slices of a unit, but each Unit of Work 
 - MAE, WAPE, lost units, lost-demand rate, and average daily closing inventory value match the approved hand-check fixtures and zero-denominator rules.
 - Artifacts are immutable and checksummed; failed candidates remain visible; promotion and rollback are audited.
 - Daily forecast requests are idempotent and retailer-local; 28-day output exposes model, data, configuration, freshness, stale, unavailable, and failed states.
+- C07 binds each run, admitted route pin, request, first queued attempt and first lease to immutable identifiers; only a terminal or fenced prior lease permits a distinct retry attempt. U7's owner publication, audit and outbox, U6 lease finalization, and U6-owned pin closure commit in one retailer-local transaction. Exact replay returns the committed result; mismatched identities and pre/postcommit failure races cannot duplicate publication.
+- Pin admission and route draining serialize on the same guard; promotion/rollback waits for verified pin closure and atomically completes its evaluation lease with the route change. Central heavy-work slot reassignment waits for retailer-local terminal proof; elapsed time alone never clears a pin or slot.
+- C10 exposes typed run history. C10/C13 accept distinct bounded product sets and return an exact covered/unavailable partition with per-product reasons; only covered products have 28 dated values. Stale, unpublished and failed results remain explicit through U8 planning and U11/U12 browser integration.
 - CPU inference is the required path; any AMD GPU result is labeled optional and measured.
 
 **Confidence hypothesis:** StockSense can compare, promote, serve, and roll back models reproducibly without leakage, silent substitution, or unsupported hardware assumptions.
@@ -132,7 +162,7 @@ Early Bolts may deliver contract-backed slices of a unit, but each Unit of Work 
 
 **Walking skeleton:** No.
 
-**Included units:** Completion increment for U8, with U4 inventory, U5 terms, U7 forecasts, and U10-U13 integration.
+**Included units:** Completion increment for U8, with U4 inventory, U5 terms, U7 forecasts, U10-U13 integration, and U15 participant registration/checkpoint/generation guard for U8.
 
 **Definition of Done:**
 
@@ -151,7 +181,7 @@ Early Bolts may deliver contract-backed slices of a unit, but each Unit of Work 
 
 **Walking skeleton:** No.
 
-**Included units:** U9 Assistant, with governed tools in U4/U5/U7/U8 and browser/audit/evidence increments in U10-U13.
+**Included units:** U9 Assistant, with governed tools in U4/U5/U7/U8, browser/audit/evidence increments in U10-U13, and U15 participant registration/checkpoint/generation guard for U9.
 
 **Definition of Done:**
 
@@ -171,7 +201,7 @@ Early Bolts may deliver contract-backed slices of a unit, but each Unit of Work 
 
 **Walking skeleton:** No.
 
-**Included units:** Final acceptance for U2, U10, U11, U12, and U13 across all assembled runtime units, plus release-level verification of U1 and U3-U9 without reopening their owned implementation.
+**Included units:** Final acceptance for U2, U10, U11, U12, U13, and U15 across all assembled runtime units, plus release-level verification of U1, U3-U9, and U14 without reopening their owned implementation.
 
 **Definition of Done:**
 
@@ -179,10 +209,13 @@ Early Bolts may deliver contract-backed slices of a unit, but each Unit of Work 
 - CI validates applicable builds, tests, 80% line-coverage floors, contracts, migrations, generated clients, security checks, images, and evidence links.
 - Deployment uses a trusted isolated local runner and immutable revision; public pull-request code cannot execute there.
 - Backup/restore, outbox/inbox replay, projection rebuild, application/model rollback, retention, telemetry loss, and tenant-placement recovery are demonstrated with limitations.
+- U15 closes the approved eleven-participant recovery roster and checkpoint set, verifies immutable `sha256:` manifest digests and operator confirmation binding, and proves fail-closed terminal fencing/reconciliation through U14. U11/U12 expose only the authorized browser recovery projection; U10/U13 retain audit and immutable evidence. Tests measure the fixed 24-hour RPO, two-hour RTO, and 30-day backup retention, reporting failed or limited evidence rather than silently relaxing them.
+- U13's clean-room evidence reruns the full C01 release validation, U3/U4 bootstrap-publisher and U14 package conformance, global identity-audit access denials, and C24 provider/consumer failure-path fixtures against the same pinned Git revision used for the recovery demonstration.
+- U13 reruns C07's positive/negative finalizer, pin/drain, attempt-binding and lease/route crash-race fixtures, plus C10/C13 typed history and bounded product-set coverage through the assembled forecast, planning and browser paths.
 - An independent clean checkout completes setup and the full scenario without owner credentials, cached models, owner GPU, or cloud spending.
 - Evidence binds FR/NFR IDs to stories, units, designs, tests, measurements, recovery results, and immutable artifact checksums.
 
-**Confidence hypothesis:** A reviewing specialist can reproduce and verify the complete AI-DLC, application, data, ML/MLOps, agentic, DevOps, and cloud-native portfolio claims.
+**Confidence hypothesis:** A reviewing specialist can reproduce and verify the complete AI-DLC, application, data, ML/MLOps, agentic, DevOps, cloud-native, and eleven-participant recovery claims against the fixed recovery targets.
 
 **Expected demo:** Run the clean-room setup, complete the business and agent journeys, trigger recovery cases, inspect measured latency/resources, and navigate requirement-to-evidence links.
 

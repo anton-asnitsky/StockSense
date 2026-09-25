@@ -1,10 +1,10 @@
 # StockSense refined mockups questions
 
-Date: 2026-09-09
+Date: 2026-09-22
 Stage: Refined Mockups
-Status: Awaiting consolidated summary confirmation
+Status: Reconciled design plan; confirmation state recorded below
 
-The classic lifecycle intentionally skipped rough mockups. These questions establish the interaction direction directly from the approved requirements and user stories. Confirmed constraints already carried forward: React with TypeScript, Vite, Ant Design, English-first UI, role and retailer isolation, explicit loading/empty/error/stale states, and human approval for purchasing actions.
+The classic lifecycle intentionally skipped rough mockups. These questions establish the interaction direction directly from the approved requirements and user stories. Confirmed constraints already carried forward: React with TypeScript, Vite, Ant Design, English-first UI, role and retailer isolation, explicit loading/empty/error/stale states, and human approval for purchasing actions. The original guided answers remain valid; this revision reconciles them with the owner-approved 67-story backlog.
 
 ## Q1. Application shell and navigation
 
@@ -107,7 +107,7 @@ Forecast comparison, inventory trajectories, and evaluation evidence need access
 
 ## Q10. Mockup coverage depth
 
-There are 63 approved stories, including operational and API-focused work that does not need a unique screen. How detailed should this stage make the visual artifacts?
+There are 67 approved stories, including operational and API-focused work that does not need a unique screen. How detailed should this stage make the visual artifacts?
 
 - A. Complete key journeys plus reusable screen/state patterns (Recommended) — mock up every distinct user workflow and map remaining stories to those patterns or to non-UI handling.
 - B. One distinct screen or state diagram for every story — maximum explicit coverage with a much larger, repetitive artifact.
@@ -116,7 +116,55 @@ There are 63 approved stories, including operational and API-focused work that d
 
 [Answer]: A. Complete key journeys plus reusable screen/state patterns (Recommended) — 2026-09-10T08:26:42Z; **Mode:** guided
 
+## Confirmed backlog reconciliation
+
+The approved User Stories revision adds no new navigation, visual-theme or
+responsive-policy choice. The refined artifacts will retain Q1-Q10 and make the
+following observable changes:
+
+- Update coverage from 63 to 67 stories and 242 acceptance criteria.
+- Add Supplier Knowledge cache/active-route status to supplier and operator views,
+  including fail-closed retrieval and authorized reconciliation/rollback.
+- Add heavy-work lease/queue status and fencing evidence to model operations,
+  showing blocked prerequisites without implying a runnable job.
+- Add a recovery-barrier workspace with run identity, phase, checkpoint,
+  PostgreSQL/RabbitMQ participants, fenced scope, explicit destructive-action
+  confirmation, and Succeeded/Failed/Aborted/Safely resumed outcomes.
+- Add browser compatibility evidence with exact version, viewport, zoom/reflow,
+  keyboard/focus and unsupported-result reporting.
+- Strengthen purchasing handoff: Submitted confirmation, submitter/time/locked
+  lines/next actor, Manager pending-decision visibility, decision actor/time/reason,
+  and explicit acting role when one person has both roles.
+- Add keyboard-safe stale edit/submission/approval recovery that identifies changed
+  fields, preserves entered context, links current evidence and offers a linked
+  replacement Draft without mutating the source.
+- Add payload-complete assistant Draft confirmation with Confirm/Cancel, stale
+  invalidation and `Create Draft only`; interrupted work shows Completed,
+  Incomplete or Outcome unknown and reconciles before retry.
+- Surface typed cache, authority, secret, stale-placement and idempotency-expiry
+  outcomes with prohibited side effects and safe next actions.
+- Carry the shared WCAG 2.2 AA, deterministic concurrency-evidence and
+  `blocked-prerequisite` rules into every affected screen/state specification.
+- Define US5.3 buffer-scenario comparison with inherited versus explicit-zero
+  overrides, common versioned inputs, deterministic differences, stale-result
+  protection, responsive layout and keyboard behavior; separate US5.3, US5.4
+  and US5.5 interaction traceability.
+
 ## Consolidated Summary Confirmation
+
+- Preserve the accepted professional analytical direction: role-aware sidebar,
+  retailer/context bar, exception dashboard, dense Ant Design tables with detail
+  drawers, master-detail purchasing, contextual assistant panel plus workspace,
+  Ant Design Charts and WCAG 2.2 AA.
+- Keep full desktop/tablet workflows and mobile read/review essentials; unsupported
+  dense authoring states provide clear guidance rather than broken controls.
+- Refine complete key journeys and reusable states rather than creating one screen
+  per story. Explicitly map all 67 stories to a UI surface or non-UI evidence path.
+- Apply every item in the confirmed backlog reconciliation above without changing
+  domain authority: APIs remain authoritative and the assistant never approves or
+  silently commits purchasing actions.
+
+Does this all look correct before I revise the refined mockup artifacts?
 
 - Looks correct
 - Request changes

@@ -1,7 +1,13 @@
 {
   "schema_version": "1.0",
   "stage": "domain-design",
-  "generated_on": "2026-09-10",
+  "generated_on": "2026-09-23",
+  "summary_confirmation": {
+    "decision": "Looks correct",
+    "confirmed_on": "2026-09-23",
+    "cycle": "r02-r09-r10-r11-resolution",
+    "receipt": "recorded after owner response on 2026-09-23"
+  },
   "sources": {
     "requirements": "../requirements-analysis/requirements.md",
     "stories": "../user-stories/stories.md",
@@ -22,6 +28,7 @@
     "US3.1",
     "US3.2",
     "US3.3",
+    "US3.4",
     "US4.1",
     "US4.2",
     "US4.3",
@@ -29,6 +36,7 @@
     "US4.5",
     "US4.6",
     "US4.7",
+    "US4.8",
     "US5.1",
     "US5.2",
     "US5.3",
@@ -70,8 +78,10 @@
     "US9.8",
     "US9.9",
     "US9.10",
+    "US9.11",
     "US10.1",
-    "US10.2"
+    "US10.2",
+    "US10.3"
   ],
   "coverage": [
     {
@@ -140,6 +150,11 @@
       "target": "SupplierKnowledge, SupplierKnowledge.AcceptedSupplierTerm, SupplierKnowledge.SupplierOffer"
     },
     {
+      "id": "US3.4",
+      "status": "OK",
+      "target": "SupplierKnowledge, SupplierKnowledge.ActiveRetrievalRoute, SupplierKnowledge.RetrievalIndexVersion, Assistant, DemoEvidence"
+    },
+    {
       "id": "US4.1",
       "status": "OK",
       "target": "Forecasting, Forecasting.ForecastRequest, Forecasting.ForecastRun, Forecasting.ForecastSeries"
@@ -175,9 +190,14 @@
       "target": "ModelLifecycle, ModelLifecycle.EvaluationRun"
     },
     {
+      "id": "US4.8",
+      "status": "OK",
+      "target": "ModelLifecycle, ModelLifecycle.HeavyWorkRequest, ModelLifecycle.HeavyWorkLease, Forecasting, DemoEvidence"
+    },
+    {
       "id": "US5.1",
       "status": "OK",
-      "target": "Replenishment, Replenishment.PlanningPolicy, Replenishment.ProductPlanningOverride, Replenishment.ReplenishmentRecommendation, Replenishment.EvidenceSnapshot"
+      "target": "Replenishment, Replenishment.PlanningPolicy, Replenishment.ProductPlanningOverride, Replenishment.ReplenishmentRecommendation, Replenishment.EvidenceSnapshot, Inventory.InboundSupplyCommitment"
     },
     {
       "id": "US5.2",
@@ -212,22 +232,22 @@
     {
       "id": "US6.3",
       "status": "OK",
-      "target": "Purchasing, Purchasing.PurchaseProposal, Purchasing.PurchaseOrder, Purchasing.PurchaseOrderLine"
+      "target": "Purchasing, Purchasing.PurchaseProposal, Purchasing.PurchaseOrder, Purchasing.PurchaseOrderLine, Inventory.InboundSupplyCommitment"
     },
     {
       "id": "US6.4",
       "status": "OK",
-      "target": "Purchasing, Purchasing.PurchaseOrder"
+      "target": "Purchasing, Purchasing.PurchaseOrder, Inventory.InboundSupplyCommitment"
     },
     {
       "id": "US6.5",
       "status": "OK",
-      "target": "Purchasing, Purchasing.PurchaseOrder, Purchasing.PurchaseOrderLine, Purchasing.Receipt, Purchasing.ReceiptLine"
+      "target": "Purchasing, Purchasing.PurchaseOrder, Purchasing.PurchaseOrderLine, Purchasing.Receipt, Purchasing.ReceiptLine, Inventory.InboundSupplyCommitment"
     },
     {
       "id": "US6.6",
       "status": "OK",
-      "target": "Purchasing, Purchasing.PurchaseOrder, Purchasing.PurchaseOrderLine, Purchasing.Receipt, Purchasing.ReceiptLine"
+      "target": "Purchasing, Purchasing.PurchaseOrder, Purchasing.PurchaseOrderLine, Purchasing.Receipt, Purchasing.ReceiptLine, Inventory.InboundSupplyCommitment"
     },
     {
       "id": "US7.1",
@@ -312,7 +332,7 @@
     {
       "id": "US8.5",
       "status": "OK",
-      "target": "DemoEvidence, DemoEvidence.SetupVerificationRun"
+      "target": "MessagingPlatform, DemoEvidence, DemoEvidence.SetupVerificationRun"
     },
     {
       "id": "US8.6",
@@ -380,6 +400,11 @@
       "target": "DemoEvidence, DemoEvidence.SetupVerificationRun"
     },
     {
+      "id": "US9.11",
+      "status": "OK",
+      "target": "RecoveryCoordination, RecoveryCoordination.RecoveryRun, RecoveryCoordination.RecoveryParticipantRegistration, RecoveryCoordination.RecoveryParticipantCheckpointSet, RecoveryCoordination.RecoveryParticipantCheckpoint, RecoveryCoordination.RecoveryManifest, TenantDirectory, AuditEvidence, DemoEvidence, WebExperience"
+    },
+    {
       "id": "US10.1",
       "status": "OK",
       "target": "DemoEvidence, DemoEvidence.DemoScenario, DemoEvidence.SetupVerificationRun"
@@ -388,12 +413,17 @@
       "id": "US10.2",
       "status": "OK",
       "target": "DemoEvidence, DemoEvidence.EvidenceManifest"
+    },
+    {
+      "id": "US10.3",
+      "status": "OK",
+      "target": "DemoEvidence, DemoEvidence.BrowserProfileEvidence, DemoEvidence.ConcurrencyReplayEvidence, DemoEvidence.SetupVerificationRun, WebExperience, RecoveryCoordination"
     }
   ],
   "reverse": [],
   "coverage_summary": {
-    "expected_story_count": 63,
-    "mapped_story_count": 63,
+    "expected_story_count": 67,
+    "mapped_story_count": 67,
     "unmapped_story_ids": [],
     "duplicate_story_ids": []
   },
@@ -555,6 +585,18 @@
       ]
     },
     {
+      "story_id": "US3.4",
+      "primary_component": "SupplierKnowledge",
+      "owned_entities": [
+        "ActiveRetrievalRoute",
+        "RetrievalIndexVersion"
+      ],
+      "supporting_components": [
+        "Assistant",
+        "DemoEvidence"
+      ]
+    },
+    {
       "story_id": "US4.1",
       "primary_component": "Forecasting",
       "owned_entities": [
@@ -636,6 +678,18 @@
       "supporting_components": [
         "Inventory",
         "SupplierKnowledge",
+        "DemoEvidence"
+      ]
+    },
+    {
+      "story_id": "US4.8",
+      "primary_component": "ModelLifecycle",
+      "owned_entities": [
+        "HeavyWorkRequest",
+        "HeavyWorkLease"
+      ],
+      "supporting_components": [
+        "Forecasting",
         "DemoEvidence"
       ]
     },
@@ -1010,11 +1064,10 @@
     },
     {
       "story_id": "US8.5",
-      "primary_component": "DemoEvidence",
-      "owned_entities": [
-        "SetupVerificationRun"
-      ],
+      "primary_component": "MessagingPlatform",
+      "owned_entities": [],
       "supporting_components": [
+        "DemoEvidence",
         "SupplierKnowledge",
         "ModelLifecycle",
         "Forecasting",
@@ -1192,6 +1245,23 @@
       ]
     },
     {
+      "story_id": "US9.11",
+      "primary_component": "RecoveryCoordination",
+      "owned_entities": [
+        "RecoveryRun",
+        "RecoveryParticipantRegistration",
+        "RecoveryParticipantCheckpointSet",
+        "RecoveryParticipantCheckpoint",
+        "RecoveryManifest"
+      ],
+      "supporting_components": [
+        "TenantDirectory",
+        "AuditEvidence",
+        "DemoEvidence",
+        "WebExperience"
+      ]
+    },
+    {
       "story_id": "US10.1",
       "primary_component": "DemoEvidence",
       "owned_entities": [
@@ -1222,7 +1292,19 @@
         "AuditEvidence",
         "WebExperience"
       ]
+    },
+    {
+      "story_id": "US10.3",
+      "primary_component": "DemoEvidence",
+      "owned_entities": [
+        "BrowserProfileEvidence",
+        "ConcurrencyReplayEvidence",
+        "SetupVerificationRun"
+      ],
+      "supporting_components": [
+        "WebExperience",
+        "RecoveryCoordination"
+      ]
     }
   ]
 }
-

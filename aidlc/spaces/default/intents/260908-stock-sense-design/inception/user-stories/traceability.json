@@ -1,5 +1,6 @@
 {
   "stage": "user-stories",
+  "summary_confirmation": "2026-09-21",
   "upstream_ids": [
     "FR1",
     "FR2",
@@ -17,32 +18,47 @@
     "FR9.5",
     "FR10",
     "FR10.1",
+    "FR10.2",
     "FR11",
     "FR12",
     "FR13",
+    "FR13.1",
     "FR14",
+    "FR14.1",
     "FR15",
     "FR16",
     "FR16.1",
+    "FR16.2",
     "FR17",
     "FR17.1",
     "FR18",
     "FR19",
+    "FR19.1",
     "FR20",
+    "FR20.1",
     "NFR1",
+    "NFR1.1",
+    "NFR1.2",
     "NFR2",
+    "NFR2.1",
     "NFR3",
     "NFR4",
     "NFR5",
     "NFR6",
     "NFR7",
+    "NFR7.1",
     "NFR8",
+    "NFR8.1",
+    "NFR8.2",
+    "NFR8.3",
     "NFR9",
     "NFR10",
     "NFR11",
+    "NFR11.1",
     "NFR12",
     "NFR13",
     "NFR14",
+    "NFR14.1",
     "NFR15"
   ],
   "coverage": [
@@ -127,6 +143,11 @@
       "target": "US3.2, US3.3, US7.2, US7.7"
     },
     {
+      "id": "FR10.2",
+      "status": "OK",
+      "target": "US3.1, US3.2, US3.3"
+    },
+    {
       "id": "FR11",
       "status": "OK",
       "target": "US2.1, US2.2, US2.5, US3.1, US4.1, US5.2"
@@ -142,9 +163,19 @@
       "target": "US4.2, US4.4, US4.5, US4.6"
     },
     {
+      "id": "FR13.1",
+      "status": "OK",
+      "target": "US4.5, US4.8"
+    },
+    {
       "id": "FR14",
       "status": "OK",
       "target": "US7.4, US7.5, US7.6, US7.7, US7.8, US7.9, US7.10, US7.11"
+    },
+    {
+      "id": "FR14.1",
+      "status": "OK",
+      "target": "US7.10"
     },
     {
       "id": "FR15",
@@ -160,6 +191,11 @@
       "id": "FR16.1",
       "status": "OK",
       "target": "US7.3"
+    },
+    {
+      "id": "FR16.2",
+      "status": "OK",
+      "target": "US3.4, US7.12"
     },
     {
       "id": "FR17",
@@ -182,9 +218,19 @@
       "target": "US2.4"
     },
     {
+      "id": "FR19.1",
+      "status": "OK",
+      "target": "US3.4"
+    },
+    {
       "id": "FR20",
       "status": "OK",
       "target": "US9.6, US9.7, US9.8, US9.9, US9.10"
+    },
+    {
+      "id": "FR20.1",
+      "status": "OK",
+      "target": "US9.11"
     },
     {
       "id": "NFR1",
@@ -192,9 +238,24 @@
       "target": "US9.4"
     },
     {
+      "id": "NFR1.1",
+      "status": "OK",
+      "target": "US2.2, US2.5, US9.4"
+    },
+    {
+      "id": "NFR1.2",
+      "status": "OK",
+      "target": "US9.4"
+    },
+    {
       "id": "NFR2",
       "status": "OK",
       "target": "US4.4, US7.1, US8.3, US9.4"
+    },
+    {
+      "id": "NFR2.1",
+      "status": "OK",
+      "target": "US7.3, US7.12, US9.4"
     },
     {
       "id": "NFR3",
@@ -222,9 +283,29 @@
       "target": "US7.11, US8.5"
     },
     {
+      "id": "NFR7.1",
+      "status": "OK",
+      "target": "US8.5, US9.11"
+    },
+    {
       "id": "NFR8",
       "status": "OK",
       "target": "US7.4, US8.2, US8.7"
+    },
+    {
+      "id": "NFR8.1",
+      "status": "OK",
+      "target": "US8.2, US10.3"
+    },
+    {
+      "id": "NFR8.2",
+      "status": "OK",
+      "target": "US10.2"
+    },
+    {
+      "id": "NFR8.3",
+      "status": "OK",
+      "target": "US4.8, US8.2, US9.11"
     },
     {
       "id": "NFR9",
@@ -242,6 +323,11 @@
       "target": "US1.1, US2.1, US7.1, US8.1, US10.1"
     },
     {
+      "id": "NFR11.1",
+      "status": "OK",
+      "target": "US10.1"
+    },
+    {
       "id": "NFR12",
       "status": "OK",
       "target": "US8.3, US8.6, US8.8"
@@ -255,6 +341,11 @@
       "id": "NFR14",
       "status": "OK",
       "target": "US2.3, US4.6, US5.5, US6.2, US7.3, US7.4, US10.1"
+    },
+    {
+      "id": "NFR14.1",
+      "status": "OK",
+      "target": "US10.3"
     },
     {
       "id": "NFR15",

@@ -1,12 +1,12 @@
 # StockSense user stories
 
-Date: 2026-09-09
-Status: Collaborative revisions integrated; final specialist checks and independent review pending.
+Date: 2026-09-21
+Status: Approved by owner gate on 2026-09-22; subsequently edited for downstream reconciliation and currently reported as drifted pending revalidation.
 
 ## Scope and priorities
 
 The approved requirements and owner-confirmed epic/feature plan govern these
-63 stories. Every story is Must Have for the full initial portfolio release;
+67 stories. Every story is Must Have for the full initial portfolio release;
 delivery slices are decided later. Required ML/agent/operational work is not
 optional merely because inventory ships first. External live activation and
 additional languages are outside the default local demo.
@@ -27,10 +27,39 @@ a foundation-only test does not cover later integrations.
 
 | Obligation | Acceptance anchors | Applicable consumers |
 | --- | --- | --- |
-| Current tenant/session/role authority | AC1.4.1-5, AC1.1.3-4 | Every business read/mutation and agent tool; jobs also use AC8.5.2 |
+| Current tenant/session/role authority | AC1.4.1-6, AC1.1.3-4 | Every business read/mutation and agent tool; jobs also use AC8.5.2 |
 | Contract compatibility | AC8.2.1-3, AC10.2.4 | Every REST endpoint and async message introduced by a story |
 | Atomic audit and safe retry | AC9.1.1-3, AC8.5.1-3 | Imports, purchases, memberships, reviews, promotion, privileged operations and agent mutations |
 | Browser context and keyboard flow | AC1.4.4-5, AC2.3.2, AC5.5.1-5, AC10.1.4 | Every browser story; assistant handoffs also use AC7.4.4 and AC7.10.4 |
+
+Every browser workflow also requires native or semantically equivalent controls,
+meaningful labels, logical heading/focus order, visible focus, text for every
+status/error/icon, polite announcements for dynamic state, no color-only meaning,
+and keyboard completion. Focus stays on the initiating control unless the action
+opens a dialog or navigates; story-specific criteria define exceptional recovery.
+
+When a named OQ or versioned profile is an implementation prerequisite, acceptance
+is `not-run` with reason `blocked-prerequisite` and the missing OQ/profile/version;
+it cannot pass, fail, or be estimated as ready until that prerequisite exists.
+Purchasing owns durable idempotency results for every purchase mutation; assistant
+and browser clients pass payload-bound keys and reconcile through Purchasing.
+Each result is retained for the lifetime of its purchase aggregate and for 90 days
+after that aggregate becomes terminal. An expired key returns typed
+`idempotency-key-expired` without effect; a deliberate new command requires
+authoritative reconciliation and a new key.
+Messaging Platform owns envelope, confirms, delivery identity, retry/DLQ/replay
+policy and size limits; each domain consumer owns inbox uniqueness, authority
+revalidation and its atomic business effect/outbox transaction.
+
+Every acceptance claim about concurrency or replay uses a versioned deterministic
+schedule that records initial entity/version state, a synchronization barrier before
+commit, competing commands, allowed winner count, final entity/version/status,
+audit/outbox/inbox/idempotency-result counts, and the exact replay response. The
+minimum schedules cover four simultaneous review-quota requests; duplicate and
+distinct receipts racing the remaining quantity; approve versus edit/cancel; manual
+versus due scheduled review; lease expiry versus renew/finalize; same-expected-version
+index-route compare-and-swap; and lost-response exact replay plus changed-payload
+replay. Scheduler timing alone is not acceptance evidence.
 
 Given/When/Then scenarios name explicit actions; they do not select a coding test methodology. OQ references
 are implementation prerequisites, not permission to choose undocumented limits.
@@ -49,14 +78,14 @@ these actors without independent human authority.
 | --- | --- |
 | EP01 Secure access and retailer isolation | US1.1, US1.2, US1.3, US1.4, US1.5 |
 | EP02 Inventory and reproducible demo data | US2.1, US2.2, US2.3, US2.4, US2.5 |
-| EP03 Supplier information | US3.1, US3.2, US3.3 |
-| EP04 Demand forecasting and ML lifecycle | US4.1, US4.2, US4.3, US4.4, US4.5, US4.6, US4.7 |
+| EP03 Supplier information | US3.1, US3.2, US3.3, US3.4 |
+| EP04 Demand forecasting and ML lifecycle | US4.1, US4.2, US4.3, US4.4, US4.5, US4.6, US4.7, US4.8 |
 | EP05 Replenishment planning | US5.1, US5.2, US5.3, US5.4, US5.5 |
 | EP06 Controlled purchasing and receipts | US6.1, US6.2, US6.3, US6.4, US6.5, US6.6 |
 | EP07 AI assistant and agentic workflows | US7.1, US7.2, US7.3, US7.4, US7.5, US7.6, US7.7, US7.8, US7.9, US7.10, US7.11, US7.12 |
 | EP08 Local platform and delivery | US8.1, US8.2, US8.3, US8.4, US8.5, US8.6, US8.7, US8.8 |
-| EP09 Observability, audit and recovery | US9.1, US9.2, US9.3, US9.4, US9.5, US9.6, US9.7, US9.8, US9.9, US9.10 |
-| EP10 Reviewer experience and portfolio evidence | US10.1, US10.2 |
+| EP09 Observability, audit and recovery | US9.1, US9.2, US9.3, US9.4, US9.5, US9.6, US9.7, US9.8, US9.9, US9.10, US9.11 |
+| EP10 Reviewer experience and portfolio evidence | US10.1, US10.2, US10.3 |
 
 ## EP01: Secure access and retailer isolation
 
@@ -77,7 +106,7 @@ As a Planner, I want to sign in locally, so that I can use the demo without Goog
 - **AC1.1.2**: **Given** invalid credentials or invalid callback/state/PKCE proof, **when** login or callback validation runs, **then** invalid credentials, callback/state or PKCE failure create no session.
 - **AC1.1.3**: **Given** an expired session or missing CSRF protection, **when** a protected mutation is requested, **then** expired sessions and missing CSRF protection cannot authorize mutations.
 
-- **AC1.1.4**: **Given** expiry/revocation during a mutation, **when** authority fails, **then** the UI shows appropriate sign-in/access recovery and no success claim; reauthentication does not automatically resubmit uncertain work.
+- **AC1.1.4**: **Given** expiry/revocation during a mutation, **when** authority fails, **then** the operation returns the typed `authority-lost` outcome, commits no newly authorized effect, and the UI shows `Sign in again` plus `Check status` when the prior outcome is uncertain; it makes no success claim, preserves entered context and never resubmits automatically after reauthentication.
 
 ### US1.2: Google federation and safe linking
 
@@ -128,10 +157,11 @@ As a Planner, I want to select an authorized retailer, so that I can work withou
 
 - **AC1.4.1**: **Given** explicit current retailer memberships, **when** retailers are listed and selected, **then** only current explicit memberships appear and authorize business access.
 - **AC1.4.2**: **Given** missing context, a foreign identifier or revoked membership, **when** business data is requested, **then** missing context, substituted identifiers and revoked memberships fail even with a valid session.
-- **AC1.4.3**: **Given** a connection previously used for retailer A and a caller authorized only for B, **when** B requests data on that reused connection, **then** no A data is returned and runtime direct-table SQL is denied. Given invalid machine scope, audience or job authority, when the protected operation is invoked, then it is denied without business effects.
+- **AC1.4.3**: **Given** a connection previously used for retailer A and a caller authorized only for B, **when** B requests data on that reused connection, **then** no A data is returned, the retailer context is reset before reuse, and runtime direct-table SQL is denied.
 
 - **AC1.4.4**: **Given** multiple memberships, **when** retailer selection changes, **then** the selected identity stays visible and old/late responses cannot appear under the new heading or supply its mutation context.
 - **AC1.4.5**: **Given** no memberships after successful login, **when** the landing view opens, **then** explicit no-access/provisioning guidance appears without signup or self-assigned access.
+- **AC1.4.6**: **Given** an invalid machine scope, audience or job authority, **when** a protected operation is invoked, **then** it returns the typed authorization problem, creates no business/audit-success/outbox effect and records denial evidence without sensitive credentials.
 
 ### US1.5: Persistent identity and keys
 
@@ -148,7 +178,8 @@ As a Operator, I want to preserve identity across restarts, so that I can provid
 
 - **AC1.5.1**: **Given** a dedicated identity database and runtime role, **when** Flyway migrations and store calls run, **then** dedicated identity storage uses Flyway and Dapper routines without EF Core or access to business tables.
 - **AC1.5.2**: **Given** persisted signing/data-protection keys, **when** identity service restarts, **then** restart preserves protected signing/data-protection material and identity records.
-- **AC1.5.3**: **Given** protected identity/key backups and the OQ7 recovery procedure, **when** restored into a clean environment, **then** recovered identity records and protected keys support authenticated access without keys in Git/state. Given the OQ7 rotation policy, when signing keys rotate, then new issuance uses the active key and old-key verification follows that policy's explicit validity boundary, without inventing overlap or lifetime values here.
+- **AC1.5.3**: **Given** protected identity/key backups and the OQ7 recovery procedure, **when** restored into a clean environment, **then** recovered identity records and protected keys support authenticated access without keys in Git/state.
+- **AC1.5.4**: **Given** the versioned OQ7 signing-key rotation policy, **when** signing keys rotate, **then** new issuance uses the active key and old-key verification follows that policy's explicit validity boundary; without that policy the check is `not-run`/`blocked-prerequisite`, and no overlap or lifetime is inferred.
 
 ## EP02: Inventory and reproducible demo data
 
@@ -220,7 +251,7 @@ As a Planner, I want to use resilient inventory views, so that I can retain corr
 
 - **AC2.4.1**: **Given** two retailers with populated Redis entries, **when** cached values are requested, **then** tenant/version-scoped Redis keys cannot mix retailer data.
 - **AC2.4.2**: **Given** a V1 inventory cache fill in flight and V2 committing, **when** V1 completes after the commit, **then** it cannot overwrite or masquerade as V2 and authoritative checks still use current data; exact view freshness follows the cache contract before implementation.
-- **AC2.4.3**: **Given** a cold cache or unavailable Redis, **when** inventory is requested, **then** outage/cold-start preserves authoritative permission, order and quota checks with explicit degraded behavior.
+- **AC2.4.3**: **Given** a cold cache or unavailable Redis, **when** inventory is requested, **then** the request uses the authorized authoritative read path, returns no stale cached value as current, records `cache-unavailable` in evidence and exposes a non-blocking `Live data; cache unavailable` state; order and quota checks continue against authoritative state.
 
 ### US2.5: Import sales history
 
@@ -246,18 +277,18 @@ As a Planner, I want to upload offers, so that I can use validated supplier inpu
 
 - Parent: EP03 / FE03.01
 - Priority: Must Have
-- Requirements: FR10,FR11
+- Requirements: FR10,FR10.2,FR11
 - Planned tasks: SS-21
 - Depends on: US8.2,US8.5,US2.2
 - INVEST: use an isolated supplier csv offers fixture with the dependencies
   below supplied as capabilities, not prior test executions. Acceptance ends at
   the stated outcome; estimate effort after contract decisions, before scheduling.
 
-- **AC3.1.1**: **Given** valid CSV under the agreed schema/limits, **when** the file is uploaded, **then** valid CSV yields source-versioned validation results under the agreed schema/limits.
+- **AC3.1.1**: **Given** golden-corpus CSV fixtures immediately below and exactly at 95% and 99% valid rows, **when** extraction completes, **then** the exact `valid rows / total rows` fraction is compared without rounded display values: every required column plus at least 99% is Validated, 95% to below 99% is PartiallyValidated, and a missing required column or below 95% is Failed, with row/field evidence.
 - **AC3.1.2**: **Given** malformed rows or wrong-currency offers, **when** rows are validated, **then** malformed rows and currency mismatches cannot become authoritative terms.
 - **AC3.1.3**: **Given** a duplicate ingestion job, **when** the consumer replays the job, **then** replay does not duplicate offers; OQ4 schema and size/row limits are resolved before implementation.
 
-- **AC3.1.4**: **Given** malformed rows/currency mismatch, **when** processing ends, **then** available row/field reasons, source version and accepted/rejected/pending outcomes identify what became authoritative and provide correction guidance; OQ4 defines batch policy.
+- **AC3.1.4**: **Given** a selected authorized file, **when** ingestion progresses or ends, **then** the keyboard-accessible view shows retailer, upload progress, queued/processing state, source version, terminal classification, row/field reasons linked to source location and a plain-language next action; correctable failure preserves context and status never depends on color alone.
 
 ### US3.2: Supplier PDF evidence
 
@@ -265,18 +296,18 @@ As a Planner, I want to inspect extracted terms and their source, so that I can 
 
 - Parent: EP03 / FE03.02
 - Priority: Must Have
-- Requirements: FR10,FR10.1
+- Requirements: FR10,FR10.1,FR10.2
 - Planned tasks: SS-21
 - Depends on: US3.1
 - INVEST: use an isolated supplier pdf evidence fixture with the dependencies
   below supplied as capabilities, not prior test executions. Acceptance ends at
   the stated outcome; estimate effort after contract decisions, before scheduling.
 
-- **AC3.2.1**: **Given** a supported text PDF, **when** text extraction completes, **then** supported text PDFs retain submission/version, extraction and page provenance in MongoDB.
-- **AC3.2.2**: **Given** a scanned, malformed or partially extractable PDF, **when** the processor handles the file, **then** scans, malformed and partial PDFs produce explicit outcomes without claiming OCR.
+- **AC3.2.1**: **Given** golden-corpus text-PDF fixtures immediately below and exactly at 98% expected anchors, with every page readable and all required terms found, **when** extraction completes, **then** the exact `matched anchors / expected anchors` fraction is compared without rounded display values: at least 98% is Validated with submission/version and page provenance in MongoDB.
+- **AC3.2.2**: **Given** independent readability and anchor fixtures immediately below and exactly at 90%, plus scanned, encrypted and malformed PDFs, **when** processed, **then** both exact fractions must be at least 90% for PartiallyValidated; either fraction below 90% is Failed; scanned or encrypted input is Unsupported; every available omission is identified and no OCR capability is claimed.
 - **AC3.2.3**: **Given** a foreign-retailer document identifier, **when** the source is requested, **then** cross-tenant document access fails; OQ4 fixes page/size/extraction limits before implementation.
 
-- **AC3.2.4**: **Given** supported or partially extracted terms, **when** the planner opens evidence, **then** the exact authorized source version/page is available, raw extraction is distinguished from accepted terms, and unavailable pages/scan limitations are explicit.
+- **AC3.2.4**: **Given** supported or partially extracted terms, **when** the planner opens evidence, **then** the keyboard-accessible view shows progress/terminal classification and the exact authorized source version/page; omissions link to source locations, raw extraction is distinct from accepted terms, and unavailable/scanned/encrypted limitations plus corrective next actions are explicit in text and icon.
 
 ### US3.3: Accepted commercial terms
 
@@ -294,6 +325,20 @@ As a Planner, I want to distinguish validated terms from raw extraction, so that
 - **AC3.3.1**: **Given** validated extracted commercial terms, **when** terms are accepted through routines, **then** authorized routines store accepted normalized terms in PostgreSQL linked to source/version.
 - **AC3.3.2**: **Given** unvalidated text conflicting with accepted terms, **when** planning reads commercial terms, **then** unvalidated document text cannot override authoritative commercial data.
 - **AC3.3.3**: **Given** a proposal based on an earlier term version, **when** the earlier proposal is approved, **then** revised terms cause stale proposal approval to conflict and require correction.
+
+### US3.4: Cache supplier knowledge safely
+
+As a Planner, I want supplier retrieval and comparisons to remain correct during cache changes, so that I never act on stale or foreign terms.
+
+- Parent: EP03 / FE03.04
+- Priority: Must Have
+- Requirements: FR19,FR19.1,FR16.2,NFR3
+- Planned tasks: SS-21/32/34
+- Depends on: US3.3,US7.12
+- INVEST: isolates disposable caching and active-route reconciliation from source ingestion and retrieval presentation.
+
+- **AC3.4.1**: **Given** an authorized retrieval/comparison result, **when** cached, **then** its five-minute key includes retailer, placement generation, contract, source and active-index generations.
+- **AC3.4.2**: **Given** source/index invalidation, Redis outage, cold start or a stale-fill race, **when** the result is requested, **then** the service falls back to authoritative state and never serves stale or foreign data.
 
 ## EP04: Demand forecasting and ML lifecycle
 
@@ -373,7 +418,7 @@ As a Operator, I want to select and reverse active models, so that I can keep fo
 
 - Parent: EP04 / FE04.04
 - Priority: Must Have
-- Requirements: FR13,FR17.1
+- Requirements: FR13,FR13.1,FR17.1
 - Planned tasks: SS-19
 - Depends on: US4.4,US9.1
 - INVEST: use an isolated model promotion and rollback fixture with the dependencies
@@ -383,6 +428,8 @@ As a Operator, I want to select and reverse active models, so that I can keep fo
 - **AC4.5.1**: **Given** a candidate with recorded evaluation evidence, **when** an authorized promotion is requested, **then** authorized promotion identifies evaluation evidence/run/version and audit.
 - **AC4.5.2**: **Given** a failed candidate or missing promotion evidence, **when** promotion is attempted, **then** missing evidence or failed candidates cannot become active through the promotion path.
 - **AC4.5.3**: **Given** a previously validated model version, **when** rollback is requested, **then** rollback selects a known prior model for subsequent forecasts without erasing earlier provenance.
+- **AC4.5.4**: **Given** a promoted or retained release, **when** Forecasting resolves it, **then** Model Lifecycle's immutable package records `skops.io` artifact, canonical manifest, SHA-256, signer-key ID, Ed25519 signature and policy/allowlist version; Forecasting verifies all fields before load and keeps revoked or incompatible evidence inactive.
+- **AC4.5.5**: **Given** signing-key rotation, revocation or rollback, **when** a retained release is considered, **then** the versioned policy defines its overlap window and active/retained effect, and rollback cannot activate a package whose signature, key status or trusted-type policy fails.
 
 ### US4.6: Forecast quality and freshness
 
@@ -416,6 +463,28 @@ As a Reviewer, I want to compare chronological policy simulations, so that I can
 - **AC4.7.1**: **Given** common exogenous demand, initial stock, supplier constraints, lead times, ordering policy and fixed versioned costs, **when** one chronological simulation per scenario runs for each forecast, **then** only forecast input varies and overlapping forecast origins are not double-counted.
 - **AC4.7.2**: **Given** demand10 and stock6, **when** scored, **then** lost units4 and lost-demand rate40% are reported; zero total demand yields rate N/A with lost units reported separately.
 - **AC4.7.3**: **Given** closing on-hand value12,8,0 across three days, **when** averaged, **then** the result is20/3 in that retailer currency; fixed acquisition costs apply, zero-stock days remain in the denominator, inbound/revenue are excluded and currencies are never aggregated.
+
+### US4.8: Coordinate heavy model work
+
+As a Operator, I want training and forecasting heavy work to share a fenced lease, so that the local cluster remains bounded and stale workers cannot publish results.
+
+- Parent: EP04 / FE04.05
+- Priority: Must Have
+- Requirements: FR13.1,NFR2,NFR8.3
+- Planned tasks: SS-18/19/20
+- Depends on: US4.4,US8.2,US8.5
+- INVEST: covers one versioned coordination capability with explicit lifecycle and failure outcomes.
+- Readiness: Blocked for implementation/sizing until the lease queue/deadline and
+  canonical request-hash contract is versioned in NFR8.3.
+
+Model Lifecycle owns PostgreSQL-backed lease/queue state and fencing-token issuance.
+Training and Forecasting are clients; artifact registration, promotion and forecast
+publication each enforce the current token in the atomic authoritative write.
+
+- **AC4.8.1**: **Given** an authorized heavy job, **when** it acquires, renews or releases the lease with an idempotency key, **then** the API returns a stable state, deadline and monotonically fenced token.
+- **AC4.8.2**: **Given** a queued, expired, duplicate or conflicting request, **when** coordination is evaluated, **then** the contract returns a bounded typed outcome without overlapping heavy execution.
+- **AC4.8.3**: **Given** restart or restore, **when** lease reconciliation runs, **then** stale holders cannot finalize artifacts or forecasts and queue/lease state is reconstructed before new work starts.
+- **AC4.8.4**: **Given** renew after expiry, stale-token release, same-key/different-payload acquire, queued deadline expiry or two finalizers, **when** the operation executes, **then** canonical request-hash conflict and fencing rules permit at most one current owner and one authoritative finalization.
 
 ## EP05: Replenishment planning
 
@@ -533,9 +602,10 @@ As a Planner, I want to prepare a draft from a scenario, so that I can review co
 
 - **AC6.1.1**: **Given** a current authorized scenario, **when** a draft is created, **then** current authorized scenario inputs create an editable draft with source versions and audit.
 - **AC6.1.2**: **Given** locked Submitted/Approved commercial lines, **when** an edit is attempted, **then** submitted/approved lines cannot be edited; correction creates a new linked draft.
-- **AC6.1.3**: **Given** replayed draft creation or a stale expected edit version, **when** draft creation/edit is retried, **then** retry/idempotency and stale-version tests prevent duplicate drafts and overwriting concurrent edits.
+- **AC6.1.3**: **Given** replayed Draft creation or a stale expected edit version, **when** creation/edit is retried, **then** exact replay returns the original result without a duplicate Draft; changed payload conflicts without effect; a stale edit preserves entered values, moves focus to a text error summary, identifies changed fields, links current evidence and offers creation of a linked replacement Draft without overwriting the source.
 
 - **AC6.1.4**: **Given** a locked source order needing correction, **when** a linked replacement Draft is created, **then** its view shows both identities/statuses, leaves the source unchanged and requires fresh submission/approval; only currently permitted rejection/cancellation actions are offered.
+- **AC6.1.5**: **Given** an accepted purchasing operation, **when** its key is replayed during aggregate lifetime or within 90 days after terminal state, changed under the same key, or replayed after expiry, **then** exact replay returns the original authorized result, changed payload returns a typed conflict without effect, and expired replay returns `idempotency-key-expired` without effect; a new command is accepted only after authoritative reconciliation with a new key.
 
 ### US6.2: Submit a draft
 
@@ -550,9 +620,9 @@ As a Planner, I want to submit my proposal, so that I can obtain a manager decis
   below supplied as capabilities, not prior test executions. Acceptance ends at
   the stated outcome; estimate effort after contract decisions, before scheduling.
 
-- **AC6.2.1**: **Given** a valid Draft and current version, **when** the user submits, **then** current authorized Draft transitions to Submitted and locks commercial lines.
-- **AC6.2.2**: **Given** a non-Draft order or stale expected version and a new submission key, **when** submitted, **then** the transition is rejected without business mutation; an authorized exact replay of an accepted key returns its original result without another transition/audit/outbox effect.
-- **AC6.2.3**: **Given** an authorized manager viewing a Submitted proposal, **when** the manager opens the proposal, **then** manager view exposes quantities, terms and versions for an explicit human decision.
+- **AC6.2.1**: **Given** a valid Draft and current version, **when** the user submits, **then** it transitions to Submitted, locks commercial lines and shows durable Submitted status, submitter, submission time and next authorized actor; when one person holds both roles, the acting Planner role is explicit and separately audited.
+- **AC6.2.2**: **Given** a non-Draft order or stale expected version and a new submission key, **when** submitted, **then** the transition is rejected without business mutation; stale submission preserves entered values, moves focus to a text error summary, identifies changed fields, links current evidence and offers a linked replacement Draft; an authorized exact replay of an accepted key returns its original result without another transition/audit/outbox effect.
+- **AC6.2.3**: **Given** an authorized Manager and a Submitted proposal, **when** the pending-decision view or proposal opens, **then** the proposal appears in that Manager's queue and exposes quantities, terms, versions, submitter, submission time, locked status and acting role for an explicit human decision.
 
 ### US6.3: Approve or reject a proposal
 
@@ -567,11 +637,11 @@ As a Manager, I want to decide on submitted purchases, so that I can allow only 
   below supplied as capabilities, not prior test executions. Acceptance ends at
   the stated outcome; estimate effort after contract decisions, before scheduling.
 
-- **AC6.3.1**: **Given** a current Submitted proposal and authorized Manager, **when** the manager approves, **then** approval revalidates permission, offer, price, quantity and inventory versions, then records Approved with audit.
-- **AC6.3.2**: **Given** a Submitted proposal selected for rejection, **when** the manager rejects, **then** rejection transitions Submitted to terminal Rejected; correction needs a new linked draft and fresh approval.
+- **AC6.3.1**: **Given** a current Submitted proposal and authorized Manager, **when** the Manager approves, **then** approval revalidates permission, offer, price, quantity and inventory versions, records Approved with audit, and the Planner sees Approved status, decision actor, acting Manager role and decision time.
+- **AC6.3.2**: **Given** a Submitted proposal selected for rejection, **when** the Manager rejects, **then** rejection transitions Submitted to terminal Rejected; the Planner sees status, decision actor, acting Manager role, time and supplied reason; correction requires a new linked Draft and fresh approval.
 - **AC6.3.3**: **Given** stale inputs, concurrent decisions or unauthorized actors, **when** a decision is submitted, **then** concurrent/stale decisions, unauthorized actors and agent approval attempts cannot produce an invalid committed approval.
 
-- **AC6.3.4**: **Given** changed inventory/terms on a Submitted order, **when** approval revalidation fails, **then** no approval commits and the view identifies the stale input category/current status with access to current evidence, without silently refreshing and approving lines.
+- **AC6.3.4**: **Given** changed inventory/terms on a Submitted order, **when** approval revalidation fails, **then** no approval commits, the Submitted proposal remains unapproved, focus moves to a text error summary, changed fields and current status are identified, and the Manager can inspect current evidence and create a linked replacement Draft; quantities are never silently replaced and the stale proposal is never presented as approvable.
 - **AC6.3.5**: **Given** every actor/state/action combination from the approved FR7/FR8 transition table, **when** exercised with isolated fixtures, **then** allowed combinations succeed and all unlisted transitions fail atomically; Manager-only receipt authority and a person with both roles work while Planner-only approval fails. Exact accepted-operation replay returns its original result.
 
 ### US6.4: Cancel before receipt
@@ -794,16 +864,17 @@ As a Planner, I want to turn purchase intent into a draft, so that I can review 
 
 - Parent: EP07 / FE07.08
 - Priority: Must Have
-- Requirements: FR14,FR7
+- Requirements: FR14,FR14.1,FR7
 - Planned tasks: SS-22/23
 - Depends on: US7.4,US6.1
 - INVEST: use an isolated draft a proposal conversationally fixture with the dependencies
   below supplied as capabilities, not prior test executions. Acceptance ends at
   the stated outcome; estimate effort after contract decisions, before scheduling.
 
-- **AC7.10.1**: **Given** clear authorized purchase intent and validated inputs, **when** the draft tool is invoked, **then** clear authorized intent and validated inputs produce a domain-created draft identifier and supporting evidence.
+- **AC7.10.1**: **Given** clear authorized purchase intent and validated inputs, **when** confirmation opens, **then** it shows retailer, supplier, products, quantities, prices/currency, source versions and `Create Draft only`, traps focus accessibly, and offers explicit Confirm/Cancel; Cancel returns focus to the initiating message and creates nothing.
+- **AC7.10.5**: **Given** the user confirms the unchanged visible payload, **when** the create tool runs, **then** action-draft identity, confirmation proof, canonical payload hash, context/version and idempotency bind one domain Draft; context change invalidates confirmation and explains the changed input.
 - **AC7.10.2**: **Given** ambiguous product/quantity or missing data, **when** the request is interpreted, **then** ambiguous product/quantity or missing inputs cause clarification before mutation.
-- **AC7.10.3**: **Given** a request for autonomous submit/approve/send, **when** the request is evaluated, **then** the agent cannot submit, approve or send orders; it identifies the required human action.
+- **AC7.10.3**: **Given** a request to edit an existing Draft or to submit, approve, reject, cancel, receive or send, **when** evaluated, **then** the assistant performs no mutation and identifies the Planner or Manager action required.
 
 - **AC7.10.4**: **Given** a successful draft tool call, **when** the assistant answers, **then** it labels the result Draft and links to that exact authorized draft for human review/submission.
 
@@ -820,9 +891,9 @@ As a Planner, I want to understand and recover incomplete operations, so that I 
   below supplied as capabilities, not prior test executions. Acceptance ends at
   the stated outcome; estimate effort after contract decisions, before scheduling.
 
-- **AC7.11.1**: **Given** an operation with completed and incomplete tools, **when** cancellation or configured limits trigger, **then** cancellation/configured tool-time limits stop further work and distinguish committed from incomplete actions without claiming committed actions were undone.
+- **AC7.11.1**: **Given** an operation with completed, incomplete or uncertain tools, **when** cancellation or configured limits trigger, **then** a persistent operation summary stops further work and groups steps as Completed, Incomplete or Outcome unknown with committed Draft/review identities; committed actions are never described as undone.
 - **AC7.11.2**: **Given** a lost response after a mutating tool call, **when** the operation is retried, **then** ambiguous mutating responses reconcile original idempotency key/result before retry, preventing duplicate drafts or review charges.
-- **AC7.11.3**: **Given** a provider/tool failure, **when** the failure is displayed, **then** failures expose safe retry guidance/correlation without secrets or external fallback; limits must be fixed before SS-22.
+- **AC7.11.3**: **Given** a provider/tool failure, **when** displayed, **then** text distinguishes retryable from terminal failure, shows safe correlation and `Check status` for unknown mutation outcomes without secrets/external fallback; Retry appears only after reconciliation proves no effect committed, and absent limits yield `blocked-prerequisite`.
 
 - **AC7.11.4**: **Given** cancellation after a draft/review committed, **when** execution stops, **then** completed draft/job identities and unfinished/uncertain actions are distinguished with the existing result/reconciliation path; cancellation does not undo committed drafts or charges.
 
@@ -832,15 +903,16 @@ As a Operator, I want to rebuild and switch retrieval indexes, so that I can pre
 
 - Parent: EP07 / FE07.02
 - Priority: Must Have
-- Requirements: FR16,NFR3
+- Requirements: FR16,FR16.2,NFR3
 - Planned tasks: SS-33/34
 - Depends on: US7.2
 - INVEST: isolate the manage index lifecycle fixture; completion is this specific
   capability, with final integrated recovery/evidence in US9.6/US10.2.
 
 - **AC7.12.1**: **Given** versioned retained source data, **when** a new model/config index is built, **then** per-retailer collections reconcile source versions and deletions.
-- **AC7.12.2**: **Given** a validated replacement index, **when** cutover or rollback occurs, **then** server routing chooses the intended version and never mixes vector configurations.
+- **AC7.12.2**: **Given** a validated replacement index and expected route version, **when** cutover or rollback occurs through the PostgreSQL routine-owned compare-and-swap route, **then** exactly one intended generation becomes active and vector configurations never mix.
 - **AC7.12.3**: **Given** missing/deleted/foreign sources or interrupted indexing, **when** rebuilt, **then** unauthorized evidence stays unavailable and counts/provenance reconcile before activation.
+- **AC7.12.4**: **Given** startup or restore with a missing/mismatched PostgreSQL route, Qdrant collection, dimension, count or digest, **when** reconciliation runs, **then** retrieval remains unavailable until the active generation is proved or an authorized expected-version rollback/cutover succeeds.
 
 ## EP08: Local platform and delivery
 
@@ -867,7 +939,7 @@ As a Operator, I want to check integration schemas, so that I can catch incompat
 
 - Parent: EP08 / FE08.02
 - Priority: Must Have
-- Requirements: NFR8
+- Requirements: NFR8,NFR8.1,NFR8.2,NFR8.3
 - Planned tasks: SS-04/05
 - Depends on: US8.1
 - INVEST: use an isolated validate integration contracts fixture with the dependencies
@@ -877,6 +949,7 @@ As a Operator, I want to check integration schemas, so that I can catch incompat
 - **AC8.2.1**: **Given** the initial inventory/import REST boundary, **when** the reusable contract-validation capability runs, **then** OpenAPI covers payload/auth/tenant/errors for that flow; each later consumer story must add and pass its contracts before acceptance.
 - **AC8.2.2**: **Given** an initial representative job/event fixture, **when** async contract validation runs, **then** AsyncAPI examples validate; later messaging consumers add their own contracts and US10.2 checks final all-flow coverage.
 - **AC8.2.3**: **Given** invalid examples or incompatible schema changes, **when** CI contract validation runs, **then** invalid examples and incompatible changes fail applicable CI validation.
+- **AC8.2.4**: **Given** the browser/BFF, messaging, evidence, heavy-lease, signed-model and recovery-barrier boundaries, **when** catalogue validation runs, **then** their complete versioned schemas, security/idempotency rules, examples and compatibility policies exist; legacy placeholders block dependent code generation.
 
 ### US8.3: Provision local Kubernetes
 
@@ -910,7 +983,7 @@ As a Operator, I want to bootstrap Vault and workload credentials, so that I can
 
 - **AC8.4.1**: **Given** protected Vault bootstrap access, **when** Vault is initialized, **then** persistent TLS Raft Vault protects unseal/recovery material outside the cluster and retires root-token use after scoped admin setup.
 - **AC8.4.2**: **Given** workload-specific Kubernetes identities, **when** VSO synchronizes workload credentials, **then** vSO and Kubernetes identity policies synchronize only authorized secrets without Git/Terraform-state exposure.
-- **AC8.4.3**: **Given** sealed Vault or absent credentials, **when** dependent workloads start, **then** sealed Vault/missing credentials fail safely; bootstrap does not depend on application databases and unauthorized workloads are denied.
+- **AC8.4.3**: **Given** sealed Vault, absent credentials or an unauthorized workload identity, **when** a dependent workload starts, **then** it remains `NotReady`, exposes the typed `secret-unavailable` or `secret-access-denied` reason, serves no business endpoint and performs no business write; no default or plaintext credential fallback occurs, and Vault bootstrap remains independent of application databases.
 
 ### US8.5: Reliable asynchronous work
 
@@ -918,7 +991,7 @@ As a Operator, I want to retry and replay jobs safely, so that I can avoid dupli
 
 - Parent: EP08 / FE08.02
 - Priority: Must Have
-- Requirements: NFR7,NFR3,NFR5
+- Requirements: NFR7,NFR7.1,NFR3,NFR5
 - Planned tasks: SS-12
 - Depends on: US8.2,US8.3,US1.4
 - INVEST: use an isolated reliable asynchronous work fixture with the dependencies
@@ -927,7 +1000,8 @@ As a Operator, I want to retry and replay jobs safely, so that I can avoid dupli
 
 - **AC8.5.1**: **Given** a committed representative job and outbox, **when** the outbox relay publishes and the consumer commits, **then** durable publication/confirms plus transactional outbox/inbox acknowledge only after business commit.
 - **AC8.5.2**: **Given** a representative transactional-effect consumer fixture, **when** broker/worker failures and redelivery occur, **then** the effect commits once with tenant/job authority checked; actual import/receipt consumers repeat the failure tests before their own acceptance.
-- **AC8.5.3**: **Given** a message exhausting its configured retry bound, **when** dead-letter replay is requested, **then** bounded exhausted retries enter observable DLQ/replay without an exactly-once transport claim.
+- **AC8.5.3**: **Given** envelopes of 65,535, 65,536 and 65,537 bytes, delivery attempts one through six, backoff endpoints of one and 30 seconds, and replay batches of 100 and 101, **when** authenticated publication/delivery/replay is evaluated, **then** the first two envelope sizes are accepted and 65,537 is rejected before publication; attempts one through five preserve canonical digest/attempt identity and attempt six creates no sixth delivery; contract-defined backoff stays within the inclusive bounds; seven-day DLQ retention applies; batch 100 is accepted and batch 101 is rejected atomically.
+- **AC8.5.4**: **Given** a parameterized domain-consumer conformance fixture, **when** duplicate, changed-payload, stale-authority, crash-before-commit and crash-after-commit schedules run, **then** that consumer proves inbox uniqueness, current authority and one atomic business effect/outbox result; the representative platform fixture alone is insufficient.
 
 ### US8.6: Migrate IaC state
 
@@ -1029,9 +1103,9 @@ As a Operator, I want to correlate requests across services, so that I can find 
   below supplied as capabilities, not prior test executions. Acceptance ends at
   the stated outcome; estimate effort after contract decisions, before scheduling.
 
-- **AC9.3.1**: **Given** API/message/ML/agent operations, **when** correlated telemetry is inspected, **then** openSearch logs and configured metrics/traces correlate API, message/job, ML and agent operations with bounded cardinality.
+- **AC9.3.1**: **Given** API/message/ML/agent operations and the versioned OQ6 telemetry profile, **when** correlated telemetry is inspected, **then** OpenSearch logs and configured metrics/traces correlate API, message/job, ML and agent operations; every metric label set stays within the profile's named series/cardinality budget and evidence reports observed versus allowed counts. Without that profile this check is `not-run`/`blocked-prerequisite`.
 - **AC9.3.2**: **Given** sensitive values in processing context, **when** logs are emitted, **then** default logging excludes credentials, tokens, supplier text, full prompts and hidden reasoning.
-- **AC9.3.3**: **Given** telemetry outage and buffer pressure, **when** business work continues, **then** telemetry outage/backpressure has bounded buffers/visible loss without blocking business work; OQ6 fixes stores and limits.
+- **AC9.3.3**: **Given** telemetry outage and buffer pressure under the versioned OQ6 profile, **when** business work continues, **then** buffers never exceed the profile limit, overflow follows its named drop/reject policy, `telemetry-loss` evidence records affected signal/count/time range, and business commits remain available; without the profile this check is `not-run`/`blocked-prerequisite`.
 
 ### US9.4: Measure performance and capacity
 
@@ -1039,16 +1113,20 @@ As a Reviewer, I want to inspect measured local resource evidence, so that I can
 
 - Parent: EP09 / FE09.02
 - Priority: Must Have
-- Requirements: NFR1,NFR2,NFR15
+- Requirements: NFR1,NFR1.1,NFR1.2,NFR2,NFR2.1,NFR15
 - Planned tasks: SS-24
 - Depends on: US4.4,US7.5,US9.3
 - INVEST: use an isolated measure performance and capacity fixture with the dependencies
   below supplied as capabilities, not prior test executions. Acceptance ends at
   the stated outcome; estimate effort after contract decisions, before scheduling.
+- Readiness: Blocked for implementation/sizing until the NFR1.2 workload profile
+  fixes operation mix, arrival/request count, warm-up, denominator and classifications.
 
 - **AC9.4.1**: **Given** the seeded warm stack and five concurrent users with mix/sample count/duration/hardware fixed before running, **when** ordinary inventory/purchasing reads are benchmarked including authorization, **then** measured p95 is strictly below one second and all parameters/results are published.
 - **AC9.4.2**: **Given** the full demo including OpenSearch/Dashboards, Vault/VSO, Redis, Qdrant, agent services and one active ML job, **when** capacity is measured, **then** sustained and peak RAM/CPU including Kubernetes/VM overhead fit 16GB/3CPU without extra assumed host resources.
 - **AC9.4.3**: **Given** startup/download/inference measurements or a failed budget result, **when** the measured report is published, **then** startup/download/LLM measurements are separate; failed fit is reported for owner decision without dropping services or increasing budgets silently.
+- **AC9.4.4**: **Given** the versioned import/reliability profile, **when** Retail Data is measured, **then** admission, queue and active-processing clocks are reported separately, start/deadline/readiness/restart targets are checked, and unexpected errors/timeouts use the profile's fixed operation mix, request count and denominator; that profile is an implementation prerequisite rather than an inferred test mix.
+- **AC9.4.5**: **Given** embedding/model/index and whole-cluster profiles, **when** measured at exact resource boundaries, **then** pinned artifact size, peak RSS, pod/host sampling interval, duration, throttling/OOM state and 1.5/2/16 GiB plus 3 CPU outcomes are recorded; heavy phases serialize and an absent profile is `blocked-prerequisite`.
 
 ### US9.5: Consistent retention
 
@@ -1063,7 +1141,7 @@ As a Operator, I want to expire logs and audits consistently, so that I can prev
   below supplied as capabilities, not prior test executions. Acceptance ends at
   the stated outcome; estimate effort after contract decisions, before scheduling.
 
-- **AC9.5.1**: **Given** configured7/90day retention defaults, **when** retention maintenance executes, **then** configurable defaults expire operational logs at7days and business audit at90days across PostgreSQL/OpenSearch.
+- **AC9.5.1**: **Given** configured 7-day operational-log and 90-day business-audit retention, **when** retention maintenance executes, **then** PostgreSQL and OpenSearch compare UTC instants with the same versioned rule: age below the period is retained and age equal to or greater than the period is expired, proven by fixtures immediately before, exactly at and immediately after each cutoff; OQ10 governs only maintenance schedule and allowed cleanup lag.
 - **AC9.5.2**: **Given** an expired event and index rebuild/rollback, **when** the projection is rebuilt, **then** rebuild/rollback cannot resurrect expired audit data.
 - **AC9.5.3**: **Given** a backup containing now-expired records, **when** backup data is restored, **then** restore applies the documented backup-expiry/cleanup policy with boundary fixtures; OQ5/OQ10 specify schedule and allowed lag before implementation.
 
@@ -1075,14 +1153,14 @@ As a Operator, I want to recover into a clean environment, so that I can demonst
 - Priority: Must Have
 - Requirements: FR20,NFR9
 - Planned tasks: SS-26
-- Depends on: US8.8,US4.5,US9.5,US9.7,US9.9,US9.10,US7.12
+- Depends on: US8.8,US4.5,US9.5,US9.7,US9.9,US9.10,US9.11,US7.12
 - INVEST: integrated recovery proof over independently accepted restore/replay
   capabilities, not a single implementation story spanning all stores. Its fixture
   is the full seeded clean environment; detailed restore work is US9.9/9.10.
 
-- **AC9.6.1**: **Given** validated store/secret restore capabilities, **when** the integrated clean-environment restore runs, **then** protected backups restore business/identity PostgreSQL, MongoDB and artifacts with counts, stock and provenance reconciled.
+- **AC9.6.1**: **Given** validated store/secret restore capabilities and a recovery manifest, **when** the integrated clean-environment restore runs after explicit Operator confirmation, **then** a visible run identity shows current phase/checkpoint/scope and protected backups restore business/identity PostgreSQL, MongoDB and artifacts with key sets, digests, stock and provenance reconciled.
 - **AC9.6.2**: **Given** retained authoritative source versions, **when** projections are rebuilt, **then** rebuilt audit/vector projections preserve retained source versions, deletions and expiry.
-- **AC9.6.3**: **Given** a recovery exercise with broker/worker interruption, **when** replay and rollback are exercised, **then** broker/worker replay and rollback avoid duplicate effects; OQ5 objectives are fixed first and measured time/data loss/limits are reported.
+- **AC9.6.3**: **Given** broker/worker interruption or partial restore failure, **when** replay/rollback/recovery handling executes, **then** the view identifies what remains fenced, what resumed, the authorized next action and terminal Succeeded, Failed, Aborted or Safely resumed status; success is unavailable until reconciliation passes, and OQ5 objectives are fixed and measured.
 
 ### US9.7: Rotate and recover credentials
 
@@ -1115,7 +1193,7 @@ As a Operator, I want to move a retailer to dedicated storage, so that I can evo
   the stated outcome; estimate effort after contract decisions, before scheduling.
 
 - **AC9.8.1**: **Given** a chosen retailer with queued/active work, **when** tenant migration begins, **then** pause/drain chosen tenant work then copy and reconcile database, document and artifact data before cutover.
-- **AC9.8.2**: **Given** validated copied data and new placement generation, **when** placement cutover executes, **then** validated placement-generation change and cache invalidation route new work correctly while stale jobs/routing fail.
+- **AC9.8.2**: **Given** validated copied data and a new placement generation, **when** cutover executes, **then** the placement record changes atomically, caches invalidate, all new reads/writes resolve only to the new generation, stale jobs/routes return typed `stale-placement-generation` without effect, and evidence proves there was no dual-route business write.
 - **AC9.8.3**: **Given** post-cutover writes and other retailers, **when** the migrated tenant is used, **then** post-cutover writes preserve stock/provenance/isolation and other tenants retain their intended placement.
 
 ### US9.9: Restore relational stores
@@ -1126,11 +1204,11 @@ As a Operator, I want to restore business and identity databases, so that I can 
 - Priority: Must Have
 - Requirements: FR20,NFR9
 - Planned tasks: SS-26
-- Depends on: US9.5,US1.5
+- Depends on: US9.5,US1.5,US9.11
 - INVEST: isolate the restore relational stores fixture; completion is this specific
   capability, with final integrated recovery/evidence in US9.6/US10.2.
 
-- **AC9.9.1**: **Given** a protected consistent backup and OQ5 recovery policy, **when** restored into clean isolated databases, **then** business/identity record counts and integrity checks match the fixture.
+- **AC9.9.1**: **Given** a protected backup and versioned recovery manifest from US9.11, **when** restored into clean isolated databases, **then** business/identity key sets, digests, stock-ledger balance, audit/source versions and integrity checks match the fixture and manifest cut.
 - **AC9.9.2**: **Given** expired audit records in backup, **when** retention reconciliation runs before exposure, **then** expired records cannot reappear in live access.
 - **AC9.9.3**: **Given** a corrupt or incomplete backup, **when** restoration is attempted, **then** validation fails explicitly and the restored service is not declared recovered.
 
@@ -1150,6 +1228,29 @@ As a Operator, I want to restore source documents and versioned artifacts, so th
 - **AC9.10.2**: **Given** missing/corrupt files or wrong-retailer access, **when** checked, **then** recovery/access fails explicitly without substituting another source.
 - **AC9.10.3**: **Given** restored source/deletion records, **when** handed to projection rebuild, **then** retained provenance and deletion state are available without claiming the index itself has already recovered.
 
+### US9.11: Capture a consistent recovery cut
+
+As a Operator, I want to quiesce PostgreSQL and RabbitMQ changes for backup, so that recovery evidence represents one consistent boundary.
+
+- Parent: EP09 / FE09.03
+- Priority: Must Have
+- Requirements: FR20.1,NFR8.3
+- Planned tasks: SS-06/26
+- Depends on: US8.2,US8.5,US9.1
+- INVEST: isolates barrier coordination and externally observable partial-failure behavior from the later full restore drill.
+- Readiness: Recovery policy v1 resolves OQ5 participant and global deadlines;
+  implementation must validate them under the local resource envelope.
+
+The story owns a versioned recovery manifest containing barrier ID/generation,
+fencing epoch, PostgreSQL LSN/transaction evidence, included queue identities and
+digests, participant states, snapshot state and terminal outcome. Delivery splits
+into a coordinator plus PostgreSQL and RabbitMQ participants behind this contract.
+
+- **AC9.11.1**: **Given** an authorized recovery request, **when** participants register and the coordinator prepares/closes the versioned barrier, **then** affected producers, consumers, relays, acknowledgements and topology mutations are fenced before the snapshot starts, and stale fencing tokens are rejected.
+- **AC9.11.2**: **Given** a quiesced cut, **when** captured, **then** PostgreSQL LSN/transaction evidence and per-queue identities/digests bind the broker-supported snapshot manifest.
+- **AC9.11.3**: **Given** participant timeout, lost prepare acknowledgement, abort-before-delayed-prepare ordering, coordinator restart or failure at close/drain/evidence/snapshot/resume, **when** recovery policy v1 executes idempotent abort/resume, **then** class A participants use 30/30/30/60-second, class B 60/60/60/120-second, and class C 120/180/60/180-second prepare/close/abort/resume deadlines; global registration, prepare, close/drain/evidence, snapshot, abort and resume/reconciliation limits are 60 seconds, 5 minutes, 5 minutes, 30 minutes, 5 minutes and 10 minutes; prepare dispatch is durable before send; every potentially delivered participant receives abort regardless of prepare acknowledgement; the participant's durable terminal guard prevents late prepare/close from acquiring or recreating a fence; the operator view shows run identity, phase, checkpoint, scope, terminal fencing inventory and terminal Failed, Aborted or Safely resumed state; `Aborted` requires complete abort acknowledgement plus cleared-or-suppressed fence disposition for the dispatch inventory, no success marker exists, a timeout leaves unresolved participants fenced, and an abandoned generation can never publish success.
+- **AC9.11.4**: **Given** a destructive snapshot/recovery action, **when** requested, **then** the Operator reviews scope and manifest summary and explicitly confirms; status inspection/validation remains non-destructive, and success is unavailable until every participant and reconciliation check passes.
+
 ## EP10: Reviewer experience and portfolio evidence
 
 ### US10.1: Reproduce the reviewer journey
@@ -1158,7 +1259,7 @@ As a Reviewer, I want to run the full demo independently, so that I can assess t
 
 - Parent: EP10 / FE10.01
 - Priority: Must Have
-- Requirements: NFR11,NFR14,NFR15
+- Requirements: NFR11,NFR11.1,NFR14,NFR14.1,NFR15
 - Planned tasks: SS-28
 - Depends on: US6.6,US7.5,US9.4,US9.6,US9.8
 - INVEST: use an isolated reproduce the reviewer journey fixture with the dependencies
@@ -1170,6 +1271,7 @@ As a Reviewer, I want to run the full demo independently, so that I can assess t
 - **AC10.1.3**: **Given** a missing prerequisite or failed setup step, **when** setup is attempted, **then** missing prerequisites/failure yield actionable setup/recovery diagnostics rather than a claimed successful demo.
 
 - **AC10.1.4**: **Given** provisioned demo memberships and keyboard-only operation, **when** retailer selection, import-error inspection, scenario review, submission, manager decision and receipt are traversed, **then** visible focus, meaningful labels, text statuses/errors and logical focus recovery allow completion; updates do not steal focus or rely only on color.
+- **AC10.1.5**: **Given** three clean reference-host runs, **when** setup/demo timing is evaluated, **then** every run meets the 90-minute total and 45-minute post-download deadline with each phase reported; no interpolated three-sample p95 substitutes.
 
 ### US10.2: Inspect portfolio evidence
 
@@ -1177,7 +1279,7 @@ As a Reviewer, I want to trace decisions to demonstrated outcomes, so that I can
 
 - Parent: EP10 / FE10.02
 - Priority: Must Have
-- Requirements: NFR15,FR12
+- Requirements: NFR15,NFR8.2,FR12
 - Planned tasks: SS-28
 - Depends on: US10.1
 - INVEST: use an isolated inspect portfolio evidence fixture with the dependencies
@@ -1188,7 +1290,23 @@ As a Reviewer, I want to trace decisions to demonstrated outcomes, so that I can
 - **AC10.2.2**: **Given** model/resource/recovery evaluation records, **when** evaluation reports are inspected, **then** model/data cards, rejected candidates, resource/recovery findings and synthetic limitations remain visible.
 - **AC10.2.3**: **Given** explicit owner approval for versioned release, **when** release artifacts are published, **then** owner-approved versioned release identifies demonstrated revision/tag/image without fabricated lifecycle or test outcomes.
 
-- **AC10.2.4**: **Given** all delivered consumer stories, **when** the release coverage matrix is checked, **then** every REST/async boundary and sensitive business flow has its own passing contract/authorization/audit/retry evidence; foundation fixture passes alone are insufficient.
+- **AC10.2.4**: **Given** all delivered consumer stories, **when** the machine-checkable release coverage matrix is validated, **then** every applicable FR/NFR maps through `requirement_id`, `story_id`, `ac_id`, `test_level`, `oracle/profile`, `evidence_artifact`, `revision/environment` and outcome; every REST/async boundary and sensitive business flow has its own contract/authorization/audit/retry evidence; duplicate or unknown IDs and missing applicable mappings fail the relevant quality gate, and foundation fixture passes alone are insufficient.
+- **AC10.2.5**: **Given** a versioned evidence manifest, **when** validated, **then** every check has exactly one of passed, failed, limited, rejected, unavailable or not-run plus reason, expected/actual result, trace IDs, immutable revision, environment, timing, command profile, artifact hashes and limitations.
+
+### US10.3: Verify the supported browser profile
+
+As a Reviewer, I want recorded cross-browser evidence, so that I can assess whether the portfolio UI supports its declared clients.
+
+- Parent: EP10 / FE10.03
+- Priority: Must Have
+- Requirements: NFR14.1,NFR8.1
+- Planned tasks: SS-03/11/28
+- Depends on: US8.1,US10.1
+- INVEST: isolates declared browser/version/viewport compatibility evidence from the broader end-to-end reviewer journey.
+
+- **AC10.3.1**: **Given** the declared test matrix, **when** core routes run, **then** the latest two stable Chrome, Firefox and Edge releases plus current Safari-major compatible WebKit evidence record exact versions and outcomes.
+- **AC10.3.2**: **Given** 360x800, 768x1024 and 1440x900 viewports, **when** core states render at 200% zoom/reflow, **then** keyboard order, focus, text alternatives and non-color status remain operable without page-level horizontal scrolling; labeled keyboard-operable data-region overflow is allowed.
+- **AC10.3.3**: **Given** an unsupported browser or failed matrix entry, **when** compatibility is assessed, **then** immutable evidence records exact browser/version and failed, limited, unavailable or not-run outcome; the product shows a compatibility message only when it can render one reliably, and detection alone never proves support.
 
 ## Delivery readiness and open decisions
 
@@ -1200,3 +1318,41 @@ remain prerequisites; no owner approval, test result or completed code is inferr
 Dependencies describe capabilities, not sequential epic completion. Operations
 design starts with each service; final integrated proof does not replace early
 resource feasibility checks. The story map preserves the existing SS task IDs.
+
+
+## Lifecycle status reconciliation
+
+The authoritative audit record contains `GATE_APPROVED` and `STAGE_COMPLETED`
+receipts for User Stories at 2026-09-22T06:39:38Z. Requirements Analysis had
+already been approved at 2026-09-21T16:36:58Z, including explicit accepted-risk
+dispositions for its four advisory findings. The `NOT-READY` appendix below is
+the immutable advisory review that preceded the User Stories gate; its R-01
+describes the then-stale requirements header rather than the later authoritative
+gate state. The appendix remains historical evidence. Post-approval downstream
+reconciliation edits have caused the framework to mark this completed stage as
+drifted, so approval and revalidation status must be reported separately.
+
+## Review
+
+**Verdict:** NOT-READY
+**Reviewer:** aidlc-product-lead-agent
+**Date:** 2026-09-21T18:45:49Z
+**Iteration:** 1
+
+### Findings
+
+| ID | Severity | Location | Evidence | Required action | Status |
+|---|---|---|---|---|---|
+| R-01 | Critical | aidlc/spaces/default/intents/260908-stock-sense-design/inception/user-stories/stories.md > Status and Scope and priorities; user-stories-questions.md > Source and Consolidated Summary Confirmation; personas.md > Status; user-stories-assessment.md > Rationale; requirements-analysis/requirements.md > Status and Review | The story package repeatedly describes requirements.md as approved, but requirements.md states that independent review and stage approval are pending and its terminal review verdict is NOT-READY with unresolved findings R-01 through R-04. The package therefore relies on and presents an approval state that the frozen source does not have. | Resolve or explicitly disposition the requirements findings through the requirements-analysis gate, then align every story-package approval claim and any affected story or criterion with the resulting requirements baseline. | Unresolved |
+
+### Validation Results
+
+- `stories.md` contained exactly 105,379 bytes and no pre-existing `## Review` heading before this appendix.
+- Story structure contains 67 unique `USx.y` stories and 242 unique `ACx.y.z` acceptance criteria, matching the owner-confirmed package summary.
+- `traceability.json` contains 58 unique upstream IDs and 58 coverage rows; every row is marked `OK` and targets named story IDs present in `stories.md`.
+- The requirements source explicitly says approval is pending and terminates with `**Verdict:** NOT-READY`; the conflicting approved-baseline claims occur in all four lead Markdown artifacts.
+- The review was bounded to the seven frozen artifacts and the User Stories stage definition supplied for this retry.
+
+### Summary
+
+The story package is structurally detailed and its declared requirement-to-story coverage is internally complete, but it is founded on a requirements baseline that remains pending and NOT-READY. Engineering cannot treat these stories as approved until that upstream gate is resolved and the package is reconciled to the resulting baseline.

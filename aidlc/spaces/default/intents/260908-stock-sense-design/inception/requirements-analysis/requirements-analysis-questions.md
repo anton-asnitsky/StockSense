@@ -254,6 +254,55 @@ for review; this answer is not requirements-stage approval.
   status, remaining manual allowance and reset time; failed accepted jobs keep slots.
 - Identity verification explicitly includes logout/session invalidation and tests
   preventing automatic account linking or inherited membership by matching email.
+- The lifecycle reconciliation will make the already accepted messaging policy
+  authoritative: five total RabbitMQ deliveries, deterministic one-to-30-second
+  backoff, seven-day DLQ retention, replay batches of at most 100, authenticated
+  producer binding, canonical payload digests, and a 64 KiB message-envelope cap.
+- The shared BFF contract will define no-store CSRF bootstrap/rotation, CSRF on
+  every mutation, one idempotency identity per logical command, typed HTTP 200
+  aggregate/section states, operation reconciliation, assistant SSE/resume/snapshot,
+  bounded audit/evidence queries, and RFC 9457 errors. The assistant may create a
+  confirmed purchase Draft; later Draft edits remain planner actions.
+- Evidence manifests will use exactly six outcomes: passed, failed, limited,
+  rejected, unavailable, and not-run. Demo Evidence owns C19 semantics and approved
+  examples; Contracts owns canonical packaging, schema generation, and validation.
+- Model Lifecycle will own a versioned heavy-compute lease API used by Forecasting,
+  with authenticated acquire/renew/release, idempotency, fencing tokens, queue and
+  timeout outcomes, and restore reconciliation. Promoted model metadata will carry
+  immutable skops.io artifact, canonical manifest, SHA-256, Ed25519 signature, key
+  status, trusted-type allowlist version, and revocation/overlap information.
+- Recovery evidence will use a versioned platform barrier that quiesces every
+  producer, consumer, relay, acknowledgement, and topology mutation affecting the
+  captured RabbitMQ queues; the snapshot binds queue identities/digests to a
+  PostgreSQL LSN/transaction cut and aborts or resumes explicitly after partial failure.
+- Supplier extraction quality will use a versioned golden fixture corpus. CSV is
+  Validated only with all required columns and at least 99% valid rows, PartiallyValidated
+  from 95% to below 99%, and Failed below 95% or with missing required columns. Text
+  PDF is Validated with all pages readable, all required golden terms found, and at
+  least 98% expected text anchors; PartiallyValidated requires at least 90% readable
+  pages and anchors with every omission identified; lower quality, scanned, or
+  encrypted input is Failed/Unsupported and cannot publish accepted terms.
+- Supplier Knowledge will cache only authorized retrieval and accepted-term comparison
+  results in Redis. Keys include retailer, placement generation, contract, source,
+  and active-index generations; TTL is five minutes with event invalidation. Outage
+  and stale-fill races fall back to authoritative stores without serving stale or
+  foreign data. ActiveIndexRoute is a PostgreSQL routine-owned compare-and-swap record
+  keyed by retailer and embedding configuration, backed up and reconciled with Qdrant.
+- Each embedding candidate uses a pinned artifact no larger than 1.5 GiB and a
+  measured process peak RSS no higher than 1.5 GiB inside the 2 GiB U5 limit. Candidate
+  loading, ingestion/build, and serving benchmarks are serialized; whole-cluster
+  evidence must still fit the 16 GiB/3 CPU envelope.
+- Retail imports will report admission-to-start and active-processing clocks separately.
+  Admission remains below 500 ms, queued work starts within ten minutes, and the
+  30-second/three-minute import targets apply to active processing. A 30-minute local
+  reliability profile permits at most 1% unexpected errors/timeouts, readiness must
+  succeed within 60 seconds, and restart recovery within two minutes; this is portfolio
+  evidence rather than a production availability SLA.
+- The browser matrix remains the latest two stable Chrome, Firefox, and Edge releases,
+  plus the current Safari major through standards-compatible code and WebKit coverage.
+- Clean-reviewer setup/demo timing passes only when all three clean runs meet the
+  relevant 90-minute and post-download 45-minute deadlines; no interpolated p95 over
+  three samples is used.
 
 Does this all look correct before I generate the requirements artifact?
 

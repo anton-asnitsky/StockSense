@@ -1,7 +1,8 @@
 # StockSense interaction specification
 
-Date: 2026-09-10
+Date: 2026-09-22
 Status: Draft for owner approval
+Revision: Owner-requested findings addressed after summary reconfirmation on 2026-09-22
 
 ## Scope and interaction contract
 
@@ -13,6 +14,9 @@ Global rules:
 - A retailer change invalidates incompatible cached queries, closes unsafe mutation surfaces and prevents late responses from rendering under the new retailer.
 - Destructive, financial or authority-changing actions require an explicit review step.
 - A lost or uncertain response is shown as uncertain; the client retrieves authoritative state before offering retry.
+- Idempotency results remain discoverable for the aggregate lifetime and for 90 days after its terminal state. A reused key whose retained result has expired returns `idempotency-key-expired`; the UI states that no effect occurred and requires a new operation identity.
+- `not-run` and `blocked-prerequisite` name the missing operational-quality result, profile or version and never render as passed, failed, ready or estimated.
+- Typed failures `authority-lost`, `cache-unavailable`, `secret-unavailable`, `secret-access-denied`, `stale-placement-generation` and `idempotency-key-expired` identify the prohibited side effect and a safe next action.
 - Only one modal dialog may be open. Large evidence belongs in a drawer or page.
 - Filters, sort, pagination and selected record are URL-addressable where this does not expose sensitive values.
 - Status changes use text and icons as well as color.
@@ -130,7 +134,9 @@ Steps:
 3. User confirms once; the control changes to the authoritative queued/running job.
 4. Completion refreshes the review list without stealing focus.
 5. User selects a row to inspect shortage logic, buffers, pack rounding, minimum order and supplier evidence.
-6. User creates a draft proposal in UI-06 with evidence pinned.
+6. User may open `Compare buffer scenarios`, retain the baseline, set a comparison override to inherit, zero or a positive value, and recalculate both columns on identical versioned inputs.
+7. The result identifies changed settings, resolved buffers, deterministic quantity differences and downstream shortage tradeoffs.
+8. User may create a new Draft from a current comparison; the evidence and selected scenario are pinned.
 
 Success outcome: Review outcome and allowance are visible; draft creation is traceable to evidence.
 
@@ -139,6 +145,7 @@ Error paths:
 - Quota exhausted: action is disabled with reset and scheduled-run guidance.
 - Concurrent request: existing active job is shown; no extra allowance is claimed.
 - Forecast unavailable: explicit unavailable outcome, not a zero recommendation.
+- Stale comparison input: mark the result stale, disable Draft creation, preserve the chosen comparison and require refresh/recalculation; never mutate a Draft or approved order.
 - Day-boundary retry: same job identity retains its original charging outcome.
 
 ### Flow F-06: Prepare and submit a purchase proposal
@@ -153,15 +160,17 @@ Steps:
 2. Validation runs on blur and on review: positive quantities, pack multiples, minimums, currency and supplier rules.
 3. Autosave displays `Saving`, `Saved` or `Unsaved changes`; explicit Save remains available.
 4. “Review submission” opens one confirmation dialog with retailer, totals, evidence versions and consequences.
-5. User submits; success locks lines and shows the submitted identifier/status.
+5. User submits; success locks lines and shows a durable receipt containing proposal identifier, submitter, timestamp, locked lines and next actor.
+6. The submitted proposal appears in the Manager pending-decision queue without relying on the submitter's browser session.
 
 Success outcome: A submitted immutable proposal is available in UI-07.
 
 Error paths:
 
 - Validation error: focus moves to the summary, then the first invalid field.
-- Stale evidence or optimistic conflict: submission fails and authoritative differences are shown.
-- Lost response: retrieve proposal by idempotency key before retry.
+- Stale evidence or optimistic conflict: focus moves to an error summary that identifies changed fields, preserves entered context, links current evidence and offers a linked replacement Draft without mutating the source.
+- Lost response: show `Outcome unknown` and make `Check status` the primary action; retry appears only after reconciliation confirms no effect.
+- Expired idempotency result: show `idempotency-key-expired`, state that no effect occurred and require a new operation identity.
 - Discard: destructive confirmation names the draft and returns focus to its prior list location.
 
 ### Flow F-07: Approve, reject or cancel purchasing
@@ -172,19 +181,19 @@ Trigger: Manager opens UI-07 from the overview or Purchasing.
 
 Steps:
 
-1. Queue shows submitted proposals with evidence status and decision age.
+1. Queue shows submitted proposals with submitter, submitted time, locked-line count, evidence status and decision age.
 2. Selecting a proposal updates the detail pane and its URL selection state.
 3. Manager opens supporting forecast, replenishment and audit context without losing the queue.
-4. Manager enters a reason where required and selects Approve or Reject.
+4. Manager enters a reason where required, verifies the acting role when multiple roles are held, and selects Approve or Reject.
 5. A confirmation states the retailer, proposal version, line totals and resulting state.
-6. The authoritative result updates the queue and announces outcome.
+6. The authoritative result updates the queue and announces actor, acting role, timestamp, reason and outcome.
 7. Eligible submitted/approved records expose Cancel before any receipt; cancellation has its own confirmation.
 
 Success outcome: Exactly one valid state transition is shown with decision evidence.
 
 Error paths:
 
-- Stale version: decision is rejected; current state and reviewer are shown if permitted.
+- Stale version: focus moves to the error summary; changed fields and current evidence are shown, entered reason is preserved, and a linked replacement Draft is offered without source mutation.
 - Competing decisions: losing action reloads the authoritative result.
 - Unauthorized role/membership: no business effect; safe denial.
 - Receipt already exists: cancel is unavailable and reason is shown.
@@ -225,7 +234,8 @@ Steps:
 3. Extraction/indexing progress is shown as stages with timestamps.
 4. Partial extraction exposes warnings and extracted text for review.
 5. Ready document exposes retrieval citations and version metadata.
-6. Delete action explains source deletion and downstream projection cleanup.
+6. Cache status names the authoritative version, embedding profile, active route/alias, projection generation and last reconciliation.
+7. Delete action explains source deletion and downstream projection cleanup.
 
 Success outcome: A versioned document is either ready, partial with warnings, rejected or deleted with explicit projection state.
 
@@ -233,6 +243,7 @@ Error paths:
 
 - Unsupported/scanned input: reject with supported-format guidance; no OCR claim.
 - Extraction/index failure: preserve source/version evidence and offer safe retry.
+- Cache or active-route failure: fail closed, mark retrieval unavailable, show no stale projection as current, and offer authorized reconciliation/rollback after previewing generations.
 - Wrong-retailer access: safe denial with no document existence disclosure.
 - Deleted version cited by an old answer: citation shows unavailable/deleted source state.
 
@@ -249,8 +260,9 @@ Steps:
 3. Response includes citations with source/version and distinguishes facts, calculations and uncertainty.
 4. Navigation suggestions open governed screens directly.
 5. A proposed mutation is represented as a preview card, not as completed work.
-6. User selects “Review action”; the owning domain screen reloads authority and current versions.
-7. User confirms in that domain surface; assistant history receives the authoritative outcome.
+6. A purchase-Draft preview includes retailer, supplier, products, quantities, prices, currency and source versions and states the exact effect `Create Draft only`.
+7. User selects “Review action”; the owning domain confirmation reloads authority/current versions and offers explicit Confirm and Cancel controls.
+8. User confirms in that domain surface; assistant history receives the authoritative outcome.
 
 Success outcome: Explanation and any action remain attributable, reviewable and tenant-safe.
 
@@ -259,7 +271,8 @@ Error paths:
 - LLM unavailable: show provider/model state and preserve unsent draft.
 - Retrieval degraded: label answer limits; do not fabricate citations.
 - Tool denied: show safe denial without exposing foreign data.
-- Lost tool response: query by operation identity before retry.
+- Lost tool response: show `Completed`, `Incomplete` or `Outcome unknown`; `Check status` is primary and retry is hidden until reconciliation establishes no effect.
+- Stale preview: invalidate confirmation, preserve conversational context and require a refreshed preview before mutation.
 - Prompt injection in source: content is displayed as cited data, never as trusted instruction.
 
 ### Flow F-11: Inspect operations and reviewer evidence
@@ -272,9 +285,12 @@ Steps:
 
 1. Select a versioned run, deployment, contract, trace or recovery exercise.
 2. Inspect summary, configuration fingerprint, timestamps and evidence links.
-3. Follow stable links across requirements, stories, design, contracts and validation.
-4. Missing evidence remains marked missing and provides the command or task expected to create it.
-5. Reviewer journey records local progress only after an observable result.
+3. For heavy work, inspect queue identity, lease owner/expiry, heartbeat, fencing generation and prerequisites before treating the work as runnable.
+4. For recovery, inspect run identity, phase, checkpoint, UTC start, PostgreSQL/RabbitMQ participants and fenced scope before any destructive confirmation.
+5. For browser support, inspect exact browser/version, viewport, zoom/reflow, keyboard/focus, text/non-color and horizontal-scroll results.
+6. Follow stable links across requirements, stories, design, contracts and validation.
+7. Missing evidence remains marked missing and provides the command or task expected to create it.
+8. Reviewer journey records local progress only after an observable result.
 
 Success outcome: A reviewer can reproduce the demo and distinguish planned, implemented, tested and measured claims.
 
@@ -283,6 +299,8 @@ Error paths:
 - Missing prerequisite: actionable setup guidance.
 - Backend unavailable: retain static documentation links and mark live evidence unavailable.
 - Revision mismatch: warn that evidence belongs to another revision.
+- Lease/fencing mismatch: return `authority-lost`, name the prohibited side effect and reconcile before replacement work.
+- Missing OQ/profile/version: render `blocked-prerequisite`, never a run result or readiness estimate.
 
 ## Component specifications
 
@@ -563,6 +581,51 @@ Error paths:
 | Color | Series differ by label, marker/line pattern and color |
 | Screen reader | Chart region receives concise purpose; table carries exact values |
 
+## BufferScenarioComparison
+
+| Field | Value |
+| --- | --- |
+| Component | `BufferScenarioComparison` |
+| Description | Compares baseline and configurable product-buffer scenarios on one versioned input set. |
+| Category | input / display / feedback |
+
+### States
+
+| State | Description | Trigger |
+| --- | --- | --- |
+| ready | Baseline and editable comparison inputs shown | Current inputs loaded |
+| calculating | Both scenarios recompute on one common input set | Recalculate selected |
+| complete | Changed settings and deterministic deltas shown | Calculation succeeds |
+| stale | Common input/version changed; downstream action blocked | Freshness check fails |
+| unavailable | Required forecast, terms or simulation input missing | Prerequisite absent |
+
+### Props / inputs
+
+| Prop | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `commonInputs` | object | yes | — | Inventory, forecast, terms and simulation versions shared by both columns |
+| `retailerDefault` | number | yes | — | Default buffer used when no product override exists |
+| `baselineOverride` | number or null | yes | — | `null` means inherit; zero remains an explicit override |
+| `comparisonOverride` | number or null | yes | — | Editable inherit/zero/positive comparison value |
+| `results` | object or null | yes | `null` | Resolved buffers, quantities, shortages and deltas |
+
+### Responsive behaviour
+
+| Breakpoint | Behaviour |
+| --- | --- |
+| mobile (<768px) | Difference summary first; labeled baseline and comparison sections stack vertically |
+| tablet (768–1023px) | Two-column inputs; results use a horizontally bounded semantic table |
+| desktop (>=1024px) | Baseline/comparison columns and result table remain side by side |
+
+### Accessibility
+
+| Requirement | Implementation |
+| --- | --- |
+| Keyboard | Override choice, reset, recalculate and downstream action use ordered native controls |
+| Semantics | Baseline, comparison and difference use table headers and visible labels |
+| Non-color | Changed settings and quantity deltas include signs and text labels |
+| Focus | Submitted stale result focuses the summary; refresh preserves the chosen comparison |
+
 ## ReviewRequestControl
 
 | Field | Value |
@@ -623,6 +686,7 @@ Error paths:
 | selected-stale | Evidence/version changed | Freshness check fails |
 | deciding | Explicit confirmation open | Approve/reject/cancel selected |
 | conflict | Another transition won | Version conflict |
+| handoff-confirmed | Durable submission receipt and Manager queue entry visible | Submission accepted |
 | complete | Outcome and next item | Authoritative success |
 
 ### Props / inputs
@@ -634,6 +698,8 @@ Error paths:
 | `capabilities` | array | yes | — | Allowed decisions from server state |
 | `evidence` | object | yes | — | Versions, rationale and links |
 | `decisionReason` | string | conditional | — | Required according to transition contract |
+| `actingRole` | enum | yes | — | Planner or Manager role exercised for this action |
+| `handoffReceipt` | object or null | conditional | `null` | Submitter/time/locked lines/next actor |
 
 ### Responsive behaviour
 
@@ -713,6 +779,8 @@ Error paths:
 | generating | Model response streaming/pending | Prompt sent |
 | retrieving | Sources being resolved | Retrieval starts |
 | tool-preview | Proposed navigation or mutation shown | Tool result/proposal |
+| confirming-draft | Complete Draft payload and exact effect await Confirm/Cancel | Governed preview selected |
+| interrupted | Completed, Incomplete or Outcome unknown shown | Tool work interrupted |
 | degraded | Model/retrieval/tool partly unavailable | Dependency failure |
 | error | No reliable answer/action outcome | Failure |
 | complete | Cited answer and activity record | Success |
@@ -726,6 +794,7 @@ Error paths:
 | `messages` | array | yes | `[]` | Thread history |
 | `providerState` | object | yes | — | Local/external model state |
 | `toolActivity` | array | yes | `[]` | Calls, outcomes and evidence |
+| `draftPreview` | object or null | no | `null` | Retailer, supplier, products, quantities, prices, currency and source versions |
 
 ### Responsive behaviour
 
@@ -805,6 +874,43 @@ Centered modal on tablet/desktop; full-width bottom sheet or full-screen dialog 
 
 Focus enters the title, remains trapped, and returns to the trigger on cancel. The confirm button is reachable after the consequence summary. Escape cancels except while an irreversible request is in flight; the reason is announced.
 
+## Governed recovery and evidence patterns
+
+### StaleRecoveryPanel
+
+This shared panel handles stale editing, submission and approval. It receives the attempted entity/version, authoritative entity/version, changed-field list, preserved user input, current-evidence links and replacement-Draft capability. Opening focuses a linked error summary. Each change link moves focus to the affected field or evidence. `Create linked replacement Draft` copies preserved context into a new Draft only after confirmation and never mutates or silently replaces the source record.
+
+### OperationOutcomePanel
+
+| Outcome | Required presentation | Primary action | Retry rule |
+| --- | --- | --- | --- |
+| `Completed` | Authoritative identifier, effect and evidence link | Continue | No retry |
+| `Incomplete` | Completed and uncompleted portions | Inspect details | Only for the uncompleted operation with a new authorized request |
+| `Outcome unknown` | Operation identity and explicit absence of a success claim | Check status | Hidden until reconciliation says no effect |
+| `idempotency-key-expired` | Retention expiry and explicit `No effect` | Start a new request | Requires a new key |
+| `authority-lost` | Lease/fencing evidence and prohibited side effect | Reconcile authority | Never continue under the stale generation |
+| `cache-unavailable` | Source/projection versions and fail-closed retrieval state | Diagnose or reconcile | No stale retrieval fallback |
+| `secret-unavailable` / `secret-access-denied` | Affected capability without secret material | Diagnose access | No dependent operation |
+| `stale-placement-generation` | Expected/current placement generation | Refresh placement | No write to the stale placement |
+
+The component uses `Alert`, `Result`, `Descriptions` and specific action `Button`s. Focus moves to the outcome heading after a submitted action; background reconciliation updates use a throttled polite live region.
+
+### LeaseStatusPanel
+
+The model-operations panel shows queue identity, requested operation, prerequisite result, lease owner, acquired/expiry UTC timestamps, heartbeat age, fencing token/generation and current authority. Its state set is `queued`, `blocked-prerequisite`, `leased`, `running`, `authority-lost`, `completed`, `failed` and `aborted`. `blocked-prerequisite` cannot show progress or an estimated start. `authority-lost` disables mutation controls and explains which write/promotion side effect is prohibited.
+
+### RecoveryBarrierPanel
+
+The recovery panel receives run identity, phase, checkpoint, start timestamp, PostgreSQL participant, RabbitMQ participant, fenced scope, destructive-action preview and evidence links. It exposes explicit `Review destructive action`, `Confirm destructive action`, `Abort` and `Check status` actions according to server capability. Terminal states are exactly `Succeeded`, `Failed`, `Aborted` and `Safely resumed`; ambiguous interruption remains `Outcome unknown`. The confirmation heading receives focus, names every participant/scope and returns focus to the run heading on completion or cancellation.
+
+### BrowserEvidencePanel
+
+The browser profile evidence record includes browser name and exact version, operating system, viewport, zoom/reflow level, keyboard/focus result, text-spacing result, non-color result, horizontal-scroll locations, tested revision, timestamp and supported/unsupported disposition. A failed check links to its exact evidence and expected behavior. Compatibility warnings inside the application require reliable detection; otherwise only this evidence record states support.
+
+### ConcurrencyReplayEvidence
+
+The deterministic evidence panel presents initial entity/state/version, synchronization barrier, competing commands, winner count, final entity/state/version/status, audit/outbox/inbox/idempotency counts and the exact replay response. It uses semantic descriptions and tables. A result is incomplete if any required count or the replay response is missing; absent fields cannot be rendered as zero.
+
 ## Keyboard interaction summary
 
 | Pattern | Keys and behavior |
@@ -818,6 +924,8 @@ Focus enters the title, remains trapped, and returns to the trigger on cancel. T
 | Combobox/select | Arrow keys navigate; Enter selects; Escape closes |
 | Charts | Controls are keyboard reachable; data table supplies exact exploration |
 | Assistant | Tab traverses prompt, stop, citations and actions; streaming does not move focus |
+| Stale recovery | Error summary receives focus; links reach changed fields/evidence; preserved context remains keyboard reachable |
+| Recovery barrier | Tab follows run evidence, destructive preview, confirmation and status; outcome changes never steal focus in the background |
 
 ## Copy and outcome conventions
 
@@ -827,6 +935,8 @@ Focus enters the title, remains trapped, and returns to the trigger on cancel. T
 - Never show raw stack traces, secret values, internal prompts or foreign identifiers.
 - Timestamps show retailer-local display time with UTC available in detail/tooltips; stored values remain UTC.
 - Currency values always include the retailer currency and never imply FX conversion.
+- Retention timestamps use UTC for policy evaluation. An item whose age is greater than or equal to the configured retention period is expired; boundary-time copy must not imply an additional grace interval.
+- `not-run` and `blocked-prerequisite` are neutral evidence states and never use pass/fail/readiness styling.
 
 ## Traceability
 
@@ -837,10 +947,13 @@ The UI IDs and flows map to all stories through `mockups.md` § Story-to-interfa
 | Retailer switch and late responses | US1.4, AC1.4.1–AC1.4.5 |
 | Import diagnostics and authoritative outcome | US2.2, AC2.2.1–AC2.2.4; US2.5 |
 | Inventory states and cache degradation | US2.3, US2.4 |
-| Forecast provenance/comparison | US4.1–US4.7 |
-| Manual review request and quota | US5.3, US5.4 |
-| Draft/submit/review/cancel | US6.1–US6.5 |
+| Supplier cache and active-route safety | US3.4 |
+| Forecast provenance/comparison and heavy-work fencing | US4.1–US4.8 |
+| Buffer-scenario comparison | US5.3, AC5.3.1–AC5.3.3 |
+| Manual review request | US5.4, AC5.4.1–AC5.4.7 |
+| Review status and allowance | US5.5, AC5.5.1–AC5.5.5 |
+| Draft/submit/review/cancel and observable handoff | US6.1–US6.5, especially AC6.1.3, AC6.2.1–AC6.2.3, AC6.3.1–AC6.3.4 |
 | Partial/full receipts and races | US6.6 |
-| Assistant context, evidence and governed action | US7.1–US7.12 |
-| Operations, audit and recovery evidence | US8.1–US9.10 |
-| Reviewer journey | US10.1, US10.2 |
+| Assistant context, evidence, governed action and interruption recovery | US7.1–US7.12, especially AC7.10.1, AC7.10.4–AC7.10.5, AC7.11.1–AC7.11.4, AC7.12.4 |
+| Operations, audit, retention and recovery barrier evidence | US8.1–US9.11, especially AC9.6.1–AC9.6.3 and AC9.11.1–AC9.11.4 |
+| Reviewer journey and browser profile evidence | US10.1–US10.3 |

@@ -1,7 +1,7 @@
 # User stories plan and questions
 
-Date: 2026-09-09
-Status: Story plan confirmed by the owner's instruction to proceed; generation in progress.
+Date: 2026-09-21
+Status: Story plan, final mob policy package and consolidated summary confirmed by the owner.
 Source: approved requirements-analysis/requirements.md in this intent.
 
 ## Persona development approach
@@ -72,26 +72,62 @@ authority. Scheduled processing remains deterministic; managers retain approval.
 
 This records approval of the EP07 refinement, not completion of User Stories.
 
+## Q3: Final mob decisions
+
+The final Design, Development and Quality reconciliation resolved the technical
+ownership, recovery, browser, accessibility and evidence objections. Three
+owner-level policies remain. The recommended package is:
+
+1. Require an observable Planner-to-Manager handoff with Submitted/decision
+   status, actor, timestamp, locked-line and next-actor information, plus a
+   keyboard-safe stale-decision path that explains changed fields and offers a
+   linked replacement Draft without mutating the source.
+2. Retain each Purchasing idempotency result for the lifetime of its purchase
+   aggregate and for 90 days after the aggregate becomes terminal. A replay after
+   expiry returns typed `idempotency-key-expired` without effect; the caller must
+   reconcile authoritative state and use a new key for a deliberate new command.
+3. Compare extraction percentages as exact fractions without display rounding.
+   Apply retention against UTC instants: age equal to or greater than the configured
+   period is expired; OQ10 remains responsible only for maintenance schedule and
+   allowed cleanup lag.
+
+A. Accept the recommended package
+B. Review the three policies individually
+X. Other (please specify)
+
+[Answer]: A. Accept the recommended package (`I accept`)
+
 ## Consolidated Summary Confirmation
 
 - Organize work as epics -> features -> user stories, as requested by the owner.
-- Proposed epics: access and tenancy; inventory and demo data; supplier information;
-  forecasting and ML; replenishment; purchasing; AI assistant and agentic workflows;
-  local platform and delivery; observability and recovery; portfolio experience.
-- Use the four established human roles: planner, manager, operator and reviewer.
-  Services remain supporting actors with explicitly bounded authority.
-- EP07 explicitly covers investigation, supplier comparison, replenishment
-  assistance, draft proposals, execution/recovery and evaluation/auditing, supported
-  by local inference and RAG. Domain services enforce authority and calculations;
-  the assistant cannot approve purchases or bypass manual-review quotas.
-- Preserve all approved requirements and SS task IDs. Each feature has a stable ID;
-  each story names its parent feature, requirement IDs and testable acceptance criteria.
-- Retain workflow-based delivery slices across epics. Required initial-release
-  capabilities remain required even if they ship after the first inventory demo.
-- Have design, development and quality specialists contribute to the story drafts,
-  then independently review the integrated result. Story count follows decomposition.
+- Use EP01-EP10 and the four established human roles: Planner, Manager, Operator
+  and Reviewer. Services remain supporting actors with bounded authority.
+- EP07 covers investigation, supplier comparison, replenishment assistance, Draft
+  proposals, execution/recovery and evaluation/auditing through local inference,
+  RAG and Strands. Domain services enforce calculations and authority.
+- Preserve all approved requirements, SS task IDs and existing story IDs. The final
+  decomposition contains 67 Must Have stories and 242 uniquely identified criteria.
+- Cover extraction classifications and boundaries, cache isolation, ML lease and
+  package controls, active-index reconciliation, reliable messaging, BFF contracts,
+  consistent recovery barriers, evidence outcomes, clean-run timing and browser
+  compatibility without inventing unresolved profiles or limits.
+- The assistant may create a newly confirmed Draft only. Later editing remains a
+  Planner action; the assistant cannot submit, approve, reject, cancel or receive.
+- Require visible Planner-to-Manager handoff and keyboard-safe stale-decision
+  recovery into a linked replacement Draft without mutating the source proposal.
+- Retain Purchasing idempotency results for aggregate lifetime plus 90 days after
+  terminal state. Expired keys return `idempotency-key-expired` without effect and
+  require reconciliation plus a new key for a deliberate new command.
+- Compare supplier quality percentages as exact fractions without display rounding.
+  Apply retention against UTC instants, with age equal to or greater than the
+  configured period expired; OQ10 governs maintenance schedule and cleanup lag.
+- Keep unresolved reliability workload, telemetry profile and recovery-barrier
+  timing dependencies visibly blocked rather than estimating or passing them.
+- Preserve the independent Design, Development and Quality contribution records;
+  their objective corrections and the accepted owner policies are integrated before
+  the independent Product Lead review.
 
-Does this all look correct before I generate the user stories and personas?
+Does this all look correct before I finalize and independently review the user stories and personas?
 
 - Looks correct
 - Request changes

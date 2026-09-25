@@ -1,7 +1,7 @@
 # StockSense personas
 
-Date: 2026-09-09
-Status: Draft derived from approved requirements; not empirical user research.
+Date: 2026-09-21
+Status: Owner-confirmed draft refreshed from approved requirements; not empirical user research.
 
 ## Persona definitions
 

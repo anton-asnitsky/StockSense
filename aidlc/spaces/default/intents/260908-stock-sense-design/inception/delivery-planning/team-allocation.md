@@ -1,8 +1,10 @@
 # StockSense team allocation
 
-Date: 2026-09-11
+Date: 2026-09-25
 Stage: Delivery Planning
-Status: Generated from the confirmed Delivery Planning summary
+Status: Reconciled with the approved C01-C27 contract, including C07/C10/C13 finalization and product-set rules
+Summary confirmation: Looks correct (2026-09-25)
+Construction staffing: One coordinated session (owner answer, 2026-09-25); specialist tasks remain bounded beneath one approval stream.
 
 ## Allocation basis
 
@@ -92,13 +94,21 @@ ML training, model download, full-cluster startup, performance runs, backup/rest
 ## Hand-off rules
 
 - U1 provider contracts precede consumer integration. A mock generated from an approved contract can unblock development but cannot close the provider's Definition of Done.
+- U1's Bolt 1 package is a source-bound `candidate`; its Bolt 2 `release` must pass the fixed C01-C27 coverage/kind policy, digest reconstruction, sidecar, generated-output, compatibility, validation, and evidence checks. U1 owns that policy; provider units own their API/event semantics and consumer units own their generated outputs. New provider revisions trigger a new package release check.
+- For C24, U3 and U4 own durable bootstrap participant behavior and negative tests. U15 owns the coordinator client, retry interpretation, and the rule that a participant's durable `200` is not whole-run success. The technical lead integrates provider/consumer conformance, and quality/reliability independently checks the `401`/`403`/`409`/`422`/`503`, checkpoint, late-prepare, and persistence-failure fixtures before Bolt 2 closes.
+- U1 owns C07's typed shared-transaction port, role-grant and conformance fixtures and C10/C13's typed history/product-set schemas by Bolt 2. U6 owns its lease/fence and route pin, finalizer function, drain guard, and atomic evaluation-lease completion. U7 owns immutable run/attempt creation, forecast publication, typed history and product-set coverage. The ML/MLOps and data specialists coordinate the retailer-local stored-routine transaction; quality/reliability independently checks race, replay, failed commit, and negative-schema fixtures before Bolt 4 closes. U8 and U11/U12 consume the covered/unavailable states, and U13 reruns the assembled path in Bolt 7.
 - A producer owns business semantics and examples; consumers own compatibility tests and explicit degraded-state behavior.
 - U4 tenant and placement authority precedes U5-U9 business integrations. No consumer may authorize from cached claims alone.
 - U5 accepted terms and U7 usable forecast contracts precede final U8 planning/purchasing acceptance.
 - U4/U5/U7/U8 governed tools precede U9 assistant side-effect tests.
-- U10 may build its generic inbox/projection path early, but final completion waits for each U3-U9 publisher's authoritative event examples and replay evidence.
-- U11/U12 may develop against U1 examples; final UI claims wait for real provider integration.
+- U3 and U4 own service-local C23-conformant bootstrap publishers; they are not U14 package consumers. The .NET and data specialists implement their atomic audit/outbox and adapter paths, quality/reliability checks the applicable C22 fixtures, and U13 records separate U3/U4 conformance evidence before Bolt 2 closes.
+- U3 owns the revocable human platform-Operator grant and C02 current-grant API. U10 owns a separate global identity-audit projection and C17 query that validates a delegated human token and checks U3 for every page; U11/U12 own the distinct no-store C18 platform view. Security/identity and quality/reliability check retailer-only, machine, revoked-grant, wrong-token, unavailable-check, and tenant-leakage denials before Bolt 2 closes.
+- U10 may build its generic inbox/projection path early, but final completion waits for each U3-U9 and U15 publisher's authoritative event examples, its own recovery participant checkpoint, tenant/global query separation, and replay evidence.
+- U11/U12 may develop against U1 examples; final UI claims, including the platform-operations audit view, wait for real provider integration.
 - U13 prepares scenario/evidence structure early and closes only after clean-room verification of the assembled system.
+- U14 delivers a thin RabbitMQ consumer adapter for U10 in Bolt 1, then closes .NET/Python broker conformance for its approved consumers in Bolt 2. It owns reusable delivery mechanics; U3/U4 independently implement the same applicable protocol and fixtures through service-owned publishers. U1 and each producer/consumer retain schema meaning, outbox/inbox state, authorization, and business effects.
+- U15 starts routine-backed coordination, operator authority, fencing, and U3/U4 participant integration in Bolt 2. Each later provider adds its own recovery checkpoint and generation guard before its Bolt closes. U15 final acceptance waits for the full eleven-participant roster, U11/U12 browser projection, and U10/U13 evidence in Bolt 7.
+- The technical lead owns cross-unit integration of U14 and U15. The .NET and data specialists implement coordinator routines and service boundaries; platform/DevOps owns broker, Vault, storage and local deployment; security/identity reviews operator authority and generation fencing; quality/reliability verifies manifest, timeout, recovery-target and fail-closed behavior. The AI-DLC steward checks current upstream alignment at each gate.
 
 ## Git and review ownership
 

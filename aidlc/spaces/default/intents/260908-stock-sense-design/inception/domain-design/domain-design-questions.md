@@ -1,8 +1,8 @@
 # StockSense domain design questions
 
-Date: 2026-09-10
+Date: 2026-09-23
 Stage: Domain Design
-Status: Awaiting consolidated summary confirmation
+Status: Reconciled design plan; latest confirmation recorded below
 Mode: Guided, one question at a time
 
 This stage defines logical code components, their responsibilities, owned entities,
@@ -165,9 +165,75 @@ component should own them?
 
 [Answer]: A. Add a Demand History component that owns demand observations, promotion observations, demand-import batches, and protected synthetic evaluation truth (Recommended) — confirmed 2026-09-10; **Mode:** guided
 
+## Q11. Recovery-barrier ownership
+
+US9.11 adds a versioned coordinator and participant lifecycle that fences PostgreSQL
+and RabbitMQ activity, captures one recovery manifest, and owns abort/resume state.
+Which logical component should own this code and its entities?
+
+- A. Add a Recovery Coordination component (Recommended) — it owns recovery runs,
+  barriers, participant checkpoints, manifests, fencing generations and terminal
+  outcomes. Demo Evidence invokes and verifies it but does not own operational
+  recovery state.
+- B. Extend Demo Evidence — it owns the coordinator and recovery entities together
+  with reproducibility scenarios and reviewer evidence.
+- C. Distribute ownership among business components — each component coordinates
+  its own PostgreSQL/RabbitMQ participation without one authoritative recovery owner.
+- X. Other (please specify)
+
+[Answer]: A. Add a Recovery Coordination component (Recommended) — confirmed 2026-09-22; **Mode:** guided
+
+## Review-directed recovery resolution
+
+The owner's 2026-09-22 instruction to resolve findings R-01 through R-07 closes
+the implementation-blocking recovery ambiguity through recovery policy v1. It
+defines synchronous prepare/close/abort/resume semantics for Identity Access and
+Tenant Directory, assigns every participant to an explicit deadline class, and
+defines fail-closed outcomes for registration, prepare, close/drain/evidence,
+snapshot, coordinator-restart, abort, resume, stale-response and digest-mismatch
+failures. The exact profile is recorded in `components.md`, ADR-011, FR20.1 and
+US9.11; future environments may version the values without weakening fencing.
+
+## Confirmed backlog reconciliation
+
+The 67-story baseline was approved by the User Stories owner gate at
+2026-09-22T06:39:38Z after Requirements Analysis was approved at
+2026-09-21T16:36:58Z. The retained `NOT-READY` appendices are pre-gate advisory
+evidence, while later reconciliation edits make both completed stages drifted
+and eligible for revalidation. Approval therefore governs the baseline decision;
+it does not erase review history or claim current revalidation. The baseline adds
+four stories and tightens several ownership contracts without changing the ten
+previously accepted boundaries:
+
+- Supplier Knowledge owns authoritative retrieval-route generations, index
+  reconciliation and cache invalidation semantics. Redis remains disposable; cached
+  results are not domain entities and must fall back to authoritative state.
+- Model Lifecycle owns the PostgreSQL-backed heavy-work queue, lease and fencing
+  token. Forecasting and training workers are clients and cannot publish under a
+  stale token.
+- Recovery Coordination is a new logical component. It owns recovery runs,
+  barriers, participant checkpoints, manifests, fencing generations, destructive
+  confirmations and terminal recovery outcomes for PostgreSQL/RabbitMQ cuts.
+- Demo Evidence owns immutable browser-profile evidence and deterministic
+  concurrency/replay evidence. Web Experience renders those records and
+  compatibility guidance without becoming their authority.
+- Purchasing retains aggregate-scoped idempotency results and immutable handoff,
+  decision and receipt evidence. Replenishment remains the owner of buffer-scenario
+  definitions and comparisons.
+- Inventory owns versioned dated inbound-supply commitments. Purchasing commands
+  their approval, cancellation, and receipt updates through the Inventory port;
+  Replenishment reads them with stock positions for time-phased shortage logic.
+- MessagingPlatform owns the shared AsyncAPI envelope and RabbitMQ protocol code,
+  while each domain keeps its own message schema, outbox/inbox, authorization,
+  idempotency, and atomic business effects. DemoEvidence verifies conformance.
+- Tenant Directory continues to own placement generations and authority context;
+  Vault, Redis, Qdrant and data stores remain external dependencies. RabbitMQ is
+  broker infrastructure behind MessagingPlatform rather than a domain owner.
+
 ## Mandatory ambiguity scan
 
-- All discovered business-data families now have a proposed single owner.
+- All discovered business-data families, recovery coordination state and reviewer
+  evidence records now have a proposed single owner.
 - Retailer configuration in Tenant Directory covers currency, time zone, stores,
   memberships, roles, and storage placement. Replenishment owns planning-policy
   settings such as buffer-day defaults and product overrides.
@@ -175,8 +241,15 @@ component should own them?
   outbox entries. Audit Evidence owns the derived search projection, indexing
   checkpoints, replay status, and authorized audit-query model.
 - Accepted synthetic records enter their owning business components; Demo Evidence
-  owns scenario definitions, generation runs, setup verification, and portfolio
-  evidence manifests.
+  owns scenario definitions, generation runs, setup verification, browser-profile
+  and deterministic replay evidence, and portfolio evidence manifests.
+- Recovery Coordination owns operational barrier state; Demo Evidence invokes and
+  verifies recovery but cannot synthesize or overwrite its outcome.
+- Recovery policy v1 assigns every participant to an explicit prepare/close/abort/
+  resume deadline class, defines synchronous bootstrap semantics for Identity
+  Access and Tenant Directory, records prepare dispatch before send, suppresses
+  prepare/close after a durable abort terminal guard, and fails closed for every
+  partial-failure class including lost acknowledgements and command reordering.
 - Deployment topology remains intentionally deferred to Units Generation.
 - Infrastructure products remain external dependencies or adapters, not domain
   entities.
@@ -191,28 +264,49 @@ component should own them?
 2. Identity Access owns authentication accounts, credentials, federation, and
    sessions. Tenant Directory owns retailers, memberships, roles, retailer
    configuration, stores, and storage placement.
-3. Inventory owns products, stock positions, and stock movements, with a documented
-   extraction path for a future richer Catalog component.
+3. Inventory owns products, stock positions, stock movements, and the versioned
+   dated inbound-supply commitment. Purchasing creates, cancels, and reduces that
+   commitment through the Inventory port as approvals and receipts occur.
 4. Demand History separately owns sales, lost demand, promotions, import batches,
    and protected synthetic evaluation truth.
 5. Supplier Knowledge owns source documents, extraction, validation, normalized
-   accepted terms, provenance, and authorized retrieval indexing. Assistant consumes
-   retrieval through its contract.
+   accepted terms, provenance, authorized retrieval indexing and active-route
+   reconciliation. Assistant consumes retrieval through its contract; Redis remains
+   a disposable cache.
 6. Forecasting owns operational forecast requests, runs, results, versions, and
    freshness. Model Lifecycle owns datasets, experiments, evaluations, candidates,
-   promotions, and rollbacks.
+   promotions, rollbacks, and the fenced heavy-work queue/lease.
 7. Replenishment owns scheduled/manual reviews, quotas, scenarios,
    recommendations, evidence snapshots, and planning-policy settings. Purchasing
-   owns proposals, orders, approvals, rejections, cancellations, and receipts.
+   owns proposals, orders, approvals, rejections, cancellations, and receipts;
+   Replenishment reads Inventory's dated inbound commitments for time-phased
+   shortage calculations.
 8. Each business component commits its business change, local audit entry, and
    outbox entry atomically. Audit Evidence builds and serves the authorized,
    rebuildable search projection.
-9. Components use synchronous contracts for immediate commands and queries and
-   RabbitMQ events for asynchronous propagation. Cross-component storage access is
-   prohibited.
+9. Components use synchronous contracts for immediate commands and queries.
+   MessagingPlatform owns the shared AsyncAPI envelope, RabbitMQ adapter, delivery
+   identity, publisher-confirm, retry, DLQ, replay, payload-limit, telemetry, and
+   conformance code. Domain components own their message schemas, outbox/inbox,
+   authorization, idempotency, and atomic effects. Cross-component storage access
+   is prohibited.
 10. Web Experience owns UI composition and client workflow state without business
     entities. Demo Evidence owns reproducible scenarios, setup verification, and
-    evidence manifests.
+    evidence manifests, including browser-profile and concurrency/replay evidence.
+11. Recovery Coordination owns PostgreSQL/RabbitMQ barrier runs, participant
+    checkpoints, manifests, fencing generations, explicit destructive confirmations,
+    and terminal recovery outcomes. Recovery policy v1 provides class-specific and
+    global deadlines, idempotent synchronous bootstrap ports, a write-ahead dispatch
+    inventory, durable participant terminal guards, and fail-closed partial-failure
+    outcomes. Demo Evidence exercises lost-acknowledgement and abort-before-prepare
+    schedules through contracts.
+12. Purchasing owns durable submission-to-manager handoff, decision and receipt
+    evidence plus aggregate-lifetime and post-terminal idempotency records;
+    Replenishment owns buffer-scenario comparisons.
+13. Requirements Analysis and User Stories are owner-gate approved according to
+    authoritative audit receipts. Their retained `NOT-READY` appendices are
+    historical pre-gate reviews, while later reconciliation edits remain marked
+    drifted until revalidated.
 
 ## Consolidated Summary Confirmation
 

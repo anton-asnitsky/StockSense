@@ -1,7 +1,8 @@
 # StockSense design system mapping
 
-Date: 2026-09-10
+Date: 2026-09-22
 Status: Draft for owner approval
+Revision: Owner-requested findings addressed after summary reconfirmation on 2026-09-22
 
 ## Design system decision
 
@@ -83,6 +84,7 @@ Transitions remain under 200ms for navigation affordances and under 300ms for dr
 | Detail surface | `Drawer`, `Tabs`, `Descriptions`, `Timeline` | Drawer on desktop/tablet; full route/screen on mobile |
 | Import | `Upload`, `Steps`, `Progress`, `Table`, `Result` | Review-before-commit; diagnostics downloadable; no hidden partial policy |
 | Draft line editing | `Form`, `InputNumber`, `Table` | Draft-only editing; on-blur and submit validation |
+| Buffer scenario comparison | `Form`, `Radio`/`Select`, `InputNumber`, `Descriptions`, `Table`, `Alert` | Distinguish inherit from explicit zero; one common version set; signed text deltas; stale action blocked |
 | Confirmation | `Modal` | Specific verb; retailer/version/consequence; never nested |
 | Result state | `Result`, `Alert`, `Empty`, `Skeleton`, `Spin` | Match shared state taxonomy; spinner needs a name and delayed message |
 | Notifications | `App` message/notification APIs | Supplement inline result; never sole evidence |
@@ -90,6 +92,13 @@ Transitions remain under 200ms for navigation affordances and under 300ms for dr
 | Assistant panel | `Drawer` or layout `Sider`, `List`, `Input.TextArea` | Labeled conversation log; tool previews; citations and provider state |
 | Assistant full workspace | `Layout`, `Splitter` if chosen and accessible, `Tabs`, `Drawer` | Preserve keyboard path; resizing cannot be pointer-only |
 | Purchasing queue | `Table`/`List`, `Flex`, `Descriptions`, `Form` | Master-detail with authoritative capability controls |
+| Durable handoff receipt | `Result`, `Descriptions`, `Timeline`, stable `Link` | Submitter/time/locked lines/next actor; mirrored in Manager queue |
+| Stale recovery | `Alert`, linked error summary, `Descriptions`, `Button` | Preserve input, enumerate changes, link current evidence, replacement Draft only |
+| Supplier cache route | `Descriptions`, `Tag`, `Timeline`, guarded `Modal` | Source/profile/alias/generation/reconciliation; fail closed |
+| Lease and fencing | `Descriptions`, `Progress`, `Alert`, `Timeline` | Queue/lease/heartbeat/fencing; blocked prerequisites have no progress estimate |
+| Recovery barrier | `Steps`, `Descriptions`, `Alert`, destructive `Modal` | Run/phase/checkpoint/participants/fenced scope and exact terminal state |
+| Browser evidence | `Descriptions`, `Table`, `Result` | Exact browser/version/viewport/zoom/focus/non-color/scroll evidence |
+| Deterministic replay evidence | `Descriptions`, semantic `Table`, code text | Initial/final versions, barrier, commands, winner and exact counts/response |
 | Error boundary | `Result`, `Alert`, retry `Button` | State effect and recovery in plain language |
 | Help | `Popover`, `Tooltip`, inline text | Essential instructions remain visible; tooltip is supplemental |
 
@@ -104,17 +113,18 @@ Use native HTML elements when they express semantics better than a component abs
 | UI-02 Import center | `Steps` + `Upload` + `Form` + validation `Table` + review `Descriptions` |
 | UI-03 Inventory | filter `Form` + `Table` + `Drawer` + `Tabs` + `Timeline` |
 | UI-04 Forecasts | selector `Form` + Ant Design Charts + text summary + `Table` + evidence `Descriptions` |
-| UI-05 Replenishment | allowance `Alert`/`Statistic` + `Table` + `Drawer` + request `Modal` |
+| UI-05 Replenishment | allowance `Alert`/`Statistic` + results `Table` + evidence `Drawer` + scenario-comparison `Form`/`Table` + request `Modal` |
 | UI-06 Draft proposal | editable `Form`/`Table` + totals `Statistic` + review `Modal` |
 | UI-07 Purchase review | responsive `Flex` split + queue `Table` + detail `Descriptions` + decision `Form` |
 | UI-08 Receipts | order `Descriptions` + progress `Steps`/`Progress` + receipt `Form`/`Table` |
-| UI-09 Suppliers | supplier `Tabs` + document `Table` + upload `Drawer` + extraction `Alert` |
+| UI-09 Suppliers | supplier `Tabs` + document/cache `Table` + upload `Drawer` + extraction/route `Alert` |
 | UI-10 Assistant panel | `Drawer`/secondary `Sider` + conversation `List` + prompt `Form` + citations |
 | UI-11 Assistant workspace | multi-region `Layout` + history `List` + evidence `Tabs`/`Drawer` |
-| UI-12 Model operations | run `Table` + comparison charts + version/evaluation `Descriptions` + promotion `Modal` |
-| UI-13 Operations | health `Card` grid + procedure `List` + evidence `Table` + safe external links |
+| UI-12 Model operations | run/lease `Table` + comparison charts + version/fencing `Descriptions` + promotion `Modal` |
+| UI-13 Operations | health `Card` grid + recovery `Steps` + participant/scope `Descriptions` + evidence `Table` |
 | UI-14 Audit/observability | filter `Form` + virtualized or paginated `Table` + trace `Drawer`/`Timeline` |
 | UI-15 Reviewer | `Steps` + evidence status `Table` + stable-link `List` + setup `Result` states |
+| UI-16 Browser evidence | profile `Descriptions` + check `Table` + supported/unsupported `Result` |
 
 ## Status taxonomy
 
@@ -128,6 +138,12 @@ Use native HTML elements when they express semantics better than a component abs
 | Pending | Queued, Running, Saving | processing status plus progress | operation name and current step |
 | Uncertain | Checking outcome | warning `Alert` | explicit “do not retry yet” text |
 | Terminal | Rejected, Cancelled, Received | semantic tag | exact terminal label |
+| Submitted handoff | Submitted, Pending manager decision | info/processing `Tag` plus receipt | submitter, time, locked lines and next actor |
+| Blocked prerequisite | Not run, Blocked prerequisite | neutral `Result`/`Alert` | missing OQ/profile/version; no pass/fail/readiness cue |
+| Authority lost | Authority lost, Fenced | error `Result` | fencing generation and prohibited side effect |
+| Recovery terminal | Succeeded, Failed, Aborted, Safely resumed | exact semantic `Tag`/`Result` | full terminal text and evidence link |
+| Cache route failure | Cache unavailable, Active route missing, Generation stale | error/warning `Alert` | fail-closed text and source/projection generations |
+| Idempotency expired | Idempotency key expired | neutral/error `Result` by context | explicit no-effect text and new-request action |
 
 Status vocabulary must match domain contracts. UI wording cannot create extra purchasing states.
 
@@ -158,6 +174,8 @@ Use Ant Design responsive tokens as implementation primitives while honoring the
 
 Breakpoint behavior is tested at boundaries and intermediate widths. Browser zoom to 400% may trigger the compact/mobile layout without loss of required functionality.
 
+The supported-browser evidence matrix records exact browser versions rather than evergreen family names. For each version it captures viewport, 200%/400% zoom or equivalent reflow, keyboard and focus behavior, text spacing, non-color understanding and every permitted two-dimensional scroll region. A profile is `Supported` only when all required checks have evidence; `Unsupported` and `Not run` remain distinct. The application shows a compatibility warning only where detection is reliable.
+
 ## Form conventions
 
 - Labels are visible and placed above fields.
@@ -168,6 +186,7 @@ Breakpoint behavior is tested at boundaries and intermediate widths. Browser zoo
 - Numeric fields state unit, range, pack/minimum rule and rounding behavior.
 - Date/time fields identify the retailer-local zone, with UTC available in detail.
 - Autosave reports Saving, Saved and Unsaved changes; consequential transitions remain explicit.
+- Stale submit/approve failures preserve entered values, focus the error summary, enumerate changed fields and expose a linked replacement-Draft action without mutating the source.
 
 ## Table conventions
 
@@ -184,6 +203,7 @@ Breakpoint behavior is tested at boundaries and intermediate widths. Browser zoo
 - Use drawers for inspectable detail that benefits from retained list context.
 - Use full pages for long assistant sessions, model evidence and complex operational procedures.
 - Use dialogs only for focused input or consequential confirmation.
+- Assistant Draft confirmation must contain the complete payload and the exact effect `Create Draft only`; no request is sent before explicit confirmation.
 - Never nest a dialog. If more evidence is needed, cancel/close and open the appropriate drawer/page with a return path.
 - Opening an overlay moves focus to its heading; closing returns focus to the trigger unless that trigger no longer exists, in which case focus moves to the nearest stable heading.
 

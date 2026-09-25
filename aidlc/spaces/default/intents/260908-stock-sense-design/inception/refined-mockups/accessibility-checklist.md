@@ -1,8 +1,9 @@
 # StockSense accessibility checklist
 
-Date: 2026-09-10
+Date: 2026-09-22
 Target: WCAG 2.2 Level AA
 Status: Design checklist; implementation evidence pending
+Revision: Owner-requested findings addressed after summary reconfirmation on 2026-09-22
 
 ## Scope and claim boundary
 
@@ -98,6 +99,10 @@ Criteria not relevant to the implemented content must be recorded as Not applica
 | Background job progress | Focus remains unchanged; polite status region updates at meaningful milestones |
 | Session expiry | Focus moves to session-expired alert; uncertain mutation is identified |
 | Conflict/stale response | Focus moves to conflict heading; reload action follows in order |
+| Stale edit/submission/approval | Linked error summary receives focus; changed fields, preserved values, current evidence and replacement-Draft action follow in reading order |
+| Assistant Draft confirmation | Dialog heading receives focus; complete payload precedes Confirm/Cancel; cancel returns to preview trigger |
+| Outcome unknown | Outcome heading receives focus after submission; `Check status` is the first action and retry is absent |
+| Recovery barrier confirmation | Destructive-action heading receives focus; participants and fenced scope precede the confirm action |
 
 ## Screen-specific checklist
 
@@ -151,6 +156,10 @@ Criteria not relevant to the implemented content must be recorded as Not applica
 - [ ] Request confirmation names quota effect.
 - [ ] Job status updates are polite and do not steal focus.
 - [ ] Calculation evidence has a logical reading order.
+- [ ] Scenario controls distinguish inherited, explicit-zero and positive overrides in visible and programmatic text.
+- [ ] Baseline, comparison and signed differences use semantic headers and never rely on color or spatial position alone.
+- [ ] Mobile stacking preserves baseline/comparison labels and presents the difference summary before dense detail.
+- [ ] A stale comparison focuses an explanatory summary after submission, preserves the chosen values and blocks Draft creation until refresh/recalculation.
 
 ### UI-06 through UI-08 Purchasing and receipts
 
@@ -162,6 +171,9 @@ Criteria not relevant to the implemented content must be recorded as Not applica
 - [ ] Partial/full receipt totals are expressed in text per line.
 - [ ] Conflict, duplicate and uncertain outcomes never appear as success.
 - [ ] Mobile decision controls remain separated to prevent accidental activation.
+- [ ] Submitted confirmation exposes submitter, time, locked lines and next actor in text and is reachable from the Manager queue.
+- [ ] Decision receipts expose actor, acting role, time and reason; a dual-role user can verify the role being exercised.
+- [ ] Stale recovery focuses a linked summary, preserves entered context, enumerates changes and offers a replacement Draft without silently mutating the source.
 
 ### UI-09 Supplier knowledge
 
@@ -170,6 +182,8 @@ Criteria not relevant to the implemented content must be recorded as Not applica
 - [ ] Document source, version and checksum are available to assistive technology.
 - [ ] Extracted tables preserve headers or provide a linearized alternative.
 - [ ] Delete confirmation explains source and projection effects.
+- [ ] Cache/active-route status exposes source version, profile, alias/generation and reconciliation time without relying on color.
+- [ ] Fail-closed retrieval and authorized reconciliation/rollback states have distinct headings, effects and actions.
 
 ### UI-10 and UI-11 Assistant
 
@@ -181,8 +195,10 @@ Criteria not relevant to the implemented content must be recorded as Not applica
 - [ ] Proposed mutation opens the owning domain confirmation; chat itself cannot approve.
 - [ ] Provider/retrieval degradation is explicit.
 - [ ] Full-screen mobile assistant preserves a clear back path and context label.
+- [ ] Draft confirmation reads retailer, supplier, products, quantities, prices, currency, source versions and `Create Draft only` before Confirm/Cancel.
+- [ ] Interrupted work exposes `Completed`, `Incomplete` or `Outcome unknown`; `Check status` precedes any conditionally available retry.
 
-### UI-12 through UI-15 Operations and reviewer evidence
+### UI-12 through UI-16 Operations and reviewer evidence
 
 - [ ] Run/deployment/recovery evidence identifies revision and timestamp.
 - [ ] Logs and traces use semantic tables/lists and bounded pagination.
@@ -190,6 +206,11 @@ Criteria not relevant to the implemented content must be recorded as Not applica
 - [ ] Missing evidence is labeled missing rather than silently omitted.
 - [ ] External/documentation links disclose destination where useful.
 - [ ] Reviewer steps reflect observed completion and remain keyboard operable.
+- [ ] Lease status exposes queue, owner, expiry, heartbeat, fencing generation and authority as text; `blocked-prerequisite` has no progress/readiness cue.
+- [ ] Recovery barrier presents run, phase, checkpoint, UTC start, PostgreSQL/RabbitMQ participants and fenced scope before destructive confirmation.
+- [ ] Recovery terminal states read exactly `Succeeded`, `Failed`, `Aborted` or `Safely resumed`; ambiguity remains `Outcome unknown`.
+- [ ] Concurrency/replay evidence exposes initial/final state and version, barrier, commands, winner count, audit/outbox/inbox/idempotency counts and exact replay response.
+- [ ] Browser evidence names exact version, viewport, zoom/reflow, keyboard/focus, text spacing, non-color result and horizontal-scroll exceptions.
 
 ## Forms and error handling
 
@@ -202,6 +223,8 @@ Criteria not relevant to the implemented content must be recorded as Not applica
 - [ ] Server errors explain the effect: committed, not committed or uncertain.
 - [ ] Disabled controls expose a visible reason; disabled elements are not the only route to that explanation.
 - [ ] Success appears inline near the initiating workflow and includes an authoritative identifier/evidence link.
+- [ ] Typed failures identify the prohibited side effect and safe next action: `authority-lost`, `cache-unavailable`, `secret-unavailable`, `secret-access-denied`, `stale-placement-generation`, `idempotency-key-expired`.
+- [ ] `not-run` and `blocked-prerequisite` never use pass/fail/ready styling or announce an estimate.
 
 ## Data table checklist
 
@@ -253,6 +276,9 @@ Avoid multiple simultaneous live regions announcing the same update.
 - [ ] No fixed-height region clips validation, status or translated/long content.
 - [ ] Touch targets and spacing meet the selected WCAG target.
 - [ ] Landscape and portrait preserve supported mobile review tasks.
+- [ ] Record exact browser/version, operating system, viewport and tested revision for every result.
+- [ ] At 400% zoom, required content reflows to one dimension except documented data-table regions; any horizontal scroll is visible, keyboard reachable and limited to that region.
+- [ ] Text spacing overrides do not clip handoff receipts, typed outcomes, confirmation payloads or recovery evidence.
 
 ## Automated verification plan
 
@@ -277,6 +303,8 @@ Automated tools cannot establish full conformance. Their pass must be supplement
 - [ ] Verify contrast for all normal, hover, focus, disabled, selected, stale, warning and error states.
 - [ ] Verify focus is never obscured by sticky headers, bottom action bars, assistant surfaces or notifications.
 - [ ] Verify mobile read/review/approval tasks with touch and keyboard/switch-equivalent navigation where available.
+- [ ] Verify each supported browser version at the declared viewport/zoom profile and record unsupported outcomes separately from checks not run.
+- [ ] Verify in-product compatibility warnings only for profiles the application can detect reliably.
 
 ## Critical journey evidence matrix
 
@@ -293,6 +321,11 @@ Automated tools cannot establish full conformance. Their pass must be supplement
 | Supplier document | upload alternative/status | extraction warning and source review |
 | Assistant/tool preview | log semantics, focus, citation names | NVDA conversation and governed action handoff |
 | Operations/reviewer evidence | headings, links, table semantics | full reviewer journey at zoom/keyboard |
+| Submission-to-manager handoff | receipt fields, queue link and acting-role semantics | keyboard handoff and dual-role walkthrough |
+| Stale replacement Draft | summary links, preserved values and no source mutation | keyboard-only conflict recovery |
+| Interrupted assistant work | outcome semantics and conditional retry absence | screen-reader status reconciliation |
+| Lease/recovery barrier | state names, participant/scope relationships and focus | keyboard destructive-confirmation walkthrough |
+| Browser profile evidence | exact profile fields and result semantics | 200%/400% zoom, reflow, focus, text and non-color review |
 
 ## Definition of done for accessibility
 
@@ -309,4 +342,4 @@ The browser experience may claim the selected target only when:
 
 ## Traceability
 
-This checklist operationalizes NFR14 and the browser obligations attached to every UI story, especially AC1.1.4, AC1.4.4–AC1.4.5, AC2.3.2, AC5.5.1–AC5.5.5, AC7.4.4, AC7.10.4 and AC10.1.4. Security and domain authorization remain independently tested; an accessible control does not imply the user is authorized to invoke it.
+This checklist operationalizes NFR14 and the browser obligations attached to every UI story, especially AC1.1.4, AC1.4.4–AC1.4.6, AC1.5.4, AC2.3.2, AC3.1.4, AC3.2.4, AC5.5.1–AC5.5.5, AC6.1.3–AC6.1.5, AC6.2.1–AC6.2.3, AC6.3.1–AC6.3.4, AC7.4.4, AC7.10.1, AC7.10.4–AC7.10.5, AC7.11.1–AC7.11.4, AC7.12.4, AC9.6.1–AC9.6.3, AC9.11.1–AC9.11.4 and AC10.3.1–AC10.3.3. Security and domain authorization remain independently tested; an accessible control does not imply the user is authorized to invoke it.

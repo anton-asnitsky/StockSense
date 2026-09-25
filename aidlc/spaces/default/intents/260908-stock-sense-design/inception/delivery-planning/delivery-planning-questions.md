@@ -1,8 +1,8 @@
 # StockSense delivery-planning questions
 
-Date: 2026-09-11
+Date: 2026-09-25
 Stage: Delivery Planning
-Status: In progress
+Status: Awaiting confirmation of approved-contract reconciliation
 
 ## Upstream basis
 
@@ -212,7 +212,88 @@ Score = `(0.50 × risk reduction + 0.35 × portfolio value + 0.15 × urgency) ÷
 - The AI-DLC process steward checks lifecycle correctness, traceability,
   document freshness, and internal consistency before lifecycle gates.
 
+## Historical summary confirmation (2026-09-11)
+
+Does this all look correct before I generate the artifact?
+
+- Looks correct
+- Request changes
+
+[Answer]: Looks correct
+
+## Reconciliation with approved contracts and units (2026-09-24)
+
+The confirmation above covered the original U1-U13 plan. The subsequently approved Unit catalogue and Contract Design add U14 Messaging Platform and U15 Recovery Coordination. The prior seven-Bolt sequence remains the proposed shape, with these changes before the four delivery artifacts are refreshed:
+
+- **Bolt 1:** Include a thin U14 implementation of the approved envelope and RabbitMQ delivery protocol so the runnable audit path uses shared broker mechanics. U14 is not complete at this point; U15 is represented by contract fixtures only.
+- **Bolt 2:** Complete U14 conformance (publisher confirms, retry/DLQ/replay, duplicate and size guards, .NET/Python equivalence). Start U15's authoritative run state, registration, fencing, operator authority, and the U3/U4 participant path needed for tenant migration. U15 remains open until every required participant is integrated.
+- **Bolts 3-6:** Each new provider implements its U15 recovery participant checkpoints and generation guards as it is built; U14 remains the shared transport, while each domain unit owns its outbox/inbox and business effects.
+- **Bolt 7:** Complete U15's eleven-participant recovery coordination, browser status/projection through U11/U12, manifest verification, terminal reconciliation, and evidence through U10/U13. Demonstrate the approved 24-hour RPO, two-hour RTO, and 30-day backup retention. The latest C26 contract fixes these objectives; they are no longer an open planning parameter.
+- **Traceability:** Re-run the phase-boundary audit against the current 58 requirement IDs, 67 stories, and 15 Units. The 2026-09-11 report's 43/63/13 counts cannot be reused.
+
+The first-Bolt walking skeleton, CPU-only local path, one story per branch, owner-approved merges, and risk-weighted sequencing remain as previously answered. Relative effort and confidence for Bolts 2 and 7 will be re-estimated in the refreshed plan; no calendar deadline is inferred.
+
+Derived planning result after confirmation: Bolt 7 grows from relative size 5 to 8 and its score changes from 2.00 to 1.25. Bolt 2 already sits at the scale's maximum size 8, so its score remains 1.14 while the plan explicitly splits U14/U15 work into small story branches and later participant increments. The original ranking table above is the historical pre-reconciliation proposal; the refreshed rationale is authoritative for the current ranking.
+
+Does this reconciliation look correct before I update the delivery artifacts?
+
+- Looks correct
+- Request changes
+
+[Answer]: Looks correct
+
+## Historical Consolidated Summary Confirmation (2026-09-24)
+
+Does this all look correct before I generate the artifact?
+
+- Looks correct
+- Request changes
+
+[Answer]: Looks correct
+
+## Proposed contract-finalization changes (2026-09-24)
+
+The approved seven-Bolt sequence, weighted risk-first ranking, CPU-only local path, one-story-per-branch rule, and owner-approved merges remain unchanged. This modification only makes the final C01 and C24 contract obligations explicit in the delivery plan:
+
+- **Bolt 1 / U1:** The thin walking-skeleton contract package is a `candidate`, tied to an immutable Git `sourceRevision`. Every included canonical OpenAPI, AsyncAPI, or JSON Schema document and governed sidecar has an owner, boundary IDs, semantic version, package path, and verified `sha256:` content digest. Contract validation and generated-client inputs for the demonstrated slice must pass before consumer integration.
+- **Bolt 2 / U1:** Final U1 acceptance requires a `release` manifest with exactly one coverage row for every C01-C27 boundary, the fixed canonical-kind and sidecar policy, clean reconstruction from `sourceRevision`, generated-output manifests for declared consumers, compatibility assessments, validation runs, and evidence records. Later provider changes produce new package versions and rerun the same release checks.
+- **Bolt 2 / U3, U4, U15:** Identity Access and Tenant Directory implement C24's provider-owned synchronous bootstrap port; Recovery Coordination consumes it. Provider and consumer conformance tests cover durable `200` replay, required correlation/idempotency headers, typed `401`/`403`/`409`/`422`/`503` problems, a rejected close without a matching checkpoint, abort-before-late-prepare suppression, idempotency conflicts, and persistence failure that returns `RECOVERY_PERSISTENCE_UNAVAILABLE` without inventing a durable result. A `200` participant result is never treated as coordinator-wide recovery success.
+- **Bolt 7 / U13:** Clean-room evidence verifies the complete C01 release package and C24 failure-path tests against one pinned revision, alongside the already approved eleven-participant recovery demonstration.
+- **Ownership and risk:** U1 owns package policy and release checks; U3/U4 own their durable C24 participant behavior; U15 owns consumer validation and orchestration. The risk register and dependency map name false-green package publication and unsafe bootstrap recovery as explicit integration risks. No external service or new calendar deadline is introduced.
+
+These changes preserve the previously confirmed per-Bolt demonstrations and final acceptance points. Bolt 2 remains relative size 8 (the coarse upper bound), and Bolt 7 remains size 8; the scores and order do not change.
+
+## Reconciliation with approved C01/C15/C17/C18/C22/C23 revision (2026-09-25)
+
+The owner-approved Contract Design adds an explicit exception for U3/U4 bootstrap publishers and a distinct platform identity-audit read boundary. The previously approved seven-Bolt order, first runnable purchasing slice, CPU-only local profile, one-story-per-branch rule, and owner-approved merges remain unchanged. This reconciliation updates ownership and acceptance within the existing Bolts:
+
+- **Bolt 1:** U3 Identity Access and U4 Retail Data publish audit events through their own C23-conformant bootstrap adapters; they do not acquire an U14 package dependency. U3's retailerless identity denials use the closed global C01/C15 envelope and route, while tenant events retain real retailer and placement metadata. The thin U14 adapter serves the U10 consumer/inbox path. This corrects any wording that routed U3/U4 publication through U14.
+- **Bolt 2:** U3/U4 publisher adapters pass every applicable C22 fixture, including atomic audit/outbox, authenticated producer binding, confirms, replay/conflict, retry/DLQ, size and telemetry. U13 records their results alongside U14's .NET/Python package conformance. U3 establishes the revocable human platform-Operator grant and C02 current-grant check; U10 builds the separate C17 global identity-audit query; U11/U12 expose the no-store C18 platform view. Tests deny retailer-only Operators, machine principals, revoked grants, wrong audience/client/scope, unavailable grant checks, and tenant-query leakage.
+- **Later Bolts:** Each provider keeps its own event semantics, transactional state and recovery participant behavior. Final Bolt 7 evidence reruns the U3/U4/U14 messaging and global-read negative cases with the assembled system and clean-checkout revision.
+
+No new external dependency or calendar deadline is introduced. U3 owns grants and its publisher, U4 owns its publisher, U10 owns projection and authoritative global-read enforcement, U11/U12 own the browser boundary, U14 owns shared packages for its existing consumers, and U13 collects conformance evidence.
+
+## Historical Consolidated Summary Confirmation (C01/C15/C17/C18/C22/C23)
+
+Does this all look correct before I generate the artifact?
+
+- Looks correct
+- Request changes
+
+[Answer]: Looks correct
+
 ## Consolidated Summary Confirmation
+
+Reconciliation with approved C07/C10/C13 contract (2026-09-25):
+
+The approved seven-Bolt sequence, risk-weighted ranking, CPU-only local path, and one-story-per-branch rule remain unchanged. The latest approved Contract Design adds four concrete acceptance obligations to the existing plan:
+
+- **Bolt 2 / U1:** Package C07's typed shared-transaction finalization port and its positive/negative fixtures; include the typed C10 run-history response and bounded C10/C13 product-set request and coverage schemas in the canonical contract release.
+- **Bolt 4 / U6 and U7:** Prove that a forecast run, route pin, request, first queued attempt, and first lease share immutable identifiers; retries use a new attempt only after the prior lease is terminal or fenced. U7's publication, audit, outbox, U6 lease finalization and U6-owned pin closure must commit together in one retailer-local transaction, with exact replay and failure-race evidence.
+- **Bolt 4 / U6 and U7:** Prove that pin admission races safely with route draining, and promotion or rollback waits for verified pin closure before atomically completing the evaluation lease and changing the route. Reconcile the central heavy-work slot only after retailer-local terminal proof. A timeout alone never clears a pin or slot.
+- **Bolts 4-7 / U7, U8, U11-U13:** Test typed forecast run history and bounded distinct product sets with exact covered/unavailable partition, per-product reason, and 28 dated values only for covered products; carry those states through planning, browser, and clean-room evidence. No stale or failed result is silently treated as a successful forecast.
+
+These are direct acceptance and hand-off consequences of the approved contract, not a new Bolt or an unapproved product decision. The existing external dependency posture and relative scores remain unchanged.
 
 Does this all look correct before I generate the artifact?
 

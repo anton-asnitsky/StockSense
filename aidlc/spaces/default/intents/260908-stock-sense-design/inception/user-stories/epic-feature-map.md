@@ -1,7 +1,7 @@
 # StockSense epic and feature map
 
-Date: 2026-09-09
-Status: Proposed grouping under the owner-selected epic -> feature -> story hierarchy.
+Date: 2026-09-21
+Status: Updated grouping under the owner-selected epic -> feature -> story hierarchy.
 Sources: approved requirements and `docs/execution-plan.md` (SS-01 through SS-38).
 
 ## Hierarchy and traceability
@@ -27,14 +27,14 @@ ownership or a substitute for delivery dependencies.
 | --- | --- | --- |
 | EP01 Secure access and retailer isolation | FE01.01 Local and Google sign-in, sessions and logout; FE01.02 Retailer membership and role enforcement; FE01.03 Identity persistence and key lifecycle | SS-07, SS-08, SS-09 |
 | EP02 Inventory and reproducible demo data | FE02.01 Deterministic retail simulation; FE02.02 Validated imports; FE02.03 Inventory positions and movement history; FE02.04 Correct tenant-scoped caching | SS-10, SS-11, SS-32 |
-| EP03 Supplier information | FE03.01 CSV offers and text-PDF ingestion; FE03.02 Versioned source documents and extraction; FE03.03 Validated commercial terms and provenance | SS-10, SS-21 |
-| EP04 Demand forecasting and ML lifecycle | FE04.01 Versioned daily baseline forecasts; FE04.02 Datasets, temporal evaluation and outcome measures; FE04.03 Candidate training and MLflow tracking; FE04.04 Promotion, rollback, quality and freshness | SS-13, SS-17, SS-18, SS-19, SS-20 |
+| EP03 Supplier information | FE03.01 CSV offers and text-PDF ingestion; FE03.02 Versioned source documents and extraction; FE03.03 Validated commercial terms and provenance; FE03.04 Tenant-safe supplier cache and active-route use | SS-10, SS-21, SS-32, SS-34 |
+| EP04 Demand forecasting and ML lifecycle | FE04.01 Versioned daily baseline forecasts; FE04.02 Datasets, temporal evaluation and outcome measures; FE04.03 Candidate training and MLflow tracking; FE04.04 Promotion, rollback, quality and freshness; FE04.05 Fenced heavy-compute coordination | SS-13, SS-17, SS-18, SS-19, SS-20 |
 | EP05 Replenishment planning | FE05.01 Daily shortage and quantity calculations; FE05.02 Product buffers and scenario comparison; FE05.03 Quota-limited manual review and status UI | SS-14, SS-35 |
 | EP06 Controlled purchasing and receipts | FE06.01 Draft and submit proposals; FE06.02 Manager approval, rejection and cancellation; FE06.03 Partial/full simulated receipts and stock reconciliation | SS-15, SS-16 |
 | EP07 AI assistant and agentic workflows | FE07.01 Local inference and optional external-provider boundary; FE07.02 Tenant-authorized vector ingestion and retrieval; FE07.03 Strands orchestration, tools and cited explanations; FE07.04 Agent evaluation and auditing; FE07.05 Inventory investigation; FE07.06 Supplier comparison; FE07.07 Replenishment assistance; FE07.08 Purchase proposal drafting; FE07.09 Workflow execution and recovery | SS-22, SS-23, SS-33, SS-34, SS-35, SS-36, SS-37 |
 | EP08 Local platform and delivery | FE08.01 Reproducible application skeleton; FE08.02 OpenAPI/AsyncAPI contracts and reliable messaging; FE08.03 Kubernetes and Terraform/Terragrunt setup; FE08.04 Vault and workload credentials; FE08.05 CI and trusted deployment | SS-03, SS-04, SS-05, SS-06, SS-12, SS-25, SS-29, SS-30 |
-| EP09 Observability, audit and recovery | FE09.01 Transactional audit and authorized audit search; FE09.02 Operational telemetry and resource validation; FE09.03 Backup, restore and secrets recovery; FE09.04 Shared-to-dedicated tenant migration | SS-24, SS-26, SS-27, SS-31, SS-37, SS-38 |
-| EP10 Reviewer experience and portfolio evidence | FE10.01 Clean-checkout setup and demo; FE10.02 Versioned walkthrough, evaluation evidence and limitations | SS-28 |
+| EP09 Observability, audit and recovery | FE09.01 Transactional audit and authorized audit search; FE09.02 Operational telemetry and resource validation; FE09.03 Consistent recovery barrier, backup, restore and secrets recovery; FE09.04 Shared-to-dedicated tenant migration | SS-24, SS-26, SS-27, SS-31, SS-37, SS-38 |
+| EP10 Reviewer experience and portfolio evidence | FE10.01 Clean-checkout setup and demo; FE10.02 Versioned walkthrough, evaluation evidence and limitations; FE10.03 Browser/version/viewport compatibility evidence | SS-03, SS-11, SS-28 |
 
 ## EP07: AI assistant and agentic workflows
 

@@ -1,16 +1,8 @@
 {
-  "schema_version": "1.0",
   "stage": "units-generation",
-  "generated_on": "2026-09-10",
-  "confirmation": "Owner-confirmed 13-unit decomposition",
-  "sources": {
-    "components": "../domain-design/components.md",
-    "decisions": "../domain-design/decisions.md",
-    "requirements": "../requirements-analysis/requirements.md",
-    "stories": "../user-stories/stories.md",
-    "unit_catalogue": "unit-of-work.md",
-    "dependency_dag": "unit-of-work-dependency.md",
-    "story_map": "unit-of-work-story-map.md"
+  "summary_confirmation": {
+    "answer": "Looks correct",
+    "date": "2026-09-23"
   },
   "upstream_ids": [
     "US1.1",
@@ -26,6 +18,7 @@
     "US3.1",
     "US3.2",
     "US3.3",
+    "US3.4",
     "US4.1",
     "US4.2",
     "US4.3",
@@ -33,6 +26,7 @@
     "US4.5",
     "US4.6",
     "US4.7",
+    "US4.8",
     "US5.1",
     "US5.2",
     "US5.3",
@@ -74,8 +68,10 @@
     "US9.8",
     "US9.9",
     "US9.10",
+    "US9.11",
     "US10.1",
-    "US10.2"
+    "US10.2",
+    "US10.3"
   ],
   "coverage": [
     {
@@ -144,6 +140,11 @@
       "target": "U5"
     },
     {
+      "id": "US3.4",
+      "status": "OK",
+      "target": "U5"
+    },
+    {
       "id": "US4.1",
       "status": "OK",
       "target": "U7"
@@ -175,6 +176,11 @@
     },
     {
       "id": "US4.7",
+      "status": "OK",
+      "target": "U6"
+    },
+    {
+      "id": "US4.8",
       "status": "OK",
       "target": "U6"
     },
@@ -316,7 +322,7 @@
     {
       "id": "US8.5",
       "status": "OK",
-      "target": "U1"
+      "target": "U14"
     },
     {
       "id": "US8.6",
@@ -384,6 +390,11 @@
       "target": "U2"
     },
     {
+      "id": "US9.11",
+      "status": "OK",
+      "target": "U15"
+    },
+    {
       "id": "US10.1",
       "status": "OK",
       "target": "U13"
@@ -392,28 +403,11 @@
       "id": "US10.2",
       "status": "OK",
       "target": "U13"
+    },
+    {
+      "id": "US10.3",
+      "status": "OK",
+      "target": "U13"
     }
-  ],
-  "reverse": [],
-  "coverage_summary": {
-    "expected_story_count": 63,
-    "mapped_story_count": 63,
-    "unmapped_story_ids": [],
-    "units_without_stories": []
-  },
-  "unit_story_counts": {
-    "U1": 4,
-    "U2": 18,
-    "U3": 13,
-    "U4": 32,
-    "U5": 19,
-    "U6": 14,
-    "U7": 13,
-    "U8": 23,
-    "U9": 20,
-    "U10": 33,
-    "U11": 38,
-    "U12": 38,
-    "U13": 28
-  }
+  ]
 }

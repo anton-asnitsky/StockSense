@@ -1,8 +1,8 @@
 # User stories assessment
 
-Date: 2026-09-09
+Date: 2026-09-21
 Decision: Execute
-Status: Assessment complete; confirmed plan elaborated into a draft for collaboration.
+Status: Owner-confirmed assessment refreshed after requirements reconciliation and mob review.
 
 ## Rationale
 
@@ -29,7 +29,7 @@ Existing SS task IDs remain planning references, not completed or approved units
 
 ## Planned coverage
 
-The draft contains 63 stories under ten epics and their feature IDs, with four
-human personas and explicit requirement/dependency links. All 43 upstream FR/NFR
+The draft contains 67 stories under ten epics and their feature IDs, with four
+human personas and explicit requirement/dependency links. All 58 upstream FR/NFR
 IDs have story mappings in traceability.json. Collaborative review tests
 persona fidelity, story sizing and acceptance precision before independent review.
