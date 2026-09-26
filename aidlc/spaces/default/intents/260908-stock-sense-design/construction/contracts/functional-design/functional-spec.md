@@ -28,7 +28,7 @@ A complete versioned C01 package manifest identifies canonical documents and pac
 
 1. One OpenAPI document for each included provider service.
 2. One AsyncAPI document for each included message producer.
-3. Every shared JSON Schema referenced by those documents.
+3. Every shared JSON Schema and every typed-port signature referenced by those documents.
 4. Valid and deliberately invalid examples with expected outcomes.
 5. Consumer-local generation profiles and expected generated-output manifests.
 6. Compatibility assessments against the required integration baseline.
@@ -55,7 +55,7 @@ Each document and shared schema has a stable logical ID plus a distinct immutabl
 1. Run the prerequisite checks that produce governed result sidecars, freeze the resulting exact candidate manifest bytes, compute their SHA-256 digest, then create the final `ValidationRun` in `queued` state for that manifest digest, immutable source revision, and trigger context. Keep this digest-bound final receipt detached from the manifest to avoid self-reference.
 2. Resolve the package manifest and mark the run `running`.
 3. Check package completeness, canonical paths, unique identities, exact standard versions, semantic versions, ownership metadata, C01's fixed required-kind/sidecar matrix, and exactly one coverage row for each C01-C27 boundary in a release. Recompute every manifest-entry logical/revision ID and bind it through one package-local inclusion; reject ambiguous bindings before resolving fixtures or generated outputs.
-4. Validate OpenAPI and AsyncAPI syntax and all referenced JSON Schemas.
+4. Validate OpenAPI and AsyncAPI syntax, all referenced JSON Schemas, and every typed-port signature with the port validator.
 5. Recompute every listed canonical and sidecar `sha256:` digest from exact bytes, reconstruct canonical inputs from the immutable `sourceRevision`, and reject unlisted, duplicated, symlinked, traversal, or source-mismatched files. Validate every valid example and verify that each deliberately invalid example fails for its declared reason.
 6. Apply common policies for tenant context, actor, placement generation, correlation, causation, idempotency, error envelopes, and message categories.
 7. Regenerate every required consumer-local output from pinned inputs and compare normalized outputs with their manifests.

@@ -116,7 +116,7 @@ entities:
       - C24-C27 remain separate recovery documents owned by their bootstrap providers, U15 coordinator, and recovery event producer; U1 does not acquire participant state.
 
   - name: SharedSchema
-    description: A reusable JSON Schema definition referenced by contract documents and examples.
+    description: A reusable canonical payload or typed-port definition referenced by contract documents and examples.
     attributes:
       - name: schemaId
         logicalType: URI
@@ -141,7 +141,8 @@ entities:
         logicalType: URI
         required: true
         unique: false
-        allowedValues: ["https://json-schema.org/draft/2020-12/schema"]
+        allowedValues: ["https://json-schema.org/draft/2020-12/schema", "urn:stocksense:dialect:typed-port:1"]
+        constraints: The typed-port dialect covers the canonical entries whose approved form is a typed port signature rather than a JSON Schema document, namely C07 model_lifecycle.finalize_heavy_work_v1 and the C08 RetailOperationsInventoryPort. C01 lists both under its schema kind.
       - name: canonicalPath
         logicalType: WorkspaceRelativePath
         required: true
@@ -174,7 +175,7 @@ entities:
         logicalType: Enum
         required: true
         unique: false
-        allowedValues: [openapi, asyncapi, json-schema]
+        allowedValues: [openapi, asyncapi, json-schema, typed-port]
       - name: logicalId
         logicalType: Identifier
         required: true
@@ -200,7 +201,7 @@ entities:
         constraints: SHA-256 of the manifest entry's RFC 8785 canonical JSON bytes; derived IDs are not added to or hashed inside the approved C01 entry.
     entityConstraints:
       - The tuple of packageId and logicalId is unique; one package cannot bind two revisions of one logical contract.
-      - Exactly one of ContractDocument or SharedSchema resolves for an inclusion according to artifactKind; documentId equals logicalId and schemaId equals urn:stocksense:schema:<logicalId>.
+      - Exactly one of ContractDocument or SharedSchema resolves for an inclusion according to artifactKind; openapi and asyncapi resolve a ContractDocument while json-schema and typed-port resolve a SharedSchema. documentId equals logicalId and schemaId equals urn:stocksense:schema:<logicalId>.
       - A revision may be included by multiple package versions without changing its immutable revision record.
       - A package load recomputes every derived ID from the manifest entry and rejects missing, ambiguous or changed mappings before resolving fixtures or generation profiles.
 
@@ -213,9 +214,10 @@ entities:
         unique: true
       - name: documentRevisionId
         logicalType: Identifier
-        required: true
+        required: false
         unique: false
         references: ContractDocument.documentRevisionId
+        constraints: Required for an element of an OpenAPI or AsyncAPI document. A typed-port fixture omits it and binds schemaRevisionId to that exact immutable port revision instead; exactly one of the two resolves for any fixture.
       - name: schemaRevisionId
         logicalType: Identifier
         required: false

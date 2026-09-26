@@ -33,7 +33,7 @@ rules:
     category: validation
     appliesTo: [ContractDocument, SharedSchema]
     trigger: A document or schema enters validation.
-    logic: "IF the artifact kind is OpenAPI THEN its specification version is 3.1.2; IF AsyncAPI THEN 3.0.0; IF shared JSON Schema THEN its dialect is 2020-12."
+    logic: "IF the artifact kind is OpenAPI THEN its specification version is 3.1.2; IF AsyncAPI THEN 3.0.0; IF a shared JSON Schema THEN its dialect is 2020-12; IF a typed port THEN its dialect is the typed-port dialect and the port validator checks its port name, version, arguments, result, conflicts and locking rather than a JSON Schema validator."
     violationBehaviour: "Fail validation and identify the unsupported baseline."
     source: [NFR8]
 
