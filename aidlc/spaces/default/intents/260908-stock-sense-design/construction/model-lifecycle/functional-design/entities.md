@@ -126,12 +126,12 @@ entities:
       - Failed availability evidence prevents evaluation eligibility.
 
   - name: HeavyWorkRequest
-    description: U6-owned durable C07 coordination request shared by training, evaluation, embedding-index and batch-forecast workers.
+    description: U6-owned durable C07 coordination request shared by training, evaluation and batch-forecast workers.
     attributes:
       - { name: requestId, logicalType: Identifier, required: true, unique: true }
       - { name: retailerId, logicalType: Identifier, required: true, unique: false, references: Retailer.retailerId }
-      - { name: workType, logicalType: Enum, required: true, unique: false, allowedValues: [training, evaluation, embedding-index, batch-forecast] }
-      - { name: ownerService, logicalType: Enum, required: true, unique: false, allowedValues: [modelLifecycle, supplierKnowledge, forecasting] }
+      - { name: workType, logicalType: Enum, required: true, unique: false, allowedValues: [training, evaluation, batch-forecast] }
+      - { name: ownerService, logicalType: Enum, required: true, unique: false, allowedValues: [modelLifecycle, forecasting] }
       - { name: ownerWorkReference, logicalType: OpaqueIdentifier, required: true, unique: false }
       - { name: forecastRunId, logicalType: Identifier, required: false, unique: false }
       - { name: forecastRoutePinId, logicalType: Identifier, required: false, unique: false, references: ForecastRoutePin.pinId }
@@ -189,12 +189,12 @@ entities:
       - Unknown local state keeps the slot reserved or reconciling and blocks another acquisition.
 
   - name: RetailerLeaseFence
-    description: U6-owned authoritative tenant-local fence co-located with U5/U7 publication state.
+    description: U6-owned authoritative tenant-local fence co-located with U7 publication state.
     attributes:
       - { name: leaseId, logicalType: Identifier, required: true, unique: true, references: HeavyWorkLease.leaseId }
       - { name: retailerId, logicalType: Identifier, required: true, unique: false, references: Retailer.retailerId }
       - { name: workerId, logicalType: ExternalIdentifier, required: true, unique: false }
-      - { name: workType, logicalType: Enum, required: true, unique: false, allowedValues: [training, evaluation, embedding-index, batch-forecast] }
+      - { name: workType, logicalType: Enum, required: true, unique: false, allowedValues: [training, evaluation, batch-forecast] }
       - { name: forecastRunId, logicalType: Identifier, required: false, unique: false }
       - { name: forecastRoutePinId, logicalType: Identifier, required: false, unique: false, references: ForecastRoutePin.pinId }
       - { name: forecastAttemptId, logicalType: Identifier, required: false, unique: false }
@@ -206,7 +206,7 @@ entities:
       - { name: terminalResultId, logicalType: Identifier, required: false, unique: true, references: HeavyWorkTerminalResult.terminalResultId }
       - { name: terminalResultDigest, logicalType: Sha256, required: false, unique: false }
     entityConstraints:
-      - U5/U7 owner publication and this fence are in the same retailer-local database and commit through the C07 port in one transaction.
+      - U7 owner publication and this fence are in the same retailer-local database and commit through the C07 port in one transaction.
       - Expiry, cancellation, supersession, recovery fencing and owner finalization serialize on this row under the database clock.
       - A completed or otherwise terminal/fenced lease points to exactly one durable terminal result; evaluation completion, route switch and decision commit together, while external-owner completion, publication and pin closure commit together.
 
@@ -217,8 +217,8 @@ entities:
       - { name: retailerId, logicalType: Identifier, required: true, unique: false, references: Retailer.retailerId }
       - { name: requestId, logicalType: Identifier, required: true, unique: false, references: HeavyWorkRequest.requestId }
       - { name: leaseId, logicalType: Identifier, required: true, unique: true, references: HeavyWorkLease.leaseId }
-      - { name: callerService, logicalType: Enum, required: true, unique: false, allowedValues: [modelLifecycle, supplierKnowledge, forecasting] }
-      - { name: workType, logicalType: Enum, required: true, unique: false, allowedValues: [training, evaluation, embedding-index, batch-forecast] }
+      - { name: callerService, logicalType: Enum, required: true, unique: false, allowedValues: [modelLifecycle, forecasting] }
+      - { name: workType, logicalType: Enum, required: true, unique: false, allowedValues: [training, evaluation, batch-forecast] }
       - { name: status, logicalType: Enum, required: true, unique: false, allowedValues: [completed, failed, cancelled, expired, superseded, recoveryFenced] }
       - { name: workerId, logicalType: ExternalIdentifier, required: true, unique: false }
       - { name: fencingToken, logicalType: PositiveInteger, required: true, unique: false, min: 1 }
@@ -238,10 +238,10 @@ entities:
       - { name: committedAt, logicalType: Instant, required: true, unique: false }
     entityConstraints:
       - Lease ID is unique and a completed fence references this immutable result; retailer, owner, operation ID and idempotency key identify exact replay with the same canonical arguments and digest.
-      - For batch-forecast the result binds run, attempt and closed pin; embedding-index has none of those fields. A pin may be closed by only this result or an authorized terminal nonpublication release.
+      - For batch-forecast the result binds run, attempt and closed pin; training and evaluation have none of those fields. A pin may be closed by only this result or an authorized terminal nonpublication release.
       - A completed evaluation result binds promotion intent, drain, decision, expected route generation and the next route generation; promotion or rollback writes it with the fence transition, signed package, route switch, drain commitment, decision, audit and outbox in one retailer-local transaction. Exact replay returns the same decision and result, never a second route change.
       - Failed, expired, cancelled or recovery-fenced evaluation results bind the lease and drain but no committed route decision; central slot reconciliation requires this local proof. Training results use U6-owned completion without external owner publication.
-      - An external-owner terminal result is written in the caller-owned retailer-local transaction with the U5/U7 publication pointer, audit and outbox; a rollback leaves no result or pin closure.
+      - An external-owner terminal result is written in the caller-owned retailer-local transaction with the U7 publication pointer, audit and outbox; a rollback leaves no result or pin closure.
 
   - name: ModelJob
     description: A logical asynchronous dataset, training, evaluation, registration, or restore job.
@@ -261,7 +261,7 @@ entities:
       - { name: version, logicalType: PositiveInteger, required: true, unique: false, min: 1 }
     entityConstraints:
       - A job never changes the active model route directly.
-      - Heavy Model Jobs share the one cluster-wide lease with external embedding-index and batch-forecast work.
+      - Heavy Model Jobs share the one cluster-wide lease with external batch-forecast work.
       - Training and evaluation heavy jobs have a C07 request projection of queued, leased, then completed, failed, cancelled, or deadline-expired; a logical retry stays under the same request and job identity. Dataset publication, registration, and restore reconciliation remain separate job types and do not invent a C07 work type.
 
   - name: ModelJobAttempt
@@ -719,7 +719,7 @@ relationships:
 | --- | --- | --- |
 | Dataset identity | DatasetExportReference, DatasetVersion, DatasetObject, TemporalSplit | Rebuild exactly the same tenant-scoped inputs and held-out horizons. |
 | Leakage control | FeatureSpecification, FeatureAvailabilityEvidence | Prove every feature and transformation was available at forecast origin. |
-| Work execution | HeavyWorkRequest, HeavyWorkLease, HeavyWorkTerminalResult, ModelJob, ModelJobAttempt, ExperimentRun | One C07 arbiter serves four work types; retailer-local terminal results prove both external-owner publication and U6 route evaluation while U6 jobs retain their own attempts and experiment evidence. |
+| Work execution | HeavyWorkRequest, HeavyWorkLease, HeavyWorkTerminalResult, ModelJob, ModelJobAttempt, ExperimentRun | One C07 arbiter serves three work types; retailer-local terminal results prove both external-owner publication and U6 route evaluation while U6 jobs retain their own attempts and experiment evidence. |
 | Evaluation | EvaluationConfiguration, EvaluationReport, ForecastMetric, InventoryPolicyReport | Compare candidates with one versioned baseline profile, common origins and exogenous scenarios. |
 | Release control | ModelDefinition, ModelArtifact, ModelRelease, PromotedModelPackage, PromotionIntent, PromotionDecision, ActiveModelRoute | Separate algorithm identity, unsigned candidate bytes, signed activation packages, human decisions, and production routing. |
 | Forecast handoff | ForecastReleaseResolution | Pin the exact release used by each Forecast Run. |

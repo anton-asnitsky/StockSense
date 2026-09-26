@@ -4,6 +4,7 @@ Date: 2026-09-25
 Stage: Contract Design  
 Status: Draft for independent architecture review
 Summary confirmation: Looks correct (2026-09-25; C07 atomic finalization and route drain, Forecasting first-attempt alignment, and C10/C13 product-set coverage; earlier C01/C15 identity-audit, U3/U4 publishing, and platform-Operator access decisions retained)
+Owner-directed revision (2026-09-26): C07 no longer names U5 Supplier Knowledge as a heavy-work caller. `authorizedCallers` drops `supplier-knowledge-service` and the `workType` enum drops `embedding-index`, leaving U7 Forecasting as the sole external finalizer caller. The owner resolved this in favour of `unit-of-work-story-map.md`, which assigns US4.8 to U6/U7/U13 and does not assign heavy model work to U5; the earlier contract text over-reached. Raised as U5 functional-design review finding R-07.
 
 ## Purpose and baseline
 
@@ -11,7 +12,7 @@ This artifact defines the formal boundaries that let all 15 StockSense units be 
 
 Upstream sources: `unit-of-work.md`, `unit-of-work-dependency.md`, `components.md`, and `requirements.md`.
 
-Only U11 Web BFF is exposed to the browser. Runtime service APIs remain cluster-internal. Synchronous APIs use the confirmed OpenAPI 3.1.2 baseline, asynchronous RabbitMQ contracts use AsyncAPI 3.0.0, and shared documents use JSON Schema 2020-12 or an explicitly typed shared-schema port. U4 and U8 use an in-process port and one PostgreSQL transaction inside the shared v1 Retail Operations deployment; C07 adds a separate EXECUTE-only U6 stored-function port inside U5/U7 retailer-local finalization transactions. Neither port grants cross-schema table access. Validator versions are pinned by U1.
+Only U11 Web BFF is exposed to the browser. Runtime service APIs remain cluster-internal. Synchronous APIs use the confirmed OpenAPI 3.1.2 baseline, asynchronous RabbitMQ contracts use AsyncAPI 3.0.0, and shared documents use JSON Schema 2020-12 or an explicitly typed shared-schema port. U4 and U8 use an in-process port and one PostgreSQL transaction inside the shared v1 Retail Operations deployment; C07 adds a separate EXECUTE-only U6 stored-function port inside U7 retailer-local finalization transactions. Neither port grants cross-schema table access. Validator versions are pinned by U1.
 
 ## Contracts
 
@@ -25,7 +26,7 @@ The table follows every direct integration point in the approved unit topology. 
 | C04 | U4 Retail Data | U6 Model Lifecycle | REST/OpenAPI asynchronous dataset-export jobs | U4 Retail Data |
 | C05 | U5 Supplier Knowledge | U6 Model Lifecycle | REST/OpenAPI accepted-term dataset exports | U5 Supplier Knowledge |
 | C06 | U4 Retail Data | U7 Forecasting | REST/OpenAPI demand observations and retailer calendar | U4 Retail Data |
-| C07 | U6 Model Lifecycle | U5 Supplier Knowledge / U7 Forecasting | REST/OpenAPI model, lease and route commands plus a versioned same-transaction PostgreSQL finalization port | U6 Model Lifecycle |
+| C07 | U6 Model Lifecycle | U7 Forecasting | REST/OpenAPI model, lease and route commands plus a versioned same-transaction PostgreSQL finalization port | U6 Model Lifecycle |
 | C08 | U4 Retail Data | U8 Planning and Purchasing | In-process typed port and shared transaction schema | U4 owns inventory/commitment effects; U8 owns purchasing command |
 | C09 | U5 Supplier Knowledge | U8 Planning and Purchasing | REST/OpenAPI accepted terms and provenance | U5 Supplier Knowledge |
 | C10 | U7 Forecasting | U8 Planning and Purchasing | REST/OpenAPI 28-day forecast status and series | U7 Forecasting |
@@ -596,7 +597,7 @@ paths:
               else: { not: { anyOf: [ { required: [forecastRunId] }, { required: [forecastRoutePinId] }, { required: [forecastAttemptId] } ] } }
               properties:
                 workerId: { type: string, minLength: 1, maxLength: 200 }
-                workType: { enum: [training, evaluation, embedding-index, batch-forecast] }
+                workType: { enum: [training, evaluation, batch-forecast] }
                 requestedLeaseSeconds: { type: integer, minimum: 30, maximum: 900 }
                 placementGeneration: { type: integer, minimum: 1 }
                 recoveryGeneration: { type: integer, minimum: 1 }
@@ -793,7 +794,7 @@ components:
       type: object
       required: [workType, requestHash, priority, deadlineAt, placementGeneration, recoveryGeneration]
       properties:
-        workType: { enum: [training, evaluation, embedding-index, batch-forecast] }
+        workType: { enum: [training, evaluation, batch-forecast] }
         requestHash: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
         priority: { type: integer, minimum: 0, maximum: 100 }
         deadlineAt: { type: string, format: date-time }
@@ -812,7 +813,7 @@ components:
       properties:
         requestId: { type: string, format: uuid }
         retailerId: { type: string, format: uuid }
-        workType: { enum: [training, evaluation, embedding-index, batch-forecast] }
+        workType: { enum: [training, evaluation, batch-forecast] }
         status: { enum: [queued, leased, completed, failed, cancelled, deadline-expired] }
         requestHash: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
         deadlineAt: { type: string, format: date-time }
@@ -833,7 +834,7 @@ components:
         leaseId: { type: string, format: uuid }
         requestId: { type: string, format: uuid }
         workerId: { type: string }
-        workType: { enum: [training, evaluation, embedding-index, batch-forecast] }
+        workType: { enum: [training, evaluation, batch-forecast] }
         forecastRunId: { type: string, format: uuid }
         forecastRoutePinId: { type: string, format: uuid }
         forecastAttemptId: { type: string, format: uuid }
@@ -1049,12 +1050,12 @@ Every C07 call requires an authenticated identity with a narrow audience/scope a
 
 #### C07 shared-transaction finalization port (version 1)
 
-The C07 REST `:complete` command is for U6-owned work with no separate authoritative owner publication. It is **not** U5/U7's publication authority. U5 and U7 own their publication rows; their owner-controlled PostgreSQL stored routines invoke the U6-owned `model_lifecycle.finalize_heavy_work_v1` function in the **same retailer-local database transaction**, then write their owner rows, audit and outbox, and commit once. The port is versioned and callable only by the named U5/U7 database service roles with `EXECUTE` grants; the routine verifies the authenticated database role as well as the caller service argument. For `batch-forecast`, run ID, attempt ID and route pin ID are mandatory. U6 row-locks the request, retailer-local lease/fence, route pin and route-control guard; verifies the request's immutable `(retailerId, forecastRunId, forecastRoutePinId, initialForecastAttemptId)`, the lease's `(requestId, forecastRunId, forecastRoutePinId, forecastAttemptId)`, the pin's `(retailerId, forecastRunId, initialForecastAttemptId, promotionGeneration, placementGeneration, recoveryGeneration)`, the supplied attempt ID and the current lease identity, worker, work type, active status, unexpired database-clock deadline, token, generations, non-cancelled request and canonical payload. First acquisition must use the request's initial attempt ID; a subsequent acquisition requires a distinct attempt ID and an authoritative terminal/fenced prior lease. U7 verifies that attempt row and expected owner version in its own routine. U6 records one terminal result and closes the verified U6-owned pin under those locks, returning the result identity and pin-closure disposition. A changed-payload replay or failed binding raises a transaction-aborting conflict. An exact replay returns the committed result and `already-closed` pin disposition; the U7 owner routine may return success only after verifying its **own publication** with that result identity, digest, attempt ID and expected version already committed. Any failure in owner rows, audit, outbox, U6 pin closure or finalization rolls back all effects. A crash before commit leaves the lease and pin active; a crash after commit is recovered by reading the same result identity and owner pointer, without republishing. HTTP checks, a `:complete` call followed by owner commit, or an outbox publish before commit cannot satisfy this contract.
+The C07 REST `:complete` command is for U6-owned work with no separate authoritative owner publication. It is **not** U7's publication authority. U7 owns its publication rows; its owner-controlled PostgreSQL stored routine invokes the U6-owned `model_lifecycle.finalize_heavy_work_v1` function in the **same retailer-local database transaction**, then write their owner rows, audit and outbox, and commit once. The port is versioned and callable only by the named U7 database service role with `EXECUTE` grants; the routine verifies the authenticated database role as well as the caller service argument. For `batch-forecast`, run ID, attempt ID and route pin ID are mandatory. U6 row-locks the request, retailer-local lease/fence, route pin and route-control guard; verifies the request's immutable `(retailerId, forecastRunId, forecastRoutePinId, initialForecastAttemptId)`, the lease's `(requestId, forecastRunId, forecastRoutePinId, forecastAttemptId)`, the pin's `(retailerId, forecastRunId, initialForecastAttemptId, promotionGeneration, placementGeneration, recoveryGeneration)`, the supplied attempt ID and the current lease identity, worker, work type, active status, unexpired database-clock deadline, token, generations, non-cancelled request and canonical payload. First acquisition must use the request's initial attempt ID; a subsequent acquisition requires a distinct attempt ID and an authoritative terminal/fenced prior lease. U7 verifies that attempt row and expected owner version in its own routine. U6 records one terminal result and closes the verified U6-owned pin under those locks, returning the result identity and pin-closure disposition. A changed-payload replay or failed binding raises a transaction-aborting conflict. An exact replay returns the committed result and `already-closed` pin disposition; the U7 owner routine may return success only after verifying its **own publication** with that result identity, digest, attempt ID and expected version already committed. Any failure in owner rows, audit, outbox, U6 pin closure or finalization rolls back all effects. A crash before commit leaves the lease and pin active; a crash after commit is recovered by reading the same result identity and owner pointer, without republishing. HTTP checks, a `:complete` call followed by owner commit, or an outbox publish before commit cannot satisfy this contract.
 
 ```yaml shared-schema
 port: model_lifecycle.finalize_heavy_work_v1
 transaction: caller-owned retailer-local PostgreSQL transaction; no autonomous commit
-authorizedCallers: [supplier-knowledge-service, forecasting-service]
+authorizedCallers: [forecasting-service]
 arguments:
   required: [callerService, retailerId, workType, requestId, leaseId, workerId, fencingToken, placementGeneration, recoveryGeneration, resultDigest, operationId, idempotencyKey, expectedOwnerVersion]
   conditionalRequiredForBatchForecast: [forecastRunId, forecastAttemptId, forecastRoutePinId]
@@ -1098,7 +1099,7 @@ On failed evaluation or package verification, U6 records `failed` or `cancelled`
 
 `manifestDigest` is SHA-256 of the UTF-8 RFC 8785 canonical representation of the immutable manifest with `manifestDigest`, `signature`, and the live `verification` projection omitted; the Ed25519 signature covers those same canonical bytes. Forecasting verifies the manifest and artifact digests, signature, authoritative current signer status, `skops.io` type, trust-policy version/digest, feature schema, runtime profile, release state and validity window before deserializing. Signer status comes from authoritative trust metadata: `active` may sign/verify, `verify-only-overlap` may verify retained packages only, and `revoked` invalidates associated packages immediately. V1 permits exactly one active route and no previous-release overlap; the overlap fields remain in the manifest schema for future protocol versions but must be null/unused in v1. Rollback creates a new promotion generation after the same drain, evaluation and fence checks and requires the retained package to pass every check. Any failure returns explicit `model-unavailable` and prevents forecast publication; no alternate release, baseline, artifact type or provider is silently substituted. All failures use RFC 9457 with stable codes and correlation IDs: `401` unauthenticated, `403` retailer/worker/operator authority denied, `404` hidden resource or no active compatible release, `409` idempotency/generation/fence/finalizer conflict, `410` expired/cancelled/revoked/overlap-ended, `422` unsupported work or incompatible package, and `503` authoritative lease, trust metadata or artifact storage unavailable.
 
-C07 conformance fixtures must prove: the `x-contract-fixtures` values validate against their named OpenAPI 3.1 schemas with the stated positive/negative results, including a valid pin admission and both batch/nonbatch lease branches; a pin, request, first queued attempt and first lease share immutable IDs, while a terminal retry uses a distinct attempt ID; mismatched run/pin/attempt IDs and an attempt-2 claim on a first lease conflict; expiry, supersession and recovery fencing racing U7 finalization yield either one fully committed current result or no owner result/audit/outbox/pin closure; identical replay returns the same result and `already-closed` pin while changed-digest replay conflicts; a crash before commit leaves the lease and pin active and a crash after commit is read back once; U6 alone closes its pin under route/lease row locks, with a pin-close/drain race yielding exactly one winner; global slot reassignment waits for tenant-local terminal proof even across database unavailability; pin/admit racing drain has exactly one winner and never admits an old-route pin after drain; promotion and rollback each atomically complete the evaluation lease and switch route, exact replay returns the same decision, and pre/postcommit crashes cannot free the slot before local proof; failed evaluation, abort and recovery fencing each produce a local terminal/fenced result before central reconciliation; promotion/rollback reject nonzero or uncertain pins, stale generations and expired evaluation leases; drain timeout and restart never clear a pin by time alone. U1 publishes these as positive/negative fixtures for U5/U6/U7 and U15 recovery integration.
+C07 conformance fixtures must prove: the `x-contract-fixtures` values validate against their named OpenAPI 3.1 schemas with the stated positive/negative results, including a valid pin admission and both batch/nonbatch lease branches; a pin, request, first queued attempt and first lease share immutable IDs, while a terminal retry uses a distinct attempt ID; mismatched run/pin/attempt IDs and an attempt-2 claim on a first lease conflict; expiry, supersession and recovery fencing racing U7 finalization yield either one fully committed current result or no owner result/audit/outbox/pin closure; identical replay returns the same result and `already-closed` pin while changed-digest replay conflicts; a crash before commit leaves the lease and pin active and a crash after commit is read back once; U6 alone closes its pin under route/lease row locks, with a pin-close/drain race yielding exactly one winner; global slot reassignment waits for tenant-local terminal proof even across database unavailability; pin/admit racing drain has exactly one winner and never admits an old-route pin after drain; promotion and rollback each atomically complete the evaluation lease and switch route, exact replay returns the same decision, and pre/postcommit crashes cannot free the slot before local proof; failed evaluation, abort and recovery fencing each produce a local terminal/fenced result before central reconciliation; promotion/rollback reject nonzero or uncertain pins, stale generations and expired evaluation leases; drain timeout and restart never clear a pin by time alone. U1 publishes these as positive/negative fixtures for U6/U7 and U15 recovery integration.
 
 ### C08 — Inventory and receipt posting for Planning and Purchasing
 
@@ -3645,14 +3646,14 @@ ciGates:
 | U1 package completeness and compatibility | C01's versioned candidate/release manifest lists canonical OpenAPI/AsyncAPI/JSON Schema inputs plus governed sidecars for fixtures, generation, C22/C23 protocol conformance, recovery policy, compatibility assessments, validation runs and evidence; C24 supplies typed bootstrap results and problems |
 | All unit dependency integration points | C01-C19 and C22-C27 cover the approved 15-unit topology; C20-C21 cover external identity and model-provider boundaries |
 | NFR3 tenant isolation and placement migration | Common envelope, C02, C17-C18, C24-C27, and authority invariants require current membership and placement/recovery generation |
-| NFR4 routine-only PostgreSQL access | Ownership rules prohibit cross-unit table access; C07 exposes only a U6-owned EXECUTE-only versioned stored-function port inside U5/U7 owner transactions, with no arbitrary SQL |
+| NFR4 routine-only PostgreSQL access | Ownership rules prohibit cross-unit table access; C07 exposes only a U6-owned EXECUTE-only versioned stored-function port inside U7 owner transactions, with no arbitrary SQL |
 | NFR5 browser identity | C16 and C18 define BFF, PKCE, cookie, CSRF, token, and replay boundaries |
 | NFR7 durable messaging | C03, C15, C22-C23, C25 and C27 define at-least-once, outbox/inbox, confirms, commit-before-ack, DLQ, replay, language-package compatibility and conformance semantics |
 | NFR7.1 bounded shared messaging | C01, C15, C22-C23 require authenticated producer binding, RFC 8785/SHA-256 payload digests, 64 KiB envelopes, five deliveries, deterministic 1/2/4/8-second retry delays within the one-to-30-second bound, seven-day DLQ retention, replay batches of 1-100 and exact-replay/conflict/poison/expiry/reconciliation evidence |
 | NFR8 formal API contracts | Every synchronous provider boundary is assigned to OpenAPI 3.1.2 or the explicit C08 in-process schema; every durable event/command boundary uses AsyncAPI 3.0.0 |
 | NFR8.1 browser/BFF contract | C18 defines no-store CSRF bootstrap/rotation, CSRF plus one idempotency identity on every mutation, typed HTTP 200 sections, bounded reads/uploads, operation status/reconciliation, purchasing requests, assistant SSE/resume/snapshot, bounded audit/evidence queries, contract metadata and stable RFC 9457 problems |
 | NFR8.2 evidence schema | C19 permits exactly the six approved outcomes and requires reason, expected/actual result, trace IDs, immutable revision, environment, timing, command profile, artifacts/checksums and limitations |
-| FR13.1 and NFR8.3 model/recovery catalogue | C07 formalizes versioned heavy-work request/lease lifecycle, same-transaction U5/U7 finalization, no-overlap route pins/drain and verifiable signed `skops.io` package manifests; C24-C26 formalize recovery registration, immutable roster snapshots, participant routes, deadline classes and global barrier deadlines |
+| FR13.1 and NFR8.3 model/recovery catalogue | C07 formalizes versioned heavy-work request/lease lifecycle, same-transaction U7 finalization, no-overlap route pins/drain and verifiable signed `skops.io` package manifests; C24-C26 formalize recovery registration, immutable roster snapshots, participant routes, deadline classes and global barrier deadlines |
 | Forecasting product-set consumers | C10 and C13 require a distinct 1–100-product request set, exact covered/unavailable partition, per-product reason and 28 dated values only for covered products; stale/unpublished/failed results remain explicit |
 | Purchasing safety in FR7/FR8 | C08, C14, and C18 omit assistant approval authority and preserve versions, atomic receipt validation, cancellation, and cumulative receipt limits |
 | Manual review quota in FR9-FR9.5 | C14 and C18 expose remaining allowance/reset time and `429`, while U8 remains authoritative |
