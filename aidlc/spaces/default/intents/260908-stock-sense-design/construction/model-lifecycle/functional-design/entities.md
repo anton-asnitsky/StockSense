@@ -239,7 +239,7 @@ entities:
     entityConstraints:
       - Lease ID is unique and a completed fence references this immutable result; retailer, owner, operation ID and idempotency key identify exact replay with the same canonical arguments and digest.
       - For batch-forecast the result binds run, attempt and closed pin; embedding-index has none of those fields. A pin may be closed by only this result or an authorized terminal nonpublication release.
-      - A completed evaluation result binds promotion intent, drain, decision, expected route generation and the next route generation; promotion or rollback writes it with the fence transition, signed package, route switch, decision, audit and outbox in one retailer-local transaction. Exact replay returns the same decision and result, never a second route change.
+      - A completed evaluation result binds promotion intent, drain, decision, expected route generation and the next route generation; promotion or rollback writes it with the fence transition, signed package, route switch, drain commitment, decision, audit and outbox in one retailer-local transaction. Exact replay returns the same decision and result, never a second route change.
       - Failed, expired, cancelled or recovery-fenced evaluation results bind the lease and drain but no committed route decision; central slot reconciliation requires this local proof. Training results use U6-owned completion without external owner publication.
       - An external-owner terminal result is written in the caller-owned retailer-local transaction with the U5/U7 publication pointer, audit and outbox; a rollback leaves no result or pin closure.
 
@@ -512,6 +512,7 @@ entities:
     entityConstraints:
       - There is at most one active drain per retailer, and switch requires zero provably outstanding pins under the route-control lock.
       - Evaluation request and lease identities are attached only after zero old-route pins are proven; the evaluation request deadline cannot extend the drain deadline.
+      - The transition to `committed` is written in the same retailer-local transaction as the completed evaluation terminal result, route switch and decision; a drain never reaches `committed` without that result.
       - Deadline or restart never silently clears a pin; unsafe abort leaves the route unavailable for recovery.
 
   - name: ActiveModelRoute
