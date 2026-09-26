@@ -308,6 +308,8 @@ entities:
       - { name: messageType, logicalType: String, required: true, unique: false }
       - { name: schemaVersion, logicalType: Version, required: true, unique: false }
       - { name: payloadDigest, logicalType: Digest, required: true, unique: false }
+      - { name: envelopeProfile, logicalType: Enum, required: true, unique: false, allowedValues: [tenant] }
+      - { name: producerBindingRef, logicalType: Reference, required: true, unique: false }
       - { name: placementGeneration, logicalType: PositiveInteger, required: true, unique: false }
       - { name: occurredAt, logicalType: Instant, required: true, unique: false }
       - { name: publicationState, logicalType: Enum, required: true, unique: false, allowedValues: [pending, published, deadLettered], default: pending }
@@ -315,6 +317,8 @@ entities:
     entityConstraints:
       - The business mutation, accepted audit record, and outbox message share one commit boundary.
       - Publication status does not alter the committed business effect.
+      - U4's own publisher validates the closed tenant C01 profile and C23 rules without an U14 runtime dependency.
+      - The immutable message identity, canonical RFC 8785 data digest and producer binding survive publish retry and authorized replay.
 
   - name: InboxReceipt
     description: A consumer-side deduplication and processing result for one received message.
@@ -330,6 +334,81 @@ entities:
     entityConstraints:
       - The pair consumer and messageId is unique.
       - Acknowledgement follows the inbox and business commit.
+
+  - name: RetailRecoveryParticipantState
+    description: Durable U4 Tenant Directory C24 class-A synchronous participant state for one retailer, run and recovery generation.
+    attributes:
+      - { name: participantStateId, logicalType: Identifier, required: true, unique: true }
+      - { name: participant, logicalType: ConstantTenantDirectory, required: true, unique: false }
+      - { name: retailerId, logicalType: Identifier, required: true, unique: false, references: Retailer.retailerId }
+      - { name: runId, logicalType: Identifier, required: true, unique: false }
+      - { name: placementGeneration, logicalType: PositiveInteger, required: true, unique: false }
+      - { name: recoveryGeneration, logicalType: PositiveInteger, required: true, unique: false }
+      - { name: rosterDigest, logicalType: Digest, required: true, unique: false }
+      - { name: phase, logicalType: Enum, required: true, unique: false, allowedValues: [prepared, closed, aborted, resumed, unresolved] }
+      - { name: fenceDisposition, logicalType: Enum, required: true, unique: false, allowedValues: [active, cleared, terminally-suppressed, unresolved] }
+      - { name: checkpointId, logicalType: Identifier, required: false, unique: false }
+      - { name: checkpointDigest, logicalType: Digest, required: false, unique: false }
+    entityConstraints:
+      - Participant is tenant-directory only; its registered C24 command route is /internal/v1/recovery/participants/tenant-directory/retailers/{retailerId}/runs/{runId}/{command}, acknowledgement is the synchronous response, and deadline class is A.
+      - Retailer, run and recovery generation identify one monotonic participant state; a stale generation cannot acquire a fence.
+      - Prepare atomically advances recovery generation and fences U4 membership, role, retailer-setting, placement and topology writes before acknowledging; it does not claim Inventory, Demand History or U8 Purchasing fences.
+      - Close records only Tenant Directory's own placement, membership, generation, audit/outbox and checkpoint evidence; U15 joins separate inventory, demand-history and other roster checkpoints.
+      - Abort creates a terminal guard even before delayed prepare; resume clears only after local authoritative reconciliation.
+
+  - name: RetailRecoveryCommandResult
+    description: Exact durable status and response of an idempotent Tenant Directory C24 command.
+    attributes:
+      - { name: commandResultId, logicalType: Identifier, required: true, unique: true }
+      - { name: participantStateId, logicalType: Identifier, required: true, unique: false, references: RetailRecoveryParticipantState.participantStateId }
+      - { name: commandId, logicalType: Identifier, required: true, unique: false }
+      - { name: idempotencyKey, logicalType: Identifier, required: true, unique: false }
+      - { name: canonicalRequestHash, logicalType: Digest, required: true, unique: false }
+      - { name: durableStatus, logicalType: Integer, required: true, unique: false }
+      - { name: durableBody, logicalType: SafeResponse, required: true, unique: false }
+    entityConstraints:
+      - Participant, retailer, run, command and idempotency identity prevent a changed retry from acquiring a new result.
+      - A successful result commits with its fence, checkpoint or terminal guard; persistence failure cannot fabricate success.
+
+  - name: RetailAsyncRecoveryParticipantState
+    description: Durable C25 state for one separately registered U4 Inventory or Demand History participant.
+    attributes:
+      - { name: asyncParticipantStateId, logicalType: Identifier, required: true, unique: true }
+      - { name: participant, logicalType: Enum, required: true, unique: false, allowedValues: [inventory, demand-history] }
+      - { name: retailerId, logicalType: Identifier, required: true, unique: false, references: Retailer.retailerId }
+      - { name: runId, logicalType: Identifier, required: true, unique: false }
+      - { name: recoveryGeneration, logicalType: PositiveInteger, required: true, unique: false }
+      - { name: placementGeneration, logicalType: PositiveInteger, required: true, unique: false }
+      - { name: registrationId, logicalType: Identifier, required: true, unique: false }
+      - { name: rosterDigest, logicalType: Digest, required: true, unique: false }
+      - { name: deadlineClass, logicalType: Enum, required: true, unique: false, allowedValues: [B, C] }
+      - { name: commandRoute, logicalType: Route, required: true, unique: false }
+      - { name: acknowledgementRoute, logicalType: Route, required: true, unique: false }
+      - { name: phase, logicalType: Enum, required: true, unique: false, allowedValues: [prepared, closed, aborted, resumed, unresolved] }
+      - { name: fenceDisposition, logicalType: Enum, required: true, unique: false, allowedValues: [active, cleared, terminally-suppressed, unresolved] }
+      - { name: checkpointDigest, logicalType: Digest, required: false, unique: false }
+    entityConstraints:
+      - Inventory and Demand History each have their own registration, monotonic state, fence, command ledger and checkpoint; neither shares the C24 tenant-directory result.
+      - Inventory is registered only as class B (prepare/close/abort/resume 60/60/60/120 seconds); Demand History is registered only as class C (120/180/60/180 seconds). Reject a mismatched registered class before prepare.
+      - Each participant receives C25 commands at stocksense.recovery.command.v1.{participant} and publishes idempotent acknowledgements to stocksense.recovery.acknowledgement.v1 using its assigned class deadline.
+      - Inventory fences product, stock-position, movement, inventory import, receipt-stock mutation and its relays/consumers; Demand History fences demand/promotion observations, demand import and its relays/consumers. U8 Purchasing fences its own order state separately.
+      - Inventory close binds stock-ledger conservation, position watermark and inventory outbox/inbox evidence; Demand History close binds source/observation versions, local-date lineage and demand outbox/inbox evidence.
+      - Abort before delayed prepare persists a terminal guard; resume clears only the matching participant's fence after its own authoritative reconciliation.
+
+  - name: RetailAsyncRecoveryCommandResult
+    description: Exact durable C25 command/acknowledgement result owned separately by Inventory or Demand History.
+    attributes:
+      - { name: asyncCommandResultId, logicalType: Identifier, required: true, unique: true }
+      - { name: asyncParticipantStateId, logicalType: Identifier, required: true, unique: false, references: RetailAsyncRecoveryParticipantState.asyncParticipantStateId }
+      - { name: commandId, logicalType: Identifier, required: true, unique: false }
+      - { name: commandMessageId, logicalType: Identifier, required: true, unique: false }
+      - { name: idempotencyKey, logicalType: Identifier, required: true, unique: false }
+      - { name: canonicalRequestHash, logicalType: Digest, required: true, unique: false }
+      - { name: outcome, logicalType: Enum, required: true, unique: false, allowedValues: [prepared, closed, aborted, resumed, terminal, failed] }
+      - { name: acknowledgementMessageId, logicalType: Identifier, required: true, unique: false }
+    entityConstraints:
+      - The acknowledgement causationId equals commandMessageId; an exact command retry republishes the same durable outcome and stable acknowledgement identity without repeating the transition.
+      - Changed command content under the same commandId/idempotencyKey conflicts; persistence failure cannot yield a success acknowledgement.
 
 relationships:
   - { from: Retailer, to: RetailerSettingVersion, cardinality: "1:N", direction: "Retailer owns setting history" }
@@ -348,6 +427,10 @@ relationships:
   - { from: DemandObservation, to: DemandObservation, cardinality: "0..1:N", direction: "Correction supersedes prior observation" }
   - { from: Retailer, to: RetailDataSnapshotManifest, cardinality: "1:N", direction: "Retailer publishes immutable snapshots" }
   - { from: BusinessAuditRecord, to: OutboxMessage, cardinality: "1:0..N", direction: "Accepted decisions publish events" }
+  - { from: Retailer, to: RetailRecoveryParticipantState, cardinality: "1:N", direction: "Retailer has versioned recovery runs" }
+  - { from: RetailRecoveryParticipantState, to: RetailRecoveryCommandResult, cardinality: "1:N", direction: "Commands retain exact durable results" }
+  - { from: Retailer, to: RetailAsyncRecoveryParticipantState, cardinality: "1:N", direction: "Retailer has separate inventory and demand-history C25 participants" }
+  - { from: RetailAsyncRecoveryParticipantState, to: RetailAsyncRecoveryCommandResult, cardinality: "1:N", direction: "Async commands retain exact acknowledgement results" }
 ```
 
 ## Entity summary
@@ -359,5 +442,6 @@ relationships:
 | Demand History | DemandObservation, PromotionObservation, SyntheticDemandTruth | Observed data remains versioned and synthetic truth stays behind an evaluation-only boundary. |
 | Import and snapshot boundary | ImportBatch, ImportDiagnostic, RetailDataSnapshotManifest | Inputs and downstream reads are immutable, checksummed, bounded, and reproducible. |
 | Reliability evidence | IdempotencyRecord, BusinessAuditRecord, OutboxMessage, InboxReceipt | Retries are payload-bound and accepted effects commit with audit and outbox evidence. |
+| Recovery participants | RetailRecoveryParticipantState, RetailRecoveryCommandResult, RetailAsyncRecoveryParticipantState, RetailAsyncRecoveryCommandResult | U4 owns Tenant Directory's C24 class-A synchronous state plus separate Inventory and Demand History C25 asynchronous fences, checkpoints and exact results. |
 
 Purchasing-owned receipt and order entities reference Inventory products and positions through public module ports. Redis contains only disposable versioned views and is intentionally absent from the authoritative entity model.

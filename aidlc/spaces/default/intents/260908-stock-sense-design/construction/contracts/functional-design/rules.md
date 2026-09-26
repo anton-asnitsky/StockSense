@@ -2,7 +2,7 @@
 
 Unit: U1 Contracts (`contracts`)
 
-Sources: U1 ownership and constraints; US8.2, US8.5, US8.7, and US10.2; NFR3, NFR5, NFR7, NFR8, NFR13, NFR15, and FR12; C01 and C15 from Contract Design; and the confirmed Functional Design decisions.
+Sources: U1 ownership and constraints; US8.2, US8.5, US8.7, US9.11, and US10.2; NFR3, NFR5, NFR7, NFR8, NFR13, NFR15, FR12, and FR20.1; C01, C07, C10, C13, C15, and C22-C27 from Contract Design; and the confirmed Functional Design decisions.
 
 The YAML block is the source of truth for U1 rules. Rules that mention runtime delivery describe what contracts and evidence must declare and validate. Runtime units remain responsible for implementing authorization, persistence, publication, consumption, and side effects.
 
@@ -11,11 +11,11 @@ schemaVersion: "1.0.0"
 unit: contracts
 rules:
   - id: BR1.1
-    statement: Every candidate package contains all canonical documents, referenced schemas, fixtures, and generation profiles declared by its manifest.
+    statement: Every candidate package contains the canonical documents and candidate sidecars required for its declared C01-C27 boundaries; a release contains every boundary and all required result sidecars, bound to one immutable source revision.
     category: constraint
     appliesTo: [ContractPackage]
     trigger: A package is submitted for validation.
-    logic: "IF a declared artifact is absent, duplicated, unreadable, or outside the package boundary THEN the package is incomplete."
+    logic: "IF any declared artifact is absent, duplicated, unreadable, unlisted, symlinked, outside the package boundary, digest-mismatched against exact bytes, or source-revision-mismatched against a clean reconstruction, OR a boundary lacks a canonical kind or sidecar required by the fixed C01 policy, OR a release omits or duplicates any C01-C27 boundary, THEN the package is incomplete. A success-labelled result sidecar without its actual validation evidence is also incomplete."
     violationBehaviour: "Fail package validation with an artifact-specific finding."
     source: [NFR8]
 
@@ -45,6 +45,24 @@ rules:
     logic: "IF released content or completed evidence changes THEN create a new version or run rather than rewriting the prior record."
     violationBehaviour: "Reject in-place mutation and retain the prior record."
     source: [NFR15]
+
+  - id: BR1.5
+    statement: Release validation and publication bind to the exact finalized manifest digest.
+    category: constraint
+    appliesTo: [ContractPackage, ValidationRun, EvidenceRecord]
+    trigger: A final manifest is validated or published.
+    logic: "IF the detached passing validation receipt lacks the exact manifest SHA-256 digest and source revision, OR publication recomputes a different digest, THEN the release is not validated. The detached receipt is not included in the manifest it hashes."
+    violationBehaviour: "Block publication and require a new final validation run for the changed manifest."
+    source: [NFR8, NFR15]
+
+  - id: BR1.6
+    statement: Manifest entries deterministically resolve to reusable immutable document and schema revisions through package-local inclusions.
+    category: constraint
+    appliesTo: [ContractPackage, PackageInclusion, ContractDocument, SharedSchema, ExampleFixture, GenerationProfile, CompatibilityAssessment]
+    trigger: A C01 manifest is loaded or a document/schema revision is replaced or referenced.
+    logic: "Derive logicalId as SHA-256 of the UTF-8 canonical kind, owner and normalized safe path with domain separator logical\\0; derive revisionId as SHA-256 of logicalId, semantic version and verified content digest with separator revision\\0. IF a manifest entry cannot reproduce those IDs, a package binds two revisions of one logicalId, a changed artifact reuses a published revision ID, or a fixture/profile/assessment resolves only a mutable logical ID, THEN revision identity is invalid. PackageInclusion, not the revision, owns package membership and boundary coverage, so the same unchanged revision may be reused by another package."
+    violationBehaviour: "Reject the package or reference; retain predecessor revisions and create a new revision only when version or content changes."
+    source: [NFR8, NFR15]
 
   - id: BR2.1
     statement: The initial inventory-import OpenAPI boundary specifies payloads, authentication expectations, tenant context, successful responses, and stable error responses.
@@ -78,9 +96,36 @@ rules:
     category: authorization
     appliesTo: [ContractDocument, SharedSchema, ExampleFixture]
     trigger: A REST mutation, internal call, job, or event contract is validated.
-    logic: "IF required context is missing, client context is represented as authority, or an error lacks its stable envelope THEN the contract fails policy validation."
+    logic: "IF required context is missing, client context is represented as authority, or an error lacks its stable envelope THEN the contract fails policy validation. Tenant events require real retailer and placement context; retailerless U3 identity-security events use only the distinct closed global profile and prohibit fabricated retailer or placement fields."
     violationBehaviour: "Reject the contract candidate; runtime access is never granted by contract metadata alone."
     source: [NFR3, NFR5, NFR7, NFR8]
+
+  - id: BR2.5
+    statement: The catalogue contains complete versioned schemas, security and idempotency rules, examples, and compatibility policy for every assigned boundary.
+    category: validation
+    appliesTo: [ContractPackage, ContractDocument, SharedSchema, ExampleFixture]
+    trigger: U1 catalogue validation or dependent code generation.
+    logic: "IF browser/BFF, messaging, evidence, heavy-lease, signed-model, or recovery-barrier boundaries retain a legacy placeholder or lack any required versioned schema, security/idempotency rule, example, or compatibility policy THEN catalogue validation fails."
+    violationBehaviour: "Block dependent generation and name the incomplete boundary."
+    source: [AC8.2.4, NFR8]
+
+  - id: BR2.6
+    statement: C07's typed shared-transaction port and fixtures prove the declared lease, attempt, pin, drain and route-change contract shape without claiming runtime atomicity from schema validation alone.
+    category: validation
+    appliesTo: [ContractPackage, SharedSchema, ExampleFixture, ValidationRun]
+    trigger: C07 canonical package validation runs.
+    logic: "IF the versioned EXECUTE-only finalizer signature, named U5/U7 caller roles, immutable run/pin/request/first-attempt/lease binding, terminal/fenced retry rule, one-transaction owner publication and U6 pin closure, replay/conflict, pin-admit/drain exclusion, atomic evaluation-lease route change, or local-terminal-before-central-slot positive and negative fixtures are missing or contradict the canonical C07 contract THEN validation fails."
+    violationBehaviour: "Block C07 package publication with fixture-specific findings; U5/U6/U7/U15 separately prove live transaction and recovery behavior."
+    source: [AC8.2.4, NFR8]
+
+  - id: BR2.7
+    statement: C10 typed run history and C10/C13 bounded product-set contracts preserve exact forecast coverage and unavailable outcomes.
+    category: validation
+    appliesTo: [ContractDocument, SharedSchema, ExampleFixture, ValidationRun]
+    trigger: C10 or C13 canonical contract validation runs.
+    logic: "IF ForecastRunHistoryResponse or a distinct bounded product-set request is untyped, duplicate or over-limit products pass, covered and unavailable products do not form an exact partition, an unavailable product lacks its reason, a covered product lacks 28 dated values, an unavailable product carries a fabricated series, or stale/unpublished/failed results are represented as success THEN validation fails."
+    violationBehaviour: "Block C10/C13 publication and name the violating product, field and fixture."
+    source: [AC8.2.4, NFR8]
 
   - id: BR3.1
     statement: Generated clients and message models are consumer-local derivatives of canonical documents.
@@ -181,6 +226,60 @@ rules:
     violationBehaviour: "Fail reliability-policy validation and expose the unsupported claim or missing outcome."
     source: [NFR7]
 
+  - id: BR5.5
+    statement: Messaging package compatibility and recovery documents preserve the approved C22-C27 protocol boundaries.
+    category: validation
+    appliesTo: [ContractPackage, ContractDocument, SharedSchema, ExampleFixture]
+    trigger: A messaging package or recovery contract is validated.
+    logic: "IF the U14 package protocol range, shared conformance fixture, C01 envelope composition, provider ownership, or recovery document coverage is absent or incompatible THEN the package is incomplete. C24 additionally requires the correlation/idempotency headers, typed durable 200 result, and RFC 9457 401/403/409/422/503 problems with stable codes, including RECOVERY_PERSISTENCE_UNAVAILABLE."
+    violationBehaviour: "Fail contract validation; do not attribute runtime conformance to a schema pass."
+    source: [NFR7, NFR8, FR20.1]
+
+  - id: BR5.6
+    statement: Recovery fixtures require durable dispatch inventory, monotonic fencing, abort-before-late-prepare protection, and truthful partial-failure outcomes.
+    category: constraint
+    appliesTo: [ContractDocument, ExampleFixture, CoverageEntry]
+    trigger: C24-C27 or US9.11 evidence is evaluated.
+    logic: "IF a potentially delivered participant is omitted from abort, a late command can reacquire a fence, a closed result lacks a matching checkpoint digest, a changed idempotent retry returns a successful replay, persistence failure fabricates a durable result instead of 503, or unresolved participants are reported as recovered THEN the recovery contract or evidence fails."
+    violationBehaviour: "Reject the fixture or coverage claim and name the affected participant and generation."
+    source: [FR20.1, NFR8]
+
+  - id: BR5.7
+    statement: Operator recovery commands require current authorization and a single-use confirmation bound to the same subject, client, scope, roster, and manifest.
+    category: authorization
+    appliesTo: [ContractDocument, ExampleFixture]
+    trigger: C26 preview or destructive start is validated.
+    logic: "IF current Operator membership, placement generation, delegated human identity, or preview/start binding is absent or changed THEN destructive start is denied."
+    violationBehaviour: "Fail the contract or negative example; a browser or service assertion alone never grants authority."
+    source: [FR20.1, NFR3, NFR8]
+
+  - id: BR5.8
+    statement: Tenant and retailerless global identity-audit messages have separate closed envelopes, event types, routes, and negative fixtures.
+    category: validation
+    appliesTo: [ContractDocument, SharedSchema, ExampleFixture]
+    trigger: C01/C15 audit contracts or examples are validated.
+    logic: "IF a global identity outcome invents retailer or placement context, omits redacted pre-login denial examples, enters a tenant route, or a tenant event lacks real retailer and placement context THEN the contract fails."
+    violationBehaviour: "Reject the event schema or fixture and name the violated profile."
+    source: [NFR3, NFR7, NFR8]
+
+  - id: BR5.9
+    statement: U3/U4 bootstrap publisher profiles and U14 language packages prove their distinct C22/C23 conformance obligations.
+    category: validation
+    appliesTo: [ContractPackage, ContractDocument, ExampleFixture, EvidenceRecord]
+    trigger: A publisher profile, consumer package, or domain-consumer fixture is evaluated.
+    logic: "IF an applicable versioned C22 fixture is missing for U3/U4 service-owned C23 publishers, their U13 evidence is absent, or U14 package evidence is used to imply U3/U4 conformance THEN the claim fails. Parameterized duplicate, changed-payload, stale-authority, crash-before-commit and crash-after-commit schedules must be supplied; each domain consumer separately proves inbox uniqueness, current authority, and one atomic business effect/outbox result."
+    violationBehaviour: "Fail the applicable conformance or coverage claim; the representative platform fixture cannot substitute for a domain consumer."
+    source: [AC8.5.4, NFR7, NFR8]
+
+  - id: BR5.10
+    statement: Platform identity-audit reads remain distinct from retailer audit routes and require the approved live human grant checks.
+    category: authorization
+    appliesTo: [ContractDocument, ExampleFixture]
+    trigger: C02/C17/C18 global identity-audit read contracts are validated.
+    logic: "IF the U3 revocable human platform-Operator grant/current-check operation, U10 delegated-human per-page grant check, or separate U11 no-store platform route is absent, OR a retailer-only Operator, machine caller, revoked grant, invalid audience/client/scope, unavailable check, or tenant-route leakage is accepted THEN the contract fails."
+    violationBehaviour: "Reject the contract or negative fixture; U1 validation does not grant runtime access."
+    source: [NFR3, NFR5, NFR8]
+
   - id: BR6.1
     statement: Pull-request validation reports every applicable contract check alongside the other required hosted CI categories.
     category: policy
@@ -213,12 +312,12 @@ rules:
     category: policy
     appliesTo: [EvidenceRecord]
     trigger: Contract evidence is published or inspected.
-    logic: "IF a required source ID, boundary ID, rule ID, revision, or run cannot be resolved THEN traceability is incomplete."
+    logic: "EvidenceRecord.ruleIds is a nonempty set of versioned BR identifiers. Resolve each against the U1 rules catalogue at the evidence sourceRevision, then require its acceptance criterion, boundary, immutable artifact revision and validationRunId to resolve to the same package; any missing, stale or cross-package link makes traceability incomplete."
     violationBehaviour: "Mark evidence incomplete and prohibit a complete-coverage claim."
     source: [NFR15]
 
   - id: BR6.5
-    statement: Evidence preserves model and data cards, rejected candidates, resource and recovery findings, synthetic limitations, and every failed, limited, rejected, or not-run outcome.
+    statement: Evidence preserves model and data cards, rejected candidates, resource and recovery findings, synthetic limitations, and all six passed, failed, limited, rejected, unavailable, and not-run outcomes with their reasons and observed results.
     category: policy
     appliesTo: [ValidationRun, ValidationFinding, EvidenceRecord]
     trigger: A result is recorded or summarized.
@@ -245,13 +344,18 @@ rules:
     source: [NFR15]
 ```
 
+## Validation ownership
+
+U1 validates canonical shapes, fixtures, package coverage, exact revision/digest binding, and evidence presence. U3/U4 own their bootstrap publishers, U14 owns shared language-package mechanics, U10 owns global-read enforcement, and each domain consumer proves its own atomic effects. A passing U1 schema or representative fixture never substitutes for those runtime results.
+
 ## Rules summary
 
 | Group | Rules | Summary |
 | --- | --- | --- |
-| Package and ownership | BR1.1-BR1.4 | Packages are complete, standards-based, immutable after release, and preserve provider semantic ownership. |
-| Contract validation | BR2.1-BR2.4 | Initial REST/async fixtures and shared context/error rules must validate, including expected failures. |
+| Package and ownership | BR1.1-BR1.6 | Packages are complete, standards-based, exact-manifest-bound, revision-addressable, immutable after release, and preserve provider semantic ownership. |
+| Contract validation | BR2.1-BR2.5 | Initial REST/async fixtures, the complete versioned catalogue, and shared context/error rules must validate, including expected failures. |
 | Generated outputs | BR3.1-BR3.3 | Generation is consumer-local, reproducible, provenance-rich, and checked for drift. |
 | Compatibility | BR4.1-BR4.4 | The comparison baseline follows the Git integration path; breaking changes need a new major version and approval. |
 | Reliable messaging | BR5.1-BR5.4 | Contracts distinguish jobs/events and declare outbox/inbox, authority, deduplication, bounded retry, DLQ, and replay semantics. |
+| Messaging, audit, and recovery | BR5.5-BR5.10 | C01/C15/C17/C18/C22-C27 compatibility, bootstrap publisher evidence, global identity-audit separation, recovery fencing, partial failure, and Operator confirmation must be independently validated. |
 | CI and evidence | BR6.1-BR6.7 | Hosted checks block unsafe integration and provide truthful, stable, boundary-specific portfolio evidence. |

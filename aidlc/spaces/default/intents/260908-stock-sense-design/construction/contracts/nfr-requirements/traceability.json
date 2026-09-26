@@ -1,0 +1,98 @@
+{
+  "stage": "nfr-requirements",
+  "unit": "contracts",
+  "upstream_ids": [
+    "NFR1",
+    "NFR2",
+    "NFR3",
+    "NFR4",
+    "NFR5",
+    "NFR6",
+    "NFR7",
+    "NFR8",
+    "NFR9",
+    "NFR10",
+    "NFR11",
+    "NFR12",
+    "NFR13",
+    "NFR14",
+    "NFR15"
+  ],
+  "coverage": [
+    {
+      "id": "NFR1",
+      "status": "N/A",
+      "target": "U1 is build-time contract governance and has no ordinary runtime inventory or purchasing read path; owning runtime units measure the p95 read SLO."
+    },
+    {
+      "id": "NFR2",
+      "status": "N/A",
+      "target": "U1 adds no deployed cluster workload; CI validator resource bounds are separate from the demonstrated Kubernetes workload envelope."
+    },
+    {
+      "id": "NFR3",
+      "status": "OK",
+      "target": "NFR3.1"
+    },
+    {
+      "id": "NFR4",
+      "status": "N/A",
+      "target": "U1 owns repository and CI artifacts and has no PostgreSQL application role or table access; provider contracts explicitly expose no storage schema."
+    },
+    {
+      "id": "NFR5",
+      "status": "OK",
+      "target": "NFR5.1, NFR8.11"
+    },
+    {
+      "id": "NFR6",
+      "status": "OK",
+      "target": "NFR6.1, NFR6.2"
+    },
+    {
+      "id": "NFR7",
+      "status": "OK",
+      "target": "NFR7.1, NFR7.2, NFR7.3"
+    },
+    {
+      "id": "NFR8",
+      "status": "OK",
+      "target": "NFR8.1, NFR8.2, NFR8.3, NFR8.4, NFR8.5, NFR8.6, NFR8.7, NFR8.8, NFR8.9, NFR8.10, NFR8.11"
+    },
+    {
+      "id": "NFR9",
+      "status": "N/A",
+      "target": "U1 has no operational-log or business-audit retention store; it preserves immutable validation evidence while U10 and operations own the 7-day/90-day retention controls."
+    },
+    {
+      "id": "NFR10",
+      "status": "OK",
+      "target": "NFR10.1"
+    },
+    {
+      "id": "NFR11",
+      "status": "OK",
+      "target": "NFR11.1, NFR11.2"
+    },
+    {
+      "id": "NFR12",
+      "status": "N/A",
+      "target": "U1 neither provisions infrastructure nor manages Terraform/Terragrunt state; it only supplies contract checks consumed by the infrastructure and delivery units."
+    },
+    {
+      "id": "NFR13",
+      "status": "OK",
+      "target": "NFR13.1, NFR13.2, NFR13.3, NFR13.4, NFR13.5"
+    },
+    {
+      "id": "NFR14",
+      "status": "N/A",
+      "target": "U1 has no browser UI; U12 owns keyboard operation and loading, empty, failure, and stale-data states."
+    },
+    {
+      "id": "NFR15",
+      "status": "OK",
+      "target": "NFR15.1, NFR15.2, NFR15.3, NFR15.4, NFR15.5"
+    }
+  ]
+}

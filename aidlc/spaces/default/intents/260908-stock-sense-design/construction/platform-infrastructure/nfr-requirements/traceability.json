@@ -1,0 +1,98 @@
+{
+  "stage": "nfr-requirements",
+  "unit": "platform-infrastructure",
+  "upstream_ids": [
+    "NFR1",
+    "NFR2",
+    "NFR3",
+    "NFR4",
+    "NFR5",
+    "NFR6",
+    "NFR7",
+    "NFR8",
+    "NFR9",
+    "NFR10",
+    "NFR11",
+    "NFR12",
+    "NFR13",
+    "NFR14",
+    "NFR15"
+  ],
+  "coverage": [
+    {
+      "id": "NFR1",
+      "status": "OK",
+      "target": "NFR1.1"
+    },
+    {
+      "id": "NFR2",
+      "status": "OK",
+      "target": "NFR2.1, NFR2.2"
+    },
+    {
+      "id": "NFR3",
+      "status": "OK",
+      "target": "NFR3.1, NFR3.2, NFR3.3, NFR3.4, NFR3.5, NFR3.6, NFR3.7"
+    },
+    {
+      "id": "NFR4",
+      "status": "OK",
+      "target": "NFR4.1"
+    },
+    {
+      "id": "NFR5",
+      "status": "OK",
+      "target": "NFR5.1, NFR5.2"
+    },
+    {
+      "id": "NFR6",
+      "status": "OK",
+      "target": "NFR6.1, NFR6.2, NFR6.3, NFR6.4, NFR6.5"
+    },
+    {
+      "id": "NFR7",
+      "status": "OK",
+      "target": "NFR7.1, NFR7.2"
+    },
+    {
+      "id": "NFR8",
+      "status": "OK",
+      "target": "NFR8.1, NFR8.2"
+    },
+    {
+      "id": "NFR9",
+      "status": "OK",
+      "target": "NFR9.1, NFR9.2"
+    },
+    {
+      "id": "NFR10",
+      "status": "OK",
+      "target": "NFR10.1, NFR10.2, NFR10.3, NFR10.4"
+    },
+    {
+      "id": "NFR11",
+      "status": "OK",
+      "target": "NFR11.1, NFR11.2, NFR11.3, NFR11.4"
+    },
+    {
+      "id": "NFR12",
+      "status": "OK",
+      "target": "NFR12.1, NFR12.2, NFR12.3, NFR12.4, NFR12.5, NFR12.6, NFR12.7, NFR12.8"
+    },
+    {
+      "id": "NFR13",
+      "status": "OK",
+      "target": "NFR13.1, NFR13.2, NFR13.3, NFR13.4, NFR13.5, NFR13.6"
+    },
+    {
+      "id": "NFR14",
+      "status": "N/A",
+      "target": "The platform-infrastructure unit does not implement browser loading, empty, failure, stale-data, keyboard, language, or accessibility behavior; those acceptance requirements belong to the Web Application and Web BFF units. This unit supports them only through availability and contract surfaces covered by other NFRs."
+    },
+    {
+      "id": "NFR15",
+      "status": "OK",
+      "target": "NFR15.1, NFR15.2"
+    }
+  ]
+}

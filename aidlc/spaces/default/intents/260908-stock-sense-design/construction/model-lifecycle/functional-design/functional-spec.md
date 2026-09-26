@@ -4,7 +4,7 @@ Unit: U6 Model Lifecycle (model-lifecycle)
 
 Status: Draft for independent review
 
-Decision basis: confirmed Model Lifecycle Functional Design answers dated 2026-09-13.
+Decision basis: confirmed Model Lifecycle Functional Design answers dated 2026-09-13 and reconciliation confirmed 2026-09-25, followed by owner-directed C07 safety corrections pending review.
 
 This specification is the source of truth for ordered workflows and lifecycle transitions. The entity diagram and rule summary are derived views of `entities.md` and `rules.md`.
 
@@ -40,23 +40,24 @@ Every protected action revalidates retailer context, current role or machine sco
 
 ### WF2. Admit and schedule a resource-intensive ML job
 
-1. An authorized Operator submits a train, forecast-evaluation, policy-evaluation, or restore-reconciliation command with immutable dependency IDs and an operation key.
+1. An authorized Operator submits a train, forecast-evaluation, policy-evaluation, or restore-reconciliation command with immutable dependency IDs and an operation key. Training and evaluation link a U6 Model Job to a C07 HeavyWork Request; restore reconciliation is a C25-directed internal job and is not represented as an unsupported C07 work type.
 2. The service validates tenant, role, placement, dependency status, request hash, and contract version before accepting the job.
 3. An exact replay returns the existing logical job. Changed payload under the same key conflicts.
-4. The accepted job moves Requested to Queued. The global queue orders accepted heavy jobs by durable admission sequence.
-5. A dispatcher grants the cluster-wide execution lease only when no other heavy job holds a valid lease. Waiting jobs remain visible in FIFO order.
+4. The accepted job moves Requested to Queued. U6's separate C07 HeavyWork Request queue accepts training, evaluation, Supplier Knowledge embedding-index, and Forecasting batch-forecast work under authenticated owner-service and retailer/job authority. External owner work remains in its own domain ledger and never becomes a U6 Model Job.
+5. The global queue orders all four work types by durable admission sequence; the C07 priority field is stored but does not reorder version 1 FIFO. A dispatcher grants the one cluster-wide execution slot only when no other work type holds a valid lease. Each new acquisition receives a globally higher fencing token.
 6. Cancellation may remove a Queued job or signal a Running attempt; cancellation never promotes or deletes verified evidence.
+7. C07 admission fixes a 60-minute deadline and at most three lease acquisitions for all four supported work types under execution-policy-v1. The deadline is never extended by waiting, retry, or broker redelivery; the owner service retains its own domain job identity and result.
 
 ### WF3. Execute, heartbeat, and recover a Model Job
 
-1. The worker appends a Model Job Attempt, acquires the job and cluster leases, and pins immutable input and runtime digests.
-2. The attempt moves Leased to Running and emits bounded heartbeats. Commit authority is valid only while the worker owns an unexpired lease.
+1. A U6 worker appends a Model Job Attempt; U6 and external workers acquire and renew their own C07 HeavyWork Lease against the shared request/queue ledger and pin immutable input and runtime digests in the owner service.
+2. PostgreSQL grants a unique lease ID and a fencing token strictly greater than any prior token for that request. The five-minute lease is renewed at most every minute with lease ID, token, retailer, and placement/recovery generation checks. Commit authority is valid only while that exact lease remains active and unexpired.
 3. Verified intermediate outputs may be stored with checkpoint digests. A checkpoint never represents job success or promotion.
-4. Success finalizes outputs, completes experiment evidence, changes the attempt and logical job to Succeeded, and releases the lease.
+4. Success finalizes owner-service outputs and evidence with the C07 lease. For U5/U7, the owner PostgreSQL routine invokes U6's EXECUTE-only `finalize_heavy_work_v1` in the same retailer-local transaction as owner state, audit and outbox. The U6 port first checks for an immutable terminal result under the retailer, caller-service, operation ID, idempotency key and lease identity, even if the lease is now completed. Exact canonical argument and result-digest replay returns that result's ID and digest with `idempotent-replay` and `already-closed` for its pin; changed payload, a pin closed by a different result, or mismatched owner identity conflicts. For a new finalization it locks the local request, lease/fence, route pin and guard where applicable; checks request/lease/forecast-run/attempt/pin binding, worker, global token, work type, active status, database-clock expiry, retailer, placement/recovery generation, result digest, idempotency identity and expected owner version; and writes one immutable `HeavyWorkTerminalResult`, its ID on the completed fence, and the same result ID on the closed U6-owned pin. It returns `terminalResultId`, `resultDigest`, `closedPinId` and pin-closure disposition. U7 cannot update U6 route tables. Before its owner routine returns success on replay, U5/U7 reads its already committed publication pointer and verifies the same terminal result ID/digest, attempt ID where applicable and expected owner version; it does not republish owner rows, audit or outbox. A crash before commit leaves lease and pin active; after commit the owner and U6 result are read back together. The C07 REST `:complete` endpoint is reserved for U6-owned work and never stands in for an external owner's publication transaction. U6 holds the central slot until the local terminal/fenced result is durably reconciled; an inaccessible tenant database fails acquisitions closed.
 5. A controlled failure records a safe code and provenance and changes both attempt and job to Failed. A cancellation records Cancelled.
-6. Lease expiry marks the attempt Interrupted and the job Failed or retryable. A later retry appends an attempt under the same logical job and reuses only immutable inputs or a verified checkpoint.
+6. Lease expiry marks the owner attempt Interrupted and invalidates its token forever. Only transient dependency failure or lease interruption retries after one and then two minutes, within the original deadline and three-acquisition budget. Retry appends an owner attempt under the same owner job and C07 request, reusing only immutable inputs or a verified checkpoint. Invalid inputs, authorization, compatibility, corruption, cancellation, or signature failure are terminal.
 7. A stale or foreign worker cannot commit after losing its lease. Repeated messages are deduplicated by inbox records.
-8. Exhausted retry policy moves the work to observable dead-letter handling; controlled replay retains the original job and tenant authority.
+8. Attempt exhaustion yields terminal Failed; elapsed deadline yields C07 DeadlineExpired. Both retain safe failure evidence and an observable operator action. A new run requires a new authorized operation key; broker dead-letter replay retains event identity and cannot reopen a terminal C07 request.
 
 ### WF4. Train the first retailer-scoped candidate
 
@@ -65,15 +66,15 @@ Every protected action revalidates retailer context, current role or machine sco
 3. The worker fits one retailer-scoped multi-product HistGradientBoostingRegressor with Poisson loss. It uses declared lagged observed-sales, shifted rolling, calendar, known-promotion, product-identity, and horizon-day features.
 4. Every transformation is fitted inside its temporal fold or final training window. Evaluation-only truth remains inaccessible to the fitting path.
 5. The worker records the run in operator-only experiment metadata, including job attempt, inputs, configuration, runtime, timings, status, and safe failure details.
-6. Successful serialized bytes are written to staging, checked against the declared format and input/output schemas, hashed, and finalized at an immutable object reference.
+6. Successful serialized skops.io bytes are written to staging, checked against declared runtime and input/output schemas, hashed, and finalized at an immutable object reference. Training records byte and provenance evidence only. Promotion generation, active status, validity window, full C07 package manifest and signature are created only after an explicit route decision.
 7. The completed job may create a Candidate release. It never changes an Active Model Route.
 8. Failed or cancelled runs remain inspectable and cannot create a validated release.
 
 ### WF5. Evaluate forecasts with common rolling origins
 
-1. An evaluation job pins one Dataset Version, at least three complete 28-day Temporal Splits, the seasonal-naive and moving-average definitions, and any trained candidate definitions.
-2. Feature-availability validation must pass for every scored split. Incomplete horizons are excluded with dates, counts, and reasons.
-3. Each model produces forecasts for identical retailer products and origins. A mismatch makes the report Incomplete.
+1. An evaluation job pins one Dataset Version and evaluation-configuration-v1: seven observed days for a seasonal-naive weekly pattern, the preceding 28 observed days for a moving average, 28-day nonoverlapping rolling-origin stride and 28-day held-out horizon, with at least three complete origins. For product and origin date O, seasonal-naive horizon day h (1..28) repeats the observation at O-7+((h-1) mod 7); moving-average horizon day h is the same arithmetic mean of observations O-28 through O-1. O is the first forecast date. Missing any required observed history excludes that product-origin for every model.
+2. Feature-availability validation must pass for every scored split. Incomplete horizons are excluded with dates, counts, and reasons. Leakage fixtures specifically verify seasonal-naive days 8 and 28 and moving-average day 28 against origin-only data while held-out truth is inaccessible.
+3. Each model produces forecasts for identical retailer, dataset, product-origin pairs, horizon, evaluation truth, and availability cutoff under one immutable configuration digest. A mismatch makes the report Incomplete. Changed periods, stride, or exclusion policy create a new configuration version and a separately comparable report.
 4. For each model, MAE equals total absolute error divided by observation count; zero-demand observations remain included.
 5. WAPE equals one hundred times total absolute error divided by total generated true demand. A zero denominator yields WAPE N/A, a zero-demand flag, and retained MAE.
 6. The report records dates, sample counts, products, origins, exclusions, versions, unsuccessful candidates, and synthetic-data limitations.
@@ -94,55 +95,57 @@ Every protected action revalidates retailer context, current role or machine sco
 ### WF7. Validate and register a Model Release
 
 1. An authorized Operator requests validation of a Candidate release using its operation key.
-2. Model Lifecycle validates current authority, tenant identity, successful run, complete comparable report against both baselines, complete lineage, feature-availability evidence, no leakage failure, artifact checksum, format, dependency/runtime profile, and input/output schemas.
+2. Model Lifecycle validates current authority, tenant identity, successful run, complete comparable report against both baselines, complete lineage, feature-availability evidence, no leakage failure, artifact checksum, skops.io format, dependency/runtime profile, and input/output schemas. Release validation does not require a promotion-specific signed package that does not yet exist.
 3. A trained or baseline release that passes becomes Validated but remains inactive. Validation does not modify the retailer route.
 4. A release that fails validation remains Candidate or becomes Rejected with durable reasons. It cannot be activated.
 5. Release identity, artifact reference, evaluation link, and model definition are immutable; lifecycle changes are recorded as transitions.
 
 ### WF8. Promote a validated release
 
-1. An authorized Operator chooses a Validated release and submits the target, expected route version, evidence reference, and explicit rationale.
-2. The service revalidates role, retailer, placement, release status, artifact checksum and availability, runtime/schema compatibility, evaluation completeness, and idempotency.
+1. An authorized Operator chooses a Validated release and submits the target, expected promotion generation, evidence reference, and explicit rationale. For first activation the expected generation is zero and the route row is absent; for later changes it equals the current positive version. This is a durable promotion intent, not an automatic model choice.
+2. U6 first calls C07 `drains:start` under the durable retailer-local route-control guard for the expected generation (zero for first activation) and records its drain ID and 60-minute attempt deadline. New old-route `pins:admit` calls then fail. It waits for every previously admitted pin to be committed terminal or safely fenced and reconciled; an uncertain pin remains outstanding. Only after the drain reports zero pins does U6 create and acquire a fresh C07 evaluation request in the global queue, durably associating the request and granted lease with the drain. The evaluation request's deadline cannot extend the earlier drain deadline. The worker then rechecks current Operator grant, retailer/placement/recovery authority, release status, artifact bytes/checksum, runtime/schema/trust compatibility, evaluation completeness, idempotency and expected route generation. It does not wait for old runs or a human while holding the evaluation lease.
 3. No universal improvement threshold is inferred. The rationale explains the evidence and tradeoff; a validated baseline may remain or become active.
-4. Under one authoritative transaction, the current Active release becomes Superseded when present, the target becomes Active, a Promotion Decision is appended, the Active Model Route advances one version, and business audit and outbox records are appended.
-5. Any expected-version, audit, outbox, or eligibility failure rolls back every route-change effect.
-6. Forecast Runs admitted after commit resolve the new route; existing runs remain pinned to their prior release.
+4. Version 1 permits no prior-release overlap. Promotion waits for every old pin's proven terminal disposition; the run's deadline alone does not clear a pin. The worker constructs the full C07 active package for generation expected+1, including release status, validFrom, null overlapUntil, artifact/runtime/feature/trust fields and current signer. It canonicalizes the immutable manifest under RFC8785 excluding manifestDigest, signature and live verification, hashes and Ed25519-signs those same bytes.
+5. It calls C07 promote with drain ID, live X-Lease-Id and X-Fencing-Token, signed package, evidence digest, expected promotion generation and placement/recovery generations. In one retailer-local authoritative transaction, U6 locks the route-control guard and lease/fence rows; rechecks the drain ID, zero outstanding pins, current evaluation lease and deadline, signer/package, generations and route CAS; and writes one `HeavyWorkTerminalResult` with `workType=evaluation`, `status=completed`, result ID/digest, drain/intent/decision IDs and route generation. The completed lease/fence and promotion decision reference that same result. The signed package, route, release transitions, audit and outbox commit with it or all roll back. The inactive generation-zero guard transitions to active generation one on first activation. Exact C07 replay reads and returns the same decision and terminal result from the durable binding, even when the lease is already completed; changed payload conflicts and the separate `:complete` command is not called first. U6 reopens the central slot only after reading this committed local terminal result.
+6. Any current-authority, lease, signer, expected-version, audit, outbox, in-flight-run, or eligibility failure rolls back the route change and leaves the promotion intent failed with a safe reason.
+7. Forecast Runs admitted after commit pin only the new route; earlier old-route pins have proven terminal before the switch. On failed evaluation, abort after lease acquisition, expiry or recovery, U6 first records a local terminal/fenced evaluation-lease outcome under the fence lock; central-slot reconciliation waits for that proof. On drain expiry, U6 aborts and reopens only a still-valid old route, otherwise leaves it unavailable for recovery; restart distinguishes precommit active lease/drain from postcommit route/terminal result and never assumes a timed-out pin is closed.
 
 ### WF9. Roll back to a retained release
 
 1. An authorized Operator selects a retained compatible Validated or Superseded release and supplies current expected route version and rollback reason.
-2. The service repeats artifact, tenant, runtime, schema, evaluation, retention, and availability checks. Rejected, retired, expired, corrupt, missing, or foreign releases are ineligible.
-3. The same transaction used for promotion appends a rollback Promotion Decision, changes route and release states, audit, and outbox.
+2. The service repeats artifact, tenant, runtime, schema, signer/trust, evaluation, retention, and availability checks. Rejected, retired, expired, corrupt, missing, foreign, or signer-revoked releases are ineligible.
+3. The Operator-authorized rollback starts the same C07 drain, waits for zero proven outstanding pins **before** requesting an evaluation lease, verifies the retained release under that live lease, constructs and signs a new complete active package for the next generation, and calls C07 rollback with drain ID, X-Lease-Id, X-Fencing-Token, evidence digest and expected generations. One transaction rechecks the guard, zero pins, fence, package and CAS and writes the same typed completed evaluation `HeavyWorkTerminalResult`, linking its result ID/digest to the completed lease/fence and rollback decision; package, route/release transitions, audit and outbox commit with that result. Exact replay returns that same decision and terminal result even after lease completion; failure, abort and restart use the same local terminal/fence proof before central-slot release as promotion. An expired drain or lease leaves the old route unchanged or unavailable for recovery; no timer silently clears a pin.
 4. The prior active release becomes Superseded. The rollback target becomes Active again without changing its immutable artifact or earlier evidence.
 5. Historical Forecast Runs and prior promotions remain unchanged.
 
 ### WF10. Resolve and pin a release for Forecasting
 
-1. Forecasting calls C07 under a validated machine identity and retailer job authority when admitting a Forecast Run.
+1. Forecasting preallocates immutable Forecast Run and first-attempt IDs, then calls C07 `pins:admit` under a validated machine identity and retailer job authority; a read-only resolver response cannot authorize work. Exact admission replay returns the existing pin and never creates a second run.
 2. Model Lifecycle resolves the server-owned Active Model Route. Caller-provided artifact locations or arbitrary production release overrides are rejected.
-3. The service verifies route and release availability and returns retailer, route version, promotion decision, release version, artifact reference/checksum, runtime profile, input/output schema digests, evaluation summary, activation time, and provenance links.
-4. Forecasting persists the resolution against the Forecast Run before execution and verifies the artifact checksum and compatibility before inference.
-5. Retries for that Forecast Run reuse the same resolution even if a later promotion or rollback occurs.
+3. Under the route-control row lock, U6 checks open state, generations, release and signed package validity; inserts one durable pin for `(retailerId, forecastRunId, initialForecastAttemptId)` and returns those identities with the pin ID plus retailer, route/promotion generation, promotion decision, release version, artifact reference/checksum, immutable signed package manifest and trust-policy identity, runtime profile, input/output schema digests, evaluation summary, activation time, and provenance links. Current authoritative signer status is checked: active signs and verifies; verify-only-overlap applies only to a declared retained overlap (none in version 1); revoked immediately makes affected packages unavailable. A competing drain wins the same row lock and rejects new old-route pins.
+4. Forecasting persists the pin and immutable model/input digests against the Forecast Run, creates queued attempt 1 with the preallocated ID, and only then submits the batch-forecast request carrying all three IDs. The first lease reuses attempt 1; only an authoritative terminal/fenced earlier lease permits a distinct attempt 2 before reacquisition. Request and acquisition replay never create another attempt. Before deserialization Forecasting verifies manifest and artifact digests, signature, current signer status, trusted skops.io type, policy/version, schemas, runtime, release state, and validity window. The default resolver returns only the active release; version 1 has no previous-release overlap.
+5. Retries for that Forecast Run reuse the same resolution and durable pin; U6's finalizer closes the verified pin inside U7's owner transaction, or an authorized nonpublication release closes it after proof. An uncertain pin blocks promotion even if the Forecast Run deadline has passed.
 6. Missing, corrupt, incompatible, expired, or unreconciled releases return an explicit unavailable result with no substitution.
 7. Forecasting separately records current run status, last successful run, result age, and freshness; Model Lifecycle does not relabel an older forecast as fresh.
 
 ### WF11. Process messages and publish lifecycle events
 
 1. Authoritative Model Lifecycle mutations append required outbox records in their local transaction.
-2. The relay publishes with durable delivery and confirms, retaining unpublished entries for retry.
+2. U14's C23 package supplies the C01/C22 tenant envelope, schema validation, durable RabbitMQ delivery and publisher confirms. U6 owns the domain outbox and relay adapter, retaining unpublished entries for retry.
 3. Consumers validate schema, tenant, job authority, event identity, aggregate version, and placement generation.
 4. A consumer commits its local effect and inbox record before acknowledgement. Redelivery returns the recorded result without duplication.
-5. Bounded failure enters an observable dead-letter path. An authorized replay preserves event identity and never claims exactly-once transport.
+5. Five broker delivery attempts are distinct from C07 execution attempts. Exhaustion enters an observable dead-letter path; an authorized replay preserves event identity and never claims exactly-once transport.
 
 ### WF12. Restore and reconcile Model Lifecycle
 
-1. The Operator selects a checksummed Restore Manifest linking control-store, experiment-metadata, and object-store snapshots under one retention-policy version.
-2. Restore loads all authorities into the clean environment without declaring routes usable. Restored routes become Reconciling or Unavailable.
-3. Per retailer, the reconciliation job verifies ownership, placement, dataset manifests, experiment references, artifact bytes/checksums, runtime and schemas, evaluation evidence, release transitions, route history, tombstones, and retention state.
+1. The Operator selects a checksummed Restore Manifest linking a checkpoint-aligned PostgreSQL lifecycle snapshot, MLflow metadata snapshot, and immutable object inventory/snapshot under recovery-policy-v1. Complete sets are retained 30 days; target RPO is 24 hours and target RTO is two hours.
+2. Restore loads the complete cut into an isolated environment, verifies each snapshot digest and cut marker, and then opens the lifecycle ledger in maintenance mode. PostgreSQL alone is authoritative for release state and route; MLflow is experiment evidence; object storage is byte authority. Restored routes remain Reconciling or Unavailable.
+3. Per retailer, reconciliation compares the three inventories and verifies ownership, placement, dataset manifests, MLflow experiment references, object bytes/checksums, signed packages, runtime and schemas, evaluation evidence, release transitions, route history, tombstones, and retention state. Disagreement cannot be repaired by inferring missing metadata or bytes from another store.
 4. Jobs captured as Running become explicitly Interrupted and Failed or retryable; no partial output becomes promoted.
 5. If the recorded active release validates, the Operator completes reconciliation and restores route availability with audit evidence.
 6. If it does not validate, the route remains Unavailable. An authorized Operator may select a compatible retained Validated release as an explicit fallback through the normal route-change controls.
-7. Missing, corrupt, expired, or foreign bytes are never substituted. Counts, failures, elapsed recovery time, data loss, and limitations are reported against the later approved objectives.
+7. Missing, corrupt, expired, or foreign bytes are never substituted. Counts, failures, elapsed recovery time and data loss are reported against the fixed 24-hour RPO and two-hour RTO. Breach is explicit even when reconciliation eventually succeeds.
+8. Rollback uses the same three-authority checks at decision time; a valid ledger route with missing MLflow evidence or bytes remains unavailable.
 
 ### WF13. Apply retention and expire bytes safely
 
@@ -166,6 +169,14 @@ Every protected action revalidates retailer context, current role or machine sco
 3. Local deployment exposes health, readiness, dependency, queue, and active-job state. Missing runtime, disk, object store, MLflow, credentials, or resource headroom fails explicitly before unsupported work starts.
 4. The reviewer path uses pinned, checksummed prerequisites and a real CPU-compatible model. Optional AMD GPU results remain separate evidence.
 5. Published portfolio evidence links requirements, datasets, runs, reports, releases, tests, rejected candidates, recovery limits, and measured capacity without claiming unmeasured improvement.
+
+### WF16. Participate in C25 Class C recovery
+
+1. U6 persists each U15 command identity and recovery generation before returning a disposition. Repeated commands return the original disposition; a changed payload under the same identity conflicts.
+2. Prepare has the C25 Class C 120-second deadline. It atomically advances the recovery fence, invalidates prior job lease tokens and placement generations, stops new admission, and fences workers, finalizers, message relays and consumers. In-flight effects either finish under the old valid fence before prepare commits or are rejected and retried under a new generation.
+3. U6 drains or quarantines unsettled effects within the 180-second Class C close deadline, records job and outbox/inbox positions plus a checkpoint digest, then acknowledges close. No route or model publication is made available by the checkpoint itself.
+4. Abort has the 60-second Class C deadline and durably closes that command generation; delayed prepare or close for it is rejected, never reopened. Resume has the 180-second Class C deadline and requires U15's authorized command after checkpoint-aligned restoration and the WF12 reconciliation, with a fresh placement/recovery generation.
+5. The recovery protocol preserves tenant audit and outbox effects already committed, never synthesizes success for interrupted jobs, and returns an explicit unsafe disposition when the checkpoint or reconciliation is incomplete.
 
 ## State machines
 
@@ -195,16 +206,20 @@ stateDiagram-v2
   Queued --> Running: lease acquired
   Queued --> Cancelled: authorized cancellation
   Running --> Succeeded: outputs finalized
-  Running --> Failed: controlled failure or lease loss
+  Running --> Failed: nonretryable failure or attempt exhaustion
+  Running --> Queued: transient failure with attempt and deadline budget
+  Running --> DeadlineExpired: request deadline elapsed
   Running --> Cancelled: cancellation completed
-  Failed --> Queued: bounded retry under same job
+  Queued --> DeadlineExpired: request deadline elapsed
   Queued --> Superseded: dependency or replacement invalidates queued work
   Succeeded --> [*]
   Cancelled --> [*]
   Superseded --> [*]
+  Failed --> [*]
+  DeadlineExpired --> [*]
 ```
 
-Text fallback: accepted jobs queue and one heavy job runs at a time. Failure or interruption may append a new attempt and requeue the same logical job. Success, cancellation, and supersession are explicit terminal outcomes; none promotes a model.
+Text fallback: accepted jobs queue and one heavy job runs at a time. A retryable interrupted attempt may append a new attempt and requeue the same logical job while its deadline and budget remain. Failed, DeadlineExpired, Success, Cancellation, and Supersession are terminal for the C07 request; none promotes a model.
 
 ### Model Release lifecycle
 
@@ -262,20 +277,28 @@ erDiagram
   DATASET_VERSION ||--|{ TEMPORAL_SPLIT : defines
   TEMPORAL_SPLIT ||--|{ FEATURE_AVAILABILITY_EVIDENCE : proves
   MODEL_JOB ||--|{ MODEL_JOB_ATTEMPT : retains
+  HEAVY_WORK_REQUEST ||--o{ HEAVY_WORK_LEASE : grants
+  HEAVY_WORK_LEASE ||--o| HEAVY_WORK_TERMINAL_RESULT : closes
+  MODEL_JOB }o--o| HEAVY_WORK_REQUEST : links
+  PROMOTION_INTENT ||--|| HEAVY_WORK_REQUEST : queues_evaluation
   MODEL_JOB_ATTEMPT ||--o| EXPERIMENT_RUN : records
   EXPERIMENT_RUN }o--|| DATASET_VERSION : uses
   EXPERIMENT_RUN ||--o{ MODEL_ARTIFACT : produces
+  EVALUATION_REPORT }o--|| EVALUATION_CONFIGURATION : pins
   EVALUATION_REPORT ||--|{ FORECAST_METRIC : contains
   EVALUATION_REPORT ||--o{ INVENTORY_POLICY_REPORT : contains
   MODEL_RELEASE }o--|| MODEL_ARTIFACT : pins
+  PROMOTED_MODEL_PACKAGE }o--|| MODEL_RELEASE : signs_activation
+  PROMOTION_DECISION }o--o| PROMOTION_INTENT : commits
   MODEL_RELEASE }o--|| EVALUATION_REPORT : justified_by
   PROMOTION_DECISION }o--|| MODEL_RELEASE : targets
   ACTIVE_MODEL_ROUTE ||--|| MODEL_RELEASE : selects
   ACTIVE_MODEL_ROUTE ||--o{ FORECAST_RELEASE_RESOLUTION : snapshots
   RESTORE_MANIFEST ||--|{ RESTORE_RECONCILIATION : validates
+  RECOVERY_PARTICIPANT_STATE }o--|| RESTORE_MANIFEST : checkpoints_for
 ```
 
-Text fallback: immutable upstream exports and objects form Dataset Versions and Temporal Splits. Job Attempts create Experiment Runs and artifacts. Evaluation Reports justify Model Releases. Promotion Decisions change one Active Model Route, which Forecast Runs snapshot. Restore Manifests reconcile these authorities per retailer.
+Text fallback: immutable upstream exports and objects form Dataset Versions and Temporal Splits. One Heavy Work Request arbiter grants globally fenced leases for all four C07 work types; U6 Model Jobs retain their own attempts and experiment evidence. Evaluation Reports pin one versioned comparison configuration and justify Model Releases. An Operator Promotion Intent queues a fresh evaluation lease, then a signed activation package and Promotion Decision change one Active Model Route. Forecast Runs snapshot that package. Recovery participant state fences work before a Restore Manifest reconciles the three authorities per retailer.
 
 ## Derived rules summary
 
@@ -283,12 +306,12 @@ Text fallback: immutable upstream exports and objects form Dataset Versions and 
 | --- | --- |
 | BR1 | Server-resolved tenant and Operator authority govern every read, job, artifact, and route. |
 | BR2 | Immutable manifests and origin-time feature evidence define reproducibility and leakage boundaries. |
-| BR3 | Common rolling origins and exogenous scenarios make forecast and inventory comparisons honest. |
+| BR3 | A versioned seven-day/28-day baseline profile, common 28-day origins, and exogenous scenarios make comparisons reproducible. |
 | BR4 | Training, run metadata, and artifact finalization preserve complete immutable provenance. |
-| BR5 | Durable jobs, leases, attempts, operation keys, inboxes, and DLQ handling make retries deterministic. |
-| BR6 | Validated-but-inactive releases, human decisions, and atomic route transactions govern promotion and rollback. |
+| BR5 | One C07 arbiter serves four work types with five-minute fenced leases, fixed deadlines/attempts, transactional finalizers, and deterministic replay. |
+| BR6 | Validated inactive releases, human promotion intent, newly signed packages, first-route zero-version CAS, and atomic route transactions govern activation. |
 | BR7 | Forecasting pins one verified release and owns execution and freshness without silent fallback. |
-| BR8 | Restore, reconciliation, dependencies, and tombstones preserve usable and unavailable evidence correctly. |
+| BR8 | Thirty-day aligned recovery sets, 24-hour RPO, two-hour RTO, Class C fencing, reconciliation, and tombstones preserve evidence correctly. |
 | BR9 | OpenAPI, AsyncAPI, atomic audit, readiness, resource checks, and evidence rules support local delivery. |
 
 ## Contract refinements
@@ -297,7 +320,9 @@ Text fallback: immutable upstream exports and objects form Dataset Versions and 
 | --- | --- |
 | C04 Retail dataset exports | Return immutable job status plus retailer, placement generation, source revisions, availability cutoff, object references, row counts, and checksums. |
 | C05 Accepted-term exports | Return immutable term/provenance snapshot, retailer currency, effective-time basis, object reference, and checksum for policy evaluation. |
-| C07 promoted-model metadata | Return route and promotion versions, release identity, artifact reference/checksum, runtime profile, schema digests, evaluation summary, activation time, and provenance links; expose explicit unavailable reasons. |
+| C07 request, lease, route pin/drain and promoted-model package | U6 persists the shared request/deadline for training, evaluation, embedding-index and batch-forecast; the central single slot cannot be reused without retailer-local terminal/fence proof. Named U5/U7 database service roles invoke U6's versioned EXECUTE-only finalizer in their owner publication transaction on the same retailer-local database, without direct U6 table access; tenant split moves fence, route and owner rows together. The finalizer returns a durable terminal result ID/digest and pin disposition; exact replay verifies the committed owner pointer before success. Forecasting preallocates run/attempt IDs, admits the pin and stores queued attempt 1 before batch submission. Promotion and rollback drain old pins before obtaining evaluation work and atomically write a completed evaluation terminal result, lease/fence disposition and route decision; exact replay reads that same binding. The complete route-specific skops.io package is signed at activation. Return route generation, release identity, signed manifest, artifact checksum, trust-policy/signer identity, runtime/schema digests and provenance; expose explicit unavailable reasons. |
+| C23 reusable messaging | U14 supplies C01/C22 RabbitMQ package and conformance; U6 supplies domain adapters and atomic inbox/outbox effects with current tenant/recovery fences. |
+| C25 Class C recovery | U6 durably records prepare/abort/resume dispositions, fences worker and messaging paths, acknowledges a checkpoint, and resumes only after U15-directed reconciliation. |
 | C15 authoritative events | Add dataset-published, job-status, release-validated/rejected, model-promoted/rolled-back, route-unavailable/reconciled, and artifact-expired events under the common tenant/correlation envelope. |
 | Model Lifecycle command API | Add tenant-authorized asynchronous publication/training/evaluation job resources and Operator-only validation, promotion, rollback, restore, and retention commands with operation keys and expected versions. |
 
@@ -311,7 +336,13 @@ Text fallback: immutable upstream exports and objects form Dataset Versions and 
 | Corrupt source, dataset, or model object | Mark unavailable/corrupt; fail dependent work without substitution. |
 | Leakage or incomparable cohorts | Incomplete/failed evaluation; release cannot validate or activate. |
 | Second heavy ML job | Keep Queued in visible FIFO order. |
-| Worker or broker interruption | Retain attempts and retry safely from immutable input or verified checkpoint. |
+| Worker or broker interruption | Retain attempts and retry safely from immutable input or verified checkpoint under current fence; broker delivery and C07 execution have separate budgets. |
+| Expired deadline or exhausted attempts | Close the C07 request as deadline-expired or failed; never reopen it through replay. |
+| Stale lease token or recovery generation | Reject finalization, audit, outbox and publication effects atomically; preserve existing evidence. |
+| Lost finalizer response or changed replay | Look up the immutable terminal result before active-lease rejection. Exact replay returns its original identity, digest and pin disposition only after the owner pointer matches; a changed digest, owner version or different pin-closing result conflicts without new effects. |
+| Pin races drain or remains uncertain | Reject post-drain old-route admission; keep the uncertain pin outstanding and refuse promotion/rollback until terminal proof. |
+| First activation | Expected promotion generation zero compare-and-creates the route at generation one; any competing initializer receives a conflict. |
+| Missing baseline history or horizon leakage | Exclude that product-origin across all models; weekly pattern and 28-day mean read only observations before the origin for all 28 forecast days. |
 | Missing audit or outbox write | Roll back the authoritative mutation. |
 | Unavailable active release | Explicit unavailable model response; Forecasting does not invent or silently reuse another release. |
 | Restore mismatch | Keep the retailer route unavailable until reconciliation or explicit validated fallback succeeds. |
@@ -329,31 +360,6 @@ Text fallback: immutable upstream exports and objects form Dataset Versions and 
 
 ## Assumptions & Open Questions
 
-- Exact seasonal-naive period, moving-average window, rolling-origin cadence beyond three complete horizons, job deadlines/retry budgets, resource requests, retention durations, and recovery objectives are deferred to NFR and implementation stages.
+- Queue capacity and measured resource requests remain NFR and implementation values. Evaluation periods, job deadlines and retry budgets, retention duration, and recovery objectives are fixed in the versioned profiles above.
 - Forecast freshness threshold and stale-result planning behavior remain owned by Forecasting and Planning and are not selected here.
 - Synthetic evaluation demonstrates the workflow and does not establish real-world commercial improvement.
-
-## Review
-
-**Reviewer:** aidlc-architecture-reviewer-agent
-**Iteration:** 1
-**Verdict:** NOT-READY
-**Date:** 2026-09-13T08:23:55Z
-
-### Findings
-
-| ID | Severity | Location | Finding | Required action | Status |
-|---|---|---|---|---|---|
-| R-01 | Major | aidlc/spaces/default/intents/260908-stock-sense-design/construction/model-lifecycle/functional-design/functional-spec.md > Assumptions & Open Questions | Baseline periods, moving-average windows, and rolling-origin cadence are deferred to implementation, so candidate-versus-baseline comparisons are not reproducible from this design. | Specify the deterministic evaluation configuration, versioning rules, and equality constraints applied to baseline and candidate runs. | New |
-| R-02 | Major | aidlc/spaces/default/intents/260908-stock-sense-design/construction/model-lifecycle/functional-design/functional-spec.md > Assumptions & Open Questions | Job deadlines and retry budgets are deferred, leaving lease expiry, renewal, retry exhaustion, and duplicate-worker behavior underspecified for implementation. | Define lease duration and renewal semantics, attempt limits, retryable outcomes, terminal failure handling, and idempotency behavior. | New |
-| R-03 | Major | aidlc/spaces/default/intents/260908-stock-sense-design/construction/model-lifecycle/functional-design/functional-spec.md > Assumptions & Open Questions | Retention durations and recovery objectives are deferred, so the required relationship among MLflow metadata, object artifacts, and the lifecycle ledger during restore or rollback is not implementable without architectural guidance. | Define retention and restore invariants, the authority of each store, recovery ordering, and behavior when metadata, objects, and ledger state disagree. | New |
-
-### Validation Tool Results
-
-| Tool | Result | Interpretation |
-|---|---|---|
-| Stage-declared validation tools | Not run because the bounded review was ordered to conclude immediately after interruption | No structural validation evidence is available for this advisory verdict. |
-
-### Summary
-
-The design leaves three behavior-defining areas to later stages or implementation: reproducible model comparison, lease/retry semantics, and multi-store recovery. Those gaps require architectural decisions before a developer can implement the lifecycle safely.

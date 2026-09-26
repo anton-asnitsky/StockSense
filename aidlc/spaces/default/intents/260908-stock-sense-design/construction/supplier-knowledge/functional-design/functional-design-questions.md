@@ -1,9 +1,9 @@
 # StockSense supplier-knowledge functional-design questions
 
-Date: 2026-09-12
+Date: 2026-09-25 (reconciled; original Q1-Q14 answered 2026-09-12)
 Stage: Functional Design
 Unit: supplier-knowledge
-Status: Confirmed
+Status: Confirmed after approved-contract reconciliation (2026-09-25)
 
 These questions resolve the remaining behavior choices for supplier ingestion, accepted commercial terms, document evidence, and retrieval indexes. Accepted decisions remain fixed: MongoDB owns supplier source and extraction records; PostgreSQL routines own normalized authoritative terms; Qdrant is a rebuildable projection with separate collections per retailer and embedding/configuration version; RabbitMQ jobs are idempotent; CSV and text-based PDF are the initial formats; OCR is deferred; supplier currency must match the retailer currency; EmbeddingGemma-300M and Qwen3-Embedding-0.6B are evaluated on held-out English fixtures; original text and language metadata are preserved for later multilingual support; arbitrary client-selected collections are prohibited; and retrieved supplier content is untrusted data.
 
@@ -210,9 +210,32 @@ Retrieval generations move through Planned, Building, Validating, Active, Supers
 
 Supplier comparison filters terms by authorized retailer, product, effective time, source availability, and eligibility. It normalizes unit price using pack quantity within the retailer's single currency and orders results by normalized unit price, lead time, minimum order quantity, pack size, then supplier name and ID. The response exposes every compared input and its provenance. The assistant may explain this result but cannot replace it with an opaque or invented preference score.
 
-## Consolidated Summary Confirmation
+## Reconciliation with approved contracts and prior review (2026-09-25)
+
+The Q1-Q14 source, term, retrieval, multilingual and model-evaluation choices above remain unchanged. U5 uses the U14 C23 package for its tenant-scoped RabbitMQ mechanics under the versioned C01/C22 protocol; U5 still owns MongoDB/PostgreSQL outboxes and inboxes, current retailer authority, producer semantics and atomic local effects. U5 is an asynchronous C25 recovery participant, with durable generation fencing, checkpoint and abort/resume results; it is not one of the C24 synchronous bootstrap participants. U15 coordinates the full recovery cut.
+
+The prior architecture review identified three implementability gaps, not new product-policy choices. The revised design must make source deletion and accepted-term changes mutually exclusive through a durable cross-store fence and reconciliation protocol; represent a Validated-but-inactive retrieval generation before activation; and track object cleanup and index cleanup as separate durable substates with a completion predicate. It must preserve the approved rule that an accepted term cannot depend on a deleted source and that index validation cannot silently change the active route.
+
+The existing confirmation predates these approved contract details and review corrections. No new owner-level business choice is proposed.
+
+## Historical Consolidated Summary Confirmation
 
 Does this all look correct before I generate the artifacts?
+
+- Looks correct
+- Request changes
+
+[Answer]: Looks correct
+
+## Current Review Reconciliation (2026-09-26)
+
+The approved Q1-Q14 source, terms, retrieval, language, embedding and comparison choices remain unchanged. For C25 recovery, U5 uses one durable class-C generation across a PostgreSQL coordinator fence record and a MongoDB source fence record. Prepare stops new work, installs both fences, drains operations and message relays/consumers/acknowledgements, then close binds separate PostgreSQL, MongoDB and messaging checkpoints. Every source or term mutation checks its local fence in the same transaction as its authoritative write; workers and message paths acquire bounded operation permits and check the generation at their commit or acknowledgement boundary. Any unavailable or mismatched fence fails closed, and U5 never acknowledges a closed cut until both stores and messaging paths prove quiescence. Abort and resume reconcile both records before clearing either fence.
+
+For cache freshness, MongoDB owns a monotonic retailer source generation incremented atomically with every source upload, version change, supersession and deletion; PostgreSQL owns a monotonic accepted-term generation incremented with every accepted-term mutation. The cache key also includes the active retrieval-route generation when retrieval evidence is involved. Each cache hit and fill reads the current authoritative generation vector; a fill compares that vector again before publishing, so a missed invalidation cannot make a stale result appear current. Redis remains disposable.
+
+## Consolidated Summary Confirmation
+
+Does this Supplier Knowledge recovery-fence and cache-freshness correction look correct for the current Functional Design pass?
 
 - Looks correct
 - Request changes

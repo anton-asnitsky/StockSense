@@ -1,9 +1,9 @@
 # StockSense retail-data functional-design questions
 
-Date: 2026-09-12
+Date: 2026-09-25 (reconciled; original Q1-Q13 answered 2026-09-12)
 Stage: Functional Design
 Unit: retail-data
-Status: Confirmed
+Status: Confirmed for approved-contract reconciliation
 
 These questions resolve the remaining behavior choices for Tenant Directory, Inventory, and Demand History. Accepted decisions remain fixed: PostgreSQL is authoritative; runtime access uses Dapper/Npgsql through owned parameterized stored procedures/functions only; Flyway owns migrations; tenant boundaries and placement generations are enforced on every operation; RabbitMQ uses transactional outbox/inbox and idempotency; Redis is disposable; timestamps are stored in UTC and daily behavior follows the retailer-local calendar; sales and lost demand remain separate; and the initial demo contains three isolated retailers, one store and 100 products per retailer, with 18 months of reproducible history.
 
@@ -193,9 +193,32 @@ Receipt commands require current authority and placement, valid purchase-order l
 
 Business APIs never hard-delete accepted movements, observations, import lineage, memberships, placements, audit links, or snapshot manifests. Corrections and lifecycle changes append history. Only controlled policy jobs may archive or purge records after reference and legal-hold checks; exact retention periods remain an NFR decision.
 
-## Consolidated Summary Confirmation
+## Reconciliation with approved Contract Design (2026-09-25)
+
+The Q1-Q13 choices and Retail Data summary above remain the confirmed baseline. The revised shared contracts add three U4 design obligations before its artifacts can be reviewed:
+
+- **Bootstrap publishing:** U4 owns a service-local C23-conformant audit/reference publisher without depending on U14. Its tenant envelope, authenticated producer binding, canonical digest, bounded delivery/replay, and every applicable C22 fixture need separate U13 evidence. No retailerless identity-audit envelope is invented for U4.
+- **Recovery participant:** U4 owns its synchronous C24 `prepare`, `close`, `abort`, and `resume` participant, with durable idempotency results, current placement/recovery-generation checks, fencing of tenant writes and placement changes, checkpoint evidence, abort-before-delayed-prepare guard, and reconciliation before releasing its fence. U15 coordinates the full roster and U2 supplies broker snapshot evidence.
+- **Current authority and receipt boundary:** U4 remains the authority for retailer membership, roles and placement. The v1 U4/U8 co-deployed receipt path keeps one transaction, while C08 remains the versioned extraction seam. Platform-wide Operator grant for global identity audit belongs to U3 and cannot be inferred from a U4 retailer role.
+
+These apply already approved contracts to U4; they do not reopen the inventory, import, demand, cache, tenant or receipt decisions above. The prior summary confirmation predates the contract revision, so this short reconciliation needs a fresh confirmation before updating the artifacts.
+
+## Historical Consolidated Summary Confirmation
 
 Does this all look correct before I generate the artifacts?
+
+- Looks correct
+- Request changes
+
+[Answer]: Looks correct
+
+## Review Reconciliation (2026-09-25)
+
+The approved Q1-Q13 inventory, import, demand, tenant, cache, placement, receipt and retention choices, plus the C23 publisher reconciliation above, remain unchanged. The next U4 design revision will close prior architecture finding R-01: U4 registers `tenant-directory` as its C24 class-A synchronous bootstrap participant with the contracted `/internal/v1/recovery/participants/tenant-directory/...` route and durable prepare/close/abort/resume fence and checkpoint. `inventory` and `demand-history` remain separate C25 asynchronous roster participants, each with its own registered command/acknowledgement route, class-B-or-C deadline, fence and checkpoint under U15 coordination. No `retail-data` participant identity is introduced. The U4/U8 co-deployed receipt transaction is unchanged.
+
+## Consolidated Summary Confirmation
+
+Does this revised Retail Data summary look correct before I update its Functional Design artifacts and request a fresh review?
 
 - Looks correct
 - Request changes

@@ -1,0 +1,98 @@
+{
+  "stage": "nfr-requirements",
+  "unit": "web-application",
+  "upstream_ids": [
+    "NFR1",
+    "NFR2",
+    "NFR3",
+    "NFR4",
+    "NFR5",
+    "NFR6",
+    "NFR7",
+    "NFR8",
+    "NFR9",
+    "NFR10",
+    "NFR11",
+    "NFR12",
+    "NFR13",
+    "NFR14",
+    "NFR15"
+  ],
+  "coverage": [
+    {
+      "id": "NFR1",
+      "status": "OK",
+      "target": "NFR1.1, NFR1.2, NFR1.3, NFR1.4"
+    },
+    {
+      "id": "NFR2",
+      "status": "OK",
+      "target": "NFR2.1, NFR2.2, NFR2.3"
+    },
+    {
+      "id": "NFR3",
+      "status": "OK",
+      "target": "NFR3.1, NFR3.2"
+    },
+    {
+      "id": "NFR4",
+      "status": "N/A",
+      "target": "U12 owns no PostgreSQL role, schema, migration, stored routine, or SQL path; persistence controls remain with data-owning services."
+    },
+    {
+      "id": "NFR5",
+      "status": "OK",
+      "target": "NFR5.1, NFR5.2"
+    },
+    {
+      "id": "NFR6",
+      "status": "OK",
+      "target": "NFR6.1"
+    },
+    {
+      "id": "NFR7",
+      "status": "N/A",
+      "target": "U12 owns no RabbitMQ publisher, consumer, outbox, inbox, durable replay, or business state; browser polling and SSE are presentation transports and do not replace provider-owned durable messaging."
+    },
+    {
+      "id": "NFR8",
+      "status": "OK",
+      "target": "NFR8.1"
+    },
+    {
+      "id": "NFR9",
+      "status": "N/A",
+      "target": "U12 stores no authoritative operational log or business audit data and owns no retention maintenance; platform/U10 own seven/90-day retention, while U12 private state is disposable memory-only/no-store data."
+    },
+    {
+      "id": "NFR10",
+      "status": "OK",
+      "target": "NFR10.1, NFR10.2"
+    },
+    {
+      "id": "NFR11",
+      "status": "OK",
+      "target": "NFR11.1"
+    },
+    {
+      "id": "NFR12",
+      "status": "N/A",
+      "target": "U12 consumes the Helm and Terraform/Terragrunt platform supplied by U2/U13; infrastructure state, backend, apply serialization, backup, and migration evidence remain platform-infrastructure responsibilities."
+    },
+    {
+      "id": "NFR13",
+      "status": "OK",
+      "target": "NFR13.1"
+    },
+    {
+      "id": "NFR14",
+      "status": "OK",
+      "target": "NFR14.1, NFR14.2"
+    },
+    {
+      "id": "NFR15",
+      "status": "OK",
+      "target": "NFR15.1, NFR15.2"
+    }
+  ]
+}

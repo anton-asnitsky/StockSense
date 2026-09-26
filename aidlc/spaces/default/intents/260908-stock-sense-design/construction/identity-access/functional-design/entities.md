@@ -91,7 +91,9 @@ entities:
         unique: false
     entityConstraints:
       - Five failed attempts lock local authentication for 15 minutes.
+      - On the first attempt after lock expiry, clear lockedUntil and reset failedAttemptCount to zero atomically before evaluating the submitted secret; that failure, if any, becomes attempt one of a new sequence.
       - Successful authentication clears the current failure count.
+      - Failed-attempt and lockout state is available only to protected authentication, audit, and operator paths; absent, disabled, locked, and invalid credentials share one browser-visible authentication_failed result.
       - Reset is operator-controlled; signup and email-based reset are absent from v1.
 
   - name: ExternalIdentityLink
@@ -259,7 +261,52 @@ entities:
         default: active
     entityConstraints:
       - Each token generation is accepted at most once and is replaced atomically.
-      - Reuse of a consumed generation revokes the family and owning session.
+      - A retained RefreshTokenGeneration digest identifies a consumed credential independently of the current generation.
+      - Reuse of a consumed generation revokes the family and owning session; unknown digests fail without being misclassified as reuse.
+
+  - name: RefreshTokenGeneration
+    description: One immutable refresh-credential generation retained for one-time use and consumed-token replay detection.
+    attributes:
+      - name: generationId
+        logicalType: Identifier
+        required: true
+        unique: true
+      - name: familyId
+        logicalType: Identifier
+        required: true
+        unique: false
+        references: RefreshTokenFamily.familyId
+      - name: generationNumber
+        logicalType: NonNegativeInteger
+        required: true
+        unique: false
+      - name: tokenDigest
+        logicalType: Digest
+        required: true
+        unique: true
+        constraints: Protected lookup digest; the bearer credential itself is never stored.
+      - name: issuedAt
+        logicalType: Instant
+        required: true
+        unique: false
+      - name: consumedAt
+        logicalType: Instant
+        required: false
+        unique: false
+      - name: expiresAt
+        logicalType: Instant
+        required: true
+        unique: false
+        constraints: No later than the owning authorization session absolute expiry.
+      - name: status
+        logicalType: Enum
+        required: true
+        unique: false
+        allowedValues: [current, consumed, revoked, expired]
+    entityConstraints:
+      - The pair familyId and generationNumber is unique; exactly one generation is current for an active family.
+      - Consume-current and insert-replacement occur in one serializable family transition; concurrent presentation cannot issue two replacements.
+      - Retain consumed digests through the family expiry plus the five-minute validation-skew allowance, then expire them under the credential-retention policy.
 
   - name: CryptographicKeyVersion
     description: Versioned protected key material used for token signing or session-data protection.
@@ -385,11 +432,27 @@ entities:
         logicalType: String
         required: true
         unique: false
+        constraints: Retailerless outcomes use identity.global.audit.recorded; tenant outcomes use identity.audit.recorded only with real retailer and placement context.
+      - name: auditScope
+        logicalType: Enum
+        required: true
+        unique: false
+        allowedValues: [global-identity, tenant]
+      - name: retailerId
+        logicalType: Identifier
+        required: false
+        unique: false
+        constraints: Present only for tenant scope; forbidden for retailerless global identity scope.
+      - name: placementGeneration
+        logicalType: PositiveInteger
+        required: false
+        unique: false
+        constraints: Present with a real retailerId for tenant scope; forbidden for global identity scope.
       - name: actorType
         logicalType: Enum
         required: true
         unique: false
-        allowedValues: [human, workload, system]
+        allowedValues: [anonymous, human, workload, system]
       - name: actorId
         logicalType: Identifier
         required: false
@@ -427,9 +490,11 @@ entities:
     entityConstraints:
       - Records exclude credentials, tokens, external authorization codes, and raw key material.
       - Records are append-only until controlled retention expiry.
+      - A pre-login denial uses a safe anonymous actor and generic resource identity; submitted identifiers, email, and raw provider claims are never stored.
+      - Exactly one IdentityOutboxMessage is committed for every security-relevant audit record, including denials, in the same U3 transaction; an uncommitted pair is never exposed as a successful identity outcome.
 
   - name: IdentityOutboxMessage
-    description: A durable publication record created atomically with an authoritative identity change.
+    description: A durable publication record created atomically with every security-relevant identity audit decision, including denials.
     attributes:
       - name: messageId
         logicalType: Identifier
@@ -444,6 +509,22 @@ entities:
         logicalType: String
         required: true
         unique: false
+        constraints: identity.global.audit.recorded for retailerless outcomes; identity.audit.recorded only with real retailer and placement context.
+      - name: envelopeProfile
+        logicalType: Enum
+        required: true
+        unique: false
+        allowedValues: [global-identity, tenant]
+      - name: retailerId
+        logicalType: Identifier
+        required: false
+        unique: false
+        constraints: Required for tenant envelope; forbidden for global identity envelope.
+      - name: placementGeneration
+        logicalType: PositiveInteger
+        required: false
+        unique: false
+        constraints: Required with tenant retailerId; forbidden for global identity envelope.
       - name: schemaVersion
         logicalType: SemanticVersion
         required: true
@@ -472,8 +553,163 @@ entities:
         required: true
         unique: false
     entityConstraints:
-      - The identity change, audit record, and outbox message commit atomically.
+      - Every security decision commits one audit record and one outbox message atomically; an accepted identity mutation commits its state in that same transaction.
       - Redelivery preserves message identity and cannot repeat the authoritative identity change.
+      - The immutable message ID and idempotency key derive from the committed audit identity; payload digest uses the approved C23 canonical data profile.
+      - U3 owns its C23 bootstrap publisher adapter and applicable C22 conformance evidence independently of U14.
+
+  - name: PlatformOperatorGrant
+    description: Revocable platform-wide human grant owned by U3, independent of every U4 retailer membership or role.
+    attributes:
+      - name: grantId
+        logicalType: Identifier
+        required: true
+        unique: true
+      - name: subjectId
+        logicalType: Identifier
+        required: true
+        unique: false
+        references: Account.accountId
+      - name: status
+        logicalType: Enum
+        required: true
+        unique: false
+        allowedValues: [active, revoked]
+      - name: grantVersion
+        logicalType: PositiveInteger
+        required: true
+        unique: false
+      - name: grantedAt
+        logicalType: Instant
+        required: true
+        unique: false
+      - name: revokedAt
+        logicalType: Instant
+        required: false
+        unique: false
+    entityConstraints:
+      - Only an owner-controlled audited operation can grant or revoke this human privilege.
+      - A current-grant read returns active only for a current human subject and to U10's registered narrow grant-reader workload; no machine principal or retailer Operator role substitutes.
+      - Revocation is effective on the next current-grant read, without relying on cached role claims.
+
+  - name: IdentityRecoveryParticipantState
+    description: Durable U3 C24 state for one retailer-scoped recovery run and generation.
+    attributes:
+      - name: participantStateId
+        logicalType: Identifier
+        required: true
+        unique: true
+      - name: retailerId
+        logicalType: Identifier
+        required: true
+        unique: false
+      - name: runId
+        logicalType: Identifier
+        required: true
+        unique: false
+      - name: recoveryGeneration
+        logicalType: PositiveInteger
+        required: true
+        unique: false
+      - name: placementGeneration
+        logicalType: PositiveInteger
+        required: true
+        unique: false
+      - name: registrationId
+        logicalType: Identifier
+        required: true
+        unique: false
+      - name: rosterDigest
+        logicalType: Digest
+        required: true
+        unique: false
+      - name: phase
+        logicalType: Enum
+        required: true
+        unique: false
+        allowedValues: [prepared, closed, aborted, resumed, unresolved]
+      - name: checkpointId
+        logicalType: Identifier
+        required: false
+        unique: false
+      - name: checkpointDigest
+        logicalType: Digest
+        required: false
+        unique: false
+      - name: fenceDisposition
+        logicalType: Enum
+        required: true
+        unique: false
+        allowedValues: [active, cleared, terminally-suppressed, unresolved]
+      - name: durableStateVersion
+        logicalType: PositiveInteger
+        required: true
+        unique: false
+    entityConstraints:
+      - The retailerId and runId pair is unique; recoveryGeneration is monotonic and stale generations cannot reacquire a fence.
+      - Close requires an immutable local checkpoint and matching digest; abort creates a terminal guard even when prepare was only potentially delivered.
+      - Every prepared or unresolved state retains its fence through restart until a durable abort or reconciled resume clears or terminally suppresses it.
+
+  - name: GlobalIdentityRecoveryFence
+    description: Durable shared fence that prevents identity writes and key rotation while any retailer recovery run still holds U3.
+    attributes:
+      - name: fenceId
+        logicalType: Identifier
+        required: true
+        unique: true
+      - name: activeParticipantStateIds
+        logicalType: IdentifierSet
+        required: true
+        unique: false
+      - name: fenceVersion
+        logicalType: PositiveInteger
+        required: true
+        unique: false
+    entityConstraints:
+      - One logical global fence tracks all active or unresolved U3 participant holders; it clears only after every holder has a durable cleared or terminally-suppressed disposition.
+      - Startup reloads this fence before enabling any identity mutation or key rotation.
+
+  - name: IdentityRecoveryCommandResult
+    description: Durable idempotency and exact-result ledger for U3 C24 commands.
+    attributes:
+      - name: commandResultId
+        logicalType: Identifier
+        required: true
+        unique: true
+      - name: participantStateId
+        logicalType: Identifier
+        required: true
+        unique: false
+        references: IdentityRecoveryParticipantState.participantStateId
+      - name: idempotencyKey
+        logicalType: Identifier
+        required: true
+        unique: false
+      - name: commandId
+        logicalType: Identifier
+        required: true
+        unique: false
+      - name: command
+        logicalType: Enum
+        required: true
+        unique: false
+        allowedValues: [prepare, close, abort, resume]
+      - name: canonicalRequestHash
+        logicalType: Digest
+        required: true
+        unique: false
+      - name: durableStatus
+        logicalType: PositiveInteger
+        required: true
+        unique: false
+      - name: durableResponse
+        logicalType: JsonValue
+        required: true
+        unique: false
+    entityConstraints:
+      - The participant, retailerId, runId and idempotencyKey tuple identifies one canonical request and exact durable result; commandId is also unique within the participant/run.
+      - Matching replay returns the stored status and body; changed content under either identity returns typed 409 without changing state.
+      - A 200 result is returned only after participant state, global fence, checkpoint when applicable, and command result commit atomically; persistence failure returns typed 503 without a fabricated durable result.
 
 relationships:
   - from: Account
@@ -496,6 +732,10 @@ relationships:
     to: RefreshTokenFamily
     cardinality: one-to-zero-or-one
     direction: AuthorizationSession owns RefreshTokenFamily
+  - from: RefreshTokenFamily
+    to: RefreshTokenGeneration
+    cardinality: one-to-many
+    direction: RefreshTokenFamily owns retained RefreshTokenGeneration records
   - from: MachineClient
     to: AuthorizationSession
     cardinality: one-to-many
@@ -512,11 +752,23 @@ relationships:
     to: IdentityOutboxMessage
     cardinality: one-to-one
     direction: IdentityAuditRecord produces IdentityOutboxMessage
+  - from: Account
+    to: PlatformOperatorGrant
+    cardinality: one-to-zero-or-many
+    direction: Account may hold versioned PlatformOperatorGrant history
+  - from: IdentityRecoveryParticipantState
+    to: IdentityRecoveryCommandResult
+    cardinality: one-to-many
+    direction: Recovery state retains exact durable command results
+  - from: GlobalIdentityRecoveryFence
+    to: IdentityRecoveryParticipantState
+    cardinality: one-to-many
+    direction: Global fence tracks every active or unresolved participant holder
 ```
 
 ## Ownership boundaries
 
-The model carries authenticated identity, credential, grant, key, and identity-event state only. U11 owns browser cookies and browser token storage. U4 owns retailer membership, role, and placement. Infrastructure owns secret delivery, while U3 owns the lifecycle decisions that use protected references.
+The model carries authenticated identity, credential, U3's platform-wide human grant, key, identity-event, and U3 recovery-participant state only. U11 owns browser cookies and browser token storage. U4 owns retailer membership, role, and placement. U15 owns recovery coordination; U3 owns only its durable participant fence, checkpoint, and command results. Infrastructure owns secret delivery, while U3 owns the lifecycle decisions that use protected references.
 
 ## Entity summary
 
@@ -528,10 +780,15 @@ The model carries authenticated identity, credential, grant, key, and identity-e
 | LinkingTransaction | Ten-minute, one-time, reauthentication-bound linking proof |
 | AuthorizationSession | U3 grant/session revocation state, distinct from the BFF cookie |
 | RefreshTokenFamily | One-time rotating refresh lineage bounded by its session |
+| RefreshTokenGeneration | Retained per-generation digest for atomic rotation and consumed-token replay detection |
 | CryptographicKeyVersion | Versioned signing or session-protection key lifecycle |
 | MachineClient | Allowed workload identity, audiences, and scopes |
 | MachineCredentialVersion | Rotatable protected workload credential |
-| IdentityAuditRecord | Immutable identity decision evidence with safe metadata |
-| IdentityOutboxMessage | Atomic durable publication of an identity event |
+| IdentityAuditRecord | Immutable identity decision evidence, including retailerless denials, with safe metadata |
+| IdentityOutboxMessage | One atomic durable publication per security-relevant identity decision |
+| PlatformOperatorGrant | Revocable human platform grant, independent of retailer roles |
+| IdentityRecoveryParticipantState | Durable retailer/run/generation fence and checkpoint for U3's C24 participant |
+| GlobalIdentityRecoveryFence | Shared write/key-rotation guard across active U3 recovery runs |
+| IdentityRecoveryCommandResult | Exact durable idempotent result for each C24 command |
 
 Retailer membership, role, placement generation, and the current retailer selection are deliberately absent. U3 supplies an authenticated account or workload identity; U4 and each authoritative business provider make current retailer authorization decisions.

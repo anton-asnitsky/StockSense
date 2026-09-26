@@ -135,13 +135,14 @@ The specification is the source of truth for the workflows and state transitions
 
 ### WF10 — Publish and consume asynchronous work
 
-1. Append an event with canonical message identity, type, schema version, retailer, actor, correlation, causation, idempotency, placement generation, and payload in the business transaction.
-2. Relay the pending record using the same message identity until publication is confirmed or bounded retries are exhausted.
-3. On delivery, the consumer validates schema, machine/job authority, retailer, current placement generation, and payload digest.
+1. Append an event with canonical message identity, type, schema version, retailer, actor, correlation, causation, idempotency, placement generation, and payload in the business transaction. U4 uses only the closed C01 tenant envelope with real retailer/placement values; it does not synthesize a global identity-audit event.
+2. U4's service-owned C23 publisher binds the registered producer workload to the envelope, computes the RFC 8785/SHA-256 data digest, enforces the 65,536-byte serialized limit, and relays the pending record with the same message identity until broker confirmation or the bounded five-delivery policy is exhausted. U4 has no U14 package dependency.
+3. On delivery, the consumer validates schema, authenticated producer, machine/job authority, retailer, current placement generation, and payload digest.
 4. Lock or create the consumer/message InboxReceipt.
 5. For an exact completed redelivery, acknowledge without a duplicate effect. Reject digest mismatch or stale authority.
 6. Commit any business effect and completed inbox receipt before acknowledging.
-7. Route exhausted transient failures to an observable dead letter. Replay retains the original message identity and creates audited operator evidence.
+7. Route exhausted transient failures to an observable seven-day tenant dead letter. A current authorized Operator replay accepts one to 100 messages, retains the original canonical message identity, and creates an audited new bounded cycle; changed content under that identity conflicts. U4 reconciles authoritative state before declaring the replay closed.
+8. U4 passes each applicable versioned C22 tenant-publisher fixture, including confirms, retry/DLQ, replay, producer binding, size, digest and telemetry. U13 records U4 results separately from U3 and U14.
 
 ### WF11 — Extract one retailer to a dedicated database
 
@@ -183,6 +184,16 @@ The specification is the source of truth for the workflows and state transitions
 6. Import through the same bounded authoritative workflows used by a reviewer; never seed private records directly.
 7. Verify counts, source digests, stock conservation, the demand-10/stock-6 result, zero-demand result, tenant isolation, and repeatability under the same seed.
 8. Publish evidence only when every claimed check has a concrete result tied to the revision and scenario version.
+
+### WF15 — Serve separately registered C24/C25 recovery participants
+
+1. U4 registers three distinct identities in U15's immutable roster: `tenant-directory` as a class-A synchronous C24 participant, `inventory` as a class-B C25 asynchronous participant, and `demand-history` as a class-C C25 asynchronous participant. There is no `retail-data` participant identity. Registration fixes each participant's class, route, capabilities and workload identity for the run; U15 refuses an incomplete or incompatible roster, including a mismatched class, before prepare.
+2. Tenant Directory accepts C24 commands at `/internal/v1/recovery/participants/tenant-directory/retailers/{retailerId}/runs/{runId}/{command}` and returns the durable result synchronously. It validates U15's coordinator token, correlation/idempotency headers, roster/policy, retailer/run identity, current placement generation and monotonic recovery generation. Missing/invalid credentials are typed `401`, wrong workload/scope `403`, unsupported protocol/policy or route/body mismatch `422`, and stale generations or changed idempotency requests `409`.
+3. Before a Tenant Directory transition, its own command ledger checks participant/retailer/run, command ID, idempotency key and canonical request. An exact retry returns the prior status/body; changed content conflicts. `prepare` atomically advances the recovery generation and commits a membership/role, settings, placement and topology write fence with its exact result before `200 prepared`. It does not claim Inventory, Demand History or U8 Purchasing fences. Read-only validation is allowed only without authoritative mutation or required audit publication.
+4. Tenant Directory `close` binds its own PostgreSQL transaction/LSN, placement, membership and generation state, audit/outbox cursors, immutable checkpoint ID and digest. `abort` persists a terminal guard even before an observed prepare so delayed prepare/close cannot reacquire the fence. `resume` reconciles those same authoritative records and releases only its own fence; missing checkpoints or uncertain reconciliation return typed `409` and remain fenced. It observes class-A 30/30/30/60-second prepare/close/abort/resume limits and the shorter global deadline. Failed state or exact-result commit returns `503 RECOVERY_PERSISTENCE_UNAVAILABLE`, never fabricated `200`.
+5. Inventory consumes its C25 command at `stocksense.recovery.command.v1.inventory` under class-B prepare/close/abort/resume deadlines of 60/60/60/120 seconds; Demand History consumes its own command at `stocksense.recovery.command.v1.demand-history` under class-C deadlines of 120/180/60/180 seconds. Each validates the authenticated C01 tenant envelope, registered coordinator/roster/policy, current retailer and placement/recovery generation, and its assigned class deadline. Both send durable, idempotent acknowledgements to `stocksense.recovery.acknowledgement.v1`, preserving their own command/result identity and setting acknowledgement `causationId` to the command `messageId`.
+6. Inventory `prepare` fences product/stock writes, inventory import, receipt-stock movement and affected relays/consumers/acks. Its `close` checkpoint proves stock-movement conservation, position watermark and inventory inbox/outbox cursors. Demand History `prepare` independently fences observations, promotions, demand import and affected relays/consumers/acks. Its `close` checkpoint proves source/observation versions, local-date lineage and demand inbox/outbox cursors. U8 Purchasing separately owns its order-state participant and fence; the co-deployed receipt transaction must respect both U4 Inventory and U8 Purchasing fences.
+7. Each C25 participant durably records one monotonic state and exact command/acknowledgement result per participant/retailer/run/generation before reporting success. An exact retry republishes its stable acknowledgement without a second transition; changed content conflicts. `abort` before delayed `prepare` persists a terminal guard; `resume` clears only that participant's fence after its own checkpoint and authoritative records reconcile. On restart all three U4 participant guards load before the corresponding writes resume; timeout or persistence uncertainty retains the affected fence. U15 assembles all separately attributed checkpoints with U2 broker queue identities/digests into the complete cut.
 
 ## State machines
 
@@ -302,6 +313,8 @@ erDiagram
   PRODUCT ||--o{ SYNTHETIC_DEMAND_TRUTH : evaluated_for
   RETAILER ||--o{ RETAIL_DATA_SNAPSHOT_MANIFEST : publishes
   BUSINESS_AUDIT_RECORD ||--o{ OUTBOX_MESSAGE : emits
+  RETAILER ||--o{ RETAIL_RECOVERY_PARTICIPANT_STATE : recovers
+  RETAIL_RECOVERY_PARTICIPANT_STATE ||--o{ RETAIL_RECOVERY_COMMAND_RESULT : records
 ```
 
 ## Derived rules view
@@ -314,9 +327,9 @@ erDiagram
 | BR4.1-BR4.8 | WF5, WF7, and WF14 preserve temporal truth and prevent feature leakage. |
 | BR5.1-BR5.4 | WF6 tolerates cache races and outages without changing authority. |
 | BR6.1-BR6.8 | WF7-WF8 provide versioned, purpose-bound data to downstream units. |
-| BR7.1-BR7.8 | WF2-WF5 and WF9-WF10 provide atomic audit/outbox and replay-safe messaging. |
-| BR8.1-BR8.8 | WF11-WF13 define tenant mobility, restore, and retention safety. |
-| BR9.1-BR9.6 | WF9 and WF14 preserve modular ownership, contract seams, and reproducible portfolio evidence. |
+| BR7.1-BR7.10 | WF2-WF5 and WF9-WF10 provide atomic audit/outbox and U4-owned C23 publishing with separate C22 evidence. |
+| BR8.1-BR8.16 | WF11-WF13 and WF15 define tenant mobility, restore, Tenant Directory C24 plus Inventory/Demand History C25 participant commands/fences, and retention safety. |
+| BR9.1-BR9.7 | WF9, WF14 and WF15 preserve modular ownership, complete provider contracts and reproducible evidence. |
 
 ## Business scenarios and edge cases
 
@@ -339,6 +352,12 @@ erDiagram
 | Old job arrives after tenant cutover | Placement generation mismatch returns conflict and creates no destination or source effect. |
 | Extraction validation finds a ledger mismatch | Source remains authoritative and destination is not exposed. |
 | Restore contains expired audit history | Retention reconciliation completes before any live access or projection rebuild. |
+| U15 addresses a `retail-data` C24 route or omits an Inventory/Demand History C25 registration | The roster or command is rejected; no participant is silently aliased or skipped. |
+| U15 retries the same Tenant Directory C24 command after losing a response | Tenant Directory returns its exact durable status/body; changed request under that identity is `409` without a new fence. |
+| U15 retries a C25 Inventory or Demand History command after losing an acknowledgement | That participant republishes its stable acknowledgement identity and prior durable outcome; no second transition occurs. |
+| Abort arrives before a delayed prepare at any of the three participants | That participant's durable terminal guard suppresses delayed prepare/close and prevents fence resurrection. |
+| Tenant Directory resume finds a placement, grant or checkpoint mismatch | Only its membership/placement fence remains held; typed reconciliation failure reaches U15. |
+| Inventory resume finds a stock-ledger mismatch, or Demand History finds a source-lineage mismatch | The affected participant's own fence remains held and its C25 acknowledgement reports failure; another participant's fence is not cleared. |
 
 ## Error and result semantics
 
@@ -352,6 +371,11 @@ erDiagram
 | Invalid domain content, CSV row, quantity, currency, date, or state transition | Validation failure with bounded diagnostics and no partial effect. |
 | Cache, authoritative dependency, or safe fallback unavailable | Explicit degraded or unavailable result; stale data is never relabeled current. |
 | Accepted asynchronous work | Stable job or message identity and status; retries preserve identity. |
+| Invalid C24 coordinator or unsupported policy at Tenant Directory | Typed `401`/`403`/`422`; no participant mutation. |
+| Stale C24 placement/recovery generation or changed idempotency request | Typed `409`; no new Tenant Directory fence or command result. |
+| Invalid, stale or changed C25 command at Inventory or Demand History | Reject or report the contracted failed/terminal acknowledgement; no success effect or cross-participant fence change. |
+| Missing checkpoint or failed recovery reconciliation | Typed C24 `409` or C25 failed acknowledgement; retain only the affected participant's fence. |
+| Recovery persistence or exact-result commit unavailable | C24 `503 RECOVERY_PERSISTENCE_UNAVAILABLE` or no C25 success acknowledgement; no fabricated success. |
 
 ## Contract refinements to carry forward
 
@@ -360,6 +384,7 @@ erDiagram
 3. C08 inventory reads remain REST. The v1 receipt write uses the co-deployed public module port and one transaction; the REST receipt operation remains an extraction seam and cannot claim v1 atomicity after physical separation without a newly approved consistency model.
 4. Membership uses a role-grant collection rather than one singular role attribute.
 5. Inventory owns on-hand. Purchasing owns dated inbound and order balances; combined snapshots retain both version identities.
+6. U4 owns a service-local C23-conformant publisher and separate C22 results; no U14 runtime dependency is introduced. U4 serves `tenant-directory` on synchronous C24 and separately registered `inventory` and `demand-history` on asynchronous C25 while U15 coordinates the full cut. Platform-wide Operator grant remains with U3, separate from U4 retailer roles.
 
 ## Functional limitations
 
@@ -368,3 +393,30 @@ erDiagram
 - Currency conversion, business-day lead-time calendars, real supplier fulfillment, and autonomous ordering are outside scope.
 - Exact operational retention durations, recovery objectives, queue limits, and performance thresholds are defined in later NFR stages.
 - Redis, audit search, and other projections are rebuildable and cannot repair or replace authoritative Retail Data.
+
+## Review
+
+**Verdict:** READY
+**Reviewer:** aidlc-architecture-reviewer-agent
+**Date:** 2026-09-26T07:39:43Z
+**Iteration:** 2
+**Request Challenge:** review:da7470f59718efe64940c3af727e3e90
+
+### Findings
+
+| ID | Severity | Location | Finding | Required action | Status |
+|---|---|---|---|---|---|
+| R-01 | Major | aidlc/spaces/default/intents/260908-stock-sense-design/construction/retail-data/functional-design/functional-spec.md > WF15 steps 1 and 5; entities.md > RetailAsyncRecoveryParticipantState; rules.md > BR8.14 and BR8.15 | The prior class ambiguity is resolved. Inventory is fixed to class B with prepare/close/abort/resume deadlines of 60/60/60/120 seconds; Demand History is fixed to class C with 120/180/60/180 seconds. WF15 and the entity and rule constraints reject mismatched registration before prepare, matching recovery-policy-v1. | None; retain the fixed class mapping and pre-prepare registration validation. | Resolved |
+
+### Validation Tool Results
+
+| Tool | Result | Interpretation |
+|---|---|---|
+| Bounded policy and deadline comparison | PASS: recovery-policy-v1 and WF15, entity constraints, BR8.14 and BR8.15 agree on B 60/60/60/120 and C 120/180/60/180 seconds | Confirms R-01 is resolved. |
+| Bounded route and roster check | PASS: tenant-directory C24 and separate inventory and demand-history C25 identities, command routes and acknowledgement route are present | U4 recovery boundaries match the shared C24/C25 contracts. |
+| Bounded traceability and rule-reference check | PASS: AC9.11.1-AC9.11.4 each occur once; all OK rule targets resolve to current-unit BR IDs | Recovery acceptance criteria and rule references remain intact. |
+| Review boundary check | PASS: one existing terminal review heading at byte 34250 | The prior appendix can be replaced without changing the design prefix. |
+
+### Summary
+
+The approved recovery class and deadline mapping now holds across the workflow, entity model and rules, with mismatched registration rejected before prepare. The bounded contract, route and traceability checks found no remaining recovery architecture finding.

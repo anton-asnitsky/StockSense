@@ -96,7 +96,7 @@ Per unit: [TBD]
 - **Current Stage**: functional-design
 - **Next Stage**: nfr-requirements
 - **Status**: Running
-- **Last Updated**: 2026-09-25T18:44:04Z
+- **Last Updated**: 2026-09-26T08:41:01Z
 
 ## Session Resume Point
 - **Last Completed Stage**: delivery-planning

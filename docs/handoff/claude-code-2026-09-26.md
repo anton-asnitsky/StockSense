@@ -1,0 +1,39 @@
+# Claude Code handoff — StockSense, 2026-09-26
+
+## Start here
+
+1. Check out `chore/bolt1-retail-data-functional-design` from `origin` and start Claude Code in the repository root. On this Windows machine run `./scripts/Start-Claude.ps1`; it loads the pinned AI-DLC runtime and sets `AIDLC_HARNESS_DIR=.codex`. If `claude` is unavailable, install and sign in to Claude Code first. This handoff was prepared without a local Claude Code CLI, so Claude's own discovery of these files and its native hooks could not be exercised here.
+2. Read root `CLAUDE.md`, `AGENTS.md`, `CONTRIBUTING.md`, `docs/product-brief.md`, `docs/decisions/0001-ai-dlc-framework.md`, `docs/ai-dlc-setup.md`, `docs/development-agent-team.md`, and `aidlc/spaces/default/memory/project.md`. Use `/aidlc` from `.claude/skills/aidlc/SKILL.md` to operate the existing intent through `./scripts/aidlc.ps1`.
+3. Read the active intent's `aidlc-state.md`, audit receipts, and the U6 files listed below. Ask the owner for an explicit **Request Changes** decision before any more Functional Design review work. The owner's last `Looks correct` confirmed the Model Lifecycle summary; it did **not** authorize resetting the review attempt. The request to create this handoff is also not a Request Changes decision.
+
+Suggested first Claude Code prompt:
+
+> Read CLAUDE.md and docs/handoff/claude-code-2026-09-26.md. Inspect the active AI-DLC state and audit. Do not advance or request a third Model Lifecycle review yet. Tell me what is prepared and ask me for the exact decision needed to resume.
+
+## Exact lifecycle position
+
+- Active intent: `aidlc/spaces/default/intents/260908-stock-sense-design/` in the default space; classic scope, standard depth and test strategy. Construction / Functional Design is still active. The engine owns the next move; do not start a new intent, skip to code generation, or mark U6 complete.
+- Current Unit: Model Lifecycle (U6), `construction/model-lifecycle/functional-design/`. The consolidated summary answer `Looks correct` was recorded with `SUMMARY_CONFIRMATION_RECORDED`. Its four produced artifacts were updated afterward.
+- Formal U6 review iteration 1 returned `NOT-READY` for R-01, missing durable terminal-result identity and exact replay after a lost U5/U7 finalizer response. That verdict was recorded. The first correction added `HeavyWorkTerminalResult`, fence/pin result links, owner-pointer verification, rule BR5.12, and traceability.
+- Iteration 2 returned `NOT-READY`: R-01 resolved; new Critical R-02 found that the result entity excluded `evaluation`, so promotion/rollback could not record its atomic evaluation terminal result. That verdict was recorded. The second correction now extends the entity to evaluation/training, adds evaluation result status and decision/drain/route links, and states the atomic promotion/rollback write and exact replay in the spec and BR6.6. **That second correction is a draft, not reviewed.** The old review appendix was removed from the draft as required before a new review; the audit retains both review receipts.
+- The next engine directive reported U6 `review_state: escalation-required`, `review_iteration: 3`. A review request for iteration 3 was refused because the one stale-receipt recovery review was already spent. No iteration-3 `REVIEW_REQUESTED` or verdict exists. The temporary reviewer-dispatch marker was removed. Do not attempt another request or complete U6 without a new human decision.
+- The owner has previously approved summary content for several other Units. Retail Data U4, Recovery Coordination U15, and Supplier Knowledge U5 have completed Functional Design unit receipts; Contracts U1, Identity Access U3, Messaging Platform U14, and Forecasting U7 have earlier work and review history. Read the engine state/audit for authoritative Unit coverage instead of relying only on this snapshot. Some NFR Requirements files are provisional working artifacts ahead of stage approval; do not treat their presence as stage completion.
+
+## Files for the immediate correction
+
+- C07 authoritative contract: `aidlc/spaces/default/intents/260908-stock-sense-design/inception/contract-design/contract-summary.md`, especially the shared-transaction finalization port and route admission/promotion sections around C07 lines 1050–1101.
+- U6 outputs: `construction/model-lifecycle/functional-design/entities.md`, `rules.md`, `functional-spec.md`, and `traceability.json` under the active intent. The questions and confirmed summary are in the sibling `functional-design-questions.md` and must not be rewritten casually; the engine checks its recorded digest.
+- AI-DLC procedure: `.agents/skills/aidlc/SKILL.md`, `.codex/aidlc-common/protocols/stage-protocol.md`, `stage-protocol-construction.md` (per-unit wave and `escalation-required`), and `stage-protocol-reviewer.md`. The stage definition is `.codex/aidlc-common/stages/construction/functional-design.md`.
+- Reviewer role: `.claude/agents/aidlc-architecture-reviewer-agent.md`, with the full existing role in `.codex/agents/aidlc-architecture-reviewer-agent.toml`. Before any eventual approval gate, run the read-only StockSense process steward described in `AGENTS.md` and `.claude/agents/stocksense-aidlc-process-steward-agent.md`.
+
+## Resume only after the owner's decision
+
+If the owner explicitly replies **Request Changes** to reset this review attempt, record that exact decision and the R-02 correction reason through the AI-DLC engine. The project protocol describes the rejection route as `./scripts/aidlc.ps1 engine orchestrate report --stage functional-design --result rejected --user-input "Request Changes" --reason "Resolve U6 R-02: model and atomically bind the evaluation terminal result to promotion/rollback"`. Check the engine's response and follow its next directive; do not hand-edit state or audit, and do not substitute a different approval. If the engine asks for a different command, use its explicit route.
+
+After reset, obtain the next directive with `./scripts/aidlc.ps1 engine orchestrate next`; immediately continue any `load-steering` directive with `./scripts/aidlc.ps1 engine orchestrate continue <continue_token>`. Recheck the correction against C07, then request the named reviewer at the engine-issued iteration using the formal dispatch and receipt sequence. Record its actual verdict. If the review settles and the engine permits it, complete U6 with the `unit complete --wave` command for this stage and unit. Continue to the next engine directive. Never infer a gate approval or stage completion from a review result alone.
+
+## Git and validation
+
+The checkpoint branch contains both completed Functional Design work and explicitly provisional designs. Keep each later implementation user story on its own branch from the Bolt integration branch as `CONTRIBUTING.md` requires. Commits and pushes on working branches are authorized; every merge still needs explicit owner approval.
+
+For documentation checks, run `git diff --check`, parse U6 `traceability.json`, verify all traceability BR targets resolve in `rules.md`, and run the applicable AI-DLC stage sensors/reviewer protocol. At this checkpoint, `git diff --check` reports a trailing-space line in the engine-owned audit shard (`audit/anton-pc-e91d12f789b9.md`, line 35364), intentional Markdown hard-break spaces in two provisional platform NFR files, and a final blank line in the Web BFF NFR review appendix. Preserve recorded review bytes and audit evidence; do not hand-edit them merely to silence the check. The other changed paths pass the whitespace check. Do not report Claude-native hook activation as verified: only the existing project runtime and Codex-harness files are configured here. `./scripts/aidlc.ps1 --doctor` and `./scripts/aidlc.ps1 --status` provide local diagnostics; warnings must be interpreted against the recorded project adaptations, not silently cleared by a framework refresh.

@@ -9,3 +9,4 @@ if (($env:Path -split ';') -notcontains $env:AIDLC_BIN_DIR) {
     $env:Path = "$env:AIDLC_BIN_DIR;$env:Path"
 }
 $env:AIDLC_RULES_DIR = Join-Path $stockSenseRoot 'aidlc/spaces/default/memory'
+$env:AIDLC_HARNESS_DIR = '.codex'

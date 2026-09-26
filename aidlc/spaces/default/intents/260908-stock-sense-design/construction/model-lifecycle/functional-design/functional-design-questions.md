@@ -3,7 +3,7 @@
 Date: 2026-09-13
 Stage: Functional Design
 Unit: model-lifecycle
-Status: Confirmed
+Status: Confirmed after approved-contract reconciliation (2026-09-25)
 
 These questions resolve the remaining behavior choices for reproducible datasets, temporal evaluation, tracked training, model promotion, rollback, and recovery. Accepted decisions remain fixed: Model Lifecycle is a standalone Python service and worker; MLflow tracks experiments and model versions with operator-only access; immutable artifacts use object storage; business data enters through tenant-authorized APIs rather than direct table access; PostgreSQL access uses governed routines; RabbitMQ work is idempotent and recoverable; forecasts cover 28 days and refresh daily; seasonal-naive and moving-average baselines are mandatory; training and evaluation must prevent future leakage; model claims must expose synthetic-data limitations; Docker Desktop Kubernetes has a 16 GiB RAM and three-CPU total planning budget; and a clean reviewer environment must work without the owner's GPU or credentials.
 
@@ -193,9 +193,36 @@ Dataset publication, training, evaluation, registration, promotion, rollback, an
 
 Retention is dependency-aware. Ordinary deletion is denied while an active route, retained forecast, promotion, rollback, or required audit record depends on the dataset, evaluation, release, or artifact. Policy-driven byte expiry retains a tombstone, identity, checksum, dependency history, and explicit unavailable status. Recovery restores immutable objects, MLflow metadata, and authoritative lifecycle and route records under a checksummed recovery manifest. Reconciliation verifies tenant ownership, checksums, runtime compatibility, datasets, evaluations, and retention state before any route becomes usable. The system then restores the recorded route or an explicitly chosen validated fallback with audit evidence; it never silently substitutes the newest file.
 
-## Consolidated Summary Confirmation
+## Reconciliation with approved contracts and prior review (2026-09-25)
+
+The thirteen owner choices above remain unchanged. C07 now fixes the request lifecycle (`queued → leased → completed|failed|cancelled|deadline-expired`), the lease lifecycle, monotonically increasing fencing tokens, and finalizer checks for lease ID, token, placement/recovery generation, active status and expiry. U6 owns durable PostgreSQL request, queue, lease and fencing state and uses the signed, verifiable `skops.io` model-package manifest at its forecasting handoff. U14's C23 package supplies reusable C01/C22 RabbitMQ mechanics; U6 owns its producer, inbox/outbox, atomic local effects and conformance results. As a C25 Class C recovery participant, U6 must durably fence its jobs, workers and message paths, close a checkpoint, suppress delayed prepare after abort, and resume only after reconciliation directed by U15.
+
+The prior independent review identified three design gaps to resolve in the revised artifacts. Baseline and candidate evaluation need one versioned deterministic configuration, including fixed seasonal-naive period, moving-average window, origin cadence and identical held-out horizons. Job processing needs explicit deadline, lease renewal, retryability, attempt exhaustion and duplicate-worker rules consistent with C07. Restore needs clear authority and ordering among PostgreSQL lifecycle ledger, MLflow metadata and immutable object bytes, including fixed 24-hour RPO, 2-hour RTO and 30-day backup retention from recovery-policy-v1; missing or inconsistent evidence must keep the route unavailable. Those are implementability details under the approved model lifecycle, not new business-policy choices.
+
+The existing confirmation belongs to the earlier design pass. This reconciliation is the summary for the current pass; artifacts will be revised only after this summary is confirmed.
+
+## Historical Consolidated Summary Confirmation
 
 Does this all look correct before I generate the artifact?
+
+- Looks correct
+- Request changes
+
+[Answer]: Looks correct
+
+### Owner-directed C07 correction — 2026-09-25
+
+The owner directed repair of the two shared C07 safety gaps found by Forecasting and Model Lifecycle review. C07 now has a retailer-local EXECUTE-only U6 finalizer port called by U5/U7 in their owner publication transaction, with the central global slot held until local terminal/fence proof reconciles. It also has a persistent route-control guard, durable Forecast Run pins, and a drain begun before either promotion or rollback requests the evaluation lease. Zero proven old pins, live lease, signed package and expected generations are rechecked atomically at switch. First activation uses the inactive generation-zero guard. This amendment awaits independent review and conformance evidence.
+
+## Current C07 Contract Reconciliation (2026-09-26)
+
+The thirteen owner choices for datasets, baselines, jobs, evaluations, signed immutable model releases, Operator-controlled promotion, rollback, and restore remain unchanged. The approved C07 contract now closes the two prior Model Lifecycle findings. U6 owns a versioned EXECUTE-only PostgreSQL finalizer function callable by named U5/U7 database service roles inside their retailer-local owner publication transaction; it locks the request, lease/fence, route pin and route-control guard, validates immutable run/pin/attempt/lease binding and deadline, closes the pin, and returns one terminal result. The owner transaction commits its own rows, audit and outbox with that U6 result or rolls back everything. HTTP completion followed by a separate owner commit cannot stand in for this boundary.
+
+U6 also owns the durable route-control row and C07 `pins:admit`/`drains:start` serialization. A Forecast Run receives a durable pin and queued first attempt before batch request submission. Promotion or rollback begins a route drain before requesting the evaluation lease, so no new old-route pins enter while existing runs finish. It proves zero old pins, a valid signed package, current generations and an active evaluation lease, then atomically switches the route and terminalizes that lease. First activation uses the inactive generation-zero guard. Failed or timed-out drains keep the old route or an explicit unavailable state under the approved rules; no previous-release overlap or silent fallback is introduced.
+
+## Consolidated Summary Confirmation
+
+Does this current Model Lifecycle summary look correct for updating U6 Functional Design?
 
 - Looks correct
 - Request changes

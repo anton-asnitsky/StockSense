@@ -193,6 +193,16 @@ Forecast publication, current-pointer changes, partial acknowledgements, and oth
 
 Recovery restores authoritative PostgreSQL forecast, audit, inbox/outbox, and pointer history before exposure. Reconciliation verifies tenant and placement, pinned source and model versions, checksums, runtime and schema compatibility, exactly 28 finite nonnegative product values, product coverage, pointer transitions, retention state, and message replay position. Unresolved or incompatible runs remain unavailable. Restore never regenerates, mutates, or substitutes a forecast silently; a new forecast requires a normal scheduled request or authorized rerun.
 
+### Reconciliation with approved contracts (2026-09-25)
+
+The thirteen earlier Forecasting choices remain unchanged: one retailer-local daily request, immutable run revisions and product-level results, complete 28-day series, explicit partial-run acknowledgement, server-owned current pointer, six-hour freshness threshold, tenant-authorized reads, atomic audit/outbox, and fail-closed restore.
+
+C07 now requires Forecasting to obtain a durable `batch-forecast` heavy-work request and live lease from Model Lifecycle's shared arbiter. Every renew, release, completion, and forecast-publication finalizer carries the current lease ID and monotonic fencing token and checks placement/recovery generation and expiry. Expired, cancelled, superseded or recovery-fenced workers cannot publish. The run pins the server-resolved active package; before deserialization Forecasting verifies the signed `skops.io` manifest and artifact digests, Ed25519 signature, current signer status, trust-policy version/digest, feature/runtime schemas, release state and validity. A revoked or incompatible package yields explicit model-unavailable; no prior release or baseline is silently substituted.
+
+C23 gives Forecasting U14's reusable Python RabbitMQ package and conformance fixtures; Forecasting still owns domain message schemas and commits its own forecast state, business audit, outbox, and inbox effects. Broker delivery attempts are separate from C07 worker attempts. C25 makes Forecasting a Class C recovery participant: it durably records prepare/close/abort/resume dispositions, fences job finalizers and message paths, acknowledges a checkpoint, rejects delayed prepare after abort, and exposes current forecasts only after U15-directed reconciliation. Recovery-policy-v1 fixes 24-hour RPO, two-hour RTO, 30-day backup retention and Class C deadlines of 120/180/60/180 seconds for prepare/close/abort/resume.
+
+The Model Lifecycle revision has resolved the earlier C07 promotion-fence, package-signing, first-activation and baseline-formula findings. Two integration boundaries remain open: the cross-unit atomic finalizer used by Forecasting's batch work lacks an approved transaction contract, and a no-overlap route change needs an admission/drain barrier to prevent new old-route runs from racing the promotion lease. Forecasting must fail closed at those boundaries until Model Lifecycle and the shared contract define and verify them; this summary does not treat them as approved behavior.
+
 ## Consolidated Summary Confirmation
 
 Does this all look correct before I generate the artifact?
@@ -201,3 +211,15 @@ Does this all look correct before I generate the artifact?
 - Request changes
 
 [Answer]: Looks correct
+
+## Requested Changes Feedback
+
+What should change?
+
+[Answer]: Resolve all blockers.
+
+### Owner clarification — 2026-09-25
+
+[Answer]: Fix the two C07 safety gaps, inconsistent first-attempt creation, and missing product-set fields in C10/C13.
+
+The shared C07 amendment now specifies an EXECUTE-only U6 stored-function finalizer in the same retailer-local transaction as U7 outcomes, series, audit, outbox and pin closure; and a durable route pin/drain lock that rejects admission after draining starts. C10 and both C13 tools now require 1–100 distinct product IDs and return exact per-product coverage. U7 moves first-attempt creation after WF3 pins both digests; the first lease updates that queued attempt and only a terminal retry appends another. These are owner-directed corrections pending independent review and conformance evidence, not a claim that implementation has passed.

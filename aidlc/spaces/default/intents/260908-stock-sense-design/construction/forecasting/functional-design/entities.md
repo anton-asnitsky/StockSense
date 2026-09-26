@@ -2,7 +2,7 @@
 
 Unit: U7 Forecasting (`forecasting`)
 
-Confirmation basis: Forecasting consolidated summary reconfirmed as `Looks correct` on 2026-09-14.
+Confirmation basis: Forecasting consolidated summary reconfirmed as `Looks correct` on 2026-09-25; the owner then directed correction of four review findings. Revised C07/C10/C13 integration behavior awaits review and conformance evidence.
 
 The YAML block is the source of truth for Forecasting data shape, invariants, and relationships. The entities are logical records and do not prescribe storage technology. References to Retail Data, Model Lifecycle, identity, Planning, Audit Evidence, and platform capabilities are contract references; Forecasting does not own those units' records or calculations.
 
@@ -322,12 +322,35 @@ entities:
         logicalType: VersionIdentifier
         required: true
         unique: false
+      - name: routePinId
+        logicalType: Identifier
+        required: true
+        unique: true
+        constraints: "C07 durable pin admitted under the open-route/drain lock for this run."
+      - name: initialForecastAttemptId
+        logicalType: Identifier
+        required: true
+        unique: true
+        constraints: "Preallocated before C07 pin admission and reused by queued attempt 1 and its first lease."
       - name: artifactReference
         logicalType: ImmutableArtifactReference
         required: true
         unique: false
         constraints: "Resolved by the server and never supplied as caller routing authority."
       - name: artifactChecksum
+        logicalType: Digest
+        required: true
+        unique: false
+      - name: packageManifestDigest
+        logicalType: Digest
+        required: true
+        unique: false
+        constraints: "C07 signed manifest digest is pinned with the resolved promotion generation."
+      - name: signerId
+        logicalType: Identifier
+        required: true
+        unique: false
+      - name: trustPolicyDigest
         logicalType: Digest
         required: true
         unique: false
@@ -361,9 +384,90 @@ entities:
       - "Exactly one active compatible Model Release is resolved and pinned per run."
       - "Forecasting cannot create, promote, roll back, or silently replace a Model Release."
       - "A missing, unavailable, unvalidated, inactive, checksum-invalid, schema-incompatible, runtime-incompatible, or foreign-tenant release makes admission unavailable or failed."
+      - "Before deserialization Forecasting verifies the signed skops.io manifest and artifact digests, Ed25519 signature, current signer status, trust-policy version and digest, schema and runtime compatibility, release state and validity window."
+      - "C07 pins:admit and drains:start serialize on the same route row; a run admitted before drain counts as outstanding and no old-route pin is admitted afterward."
+
+  - name: ForecastHeavyWorkRequest
+    description: "U7's durable reference to a C07 batch-forecast request owned and queued by Model Lifecycle."
+    attributes:
+      - name: forecastRunId
+        logicalType: Identifier
+        required: true
+        unique: true
+        references: ForecastRun.forecastRunId
+      - name: routePinId
+        logicalType: Identifier
+        required: true
+        unique: false
+        references: ForecastModelResolution.routePinId
+      - name: initialForecastAttemptId
+        logicalType: Identifier
+        required: true
+        unique: false
+        references: ForecastAttempt.forecastAttemptId
+      - name: requestId
+        logicalType: Identifier
+        required: true
+        unique: true
+      - name: requestHash
+        logicalType: Digest
+        required: true
+        unique: false
+      - name: deadlineAt
+        logicalType: Instant
+        required: true
+        unique: false
+      - name: placementGeneration
+        logicalType: PositiveInteger
+        required: true
+        unique: false
+      - name: recoveryGeneration
+        logicalType: PositiveInteger
+        required: true
+        unique: false
+    entityConstraints:
+      - "C07 owns queue position, priority, lease state and the monotonic token; U7 stores the immutable request identity and returned evidence."
+      - "A duplicate request with changed canonical payload conflicts and cannot create another Forecast Run."
+
+  - name: ForecastHeavyWorkLease
+    description: "Evidence of the current C07 execution authority for a ForecastAttempt; Model Lifecycle owns the authoritative lease."
+    attributes:
+      - name: forecastAttemptId
+        logicalType: Identifier
+        required: true
+        unique: true
+        references: ForecastAttempt.forecastAttemptId
+      - name: requestId
+        logicalType: Identifier
+        required: true
+        unique: false
+        references: ForecastHeavyWorkRequest.requestId
+      - name: leaseId
+        logicalType: Identifier
+        required: true
+        unique: true
+      - name: fencingToken
+        logicalType: PositiveInteger
+        required: true
+        unique: false
+      - name: expiresAt
+        logicalType: Instant
+        required: true
+        unique: false
+      - name: placementGeneration
+        logicalType: PositiveInteger
+        required: true
+        unique: false
+      - name: recoveryGeneration
+        logicalType: PositiveInteger
+        required: true
+        unique: false
+    entityConstraints:
+      - "A stored lease is evidence, not authority by itself; C07 must still confirm current active status, token, generations and expiry at finalization."
+      - "Loss, cancellation, expiry or recovery fencing permanently prevents that attempt from publishing."
 
   - name: ForecastAttempt
-    description: "An append-only execution attempt under one ForecastRun and its unchanged pinned inputs."
+    description: "A retained execution-attempt identity under one ForecastRun and its unchanged pinned inputs; nonterminal lease/status fields advance until terminal."
     attributes:
       - name: forecastAttemptId
         logicalType: Identifier
@@ -396,6 +500,14 @@ entities:
         unique: true
       - name: leaseExpiresAt
         logicalType: Instant
+        required: false
+        unique: false
+      - name: fencingToken
+        logicalType: PositiveInteger
+        required: false
+        unique: false
+      - name: recoveryGeneration
+        logicalType: PositiveInteger
         required: false
         unique: false
       - name: queuedAt
@@ -438,8 +550,10 @@ entities:
         constraints: "Present only when output was produced; staged output is not consumer-visible."
     entityConstraints:
       - "The tuple forecastRunId and attemptNumber is unique."
-      - "Only the current unexpired lease owner may finalize an attempt."
-      - "Terminal attempts are immutable; retry appends another attempt under the same run."
+      - "Attempt 1 is created only after the input and model digests are pinned; WF2 request admission creates no attempt."
+      - "First C07 lease acquisition updates the queued attempt 1 with lease evidence; it does not append an attempt."
+      - "Only the current unexpired C07 lease owner and monotonic fencing token may finalize an attempt."
+      - "Terminal attempts are immutable; only a retry after a terminal attempt appends the next number under the same run."
       - "An interrupted or failed attempt cannot publish staged output."
 
   - name: ForecastProductOutcome
@@ -1133,6 +1247,49 @@ entities:
       - "A restored running attempt becomes interrupted and follows ordinary retry eligibility; it is never assumed successful."
       - "Failed reconciliation never regenerates, mutates, or substitutes a forecast silently."
 
+  - name: ForecastRecoveryDisposition
+    description: "Durable C25 Class C participant response and monotonic command guard for a retailer recovery run."
+    attributes:
+      - name: commandId
+        logicalType: Identifier
+        required: true
+        unique: true
+      - name: runId
+        logicalType: Identifier
+        required: true
+        unique: false
+      - name: retailerId
+        logicalType: Identifier
+        required: true
+        unique: false
+        references: TenantDirectory.Retailer.retailerId
+      - name: recoveryGeneration
+        logicalType: PositiveInteger
+        required: true
+        unique: false
+      - name: placementGeneration
+        logicalType: PositiveInteger
+        required: true
+        unique: false
+      - name: command
+        logicalType: Enum
+        required: true
+        unique: false
+        allowedValues: [prepare, close, abort, resume]
+      - name: fenceDisposition
+        logicalType: Enum
+        required: true
+        unique: false
+        allowedValues: [active, cleared, terminally-suppressed, unresolved]
+      - name: checkpointDigest
+        logicalType: Digest
+        required: false
+        unique: false
+    entityConstraints:
+      - "The participant persists the command outcome before acknowledgement and replays the same disposition for the same command ID."
+      - "Abort before delayed prepare creates a terminal guard; a late prepare cannot recreate the fence."
+      - "Prepare and close fence Forecasting finalizers, inbox/outbox paths and current-publication exposure; resume requires U15-directed reconciliation."
+
 relationships:
   - from: ForecastRequest
     to: ForecastRun
@@ -1150,6 +1307,18 @@ relationships:
     to: ForecastAttempt
     cardinality: one-to-many
     direction: run-retains-attempts
+  - from: ForecastRun
+    to: ForecastHeavyWorkRequest
+    cardinality: one-to-zero-or-one
+    direction: run-requests-c07-batch-work
+  - from: ForecastHeavyWorkRequest
+    to: ForecastHeavyWorkLease
+    cardinality: one-to-many
+    direction: c07-request-retains-leases
+  - from: ForecastAttempt
+    to: ForecastHeavyWorkLease
+    cardinality: one-to-zero-or-one
+    direction: attempt-records-current-c07-authority
   - from: ForecastRun
     to: ForecastProductOutcome
     cardinality: one-to-many
@@ -1211,28 +1380,31 @@ relationships:
 | ForecastRequest / ForecastRun | Represent one local-date request revision and its logical execution | Requests, revisions, and terminal runs are immutable and tenant-scoped |
 | ForecastInputSnapshot / ForecastModelResolution | Pin Retail Data, calendar, configuration, placement, and active Model Release provenance | Every attempt uses the same admitted snapshot; no silent substitution |
 | ForecastAttempt | Retain each leased execution try | Retry appends an attempt under the same run |
+| ForecastHeavyWorkRequest / ForecastHeavyWorkLease | Preserve C07 batch-forecast request and fencing evidence | U6 owns global queue and authoritative lease; stale tokens cannot publish |
 | ForecastProductOutcome / ForecastSeries / ForecastPoint | Record explicit product availability and exactly 28 daily values | Invalid output fails the product and is never clipped, filled, shortened, or treated as zero |
 | ForecastPublication / PartialPublicationAcknowledgement | Record publication eligibility and explicit Operator judgment of partial coverage | Partial output cannot become current without acknowledgement |
 | CurrentForecastPointer / ForecastPointerHistory | Select and explain the current revision | Selection is server-owned, atomic, version-guarded, and history-preserving |
 | ForecastAuditRecord / ForecastOutboxMessage / ForecastInboxReceipt | Preserve authoritative decisions and idempotent asynchronous effects | Business effect, audit, and outbox are atomic; consumers commit before acknowledgement |
 | ForecastReadCacheEntry | Accelerate bounded authorized reads | Cache is tenant/version scoped and never authoritative |
 | ForecastReconciliation | Prove restored state is safe to expose | Unresolved, corrupt, incompatible, or expired evidence stays unavailable |
+| ForecastRecoveryDisposition | Retain C25 Class C command, fence and checkpoint evidence | Late prepare cannot undo abort; resume waits for reconciliation |
 
 ## Sources
 
 - `inception/units-generation/unit-of-work.md` — U7 ownership, boundaries, and constraints.
-- `inception/units-generation/unit-of-work-story-map.md` — U7 participation across 42 assigned acceptance criteria.
+- `inception/units-generation/unit-of-work-story-map.md` — U7 participation across 53 assigned acceptance criteria, including later heavy-work, messaging, recovery and demo-timing criteria.
 - `inception/requirements-analysis/requirements.md` — FR2, FR5, FR11, FR13, FR17, FR19, FR20 and NFR3-NFR5, NFR7-NFR9, NFR11, NFR14-NFR15.
 - `inception/user-stories/stories.md` — US4.1, US4.6, US5.1, US5.2, US7.6, US8.1-US8.3, US8.5, US9.1, US9.6, US9.9, and US10.1 acceptance criteria.
 - `inception/domain-design/components.md` and `decisions.md` — Forecasting ownership and separation from Model Lifecycle, Replenishment, Purchasing, identity, and Audit Evidence.
-- `inception/contract-design/contract-summary.md` — C06, C07, C10, C13, C15, common envelopes, authority, compatibility, error, and retry boundaries.
+- `inception/contract-design/contract-summary.md` — C06, C07, C10, C13, C15, C23 and C25 envelopes, signed packages, fencing, messaging, recovery and retry boundaries.
 - `construction/forecasting/functional-design/functional-design-questions.md` — confirmed grain, schedule, pinning, partial outcome, validation, freshness, rerun, model availability, publication, authority, messaging/cache, and restore decisions.
 
 ## Assumptions & Open Questions
 
-- Exact lease duration, heartbeat interval, retry count, backoff, queue capacity, dead-letter retention, response bounds, and decimal storage precision are deferred to NFR design or implementation; none may be unbounded.
-- Recovery objectives, backup frequency and expiry, persistent storage limits, and the controlled retention schedule remain later NFR parameters. Reconciliation must report actual time, loss, and limitations against the approved values.
+- C07 owns the bounded heavy-work lease, heartbeat, queue, deadline and attempt policy; C23 owns separate broker retry and DLQ bounds. Response bounds and decimal storage precision must be fixed before implementation acceptance.
+- Recovery-policy-v1 fixes 24-hour RPO, two-hour RTO, 30-day backup retention and Class C prepare/close/abort/resume deadlines of 120/180/60/180 seconds. Reconciliation reports measured time, loss and limitations against those values.
 - The six-hour freshness grace period after the next retailer-local 02:00 due time and the DST invalid/ambiguous-time choices are confirmed functional decisions.
 - Planning owns inventory, supplier-term, MOQ, pack, buffer, review-quota, replenishment, and purchasing calculations. Forecasting supplies versioned series, coverage, freshness, and evidence only.
 - Model Lifecycle owns dataset creation, training, evaluation, promotion, rollback, and artifact retention. Forecasting pins and verifies one promoted compatible release for operational inference.
+- C07 now specifies the cross-unit atomic finalizer and route-admission/drain barrier. Forecasting cannot claim deployable publication or route switching until review and conformance evidence prove the expiry, recovery-fence and admission/drain races.
 - The required reviewer path is real CPU inference. Optional acceleration is measured separately and cannot change entity meaning, authority, or publication behavior.

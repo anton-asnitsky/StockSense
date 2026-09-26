@@ -113,9 +113,36 @@ After authentication, Tenant Directory determines retailer access. Zero membersh
 
 The fixed local endpoints are `https://identity.stocksense.localhost` for the issuer and `https://app.stocksense.localhost` for the application/BFF. The callbacks are `/signin-google` on the identity origin and `/signin-oidc` plus `/signout-callback-oidc` on the application origin. Google sign-in appears only when configured; local sign-in remains fully usable without Google secrets. A real Google federation smoke test is recorded separately as owner-run evidence.
 
-## Consolidated Summary Confirmation
+## Reconciliation with approved Contract Design (2026-09-25)
+
+The Q1-Q7 identity, session, key, Google-linking, and reviewer-path choices above remain unchanged. The approved C01/C02/C15/C17/C18/C22/C23/C24 contract and the existing Identity Access review require these additions to U3's Functional Design:
+
+- **Audit publication:** U3 commits every security-relevant identity audit record and exactly one outbox row atomically, including redacted pre-login denials with no retailer context. Such outcomes use the closed retailerless C01 envelope and distinct C15 global route; tenant identity events use real retailer and placement data. U3 owns its C23-conformant bootstrap publisher adapter, passes every applicable C22 fixture, and gives U13 separate evidence. U14 does not become a U3 publisher dependency.
+- **Platform access:** U3 owns a revocable human platform-Operator grant and a current-grant operation in C02, distinct from retailer Operator membership. U10 calls that operation for each C17 global identity-audit page; U11/U12 own the separate no-store C18 platform view. U3 denies machine callers and unauthorized grant readers and fails closed when current-grant checks cannot be completed.
+- **Recovery participant:** U3 implements its own C24 synchronous `prepare`, `close`, `abort`, and `resume` lifecycle. It persists run/fence and idempotency results before acknowledging, fences identity writes and key rotation during recovery, rejects stale retailer/placement/recovery generations, suppresses a delayed prepare after abort, and resumes only after local reconciliation. A `200` participant result does not assert coordinator-wide success; persistence failure returns the approved typed `503` without inventing a durable result.
+- **Coverage:** The design must account for the eight previously omitted assigned criteria: AC1.4.6, AC1.5.4, AC8.2.4, AC9.11.1–AC9.11.4, and AC10.1.5. It will distinguish U3's contribution from shared U1, U10, U13, and U15 acceptance responsibilities.
+
+These are applications of already approved contracts, not new identity policy choices. The old Functional Design review appendix is historical; its R-02, R-05, and R-06 findings must be resolved in the revised artifacts before completion.
+
+## Historical Consolidated Summary Confirmation
 
 Does this all look correct before I generate the artifact?
+
+- Looks correct
+- Request changes
+
+[Answer]: Looks correct
+
+## Review Reconciliation (2026-09-25)
+
+The approved Q1-Q7 decisions and contract reconciliation above remain unchanged. The Identity Access Functional Design revision will also close the two findings from its previous architecture review:
+
+- R-07: Link BR5.4, the current platform-Operator grant rule, to its C02/C17/C18 contract evidence in the reverse traceability map, without attributing another unit's acceptance criteria to U3.
+- R-08: Give absent, disabled, locked, and invalid local credentials the same browser-visible denial class. Keep lockout timing and the reason available only to protected operator/audit paths; align FD1, BR1.2, and the boundary response table. This prevents account-state disclosure while preserving the approved five-failure, 15-minute lockout.
+
+## Consolidated Summary Confirmation
+
+Does this revised Identity Access summary look correct before I update its Functional Design artifacts and request a fresh review?
 
 - Looks correct
 - Request changes

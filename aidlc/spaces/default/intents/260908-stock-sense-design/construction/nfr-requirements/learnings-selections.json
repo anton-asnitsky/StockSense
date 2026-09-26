@@ -1,0 +1,15 @@
+{
+  "stage_slug": "nfr-requirements",
+  "space": "default",
+  "intent": "260908-stock-sense-design",
+  "selections": [
+    {
+      "candidate_id": "c19",
+      "type": "learning",
+      "scope": "project",
+      "heading": "Corrections",
+      "text": "added a repository-local Node fallback for the AI-DLC review-brief tool because the native 2.8.0 dispatcher could not invoke the checked-in exported main function and the official update endpoint was unavailable.",
+      "source": "orchestrator"
+    }
+  ]
+}

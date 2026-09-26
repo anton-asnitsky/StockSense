@@ -93,7 +93,53 @@ The selected answers are mutually consistent with the approved Contract Design a
 - **Compatibility baseline:** Story branches compare with their Bolt integration branch, Bolt pull requests compare with `main`, and releases compare with the latest release tag. An intentional breaking change requires an explicitly approved major-version exception.
 - **Initial asynchronous fixture:** Validate the `inventory-import.requested`, `inventory-import.completed`, and `inventory-import.failed` lifecycle plus one immutable authoritative inventory-import audit event using the common envelope. Each later messaging story remains responsible for adding and passing its own contracts.
 
+## Historical Consolidated Summary Confirmation (2026-09-11)
+
+Does this all look correct before I generate the artifact?
+
+- Looks correct
+- Request changes
+
+[Answer]: Looks correct
+
+## Current summary for Construction re-entry (2026-09-24)
+
+The previous Q1-Q5 answers remain the selected implementation choices: pinned Redocly, AsyncAPI CLI, Ajv, `oasdiff`, Kiota, and `openapi-typescript`; consumer-local generated outputs; story/Bolt/release compatibility baselines; and the initial inventory-import lifecycle plus authoritative audit fixture. The approved Contract Design and Delivery Plan add these requirements to the Contracts unit's functional design:
+
+- **C01 package governance:** A walking-skeleton `candidate` may cover the boundaries it delivers, but every listed canonical OpenAPI, AsyncAPI, JSON Schema, and governed sidecar must identify its owner, C01-C27 boundary IDs, semantic version, package path, `sha256:` content digest, and immutable Git `sourceRevision` where the contract requires it. The fixed policy validates required canonical kinds and sidecars; a `release` covers exactly C01-C27, includes generated-output manifests for declared consumers and actual compatibility, validation, and evidence results, and is reconstructed from its source revision before publication. Generated runtime code remains consumer-local.
+- **C24 bootstrap validation:** U1 validates the provider-owned Identity Access and Tenant Directory OpenAPI documents, required `X-Correlation-ID` and `Idempotency-Key` headers, durable typed `200` result, typed RFC 9457 `401`/`403`/`409`/`422`/`503` problems, and the approved positive/negative fixtures. The fixtures include checkpoint matching, late prepare after abort, idempotency conflict, and `RECOVERY_PERSISTENCE_UNAVAILABLE` when a durable result cannot be committed. U3/U4 own runtime participant behavior; U15 owns coordination. A participant `200` does not prove whole-run recovery success.
+- **Delivery timing:** The thin C01 candidate supports Bolt 1; the full release package and C24 provider/consumer conformance are Bolt 2 acceptance work; Bolt 7 reruns those checks against a pinned clean-room revision. The seven-Bolt order and one-story-per-branch rule are unchanged.
+
+The existing Contracts functional-design files are draft inputs for reconciliation after this checkpoint. Their earlier review appendix is historical and will require a fresh review before an approval gate.
+
+## Reconciliation with approved Contract Design (2026-09-25)
+
+The prior Q1-Q5 choices and C01/C24 summary remain affirmed. The new Contract Design approval changes only the U1 validation and evidence obligations below; U1 still owns canonical contracts, not runtime authorization, audit persistence, broker adapters, or UI behavior:
+
+- **C01/C15 closed audit profiles:** Validate distinct tenant and retailerless global identity-audit envelopes and routes. A retailerless U3 security outcome must not acquire fabricated retailer or placement fields or leak into a tenant query. The global profile includes redacted pre-login denials; its examples and negative fixtures remain separate from tenant event examples.
+- **C22/C23 bootstrap publishers:** Validate U3 and U4 service-owned publisher profiles against every applicable versioned C22 fixture and record their separate U13 evidence. U14's .NET/Python package is validated for its approved consumers, including U10 consumption, but U3/U4 do not depend on U14 to publish bootstrap audit events.
+- **C02/C17/C18 global read boundary:** Validate the provider-owned revocable human platform-Operator grant/current-check operation, U10's distinct delegated-human global audit query with a live U3 grant check per page, and U11/U12's separate no-store platform view. Negative fixtures cover retailer-only Operators, machine callers, revoked grants, invalid token audience/client/scope, unavailable grant checks, and leakage through tenant routes.
+- **Delivery and evidence:** Bolt 1 includes the thin candidate contracts for the audited path; Bolt 2 requires the applicable U3/U4 publisher conformance, U13 results, and global-read boundary checks; Bolt 7 reruns them against the pinned clean-room revision. The approved seven-Bolt order is unchanged.
+
+The existing draft Contracts functional-design files still carry an earlier NOT-READY review with four findings. After this confirmation, those files must be reconciled with these contract changes and the review findings before any Functional Design gate is opened.
+
+## Historical Consolidated Summary Confirmation (C01/C15/C17/C18/C22/C23)
+
+Does this all look correct before I generate the artifact?
+
+- Looks correct
+- Request changes
+
+[Answer]: Looks correct
+
 ## Consolidated Summary Confirmation
+
+The earlier Q1-Q5 choices remain unchanged: pinned validators and generators, consumer-local generated outputs, branch-specific compatibility baselines, and the initial inventory-import message fixture. The approved C07/C10/C13 Contract Design and Delivery Plan add these U1-owned acceptance obligations:
+
+- Package the versioned `model_lifecycle.finalize_heavy_work_v1` EXECUTE-only shared-transaction signature as C07's canonical typed sidecar, with its named U5/U7 caller roles and positive/negative conformance fixtures. U1 validates the contract and evidence; U6 owns the routine, lease, fence and pin, while U5/U7 own their publication transactions.
+- Validate C07 fixtures for immutable run/pin/request/first-attempt/first-lease binding, a distinct retry attempt only after terminal/fenced proof, same-transaction owner publication and U6 pin closure, exact replay versus changed-payload conflict, and failures or crashes before and after commit. Include pin-admission/drain exclusion, atomic evaluation-lease completion with promotion/rollback, and central-slot reconciliation only after retailer-local terminal proof.
+- Publish and validate C10's typed `ForecastRunHistoryResponse` and C10/C13 bounded distinct product-set schemas and examples. Covered and unavailable products form an exact partition; unavailable products carry reasons and only covered products have 28 dated values. Stale, unpublished and failed outcomes remain explicit.
+- Include these canonical documents, generated-output manifests, fixtures and their real validation results in the source-bound C01 release package by Bolt 2. U6/U7 producer-consumer conformance closes in Bolt 4, and U13 reruns the assembled evidence in Bolt 7. The seven-Bolt sequence and U1's non-runtime ownership remain unchanged.
 
 Does this all look correct before I generate the artifact?
 

@@ -1,0 +1,19 @@
+# Forecasting Observability Requirements
+
+Unit: U7 Forecasting (`forecasting`)
+
+## Requirements
+
+| ID | Requirement | Acceptance and evidence | Failure behavior |
+| --- | --- | --- | --- |
+| NFR10.2 | Emit bounded OpenTelemetry logs, metrics, and traces across scheduler, API, RabbitMQ, worker, PostgreSQL routines, Redis, Retail Data, Model Lifecycle, and artifact access according to NFR10.4. Measure admission/queue/phase latency, shared-lease age, attempts, product outcomes, coverage, freshness, pointer history, cache, dependency calls, recovery, and CPU/RAM/storage. | Cardinality/canary tests prove end-to-end W3C context, the signal-specific policy, redaction, bounded buffering, explicit no-data/stale states, and observable signal loss. | Aggregate/drop unsafe labels, expose telemetry loss, and preserve authoritative work. |
+| NFR10.4 | Metrics may contain only bounded dimensions: service, operation, outcome/status class, dependency, model kind, cache state, freshness class, error class, and deployment revision; they shall contain no retailer, user, correlation, request, run, attempt, release, source, publication, pointer, artifact, product, or trace identifiers. Logs may contain correlation ID and server-generated job/run/attempt/publication IDs plus an HMAC-pseudonymized retailer ID, but no user, product, artifact locator, or raw business value. Traces use the W3C trace/span IDs as correlation and may contain the same server IDs and retailer pseudonym; release/source/pointer versions appear only as bounded digest prefixes when needed for diagnosis. The HMAC key is Vault-managed and rotated with overlap; evidence exports resolve full identifiers only through an authorized audit query. | Static instrumentation checks and canary/cardinality tests inspect all three signal types, inject forbidden values, verify pseudonym stability/rotation, enforce metric-series ceilings per service, and prove authorized evidence can correlate through the audit API without adding high-cardinality metric labels. | Drop or hash the offending attribute, increment a bounded telemetry-policy violation counter, and reject evidence publication if safe correlation cannot be maintained. |
+| NFR10.3 | Warn when queue age exceeds five minutes, a partial revision awaits acknowledgement 30 minutes, read p95 exceeds 500 ms for ten minutes, or resources exceed 90% for five minutes. Alert on missed five-/30-minute schedule targets, 60 seconds without progress, any dead letter, retry exhaustion, stale/unavailable current forecast at the freshness boundary, reconciliation over one hour, or backup age over 24 hours; tenant, leakage, schema, checksum, and pointer-integrity failures alert immediately. | Synthetic probes trigger and resolve every threshold with severity, revision, correlation, runbook, and notification evidence. | Missing telemetry raises observability-degraded state and cannot be interpreted as healthy. |
+| NFR15.3 | Dashboards and evidence manifests shall link stable requirement IDs to schedule/DST decisions, environment/configuration/source/model digests, runs/attempts, series/coverage, publications/pointers, freshness, caches, retries/DLQ, resources, recovery, tests, outcomes, and limitations. | Checksummed dashboard/evidence exports resolve every ID and retain passed, failed, limited, rejected, and not-run outcomes. | Reject incomplete evidence and prohibit timeliness, freshness, recovery, capacity, isolation, or success claims without supporting artifacts. |
+
+## Runbooks
+
+Runbooks cover missed schedules, queue pressure, shared-lease starvation, lost
+worker leases, retry/DLQ, invalid product output, partial acknowledgement,
+artifact/source mismatch, stale/unavailable pointers, Redis degradation,
+dependency outage, restore/reconciliation, resource pressure, and telemetry loss.

@@ -24,6 +24,7 @@ entities:
     entityConstraints:
       - The pair retailerId and supplierCode is unique.
       - Retirement preserves source, term, comparison, and audit history.
+      - A status or display-name mutation that changes comparison eligibility or ordering writes the MongoDB source recovery fence and advances the retailer's SupplierSourceGeneration in the same transaction; exact replay does not advance it again.
 
   - name: SupplierSubmission
     description: One immutable retailer-scoped upload request and its source identity.
@@ -210,8 +211,25 @@ entities:
       - A transition cannot cross retailer, supplier, or product identity.
       - Revocation has no resulting current term unless another term is accepted in the same governed action.
 
+  - name: SourceDeletionGuard
+    description: PostgreSQL authority that serializes term eligibility and deletion of one exact source version.
+    attributes:
+      - { name: retailerId, logicalType: Identifier, required: true, unique: false, references: Retailer.retailerId }
+      - { name: submissionId, logicalType: Identifier, required: true, unique: false, references: SupplierSubmission.submissionId }
+      - { name: sourceVersion, logicalType: PositiveInteger, required: true, unique: false, min: 1 }
+      - { name: fenceGeneration, logicalType: PositiveInteger, required: true, unique: false, min: 1 }
+      - { name: state, logicalType: Enum, required: true, unique: false, allowedValues: [open, reserved, tombstoned], default: open }
+      - { name: deletionRequestId, logicalType: Identifier, required: false, unique: false }
+      - { name: sourceChecksum, logicalType: Sha256, required: true, unique: false }
+      - { name: updatedAt, logicalType: Instant, required: true, unique: false }
+    entityConstraints:
+      - The tuple retailerId, submissionId, sourceVersion is unique and is created before a source becomes eligible for term acceptance.
+      - Term acceptance, term dependency removal, and deletion reservation lock this row in PostgreSQL with current-term dependency rows.
+      - Reserved and tombstoned states deny new acceptance; a tombstoned guard is never reopened.
+      - A committed reservation is irreversible: reconciliation retries the matching MongoDB tombstone and never reopens the guard, including after worker uncertainty.
+
   - name: SourceTombstone
-    description: Durable deletion authority for a source whose bytes and projections must stay absent.
+    description: MongoDB deletion authority for a source whose bytes and projections must stay absent.
     attributes:
       - { name: tombstoneId, logicalType: Identifier, required: true, unique: true }
       - { name: retailerId, logicalType: Identifier, required: true, unique: false, references: Retailer.retailerId }
@@ -220,10 +238,17 @@ entities:
       - { name: deletedBy, logicalType: ExternalIdentifier, required: true, unique: false }
       - { name: deletedAt, logicalType: Instant, required: true, unique: false }
       - { name: reasonCode, logicalType: String, required: true, unique: false }
-      - { name: objectDeletionState, logicalType: Enum, required: true, unique: false, allowedValues: [pending, deleted, failed] }
+      - { name: deletionRequestId, logicalType: Identifier, required: true, unique: true }
+      - { name: fenceGeneration, logicalType: PositiveInteger, required: true, unique: false, min: 1 }
+      - { name: objectCleanupState, logicalType: Enum, required: true, unique: false, allowedValues: [pending, running, complete, failed], default: pending }
+      - { name: indexCleanupState, logicalType: Enum, required: true, unique: false, allowedValues: [pending, running, complete, failed], default: pending }
+      - { name: deletionState, logicalType: Enum, required: true, unique: false, allowedValues: [tombstoned, complete], default: tombstoned }
+      - { name: objectCleanupEvidenceDigest, logicalType: Sha256, required: false, unique: false }
+      - { name: indexCleanupEvidenceDigest, logicalType: Sha256, required: false, unique: false }
     entityConstraints:
       - A tombstone survives object and index deletion.
       - Rebuild logic excludes every tombstoned source.
+      - Completion requires both cleanup branches complete, matching fence generation, and reconciled evidence; failed branches alone retry without resetting a completed branch.
 
   - name: DocumentChunk
     description: An immutable page-aware piece of extracted source text used to build retrieval projections.
@@ -272,7 +297,7 @@ entities:
       - { name: embeddingConfigurationId, logicalType: Identifier, required: true, unique: false, references: EmbeddingConfiguration.embeddingConfigurationId }
       - { name: generation, logicalType: PositiveInteger, required: true, unique: false, min: 1 }
       - { name: collectionLocator, logicalType: OpaqueLocator, required: true, unique: true, constraints: "Server-owned and never client-selected." }
-      - { name: status, logicalType: Enum, required: true, unique: false, allowedValues: [planned, building, validating, active, superseded, failed, deleted], default: planned }
+      - { name: status, logicalType: Enum, required: true, unique: false, allowedValues: [planned, building, validating, validated, active, superseded, failed, deleted], default: planned }
       - { name: sourceManifestDigest, logicalType: Sha256, required: false, unique: false }
       - { name: expectedChunkCount, logicalType: NonNegativeInteger, required: false, unique: false }
       - { name: indexedChunkCount, logicalType: NonNegativeInteger, required: false, unique: false }
@@ -283,6 +308,7 @@ entities:
       - The tuple retailerId, embeddingConfigurationId, generation is unique.
       - At most one generation is active per retailer and embedding configuration.
       - Activation requires complete source, deletion, count, checksum, and tenant reconciliation.
+      - Validation leaves the route unchanged; a separate route-authority transaction activates only a validated generation.
 
   - name: ActiveIndexRoute
     description: The authoritative server-side pointer to one validated retrieval generation.
@@ -424,6 +450,106 @@ entities:
       - The tuple consumerName and messageId is unique.
       - A repeated message with changed bytes conflicts rather than applying.
 
+  - name: RecoveryParticipantState
+    description: Durable C25 Class C command disposition and local checkpoint for supplier-knowledge.
+    attributes:
+      - { name: retailerId, logicalType: Identifier, required: true, unique: false, references: Retailer.retailerId }
+      - { name: runId, logicalType: Identifier, required: true, unique: false }
+      - { name: recoveryGeneration, logicalType: PositiveInteger, required: true, unique: false, min: 1 }
+      - { name: registrationId, logicalType: Identifier, required: true, unique: false }
+      - { name: rosterDigest, logicalType: Sha256, required: true, unique: false }
+      - { name: state, logicalType: Enum, required: true, unique: false, allowedValues: [unprepared, prepared, closed, aborted, resumed, unresolved] }
+      - { name: terminalAbortGuard, logicalType: Boolean, required: true, unique: false, default: false }
+      - { name: checkpointDigest, logicalType: Sha256, required: false, unique: false }
+      - { name: businessDrainCursor, logicalType: Digest, required: false, unique: false }
+      - { name: controlInboxCursor, logicalType: Digest, required: false, unique: false }
+      - { name: controlOutboxCursor, logicalType: Digest, required: false, unique: false }
+      - { name: lastCommandId, logicalType: Identifier, required: true, unique: false }
+    entityConstraints:
+      - The tuple retailerId, runId, recoveryGeneration is unique; later generations cannot be overwritten by stale commands.
+      - An abort received before prepare persists a terminal guard so delayed prepare cannot reacquire a fence.
+      - A closed disposition requires both durable store-local fences and drained worker/relay/consumer/acknowledgement permits, then separate MongoDB, PostgreSQL and messaging checkpoints for the same generation.
+      - The checkpoint covers MongoDB source/tombstone state, PostgreSQL terms/guards and message receipts, immutable-object digests, and rebuildable vector projection status.
+      - Business drain cursors exclude allowlisted C25 recovery-control command and acknowledgement messages. Control inbox/outbox cursors and stable message IDs are bound separately to the checkpoint and U15 manifest, so a close acknowledgement does not need to be included in its own business cut.
+
+  - name: RecoveryControlReceipt
+    description: PostgreSQL-owned durable C25 control inbox/outbox and exact response identity that remains operable while business writes are fenced.
+    attributes:
+      - { name: controlReceiptId, logicalType: Identifier, required: true, unique: true }
+      - { name: retailerId, logicalType: Identifier, required: true, unique: false, references: Retailer.retailerId }
+      - { name: runId, logicalType: Identifier, required: true, unique: false }
+      - { name: recoveryGeneration, logicalType: PositiveInteger, required: true, unique: false, min: 1 }
+      - { name: commandId, logicalType: Identifier, required: true, unique: false }
+      - { name: commandMessageId, logicalType: Identifier, required: true, unique: false }
+      - { name: acknowledgementMessageId, logicalType: Identifier, required: true, unique: true }
+      - { name: payloadDigest, logicalType: Sha256, required: true, unique: false }
+      - { name: checkpointBindingDigest, logicalType: Sha256, required: false, unique: false }
+      - { name: state, logicalType: Enum, required: true, unique: false, allowedValues: [recorded, confirmed, acknowledged, failed] }
+    entityConstraints:
+      - Only authenticated C25 recovery commands and their corresponding acknowledgements use this allowlisted lane; no supplier business message, worker or outbox event can enter it.
+      - The control inbox, recovery state and acknowledgement outbox commit through a generation-checked owned PostgreSQL routine even while the term business fence is active. A separate control relay publishes to the contracted C25 acknowledgement route with confirms and a stable message ID, then acknowledges the C25 command. It cannot clear either business fence merely by delivering a message.
+      - Partial MongoDB or PostgreSQL fence uncertainty leaves the control result failed or unresolved; retries return the exact durable disposition and never claim a closed cut.
+
+  - name: SupplierSourceRecoveryFence
+    description: MongoDB authority for U5 source and processing writes during a C25 cut.
+    attributes:
+      - { name: retailerId, logicalType: Identifier, required: true, unique: true, references: Retailer.retailerId }
+      - { name: runId, logicalType: Identifier, required: true, unique: false }
+      - { name: recoveryGeneration, logicalType: PositiveInteger, required: true, unique: false, min: 1 }
+      - { name: state, logicalType: Enum, required: true, unique: false, allowedValues: [active, fenced, closed, terminal, unresolved] }
+      - { name: inFlightPermits, logicalType: NonNegativeInteger, required: true, unique: false }
+      - { name: checkpointDigest, logicalType: Sha256, required: false, unique: false }
+    entityConstraints:
+      - Every MongoDB source, tombstone, extraction, worker and local inbox/outbox mutation writes or compares this fence document in its own transaction; concurrent prepare changes conflict rather than crossing the cut.
+      - New permits stop at prepare; close waits for all prior permits, outbox confirms and broker acknowledgements to settle before recording its source checkpoint.
+
+  - name: SupplierTermRecoveryFence
+    description: PostgreSQL authority for U5 term, deletion-guard and route writes during a C25 cut.
+    attributes:
+      - { name: retailerId, logicalType: Identifier, required: true, unique: true, references: Retailer.retailerId }
+      - { name: runId, logicalType: Identifier, required: true, unique: false }
+      - { name: recoveryGeneration, logicalType: PositiveInteger, required: true, unique: false, min: 1 }
+      - { name: state, logicalType: Enum, required: true, unique: false, allowedValues: [active, fenced, closed, terminal, unresolved] }
+      - { name: inFlightPermits, logicalType: NonNegativeInteger, required: true, unique: false }
+      - { name: checkpointDigest, logicalType: Sha256, required: false, unique: false }
+    entityConstraints:
+      - Every PostgreSQL term, dependency, deletion-guard, route and local inbox/outbox mutation locks this fence row through an owned routine in the same transaction as its effect.
+      - New permits stop at prepare; close waits for all prior permits, outbox confirms and broker acknowledgements to settle before recording its term checkpoint.
+
+  - name: SupplierSourceGeneration
+    description: MongoDB retailer-scoped authority for source-version and supplier-comparison eligibility freshness.
+    attributes:
+      - { name: retailerId, logicalType: Identifier, required: true, unique: true, references: Retailer.retailerId }
+      - { name: generation, logicalType: PositiveInteger, required: true, unique: false, min: 1 }
+      - { name: updatedAt, logicalType: Instant, required: true, unique: false }
+    entityConstraints:
+      - Increment in the same MongoDB transaction as every upload, new version, supersession, deletion, processing transition that changes source/evidence availability, or supplier status/display-name change that changes comparison eligibility or ordering; exact replay does not increment again.
+
+  - name: SupplierTermGeneration
+    description: PostgreSQL retailer-scoped authority for accepted-term freshness.
+    attributes:
+      - { name: retailerId, logicalType: Identifier, required: true, unique: true, references: Retailer.retailerId }
+      - { name: generation, logicalType: PositiveInteger, required: true, unique: false, min: 1 }
+      - { name: updatedAt, logicalType: Instant, required: true, unique: false }
+    entityConstraints:
+      - Increment through an owned PostgreSQL routine in the same transaction as every term acceptance, supersession, revocation or eligibility-affecting transition; exact replay does not increment again.
+
+  - name: SupplierResultCacheEntry
+    description: Disposable Redis projection for an authorized retrieval or comparison result.
+    attributes:
+      - { name: retailerId, logicalType: Identifier, required: true, unique: false, references: Retailer.retailerId }
+      - { name: queryDigest, logicalType: Sha256, required: true, unique: false }
+      - { name: placementGeneration, logicalType: PositiveInteger, required: true, unique: false, min: 1 }
+      - { name: contractVersion, logicalType: String, required: true, unique: false }
+      - { name: sourceGeneration, logicalType: PositiveInteger, required: true, unique: false, min: 1 }
+      - { name: activeIndexGeneration, logicalType: PositiveInteger, required: false, unique: false, min: 1 }
+      - { name: acceptedTermGeneration, logicalType: PositiveInteger, required: false, unique: false, min: 1 }
+      - { name: expiresAt, logicalType: Instant, required: true, unique: false }
+    entityConstraints:
+      - TTL is five minutes; cached data never grants authorization or supersedes current source, term, tombstone or route authority.
+      - The source and term generations are authoritative retailer-scoped records in MongoDB and PostgreSQL; activeIndexGeneration is the server-owned route generation. Read the current applicable vector before every hit and again before fill.
+      - A generation mismatch, stale fill, missing authority, missing Redis service or invalidation forces an authoritative read or explicit unavailable result; never serve an unverified cached value.
+
   - name: BusinessAuditEntry
     description: Immutable actor, tenant, target, outcome, and provenance evidence for a Supplier Knowledge action.
     attributes:
@@ -455,6 +581,12 @@ relationships:
   - { from: SupplierOfferCandidate, to: AcceptedSupplierTerm, cardinality: "1:0..N", direction: "Manager acceptance creates immutable term versions" }
   - { from: AcceptedSupplierTerm, to: TermTransition, cardinality: "1:N", direction: "Transitions preserve term history" }
   - { from: SupplierSubmission, to: SourceTombstone, cardinality: "1:0..1", direction: "Deletion creates durable exclusion" }
+  - { from: SupplierSubmission, to: SourceDeletionGuard, cardinality: "1:1", direction: "PostgreSQL serializes term acceptance and deletion reservation" }
+  - { from: Retailer, to: SupplierSourceRecoveryFence, cardinality: "1:1", direction: "MongoDB source mutations share the generation fence" }
+  - { from: Retailer, to: SupplierTermRecoveryFence, cardinality: "1:1", direction: "PostgreSQL term mutations share the generation fence" }
+  - { from: RecoveryParticipantState, to: RecoveryControlReceipt, cardinality: "1:N", direction: "C25 control results publish separately from business-drained messages" }
+  - { from: Retailer, to: SupplierSourceGeneration, cardinality: "1:1", direction: "MongoDB source changes advance cache authority" }
+  - { from: Retailer, to: SupplierTermGeneration, cardinality: "1:1", direction: "PostgreSQL term changes advance cache authority" }
   - { from: ExtractionRecord, to: DocumentChunk, cardinality: "1:N", direction: "Extraction is deterministically chunked" }
   - { from: EmbeddingConfiguration, to: RetrievalIndexGeneration, cardinality: "1:N", direction: "Configuration defines compatible generations" }
   - { from: RetrievalIndexGeneration, to: IndexBuildJob, cardinality: "1:N", direction: "Jobs build and govern a generation" }
@@ -470,9 +602,9 @@ relationships:
 
 Supplier files, source processing, and extraction evidence form one immutable provenance chain. Original bytes are addressed by opaque object references; document records retain the checksums and configuration needed to prove and reproduce every extraction. Valid candidates remain distinct from accepted commercial terms.
 
-Accepted terms are effective-dated, retailer-wide records. Manager actions create term transitions rather than updating history. Retrieval generations isolate each retailer and embedding configuration, while an active route provides an atomic server-owned switch. Tombstones and index manifests make deletions reproducible during rebuild.
+Accepted terms are effective-dated, retailer-wide records. Manager actions create term transitions rather than updating history. A PostgreSQL deletion guard closes the race with source deletion before MongoDB tombstoning. Retrieval generations isolate each retailer and embedding configuration; validated generations remain inactive until an atomic server-owned route switch. Tombstones track independent object and index cleanup branches so partial progress remains retryable during rebuild.
 
-Idempotency, inbox/outbox records, and audit entries are modeled explicitly because correctness spans several stores without a distributed transaction. Each authoritative store commits only its own state and evidence; repeatable projection workflows reconcile the rest.
+Idempotency, inbox/outbox records, and audit entries are modeled explicitly because correctness spans several stores without a distributed transaction. Each authoritative store commits only its own state and evidence; repeatable projection workflows reconcile the rest. Store-local recovery fences prevent a write or message effect from crossing a class-C cut, while retailer-scoped source and term generations keep Redis entries bound to current authority.
 
 ## Sources
 

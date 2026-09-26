@@ -16,14 +16,13 @@ engineering process.
 
 ## Project status
 
-StockSense has completed and approved Inception. Construction is the active
-lifecycle phase, but no Construction artifact or application implementation has
-started, so the application and local platform described below are an approved
-target rather than a runnable implementation. The skills table explicitly
-describes planned evidence; each claim will become demonstrated only when linked
-implementation and validation evidence is committed. The engine-owned
-[lifecycle state](aidlc/spaces/default/intents/260908-stock-sense-design/aidlc-state.md)
-is the source of truth for current progress.
+StockSense is progressing through its AI-DLC design and delivery work. Some
+Construction design artifacts exist as drafts ahead of their stage approvals;
+the application and local platform described below are not yet a runnable
+implementation. The skills table describes planned evidence, and each claim
+becomes demonstrated only when linked implementation and validation evidence
+is committed. The [lifecycle state](aidlc/spaces/default/intents/260908-stock-sense-design/aidlc-state.md)
+is the source of truth for current phase, stage, and approvals.
 
 ## Business problem
 

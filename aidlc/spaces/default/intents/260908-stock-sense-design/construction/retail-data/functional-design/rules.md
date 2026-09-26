@@ -4,7 +4,7 @@ Unit: U4 Retail Data (`retail-data`)
 
 Decision basis: confirmed Retail Data Functional Design answers dated 2026-09-12.
 
-Sources: FR2-FR6, FR8-FR12, FR14, FR17, FR19-FR20; NFR3-NFR4, NFR7-NFR15; C02-C04, C06, C08, C11, C15, C17-C19; the U4 unit boundary; assigned stories; and the confirmed Retail Data Functional Design decisions.
+Sources: FR2-FR6, FR8-FR12, FR14, FR17, FR19-FR20; NFR3-NFR4, NFR7-NFR15; C02-C04, C06, C08, C11, C15, C17-C19, C24-C26; the U4 unit boundary; assigned stories; and the confirmed Retail Data Functional Design decisions.
 
 The YAML block is the source of truth for Retail Data decision logic. Rules covering Purchasing, forecasting, model evaluation, assistant, infrastructure, or audit define U4's contribution at those boundaries. Their owning units retain the remaining behavior.
 
@@ -545,6 +545,24 @@ rules:
     violationBehaviour: "Deny direct update, delete, and foreign-tenant access."
     source: [FR17, NFR4, NFR9]
 
+  - id: BR7.9
+    statement: U4's service-local publisher implements C23 without an U14 runtime dependency.
+    category: validation
+    appliesTo: [OutboxMessage, BusinessAuditRecord]
+    trigger: A U4 audit, reference, inventory or demand event is published or replayed.
+    logic: "IF the closed tenant C01 envelope, authenticated producer binding, RFC 8785 data digest, 65,536-byte serialized limit, confirm, five-delivery retry, seven-day DLQ, authorized replay and telemetry rules pass THEN relay the committed outbox identity; U3 global identity events use a different owner/profile."
+    violationBehaviour: "Fail the U4 publication capability closed for invalid envelope or missing applicable C22 conformance evidence; keep business outbox state durable."
+    source: [C01, C15, C22, C23, AC8.2.4, AC8.5.3]
+
+  - id: BR7.10
+    statement: U4 supplies its own versioned C22 fixture results to U13.
+    category: validation
+    appliesTo: [OutboxMessage, InboxReceipt]
+    trigger: U4 claims audit-delivery or reliable-work acceptance.
+    logic: "IF every applicable tenant publisher fixture and owner consumer duplicate, conflict, stale-authority and crash schedule passes against U4 state THEN publish separately attributed U4 evidence."
+    violationBehaviour: "Do not substitute U14 package fixtures or a representative consumer pass for U4's own result."
+    source: [C22, C23, AC8.2.4, AC8.5.2, AC8.5.4]
+
   - id: BR8.1
     statement: Tenant extraction begins by draining new mutations and active work for only the selected retailer.
     category: constraint
@@ -617,6 +635,78 @@ rules:
     violationBehaviour: "Retain records and report the blocking reference or hold category."
     source: [NFR9, NFR15]
 
+  - id: BR8.9
+    statement: U4 Tenant Directory C24 prepare durably fences membership, placement and topology writes before success.
+    category: constraint
+    appliesTo: [RetailRecoveryParticipantState, RetailRecoveryCommandResult, RetailerPlacement]
+    trigger: U15's authenticated registered coordinator submits prepare.
+    logic: "IF participant tenant-directory, synchronous C24 route, coordinator, roster, policy, required headers, retailer, current placement and monotonic recovery generation validate THEN atomically persist the Tenant Directory state, membership/placement/topology fence and exact result before 200. Inventory and Demand History use separate C25 participants."
+    violationBehaviour: "Reject typed 401/403/409/422, or 503 on persistence failure; no uncommitted success or unfenced Tenant Directory write."
+    source: [C24, AC9.11.1]
+
+  - id: BR8.10
+    statement: Tenant Directory C24 close binds its own durable checkpoint and digest while its fence remains held.
+    category: validation
+    appliesTo: [RetailRecoveryParticipantState, RetailRecoveryCommandResult, OutboxMessage, InboxReceipt]
+    trigger: U15 submits close after a prepared U4 participant.
+    logic: "IF Tenant Directory's owned PostgreSQL transaction/LSN, placement/membership/recovery-generation state, audit/outbox cursors and checkpoint digest reconcile THEN persist the class-A closed result; U15/U2 assemble separate Inventory, Demand History, Purchasing and broker evidence."
+    violationBehaviour: "Deny close without matching durable evidence; never claim the whole cut from a U4 result."
+    source: [C24, AC9.11.2]
+
+  - id: BR8.11
+    statement: C24 abort and resume preserve terminal guards and local reconciliation across retry and restart.
+    category: constraint
+    appliesTo: [RetailRecoveryParticipantState, RetailRecoveryCommandResult]
+    trigger: Abort, delayed prepare, resume or process restart occurs.
+    logic: "IF abort precedes observed prepare THEN persist a Tenant Directory terminal guard that suppresses delayed prepare/close. Resume clears only this run's membership/placement/topology fence after its own generation, grant, placement, audit/outbox and checkpoint evidence reconcile."
+    violationBehaviour: "Keep unresolved participants fenced and return typed reconciliation or fence-unresolved result; no coordinator-wide success inference."
+    source: [C24, AC9.11.3]
+
+  - id: BR8.12
+    statement: C24 command identity and deadline are durable and exact.
+    category: constraint
+    appliesTo: [RetailRecoveryParticipantState, RetailRecoveryCommandResult]
+    trigger: A prepare, close, abort, resume or retry is received.
+    logic: "IF tenant-directory/retailer/run, command ID, idempotency key and canonical request match a stored C24 result THEN return its exact status/body; a changed retry is 409. Observe Tenant Directory's class-A 30/30/30/60-second limits and U15's global phase deadline."
+    violationBehaviour: "Return 503 when durable state/result cannot commit; a timeout remains fenced and cannot reset the logical deadline."
+    source: [C24, AC9.11.3]
+
+  - id: BR8.13
+    statement: U4 recovery participants accept commands only from the registered U15 coordinator; inspection remains non-destructive.
+    category: authorization
+    appliesTo: [RetailRecoveryParticipantState, RetailRecoveryCommandResult, RetailAsyncRecoveryParticipantState, RetailAsyncRecoveryCommandResult]
+    trigger: C24 or C25 status or mutation is requested.
+    logic: "IF U15's narrow authenticated workload and scope authorize the registered C24 or C25 command THEN process it under current retailer/placement context; only read-only validation may continue while the owning module is fenced without creating a required authoritative event. U15 owns explicit human confirmation."
+    violationBehaviour: "Deny unauthorized or stale mutation without a participant effect; do not turn retailer Operator role into platform grant."
+    source: [C24, C25, C26, AC9.11.4]
+
+  - id: BR8.14
+    statement: Inventory is a separate C25 participant with its own write fence and stock checkpoint.
+    category: constraint
+    appliesTo: [RetailAsyncRecoveryParticipantState, RetailAsyncRecoveryCommandResult, InventoryPosition, StockMovement]
+    trigger: U15 dispatches an inventory prepare, close, abort or resume command.
+    logic: "IF the registered inventory C25 command arrives on stocksense.recovery.command.v1.inventory with current retailer/placement/recovery generation and class B prepare/close/abort/resume deadlines of 60/60/60/120 seconds THEN persist its own monotonic command state and fence product, stock, inventory import, receipt-stock mutation and affected relay/consumer work before acknowledging. Close binds stock conservation, position watermark and inbox/outbox checkpoint; resume clears only after Inventory reconciliation."
+    violationBehaviour: "Reject an inventory registration with any class other than B before prepare. Publish no success acknowledgement before durable state/fence/checkpoint commit; keep uncertain Inventory work fenced and never claim Tenant Directory or Purchasing completion."
+    source: [C25, C26, AC9.11.1, AC9.11.2, AC9.11.3]
+
+  - id: BR8.15
+    statement: Demand History is a separate C25 participant with its own write fence and source checkpoint.
+    category: constraint
+    appliesTo: [RetailAsyncRecoveryParticipantState, RetailAsyncRecoveryCommandResult, DemandObservation, PromotionObservation]
+    trigger: U15 dispatches a demand-history prepare, close, abort or resume command.
+    logic: "IF the registered demand-history C25 command arrives on stocksense.recovery.command.v1.demand-history with current retailer/placement/recovery generation and class C prepare/close/abort/resume deadlines of 120/180/60/180 seconds THEN persist its own monotonic command state and fence demand/promotion observations, demand import and affected relay/consumer work before acknowledging. Close binds source/observation versions, local-date lineage and inbox/outbox checkpoint; resume clears only after Demand History reconciliation."
+    violationBehaviour: "Reject a demand-history registration with any class other than C before prepare. Publish no success acknowledgement before durable state/fence/checkpoint commit; keep uncertain Demand History work fenced and never claim Inventory or Tenant Directory completion."
+    source: [C25, C26, AC9.11.1, AC9.11.2, AC9.11.3]
+
+  - id: BR8.16
+    statement: Both U4 C25 participants preserve command and acknowledgement identity across retry, abort and restart.
+    category: constraint
+    appliesTo: [RetailAsyncRecoveryParticipantState, RetailAsyncRecoveryCommandResult, OutboxMessage, InboxReceipt]
+    trigger: A C25 command is delivered, retried, delayed or acknowledged.
+    logic: "IF authenticated C01 envelope context and registered participant, route, roster, policy, class deadline and command ID match THEN persist one exact result and publish its stable acknowledgement to stocksense.recovery.acknowledgement.v1 with causationId equal to command messageId. Exact retries return that result; changed content conflicts; abort-before-prepare suppresses a delayed prepare; restart reloads guards before writes resume."
+    violationBehaviour: "Reject stale, changed or unauthorized commands; retain an unresolved fence on timeout or persistence failure, and never fabricate a success acknowledgement."
+    source: [C01, C25, C26, AC9.11.1, AC9.11.3]
+
   - id: BR9.1
     statement: The reproducible fixture contains three isolated retailers, one store and 100 products each, and 18 months of history.
     category: policy
@@ -670,6 +760,15 @@ rules:
     logic: "IF a read is external THEN use the versioned contract; IF receipt modules are separated later THEN first replace the atomic requirement with an explicitly approved consistency design."
     violationBehaviour: "Do not route v1 receipt commit across a non-atomic network boundary."
     source: [FR8, NFR8, NFR15]
+
+  - id: BR9.7
+    statement: U4 provider contracts and reviewer evidence include C24/C25 and C22/C23 contributions.
+    category: validation
+    appliesTo: [RetailRecoveryParticipantState, RetailAsyncRecoveryParticipantState, OutboxMessage, InboxReceipt]
+    trigger: U1 validates the package or U13 evaluates the reviewer profile.
+    logic: "IF U4 provider-owned tenant-directory C24 commands/problems, separate inventory and demand-history C25 command/acknowledgement examples, tenant C01/C15 schemas, security/idempotency rules, compatibility and applicable C22 results are complete THEN U13 may attribute U4 evidence; U4 reports measured clean-run timing contribution only."
+    violationBehaviour: "Block U4 acceptance on missing provider contracts or evidence; U13 alone assesses complete three-run 90-minute and 45-minute limits."
+    source: [C01, C15, C22, C24, C25, AC8.2.4, AC10.1.5]
 ```
 
 ## Rules summary
@@ -682,6 +781,6 @@ rules:
 | BR4.1-BR4.8 | Demand and calendar | Source lineage, local dates, observed demand components, and protected synthetic truth remain distinct. |
 | BR5.1-BR5.4 | Redis | Versioned cache-aside behavior may degrade, but never becomes authority. |
 | BR6.1-BR6.8 | Downstream data | Immutable authorized snapshots preserve versions, purpose, ownership, and evaluation comparability. |
-| BR7.1-BR7.8 | Audit and messaging | Business, audit, and outbox writes are atomic; delivery is at-least-once and consumers deduplicate. |
-| BR8.1-BR8.8 | Extraction, restore, retention | Draining and verified generation cutover preserve one authority; recovery and purge fail closed. |
-| BR9.1-BR9.6 | Demo and boundaries | Diverse deterministic fixtures, explicit states, validated contracts, and modular deployment make reviewer evidence reproducible. |
+| BR7.1-BR7.10 | Audit and messaging | Business, audit, and outbox writes are atomic; U4's service-local C23 publisher and consumer behavior have separate C22 evidence. |
+| BR8.1-BR8.16 | Extraction, restore, recovery, retention | Draining and verified generation cutover preserve one authority; Tenant Directory C24 and separate Inventory/Demand History C25 participants retain their own durable fences, checkpoints and exact results. |
+| BR9.1-BR9.7 | Demo and boundaries | Diverse deterministic fixtures, complete U4 provider contracts and measured contributions make reviewer evidence reproducible. |

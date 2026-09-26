@@ -2,7 +2,7 @@
 
 Unit: U3 Identity Access (`identity-access`)
 
-Sources: FR1, FR2, FR20; NFR3-NFR6, NFR8-NFR11, NFR13-NFR15; C02, C16, and C20; the U3 unit boundary; assigned stories; and the confirmed Identity Access Functional Design decisions.
+Sources: FR1, FR2, FR20; NFR3-NFR6, NFR8-NFR11, NFR13-NFR15; C01, C02, C15-C18, C20, C22-C24; the U3 unit boundary; assigned stories; and the confirmed Identity Access Functional Design decisions.
 
 The YAML block is the source of truth for U3 decision logic. References to BFF session, retailer context, infrastructure, or reviewer behavior define U3's contribution at those boundaries. U11 owns the browser cookie and U4 owns retailer memberships and roles.
 
@@ -25,7 +25,7 @@ rules:
     appliesTo: [Account, LocalCredential, AuthorizationSession]
     trigger: Local authentication validation fails.
     logic: "IF the account is absent, disabled, locked, or the secret does not verify THEN no grant, session, access token, or refresh token is issued."
-    violationBehaviour: "Return the same browser-safe denial class and record a security audit outcome without revealing which check failed."
+    violationBehaviour: "Return the same browser-visible authentication_failed code for absent, disabled, locked, and invalid credentials, with no session or token. Record the specific cause only in protected security audit/operator evidence; never disclose it through the browser response."
     source: [FR1, NFR5, NFR10]
 
   - id: BR1.3
@@ -33,7 +33,7 @@ rules:
     category: policy
     appliesTo: [LocalCredential]
     trigger: A submitted local credential fails verification.
-    logic: "IF the fifth failure in the current unlocked attempt sequence is recorded THEN set lockedUntil to 15 minutes after that failure; attempts during the lock cannot authenticate."
+    logic: "IF lockedUntil has elapsed THEN atomically clear it and reset failedAttemptCount to zero before evaluating the new attempt; count a failed first attempt as one. IF the fifth failure in the current unlocked sequence is recorded THEN set lockedUntil to 15 minutes after that failure. Concurrent attempts serialize against the credential so no sixth failure bypasses lockout."
     violationBehaviour: "Deny authentication until the lock expires or an operator performs a valid reset."
     source: [FR1, NFR5]
 
@@ -139,9 +139,9 @@ rules:
   - id: BR3.4
     statement: Refresh credentials rotate once per use, remain bounded by the session, and detect reuse.
     category: constraint
-    appliesTo: [AuthorizationSession, RefreshTokenFamily]
+    appliesTo: [AuthorizationSession, RefreshTokenFamily, RefreshTokenGeneration]
     trigger: A refresh credential is presented.
-    logic: "IF the current generation is valid and the session is active THEN consume and replace it atomically; IF a consumed generation is reused THEN revoke the family and session."
+    logic: "IF the presented digest identifies the current unconsumed generation and the session is active THEN atomically mark it consumed and insert exactly one replacement. IF a retained consumed-generation digest matches THEN revoke the family and session. An unknown digest is denied without asserting a reuse match. Retain consumed digests through family expiry plus five minutes."
     violationBehaviour: "Issue no token on invalid or reused refresh and require a new sign-in after reuse detection."
     source: [FR1, NFR5]
 
@@ -235,6 +235,24 @@ rules:
     violationBehaviour: "Keep unauthorized workloads denied; expired or missing credentials cannot gain broad fallback permissions."
     source: [NFR6]
 
+  - id: BR5.4
+    statement: U3's revocable platform-Operator grant is human-only and independent of U4 retailer roles.
+    category: authorization
+    appliesTo: [Account, PlatformOperatorGrant, MachineClient]
+    trigger: A platform grant is changed, read, or used to mint a delegated global-audit token.
+    logic: "IF an owner-controlled audited operation has an active grant for a verified human subject THEN U3 may mint the BFF-bound audit.identity.global.read token; only U10's registered identity.platform-grant.read workload may query the current grant for that same subject. Retailer Operator membership, a machine token, a cached claim, or a caller-supplied subject cannot establish the grant."
+    violationBehaviour: "Deny the operation or return no positive grant result; an unavailable current check fails closed."
+    source: [NFR3, NFR5, C02, C17, C18]
+
+  - id: BR5.5
+    statement: Invalid machine authority creates no successful business or audit effect and records a safe denial.
+    category: authorization
+    appliesTo: [MachineClient, IdentityAuditRecord, IdentityOutboxMessage]
+    trigger: A protected U3 operation receives a machine token with invalid issuer, audience, scope, client, or job authority.
+    logic: "IF machine authority is invalid THEN return the typed authorization problem and commit only a redacted denial audit/outbox pair when the attempt is security-relevant; never emit a business-success event or expose credentials."
+    violationBehaviour: "Deny before any protected effect and fail closed if the required denial evidence cannot be committed."
+    source: [AC1.4.6, NFR3, NFR5, C15]
+
   - id: BR6.1
     statement: U3 authenticates an account but U4 remains authoritative for retailer membership, role, and placement generation.
     category: authorization
@@ -307,6 +325,60 @@ rules:
     violationBehaviour: "Fail recovery validation when expired data would become visible again."
     source: [NFR9]
 
+  - id: BR7.6
+    statement: C24 prepare persists a U3 participant fence and a shared identity-write/key-rotation guard before acknowledging.
+    category: constraint
+    appliesTo: [IdentityRecoveryParticipantState, GlobalIdentityRecoveryFence, IdentityRecoveryCommandResult]
+    trigger: U15 submits an authenticated recovery prepare for a registered retailer/run.
+    logic: "IF coordinator identity, required headers, roster/policy, current U4 placement generation and monotonic recovery generation validate THEN atomically persist the participant state, global fence holder and exact command result before 200. A stale or conflicting generation cannot acquire or recreate the fence."
+    violationBehaviour: "Reject typed 401/403/409/422 as applicable; unresolved persistence returns 503 and identity writes/key rotation stay fenced."
+    source: [AC9.11.1, FR20, C24]
+
+  - id: BR7.7
+    statement: C24 close requires a durable, matching U3 checkpoint; U15 owns the assembled cut.
+    category: validation
+    appliesTo: [IdentityRecoveryParticipantState, IdentityRecoveryCommandResult]
+    trigger: U15 submits close after U3 prepare.
+    logic: "IF the local U3 relational transaction/LSN and identity/outbox cursor checkpoint is durable and its digest matches the closed response THEN close may commit; U3 supplies only its participant evidence, while U15/U2 assemble PostgreSQL and broker snapshot evidence across the full roster."
+    violationBehaviour: "Deny close without a matching checkpoint and retain the fence."
+    source: [AC9.11.2, C24]
+
+  - id: BR7.8
+    statement: Abort and resume preserve a terminal guard and require local reconciliation before any U3 fence clears.
+    category: constraint
+    appliesTo: [IdentityRecoveryParticipantState, GlobalIdentityRecoveryFence]
+    trigger: Abort, resume, delayed prepare, timeout, or restart affects a recovery run.
+    logic: "IF abort arrives before a delayed prepare THEN persist a terminal guard; that generation cannot later prepare or close. Resume clears only this run's holder after account, key, grant, audit/outbox and checkpoint reconciliation; other active or unresolved holders keep the shared fence active. Restart reloads every guard before writes."
+    violationBehaviour: "Keep uncertain participants fenced and return the typed unresolved/reconciliation outcome; never mark U15's overall run successful."
+    source: [AC9.11.3, C24]
+
+  - id: BR7.9
+    statement: Every C24 command has an exact durable idempotency result bound to its canonical request.
+    category: constraint
+    appliesTo: [IdentityRecoveryParticipantState, IdentityRecoveryCommandResult]
+    trigger: Prepare, close, abort, resume, or a retry is received.
+    logic: "IF participant/retailer/run/idempotency key and command ID match stored canonical request content THEN replay the exact stored status/body; a changed request is 409. A 200 is returned only after state, checkpoint/fence when applicable, and result commit atomically."
+    violationBehaviour: "On persistence failure return 503 RECOVERY_PERSISTENCE_UNAVAILABLE without inventing a durable result."
+    source: [AC9.11.3, C24]
+
+  - id: BR7.10
+    statement: U3 observes the class A and global recovery deadlines without turning uncertainty into success.
+    category: policy
+    appliesTo: [IdentityRecoveryParticipantState, IdentityRecoveryCommandResult]
+    trigger: A C24 command is admitted, retried, timed out, or resumed.
+    logic: "IF a command cannot complete within the class A 30/30/30/60-second prepare/close/abort/resume deadline or U15's applicable global phase deadline THEN retain durable fence and terminal inventory; retry only the same command identity inside the original deadline."
+    violationBehaviour: "Return a typed failed/unresolved outcome; do not extend deadlines or clear the fence optimistically."
+    source: [AC9.11.3, C24]
+
+  - id: BR7.11
+    statement: U3 accepts destructive recovery commands only from U15 and allows only truly read-only validation while fenced.
+    category: authorization
+    appliesTo: [IdentityRecoveryParticipantState, GlobalIdentityRecoveryFence, PlatformOperatorGrant]
+    trigger: Recovery status, prepare, close, abort, resume, or an identity operation is requested.
+    logic: "IF U15's registered coordinator workload and scope are absent THEN no participant mutation occurs; browser/Operator confirmation belongs to U15. While fenced, discovery, JWKS and pure token/grant validation may run only without state mutation or required audit publication; token issuance, authentication decisions that require audit, grants, credentials, sessions and key rotation remain blocked."
+    violationBehaviour: "Deny mutation or return dependency-unavailable; U3 status does not claim full-roster recovery success."
+    source: [AC9.11.4, C24, C26]
+
   - id: BR8.1
     statement: The identity boundary exposes reproducible build, readiness, and local-authentication smoke outcomes for a clean checkout.
     category: validation
@@ -343,6 +415,15 @@ rules:
     violationBehaviour: "Do not expose raw provider errors or block local reviewer completion."
     source: [FR1, NFR10, NFR11, NFR14]
 
+  - id: BR8.5
+    statement: U3 exposes repeatable local startup and login timing evidence for each clean reviewer run without claiming the whole-system deadline alone.
+    category: validation
+    appliesTo: [Account, AuthorizationSession]
+    trigger: U13 times three clean reference-host setup and demo runs.
+    logic: "IF U3's startup, readiness and local sign-in phases complete THEN record their actual per-run durations and prerequisites for U13; U13 evaluates the 90-minute total and 45-minute post-download deadlines on all three runs without an interpolated p95."
+    violationBehaviour: "Report U3's failed, limited or not-run contribution and do not claim a complete portfolio timing pass."
+    source: [AC10.1.5, NFR11]
+
   - id: BR9.1
     statement: Every synchronous identity boundary is described by a versioned OpenAPI contract with success and failure examples.
     category: validation
@@ -353,13 +434,13 @@ rules:
     source: [NFR8, NFR13]
 
   - id: BR9.2
-    statement: Every durable identity event is described by AsyncAPI and is created atomically with its authoritative change and audit record.
+    statement: Every security-relevant identity audit decision has exactly one atomically committed outbox message under the correct closed AsyncAPI profile.
     category: constraint
     appliesTo: [IdentityAuditRecord, IdentityOutboxMessage]
-    trigger: An auditable identity change commits.
-    logic: "IF the business change is valid THEN commit the identity state, immutable audit record, and outbox message together; publish under the versioned event contract."
-    violationBehaviour: "Roll back the authoritative change if its audit/outbox records cannot commit; retry publication without repeating the change."
-    source: [NFR7, NFR8, NFR10]
+    trigger: An identity denial, accepted mutation, or other security-relevant decision is recorded.
+    logic: "IF a security decision is made THEN commit its redacted audit record and exactly one outbox row together; an accepted mutation joins that transaction. Retailerless outcomes use only the C01 global envelope, identity.global.audit.recorded type and C15 global route with anonymous-safe fields; tenant events require real retailer/placement context and the tenant route."
+    violationBehaviour: "Fail the attempted transition closed if the pair cannot commit; reject cross-profile substitution or fabricated tenant metadata."
+    source: [NFR7, NFR8, NFR10, C01, C15]
 
   - id: BR9.3
     statement: Identity event publication is at-least-once, observable, bounded, and idempotent by immutable message identity.
@@ -369,6 +450,24 @@ rules:
     logic: "IF publication is confirmed THEN mark published; otherwise retry within the bounded policy and dead-letter visibly after exhaustion while preserving messageId."
     violationBehaviour: "Never claim exactly-once transport or create another authoritative identity change during replay."
     source: [NFR7, NFR10, NFR15]
+
+  - id: BR9.4
+    statement: U3 owns its C23-conformant bootstrap audit publisher without depending on U14.
+    category: validation
+    appliesTo: [IdentityOutboxMessage]
+    trigger: U3 publishes, replays, or claims conformance for identity audit events.
+    logic: "IF U3 publishes THEN its service-owned adapter enforces authenticated producer binding, immutable message identity, RFC 8785 payload digest, 64 KiB envelope, confirms, five deliveries, bounded retry, seven-day DLQ, authorized replay and telemetry. It passes each applicable versioned C22 fixture and U13 records U3 evidence separately from U14 package evidence."
+    violationBehaviour: "Block publisher deployment or acceptance when applicable conformance or evidence is missing."
+    source: [AC8.2.4, NFR7, C22, C23]
+
+  - id: BR9.5
+    statement: U3's provider-owned C02 and C24 operations and C01/C15 events remain complete versioned contracts.
+    category: validation
+    appliesTo: [PlatformOperatorGrant, IdentityRecoveryParticipantState, IdentityOutboxMessage]
+    trigger: U1 validates the catalogue or generated clients for U3 boundaries.
+    logic: "IF the platform-grant/current-check API, typed C24 commands and problems, tenant/global audit schemas, security/idempotency rules, examples or compatibility policy are missing or left as placeholders THEN U3's provider contribution is incomplete."
+    violationBehaviour: "Block dependent code generation and U3 final acceptance while U1 retains package governance."
+    source: [AC8.2.4, NFR8, C01, C02, C24]
 ```
 
 ## Rule application
@@ -383,8 +482,8 @@ Rules apply at the U3 boundary and describe its contribution to shared flows. A 
 | Google federation | BR2.1-BR2.6 | Exact optional configuration and explicit, expiring, unique account linking prevent email-based takeover |
 | Sessions and tokens | BR3.1-BR3.7 | PKCE validation, bounded sessions/tokens, rotating refresh, logout, CSRF, and no mutation replay define the human authorization lifecycle |
 | Key lifecycle | BR4.1-BR4.4 | Versioned protected keys rotate, overlap for concrete lifetimes, survive recovery, and fail closed |
-| Machine identity | BR5.1-BR5.3 | Narrow workload authentication cannot acquire human or retailer authority and rotates through scoped delivery |
+| Machine and platform identity | BR5.1-BR5.5 | Narrow workload authentication cannot acquire human/retailer authority; U3 grants and checks a separate revocable human platform role and records safe machine denials |
 | Retailer boundary | BR6.1-BR6.3 | U4 remains authoritative; zero/one/many selection and stale-context handling are explicit |
-| Persistence and recovery | BR7.1-BR7.5 | U3 uses its owned data boundary, versioned migration, integrity-checked restore, and retention reconciliation |
-| Reviewer profile | BR8.1-BR8.4 | Exact local HTTPS behavior, explicit prerequisites, optional Google, and safe browser outcomes support clean-room review |
-| Contracts and events | BR9.1-BR9.3 | Versioned synchronous contracts and atomic at-least-once identity events remain testable and auditable |
+| Persistence and recovery | BR7.1-BR7.11 | U3 owns its data and class A C24 participant lifecycle, durable fence/ledger/checkpoint, restart-safe abort/resume, and retention reconciliation |
+| Reviewer profile | BR8.1-BR8.5 | Exact local HTTPS behavior, explicit prerequisites, optional Google, safe outcomes, and per-run timing evidence support clean-room review |
+| Contracts and events | BR9.1-BR9.5 | Versioned C02/C24 APIs, closed tenant/global audit profiles, atomic one-to-one audit/outbox and service-owned C23 conformance remain testable |

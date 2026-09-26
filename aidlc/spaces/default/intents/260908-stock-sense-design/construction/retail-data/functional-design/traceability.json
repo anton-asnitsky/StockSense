@@ -1,13 +1,14 @@
 {
   "stage": "functional-design",
   "unit": "retail-data",
-  "decision_basis": "confirmed Retail Data Functional Design answers dated 2026-09-12",
+  "decision_basis": "confirmed Retail Data answers and fresh U4 C01/C22/C23/C24/C25 recovery-participant reconciliation confirmed on 2026-09-26",
   "upstream_ids": [
     "AC1.4.1",
     "AC1.4.2",
     "AC1.4.3",
     "AC1.4.4",
     "AC1.4.5",
+    "AC1.4.6",
     "AC2.1.1",
     "AC2.1.2",
     "AC2.1.3",
@@ -60,6 +61,9 @@
     "AC6.3.3",
     "AC6.3.4",
     "AC6.3.5",
+    "AC6.4.1",
+    "AC6.4.2",
+    "AC6.4.3",
     "AC6.5.1",
     "AC6.5.2",
     "AC6.5.3",
@@ -86,6 +90,7 @@
     "AC8.2.1",
     "AC8.2.2",
     "AC8.2.3",
+    "AC8.2.4",
     "AC8.3.1",
     "AC8.3.2",
     "AC8.3.3",
@@ -113,10 +118,15 @@
     "AC9.9.1",
     "AC9.9.2",
     "AC9.9.3",
+    "AC9.11.1",
+    "AC9.11.2",
+    "AC9.11.3",
+    "AC9.11.4",
     "AC10.1.1",
     "AC10.1.2",
     "AC10.1.3",
-    "AC10.1.4"
+    "AC10.1.4",
+    "AC10.1.5"
   ],
   "coverage": [
     {
@@ -143,6 +153,11 @@
       "id": "AC1.4.5",
       "status": "OK",
       "target": "BR1.1, BR1.2, BR1.3, BR1.4, BR1.5, BR1.6, BR1.7, BR1.8, BR1.11, BR5.1, BR6.2, BR9.3"
+    },
+    {
+      "id": "AC1.4.6",
+      "status": "OK",
+      "target": "BR1.4, BR7.5 (U4 current machine/job authority; U3 issues identity)"
     },
     {
       "id": "AC2.1.1",
@@ -405,6 +420,21 @@
       "target": "BR1.1, BR1.6, BR1.8, BR1.11, BR2.7, BR2.9, BR6.3, BR7.1"
     },
     {
+      "id": "AC6.4.1",
+      "status": "OK",
+      "target": "BR2.12 (U4 atomic receipt boundary; U8 owns order cancellation)"
+    },
+    {
+      "id": "AC6.4.2",
+      "status": "OK",
+      "target": "BR2.12 (U4 rejects inventory effect after U8 invalid cancellation)"
+    },
+    {
+      "id": "AC6.4.3",
+      "status": "OK",
+      "target": "BR2.12 (shared U4/U8 transaction prevents cancel/receipt double success)"
+    },
+    {
       "id": "AC6.5.1",
       "status": "OK",
       "target": "BR1.1, BR1.6, BR1.9, BR1.11, BR2.3, BR2.4, BR2.7, BR2.12, BR7.1, BR9.5, BR9.6"
@@ -533,6 +563,11 @@
       "id": "AC8.2.3",
       "status": "OK",
       "target": "BR7.5, BR9.4"
+    },
+    {
+      "id": "AC8.2.4",
+      "status": "OK",
+      "target": "BR7.9, BR7.10, BR9.7 (U4 C23/C24 provider contribution; U1 owns complete catalogue)"
     },
     {
       "id": "AC8.3.1",
@@ -670,6 +705,26 @@
       "target": "BR8.5, BR8.6, BR8.7, BR8.8"
     },
     {
+      "id": "AC9.11.1",
+      "status": "OK",
+      "target": "BR8.9, BR8.13, BR8.14, BR8.15, BR8.16 (U4 Tenant Directory C24 and separate Inventory/Demand History C25 fences; U15 owns roster)"
+    },
+    {
+      "id": "AC9.11.2",
+      "status": "OK",
+      "target": "BR8.10, BR8.14, BR8.15 (three separately attributed U4 checkpoints; U15/U2 assemble complete manifest)"
+    },
+    {
+      "id": "AC9.11.3",
+      "status": "OK",
+      "target": "BR8.11, BR8.12, BR8.14, BR8.15, BR8.16 (C24/C25 abort/resume/idempotency/deadlines; U15 coordinates)"
+    },
+    {
+      "id": "AC9.11.4",
+      "status": "OK",
+      "target": "BR8.13, BR8.16 (U4 C24/C25 coordinator-only commands; U15 owns human confirmation)"
+    },
+    {
       "id": "AC10.1.1",
       "status": "OK",
       "target": "BR2.12, BR6.1, BR9.1, BR9.2, BR9.3, BR9.4, BR9.5"
@@ -688,6 +743,11 @@
       "id": "AC10.1.4",
       "status": "OK",
       "target": "BR2.12, BR6.1, BR9.1, BR9.2, BR9.3, BR9.4, BR9.5"
+    },
+    {
+      "id": "AC10.1.5",
+      "status": "OK",
+      "target": "BR9.7 (U4 measured contribution; U13 assesses three complete runs)"
     }
   ],
   "reverse": []

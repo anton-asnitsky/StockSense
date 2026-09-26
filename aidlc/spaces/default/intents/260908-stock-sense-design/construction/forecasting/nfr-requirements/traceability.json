@@ -1,0 +1,22 @@
+{
+  "stage": "nfr-requirements",
+  "unit": "forecasting",
+  "upstream_ids": ["NFR1", "NFR2", "NFR3", "NFR4", "NFR5", "NFR6", "NFR7", "NFR8", "NFR9", "NFR10", "NFR11", "NFR12", "NFR13", "NFR14", "NFR15"],
+  "coverage": [
+    { "id": "NFR1", "status": "OK", "target": "NFR1.1, NFR1.2, NFR1.3" },
+    { "id": "NFR2", "status": "OK", "target": "NFR2.1, NFR2.2, NFR2.3" },
+    { "id": "NFR3", "status": "OK", "target": "NFR3.1, NFR3.2, NFR3.3, NFR3.4" },
+    { "id": "NFR4", "status": "OK", "target": "NFR4.1" },
+    { "id": "NFR5", "status": "OK", "target": "NFR5.1" },
+    { "id": "NFR6", "status": "OK", "target": "NFR6.1" },
+    { "id": "NFR7", "status": "OK", "target": "NFR7.1" },
+    { "id": "NFR8", "status": "OK", "target": "NFR8.1" },
+    { "id": "NFR9", "status": "OK", "target": "NFR9.1" },
+    { "id": "NFR10", "status": "OK", "target": "NFR10.1, NFR10.2, NFR10.3, NFR10.4" },
+    { "id": "NFR11", "status": "OK", "target": "NFR11.1" },
+    { "id": "NFR12", "status": "N/A", "target": "Terraform/Terragrunt state, backend, apply serialization, Helm delivery, and platform backup transport are owned by platform-infrastructure; U7 supplies measured workload settings and recovery dependencies." },
+    { "id": "NFR13", "status": "OK", "target": "NFR13.1, NFR13.2" },
+    { "id": "NFR14", "status": "N/A", "target": "Browser loading, empty, failure, stale, keyboard, and language presentation is owned by web-application/web-bff; U7 exposes distinct machine-readable lifecycle, freshness, coverage, and limitation states." },
+    { "id": "NFR15", "status": "OK", "target": "NFR15.1, NFR15.2, NFR15.3" }
+  ]
+}

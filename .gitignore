@@ -4,6 +4,9 @@
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
 # User-specific files
+CLAUDE.local.md
+.claude/settings.local.json
+.claude/agent-memory/
 *.rsuser
 *.suo
 *.user

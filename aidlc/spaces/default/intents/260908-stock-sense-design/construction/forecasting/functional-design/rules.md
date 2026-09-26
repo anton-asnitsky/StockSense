@@ -2,7 +2,7 @@
 
 Unit: U7 Forecasting (`forecasting`)
 
-Confirmation basis: Forecasting consolidated summary reconfirmed as `Looks correct` on 2026-09-14.
+Confirmation basis: Forecasting consolidated summary reconfirmed as `Looks correct` on 2026-09-25; the owner then directed correction of four review findings. Revised C07/C10/C13 behavior awaits review and conformance evidence.
 
 The YAML block is the source of truth for Forecasting decision logic. Rules describe U7 behavior and its contract obligations. Planning owns replenishment and review calculations; Model Lifecycle owns training, evaluation, promotion, and rollback; Contracts owns canonical schema packaging; Platform owns provisioning; Audit Evidence owns searchable projections; and the Web units own presentation.
 
@@ -168,7 +168,7 @@ rules:
     category: validation
     appliesTo: [ForecastModelResolution, ForecastAttempt]
     trigger: "An attempt prepares to execute."
-    logic: "IF artifact checksum, runtime profile, input schema, output schema, release identity, or retailer scope does not match the pinned resolution THEN fail the attempt or run."
+    logic: "IF signed skops.io manifest or artifact digest, Ed25519 signature, authoritative signer status, trust-policy version/digest, feature or runtime schema, release state, validity window, or retailer scope does not match the pinned resolution THEN fail before deserialization."
     violationBehavior: "Retain the failure and do not substitute another artifact or model."
     source: [FR13, NFR11]
 
@@ -181,12 +181,21 @@ rules:
     violationBehavior: "Keep every existing attempt and result bound to the original snapshot."
     source: [FR13, NFR15]
 
+  - id: BR3.8
+    statement: "Old-route admission and model switching serialize through C07's durable drain barrier."
+    category: constraint
+    appliesTo: [ForecastModelResolution, ForecastRun]
+    trigger: "A run pins a route or Model Lifecycle starts a no-overlap promotion."
+    logic: "IF pins:admit loses the route-row race to drains:start THEN reject the old-route run; IF any old pin remains outstanding or uncertain THEN promotion/rollback cannot switch the route."
+    violationBehavior: "Fail closed with explicit model-unavailable or deferred status; never use an unapproved overlap policy."
+    source: [FR13, NFR8]
+
   - id: BR4.1
     statement: "Only the current valid attempt lease may finalize execution output."
     category: authorization
     appliesTo: [ForecastAttempt, ForecastInboxReceipt]
     trigger: "A worker starts or finalizes an attempt."
-    logic: "IF message identity, job authority, run version, placement, lease owner, or lease expiry is invalid THEN the worker cannot finalize."
+    logic: "IF message identity, job authority, run version, placement/recovery generation, C07 lease ID, current monotonic fencing token, active status, or expiry is invalid THEN the worker cannot finalize."
     violationBehavior: "Record the attempt as interrupted or failed and expose no staged output."
     source: [NFR5, NFR7, AC8.5.2]
 
@@ -195,8 +204,8 @@ rules:
     category: constraint
     appliesTo: [ForecastAttempt]
     trigger: "Execution starts, retries, fails, or is interrupted."
-    logic: "IF another try is needed THEN append a new attempt; never overwrite succeeded, failed, interrupted, or cancelled evidence."
-    violationBehavior: "Reject in-place mutation and retain the original attempt."
+    logic: "IF WF3 has pinned both digests THEN create queued attempt 1 once; IF its first lease arrives THEN update that queued attempt; IF a terminal attempt needs retry THEN append the next number without overwriting terminal evidence."
+    violationBehavior: "Reject mutation of terminal attempts or creation of a second attempt for the first lease; retain all prior terminal evidence."
     source: [FR13, NFR15]
 
   - id: BR4.3
@@ -261,6 +270,24 @@ rules:
     logic: "IF Forecasting reports model identity or evaluated quality THEN it cites Model Lifecycle evidence and does not recalculate, promote, or claim comparative improvement."
     violationBehavior: "Withhold unsupported quality claims while preserving operational status."
     source: [FR13, NFR15, AC4.1.1, AC4.6.1]
+
+  - id: BR4.10
+    statement: "Every batch forecast uses Model Lifecycle's single durable C07 heavy-work queue."
+    category: constraint
+    appliesTo: [ForecastHeavyWorkRequest, ForecastHeavyWorkLease, ForecastAttempt]
+    trigger: "An admitted run becomes eligible for execution."
+    logic: "IF a canonical batch-forecast request is accepted THEN wait for its C07 lease; renew and complete with current lease ID, fencing token, placement/recovery generation and deadline."
+    violationBehavior: "Never execute or publish outside the shared arbiter; keep a queued request visible and fail expired or fenced work explicitly."
+    source: [FR13, NFR5, NFR8]
+
+  - id: BR4.11
+    statement: "Forecast finalization must atomically bind U7 output to a current C07 fence."
+    category: constraint
+    appliesTo: [ForecastRun, ForecastAttempt, ForecastHeavyWorkLease, ForecastPublication]
+    trigger: "An attempt finalizes or advances a current pointer."
+    logic: "IF U7's stored finalizer cannot invoke U6's C07 finalize_heavy_work_v1 port and commit current lease/fence, owner output, audit, outbox and pin closure in one retailer-local PostgreSQL transaction THEN publication is prohibited."
+    violationBehavior: "Keep staged output invisible and surface a blocked integration state; a prior REST lease check alone cannot authorize publication."
+    source: [FR13, FR17, NFR8]
 
   - id: BR5.1
     statement: "A fully Succeeded revision may become current automatically after atomic finalization."
@@ -478,6 +505,15 @@ rules:
     violationBehavior: "Reject direct cross-unit storage access or client-selected routing."
     source: [NFR3, NFR4, NFR8]
 
+  - id: BR7.11
+    statement: "C23 reusable Python messaging handles broker mechanics while U7 owns domain effects."
+    category: constraint
+    appliesTo: [ForecastOutboxMessage, ForecastInboxReceipt, ForecastAttempt]
+    trigger: "A Forecasting message is published, consumed or replayed."
+    logic: "IF U14's Python package validates C01/C22/C23 envelope, confirms and retry bounds THEN U7 still commits its own state, audit, outbox and inbox; broker delivery count remains separate from C07 job attempts."
+    violationBehavior: "Reject nonconformant messaging or an attempt to treat broker retry as a new business revision or C07 attempt."
+    source: [NFR7, NFR8, AC8.5.1, AC8.5.2, AC8.5.3]
+
   - id: BR8.1
     statement: "Recovery restores all authoritative Forecasting records before exposure."
     category: constraint
@@ -546,9 +582,36 @@ rules:
     category: policy
     appliesTo: [ForecastReconciliation]
     trigger: "A Forecasting recovery exercise completes."
-    logic: "IF measured recovery evidence or approved-objective comparison is absent THEN recovery cannot be reported as successful."
+    logic: "IF measured recovery evidence or comparison with recovery-policy-v1's 24-hour RPO, two-hour RTO and 30-day backup retention is absent THEN recovery cannot be reported as successful."
     violationBehavior: "Report failed or limited recovery with unresolved parameters; do not invent an objective or result."
     source: [FR20, NFR15, AC9.6.3]
+
+  - id: BR8.9
+    statement: "Forecasting is a C25 Class C recovery participant with durable monotonic dispositions."
+    category: constraint
+    appliesTo: [ForecastRecoveryDisposition, ForecastAttempt, ForecastPublication, ForecastInboxReceipt, ForecastOutboxMessage]
+    trigger: "U15 sends prepare, close, abort or resume."
+    logic: "IF a command is accepted THEN persist its idempotent disposition and checkpoint, fence workers and message paths as required, reject delayed prepare after abort, and acknowledge within the Class C 120/180/60/180-second deadlines."
+    violationBehavior: "Keep unresolved fences active and return a failed or unresolved disposition; never claim a successful checkpoint from a timeout."
+    source: [FR20, NFR7, AC9.6.1, AC9.6.3]
+
+  - id: BR8.10
+    statement: "Current forecasts resume only after U15-directed reconciliation of restored authority."
+    category: validation
+    appliesTo: [ForecastRecoveryDisposition, ForecastReconciliation, CurrentForecastPointer]
+    trigger: "A recovery resume command is processed."
+    logic: "IF tenant placement, recovery generation, lease fences, model package, run/pointer evidence, audit/outbox and replay state are not reconciled THEN keep reads and finalizers unavailable."
+    violationBehavior: "Do not clear a fence or expose current forecasts on command receipt alone."
+    source: [FR20, AC9.6.1, AC9.9.1]
+
+  - id: BR8.11
+    statement: "Forecasting checkpoints bind its authoritative transaction and replay position to the recovery cut."
+    category: constraint
+    appliesTo: [ForecastRecoveryDisposition, ForecastReconciliation]
+    trigger: "U15 closes the Class C barrier and requests checkpoint evidence."
+    logic: "IF the U7 checkpoint lacks durable PostgreSQL LSN/transaction identity, inbox/outbox replay position, generation and a digest matching the C25 acknowledgement THEN the participant cannot report closed."
+    violationBehavior: "Keep the participant fenced and return unresolved checkpoint evidence; U15 owns the broker snapshot manifest and overall recovery outcome."
+    source: [FR20, AC9.11.2]
 
   - id: BR9.1
     statement: "Planning receives immutable 28-day forecast evidence and remains owner of replenishment and purchasing decisions."
@@ -639,6 +702,15 @@ rules:
     logic: "IF accelerated results are reported THEN label their environment separately and retain CPU inference as the required acceptance result."
     violationBehavior: "Reject evidence that replaces or obscures the CPU path."
     source: [NFR11, NFR15]
+
+  - id: BR9.11
+    statement: "Forecasting reports measured phase timing for the portable reference-host journey."
+    category: policy
+    appliesTo: [ForecastRequest, ForecastRun, ForecastAttempt]
+    trigger: "Three clean reference-host demo runs are evaluated."
+    logic: "IF Forecasting contributes to the demo THEN retain each run's own setup and inference phase timings so the complete journey can verify 90-minute total and 45-minute post-download limits on every run."
+    violationBehavior: "Report the actual exceeding run or missing phase; do not replace three observations with an interpolated p95."
+    source: [NFR15, AC10.1.5]
 ```
 
 ## Rules summary
@@ -647,29 +719,30 @@ rules:
 | --- | --- | --- |
 | Tenant and authority | BR1.1-BR1.5 | Revalidate human or machine authority, hide foreign resources, restrict Operator actions, and protect immutable evidence. |
 | Schedule and idempotency | BR2.1-BR2.7 | Resolve one deterministic 02:00 local-date request, deduplicate replays, separate retries from reruns, and remain independent of Planning review scheduling. |
-| Admission and pinned inputs | BR3.1-BR3.7 | Pin authorized Retail Data and one server-resolved active Model Release; reject unavailable or incompatible inputs without substitution. |
-| Execution and outcomes | BR4.1-BR4.9 | Append leased attempts, validate complete 28-day finite nonnegative product series, derive explicit run outcomes, and preserve provenance. |
+| Admission and pinned inputs | BR3.1-BR3.8 | Pin authorized Retail Data and one signed active Model Release through C07's route admission/drain barrier; create attempt 1 after both digests exist. |
+| Execution and outcomes | BR4.1-BR4.11 | Queue batch work through C07, reuse queued attempt 1 on first lease, fence every finalizer through the shared-transaction port, and validate complete 28-day series. |
 | Publication and current pointer | BR5.1-BR5.8 | Publish complete runs atomically, require Operator acknowledgement for partial runs, guard current selection, and retain history. |
 | Freshness and reads | BR6.1-BR6.6 | Apply the next-02:00-plus-six-hours boundary, preserve latest-versus-current facts, and return explicit bounded evidence and limitations. |
-| Audit, messaging, cache, and contracts | BR7.1-BR7.10 | Commit audit/outbox atomically, deduplicate at-least-once messages, bound failures, keep cache disposable, and enforce versioned boundaries. |
-| Restore, retention, and reconciliation | BR8.1-BR8.8 | Restore before exposure, fail closed on mismatch, preserve replay identity and expiry, and publish measured recovery limitations. |
-| Downstream and reviewer behavior | BR9.1-BR9.10 | Supply versioned forecast evidence without owning downstream arithmetic or infrastructure, and require truthful clean-checkout CPU evidence. |
+| Audit, messaging, cache, and contracts | BR7.1-BR7.11 | Commit audit/outbox atomically, use C23 Python broker mechanics with U7-owned effects, keep cache disposable, and enforce versioned boundaries. |
+| Restore, retention, and reconciliation | BR8.1-BR8.11 | Honor C25 Class C deadlines, monotonic command guards and checkpoint cut, restore before exposure, and compare evidence with fixed recovery objectives. |
+| Downstream and reviewer behavior | BR9.1-BR9.11 | Supply versioned evidence without owning downstream arithmetic or infrastructure, and require truthful clean-checkout CPU and measured timing evidence. |
 
 ## Sources
 
-- `inception/units-generation/unit-of-work.md` and `unit-of-work-story-map.md` — U7 ownership, boundaries, participating stories, and 42 assigned acceptance criteria.
+- `inception/units-generation/unit-of-work.md` and `unit-of-work-story-map.md` — U7 ownership, boundaries, participating stories and 53 assigned acceptance criteria.
 - `inception/requirements-analysis/requirements.md` — FR2, FR5-FR6, FR9.4, FR11, FR13-FR14, FR17-FR20 and applicable NFR2-NFR15 obligations.
 - `inception/user-stories/stories.md` — AC4.1.1-3, AC4.6.1-3, AC5.1.1-4, AC5.2.1-4, AC7.6.1-3, AC8.1.1-3, AC8.2.1-3, AC8.3.1-3, AC8.5.1-3, AC9.1.1-3, AC9.6.1-3, AC9.9.1-3, and AC10.1.1-4.
 - `inception/domain-design/components.md` and `decisions.md` — Forecasting ownership and separation from Model Lifecycle, Planning, Purchasing, identity, platform, and Audit Evidence.
-- `inception/contract-design/contract-summary.md` — C06, C07, C10, C13, C15 and common authority, error, compatibility, messaging, and retry semantics.
+- `inception/contract-design/contract-summary.md` — C06, C07, C10, C13, C15, C23 and C25 authority, fencing, messaging, recovery, compatibility and retry semantics.
 - `construction/forecasting/functional-design/functional-design-questions.md` — all confirmed U7 functional decisions.
 
 ## Assumptions & Open Questions
 
-- Exact lease, heartbeat, retry, backoff, queue, dead-letter, response, cache, and decimal precision limits remain NFR or implementation parameters and must be bounded before acceptance.
-- Recovery objectives, backup frequency and expiry, persistent storage limits, and cleanup timing remain later NFR decisions. Rules require fail-closed reconciliation and measured limitations regardless of chosen values.
+- Broker retry, dead-letter, response, cache and decimal precision limits follow their approved contracts or must be bounded before acceptance; C07 job attempt budgets and C23 delivery attempts are separate.
+- Recovery-policy-v1 fixes 24-hour RPO, two-hour RTO, 30-day backup retention and Class C prepare/close/abort/resume deadlines of 120/180/60/180 seconds. Persistent storage capacity and measured cleanup remain implementation evidence.
 - Planning owns inventory and supplier snapshots, MOQ, packs, buffers, review serialization and allowance, replenishment calculations, and purchase revalidation. U7 returns forecast evidence and explicit usability only.
 - Model Lifecycle owns dataset construction, baseline/candidate evaluation, training, promotion, rollback, and artifact retention. U7 records and serves the release and evaluation references it receives.
+- C07 specifies the cross-unit atomic finalizer and route admission/drain barrier. BR4.11 and BR3.8 still prohibit publication or route switching until their review and race-conformance evidence passes.
 - Platform owns deployment, state protection, resource enforcement, and backup transport; Forecasting owns truthful readiness and restored-record reconciliation for its own state.
 - Audit Evidence owns searchable projections and their rebuild. Forecasting owns its authoritative audit/outbox records and replay-stable event provenance.
 - The Web BFF and Web Application own UI composition, keyboard behavior, focus, and presentation. Forecasting supplies distinct status codes, text, versions, and limitations through governed contracts.
