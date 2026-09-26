@@ -37439,3 +37439,60 @@
 **Artifact Fingerprint**: sha256:997d1fff4c5346e6de2bad975b2cade54cd4d0f2a2b3c53cd3b724b7e54b33a1
 
 ---
+
+## Error Logged
+**Timestamp**: 2026-09-26T17:36:08Z
+**Event**: ERROR_LOGGED
+**Tool**: aidlc-log
+**Command**: aidlc-log engine log decision --checkpoint summary-confirmation --stage functional-design --unit forecasting --questions-file aidlc/spaces/default/intents/260908-stock-sense-design/construction/forecasting/functional-design/functional-design-questions.md --decision Does this all look correct?
+**Error**: Summary confirmation section in aidlc/spaces/default/intents/260908-stock-sense-design/construction/forecasting/functional-design/functional-design-questions.md must contain exactly one `[Answer]:` line with a blank value before this command runs.
+
+---
+
+## Error Logged
+**Timestamp**: 2026-09-26T17:36:33Z
+**Event**: ERROR_LOGGED
+**Tool**: aidlc-log
+**Command**: aidlc-log engine log decision --checkpoint summary-confirmation --stage functional-design --unit forecasting --questions-file aidlc/spaces/default/intents/260908-stock-sense-design/construction/forecasting/functional-design/functional-design-questions.md --decision Does this all look correct?
+**Error**: Summary confirmation questions file aidlc/spaces/default/intents/260908-stock-sense-design/construction/forecasting/functional-design/functional-design-questions.md is invalid: unsupported H3 heading "Owner clarification — 2026-09-25" after the consolidated summary; only Q<n>, "Requested Changes Feedback", or one "Assumption Confirmation" section may follow.
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-09-26T17:37:24Z
+**Event**: DECISION_RECORDED
+**Stage**: functional-design
+**Decision**: Does this all look correct?
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/260908-stock-sense-design/construction/forecasting/functional-design/functional-design-questions.md
+**Unit**: forecasting
+
+---
+
+## Error Logged
+**Timestamp**: 2026-09-26T17:39:59Z
+**Event**: ERROR_LOGGED
+**Tool**: aidlc-log
+**Command**: aidlc-log engine log answer --checkpoint summary-confirmation --stage functional-design --unit forecasting --questions-file aidlc/spaces/default/intents/260908-stock-sense-design/construction/forecasting/functional-design/functional-design-questions.md --details Looks correct
+**Error**: Cannot record the summary choice because no human reply has arrived after this question, or that turn was already used by another decision. End the turn, wait for the human's choice, then try again.
+
+---
+
+## Human Turn
+**Timestamp**: 2026-09-26T17:47:39Z
+**Event**: HUMAN_TURN
+
+---
+
+## Summary Confirmation Recorded
+**Timestamp**: 2026-09-26T17:47:47Z
+**Event**: SUMMARY_CONFIRMATION_RECORDED
+**Stage**: functional-design
+**Details**: Looks correct
+**Checkpoint**: Consolidated Summary Confirmation
+**Questions File**: aidlc/spaces/default/intents/260908-stock-sense-design/construction/forecasting/functional-design/functional-design-questions.md
+**Questions SHA-256**: ec9ab02f3b2bb1b8dda8af857426e2a64a0e57337b5455c5da4d5069513fbbda
+**Hash Scope**: confirmed-content-v1
+**Unit**: forecasting
+
+---

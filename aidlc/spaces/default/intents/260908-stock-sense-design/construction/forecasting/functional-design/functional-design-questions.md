@@ -218,7 +218,6 @@ What should change?
 
 [Answer]: Resolve all blockers.
 
-### Owner clarification — 2026-09-25
 
 [Answer]: Fix the two C07 safety gaps, inconsistent first-attempt creation, and missing product-set fields in C10/C13.
 
