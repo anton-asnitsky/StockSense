@@ -114,7 +114,7 @@ rules:
     category: validation
     appliesTo: [ContractPackage, SharedSchema, ExampleFixture, ValidationRun]
     trigger: C07 canonical package validation runs.
-    logic: "IF the versioned EXECUTE-only finalizer signature, named U5/U7 caller roles, immutable run/pin/request/first-attempt/lease binding, terminal/fenced retry rule, one-transaction owner publication and U6 pin closure, replay/conflict, pin-admit/drain exclusion, atomic evaluation-lease route change, or local-terminal-before-central-slot positive and negative fixtures are missing or contradict the canonical C07 contract THEN validation fails."
+    logic: "IF the versioned EXECUTE-only finalizer signature, the named U7 caller role, immutable run/pin/request/first-attempt/lease binding, terminal/fenced retry rule, one-transaction owner publication and U6 pin closure, replay/conflict, pin-admit/drain exclusion, atomic evaluation-lease route change, or local-terminal-before-central-slot positive and negative fixtures are missing or contradict the canonical C07 contract THEN validation fails."
     violationBehaviour: "Block C07 package publication with fixture-specific findings; U5/U6/U7/U15 separately prove live transaction and recovery behavior."
     source: [AC8.2.4, NFR8]
 
