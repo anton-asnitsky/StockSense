@@ -186,11 +186,11 @@ rules:
     source: [FR4, FR17]
 
   - id: BR2.9
-    statement: Inventory is authoritative only for on-hand quantity.
+    statement: Inventory is authoritative for on-hand quantity and dated inbound commitments.
     category: constraint
     appliesTo: [InventoryPosition, RetailDataSnapshotManifest]
     trigger: A planning snapshot is assembled.
-    logic: "IF dated inbound or order data is included THEN reference the Purchasing-owned version separately; do not persist it as Inventory-owned stock."
+    logic: "IF a snapshot includes dated inbound supply THEN read it from the Inventory-owned InboundSupplyCommitment rows with their own version, and reference Purchasing-owned order and approval state separately; never persist purchase orders as Inventory-owned records nor count open commitments as on-hand stock."
     violationBehaviour: "Reject snapshots that merge ownership or omit source versions."
     source: [FR6, FR8]
 
@@ -220,6 +220,15 @@ rules:
     logic: "IF authority, placement, order state, cumulative quantity, product/store ownership, expected stock version, and idempotency all validate for every line THEN commit receipt, order balances, stock movements, positions, both modules' audits, and outboxes once."
     violationBehaviour: "Reject or rollback the entire receipt; commit no line or event."
     source: [FR8, FR17, NFR7]
+
+  - id: BR2.13
+    statement: Dated inbound commitments change only through the C08 port under order-version and receipt invariants.
+    category: constraint
+    appliesTo: [InboundSupplyCommitment, InventoryPosition, StockMovement]
+    trigger: Planning/Purchasing invokes createApprovedCommitments, cancelOpenCommitments, or recordReceipt.
+    logic: "IF the caller supplies current retailer authority, placement generation and expected order version THEN apply the requested commitment effect inside the caller-owned transaction: create all approved lines or none; reject cancellation once any line of that order has a receipt; and post a receipt only while cumulative received quantity stays within the approved quantity, moving stock and reducing open quantity in the same commit."
+    violationBehaviour: "Return the typed C08 conflict for stale placement generation, stale order version, idempotency-hash mismatch or over-receipt, and leave commitment, stock, audit and outbox unchanged."
+    source: [FR6, FR8]
 
   - id: BR3.1
     statement: Inventory and demand imports use separate bounded UTF-8 CSV schemas.
@@ -420,11 +429,11 @@ rules:
     source: [FR5, FR6, FR14, NFR3]
 
   - id: BR6.3
-    statement: Planning snapshots keep Inventory on-hand and Purchasing dated inbound as separately versioned inputs.
+    statement: Planning snapshots version Inventory on-hand and Inventory-owned dated inbound commitments independently.
     category: constraint
     appliesTo: [RetailDataSnapshotManifest, InventoryPosition]
     trigger: A replenishment input snapshot is composed.
-    logic: "IF both sources are current THEN identify the Inventory watermark and Purchasing inbound version independently with forecast, terms, and policy versions."
+    logic: "IF both inputs are current THEN identify the Inventory movement watermark and the dated inbound commitment version independently, alongside forecast, terms, and policy versions, and carry the referenced Purchasing order version without copying order state."
     violationBehaviour: "Return explicit stale or unavailable input category and produce no usable recommendation snapshot."
     source: [FR6, FR9]
 

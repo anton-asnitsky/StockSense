@@ -142,7 +142,30 @@ entities:
     entityConstraints:
       - The tuple retailerId, storeId, and productId is unique.
       - The quantity equals the prior position plus all committed movement quantities.
-      - Inbound and purchasing state are referenced snapshot inputs, not owned quantities.
+      - On-hand units exclude dated inbound supply, which this module owns separately as InboundSupplyCommitment. Purchasing-owned order and approval state stays a referenced snapshot input, not an owned quantity.
+
+  - name: InboundSupplyCommitment
+    description: The authoritative dated inbound supply this module owns, mutated only through the C08 Retail Operations Inventory port.
+    attributes:
+      - { name: inboundCommitmentId, logicalType: Identifier, required: true, unique: true }
+      - { name: retailerId, logicalType: Identifier, required: true, unique: false, references: Retailer.retailerId }
+      - { name: storeId, logicalType: Identifier, required: true, unique: false, references: Store.storeId }
+      - { name: productId, logicalType: Identifier, required: true, unique: false, references: Product.productId }
+      - { name: sourceOrderId, logicalType: ExternalIdentifier, required: true, unique: false }
+      - { name: sourceOrderLineId, logicalType: ExternalIdentifier, required: true, unique: true }
+      - { name: approvedQuantity, logicalType: PositiveInteger, required: true, unique: false, min: 1 }
+      - { name: receivedQuantity, logicalType: NonNegativeInteger, required: true, unique: false, default: 0, min: 0 }
+      - { name: openQuantity, logicalType: NonNegativeInteger, required: true, unique: false, min: 0 }
+      - { name: expectedArrivalDate, logicalType: Date, required: true, unique: false }
+      - { name: status, logicalType: Enum, required: true, unique: false, allowedValues: [open, partiallyReceived, closed, cancelled] }
+      - { name: version, logicalType: PositiveInteger, required: true, unique: false, min: 1 }
+      - { name: updatedAt, logicalType: Instant, required: true, unique: false }
+    entityConstraints:
+      - The source order line identity is unique, so one approved purchase line has at most one commitment.
+      - Open quantity equals approved quantity minus received quantity and is never negative; cumulative receipts never exceed the approved quantity.
+      - Only this module's routines mutate these rows, and only through the C08 port inside the caller-owned transaction. Planning/Purchasing authorizes the transition and never writes or queries this schema.
+      - Creation for one order is all-lines-or-none; cancellation is rejected once any line of that order has a receipt.
+      - Status becomes closed when open quantity reaches zero and cancelled only from an unreceived open state; every transition increments version and updatedAt.
 
   - name: StockMovement
     description: An immutable authoritative change to one inventory position.
@@ -421,6 +444,9 @@ relationships:
   - { from: Store, to: InventoryPosition, cardinality: "1:N", direction: "Store holds positions" }
   - { from: Product, to: InventoryPosition, cardinality: "1:N", direction: "Product may be stocked at many stores" }
   - { from: InventoryPosition, to: StockMovement, cardinality: "1:N", direction: "Position is explained by movements" }
+  - { from: Store, to: InboundSupplyCommitment, cardinality: "1:N", direction: "Store expects dated inbound supply" }
+  - { from: Product, to: InboundSupplyCommitment, cardinality: "1:N", direction: "Product may have open commitments at many stores" }
+  - { from: InboundSupplyCommitment, to: StockMovement, cardinality: "1:N", direction: "Receipt against a commitment creates movements" }
   - { from: ImportBatch, to: ImportDiagnostic, cardinality: "1:N", direction: "Batch reports bounded diagnostics" }
   - { from: ImportBatch, to: StockMovement, cardinality: "1:N", direction: "Accepted inventory batch creates movements" }
   - { from: ImportBatch, to: DemandObservation, cardinality: "1:N", direction: "Accepted demand batch creates observations" }

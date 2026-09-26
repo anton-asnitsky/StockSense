@@ -8,7 +8,7 @@ Status: Draft for independent review
 
 ## Purpose and boundary
 
-Retail Data supplies authoritative tenant directory, product, on-hand inventory, movement, demand, calendar, and source-version behavior. Planning/Purchasing owns proposals, orders, receipts, review quotas, and dated inbound supply. For v1, U4 and U8 run in one modular deployment so a receipt and its Inventory effects can share one commit; module schemas, entities, ports, and audit streams remain distinct. The REST receipt boundary is retained as an extraction seam and is not used as a non-atomic hop inside the v1 commit.
+Retail Data supplies authoritative tenant directory, product, on-hand inventory, movement, demand, calendar, and source-version behavior. Planning/Purchasing owns proposals, orders, receipts, and review quotas, and authorizes dated inbound supply changes; Retail Data owns the dated inbound commitments themselves and its routines alone mutate them through the C08 in-process port. For v1, U4 and U8 run in one modular deployment so a receipt and its Inventory effects can share one commit; module schemas, entities, ports, and audit streams remain distinct. The REST receipt boundary is retained as an extraction seam and is not used as a non-atomic hop inside the v1 commit.
 
 The specification is the source of truth for the workflows and state transitions below. `entities.md` is authoritative for entity shape and relationships. `rules.md` is authoritative for decision logic.
 

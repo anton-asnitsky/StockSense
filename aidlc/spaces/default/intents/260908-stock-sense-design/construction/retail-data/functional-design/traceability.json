@@ -327,17 +327,17 @@
     {
       "id": "AC4.7.1",
       "status": "OK",
-      "target": "BR2.9, BR2.10, BR4.7, BR6.1, BR6.3, BR6.7, BR6.8"
+      "target": "BR2.9, BR2.10, BR4.7, BR6.1, BR6.3, BR6.7, BR6.8, BR2.13"
     },
     {
       "id": "AC4.7.2",
       "status": "OK",
-      "target": "BR2.9, BR2.10, BR4.7, BR6.1, BR6.3, BR6.7, BR6.8"
+      "target": "BR2.9, BR2.10, BR4.7, BR6.1, BR6.3, BR6.7, BR6.8, BR2.13"
     },
     {
       "id": "AC4.7.3",
       "status": "OK",
-      "target": "BR2.9, BR2.10, BR4.7, BR6.1, BR6.3, BR6.7, BR6.8"
+      "target": "BR2.9, BR2.10, BR4.7, BR6.1, BR6.3, BR6.7, BR6.8, BR2.13"
     },
     {
       "id": "AC5.1.1",
