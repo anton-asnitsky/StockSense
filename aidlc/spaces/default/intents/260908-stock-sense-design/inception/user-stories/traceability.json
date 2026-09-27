@@ -1,6 +1,6 @@
 {
   "stage": "user-stories",
-  "summary_confirmation": "2026-09-21",
+  "summary_confirmation": "2026-09-27",
   "upstream_ids": [
     "FR1",
     "FR2",
@@ -29,6 +29,7 @@
     "FR16",
     "FR16.1",
     "FR16.2",
+    "FR16.3",
     "FR17",
     "FR17.1",
     "FR18",
@@ -165,7 +166,7 @@
     {
       "id": "FR13.1",
       "status": "OK",
-      "target": "US4.5, US4.8"
+      "target": "US4.1, US4.3, US4.4, US4.5, US4.8, US7.12"
     },
     {
       "id": "FR14",
@@ -198,6 +199,11 @@
       "target": "US3.4, US7.12"
     },
     {
+      "id": "FR16.3",
+      "status": "OK",
+      "target": "US4.8, US7.12, US9.4"
+    },
+    {
       "id": "FR17",
       "status": "OK",
       "target": "US2.2, US6.5, US9.1, US9.2, US9.5"
@@ -215,7 +221,7 @@
     {
       "id": "FR19",
       "status": "OK",
-      "target": "US2.4"
+      "target": "US2.4, US3.4"
     },
     {
       "id": "FR19.1",
@@ -250,7 +256,7 @@
     {
       "id": "NFR2",
       "status": "OK",
-      "target": "US4.4, US7.1, US8.3, US9.4"
+      "target": "US4.4, US4.8, US7.1, US7.12, US8.3, US9.4"
     },
     {
       "id": "NFR2.1",
@@ -260,7 +266,7 @@
     {
       "id": "NFR3",
       "status": "OK",
-      "target": "US1.4, US2.4, US4.2, US7.2, US7.12, US8.5, US9.2, US9.8, US9.10"
+      "target": "US1.4, US2.4, US3.4, US4.2, US7.2, US7.12, US8.5, US9.2, US9.8, US9.10"
     },
     {
       "id": "NFR4",
@@ -285,7 +291,7 @@
     {
       "id": "NFR7.1",
       "status": "OK",
-      "target": "US8.5, US9.11"
+      "target": "US8.5"
     },
     {
       "id": "NFR8",
@@ -300,7 +306,7 @@
     {
       "id": "NFR8.2",
       "status": "OK",
-      "target": "US10.2"
+      "target": "US8.2, US10.2"
     },
     {
       "id": "NFR8.3",
@@ -345,7 +351,7 @@
     {
       "id": "NFR14.1",
       "status": "OK",
-      "target": "US10.3"
+      "target": "US10.1, US10.3"
     },
     {
       "id": "NFR15",

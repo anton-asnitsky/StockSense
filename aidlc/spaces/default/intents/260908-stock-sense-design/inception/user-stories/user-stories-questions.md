@@ -1,8 +1,9 @@
 # User stories plan and questions
 
-Date: 2026-09-21
-Status: Story plan, final mob policy package and consolidated summary confirmed by the owner.
-Source: approved requirements-analysis/requirements.md in this intent.
+Date: 2026-09-27
+Status: Reopened after formal Inception redo; prior answers remain historical owner
+choices, while the revised summary below awaits confirmation for this pass.
+Source: newly approved requirements-analysis/requirements.md in this intent.
 
 ## Persona development approach
 
@@ -97,6 +98,23 @@ X. Other (please specify)
 
 [Answer]: A. Accept the recommended package (`I accept`)
 
+## 2026-09-27 revision scope
+
+The owner selected Modify for the existing User Stories artifacts. Keep the
+approved epic/feature organization, human personas, original story IDs and
+prior Q1-Q3 policy answers. Reconcile the new FR16.3 and expanded FR13.1/NFR2:
+U5 embedding-index builds share U6's durable global heavy-work slot with
+training, evaluation and Forecasting batches, while U5 alone owns index
+validation and active-route activation. The shared-transaction Forecasting
+finalizer is not an U5 capability. Add observable contention, fencing and
+resource-evidence criteria for both model and embedding job profiles. Update
+traceability for every current FR/NFR ID without renumbering existing stories.
+Recovery-barrier phase deadlines and 7/90-day log/audit retention defaults stay
+fixed; RPO, RTO, backup expiry and local disk capacity remain open under OQ5.
+The earlier Requirements Analysis questionnaire sentence that calls all recovery
+targets selected is not authority for numerical values; the owner approved the
+current requirements with that discrepancy disclosed.
+
 ## Consolidated Summary Confirmation
 
 - Organize work as epics -> features -> user stories, as requested by the owner.
@@ -105,14 +123,19 @@ X. Other (please specify)
 - EP07 covers investigation, supplier comparison, replenishment assistance, Draft
   proposals, execution/recovery and evaluation/auditing through local inference,
   RAG and Strands. Domain services enforce calculations and authority.
-- Preserve all approved requirements, SS task IDs and existing story IDs. The final
-  decomposition contains 67 Must Have stories and 242 uniquely identified criteria.
+- Preserve all approved requirements, SS task IDs and the 67 existing Must Have
+  story IDs. Add or revise acceptance criteria only where current requirements
+  require them; keep every criterion ID unique and update the count afterward.
 - Cover extraction classifications and boundaries, cache isolation, ML lease and
   package controls, active-index reconciliation, reliable messaging, BFF contracts,
   consistent recovery barriers, evidence outcomes, clean-run timing and browser
   compatibility without inventing unresolved profiles or limits.
 - The assistant may create a newly confirmed Draft only. Later editing remains a
   Planner action; the assistant cannot submit, approve, reject, cancel or receive.
+- Expand heavy-work coordination to include U5 embedding-index builds alongside
+  model training, evaluation and Forecasting batches. Test shared-slot contention,
+  stale lease fencing and distinct U5 route-activation authority. Measure both
+  heavy-job profiles within the 16 GiB/3 CPU cluster envelope.
 - Require visible Planner-to-Manager handoff and keyboard-safe stale-decision
   recovery into a linked replacement Draft without mutating the source proposal.
 - Retain Purchasing idempotency results for aggregate lifetime plus 90 days after
@@ -121,8 +144,9 @@ X. Other (please specify)
 - Compare supplier quality percentages as exact fractions without display rounding.
   Apply retention against UTC instants, with age equal to or greater than the
   configured period expired; OQ10 governs maintenance schedule and cleanup lag.
-- Keep unresolved reliability workload, telemetry profile and recovery-barrier
-  timing dependencies visibly blocked rather than estimating or passing them.
+- Keep unresolved workload and telemetry profiles visibly blocked. Use the fixed
+  recovery-barrier phase deadlines, while leaving RPO, RTO, backup expiry and
+  local disk capacity open under OQ5 until their values are confirmed.
 - Preserve the independent Design, Development and Quality contribution records;
   their objective corrections and the accepted owner policies are integrated before
   the independent Product Lead review.

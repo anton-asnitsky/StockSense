@@ -1,8 +1,9 @@
 # User stories assessment
 
-Date: 2026-09-21
+Date: 2026-09-27
 Decision: Execute
-Status: Owner-confirmed assessment refreshed after requirements reconciliation and mob review.
+Status: Reopened draft after the approved Requirements Analysis revision;
+prior User Stories gate and mob review are historical.
 
 ## Rationale
 
@@ -19,6 +20,8 @@ scan reflects framework tooling rather than an existing application.
 - Partial receipts, cumulative quantity limits, review quotas and tenant isolation
   require acceptance scenarios beyond a happy-path demo.
 - The local resource envelope and optional model providers must retain traceability.
+- U5 embedding-index builds now contend for the same heavy-work slot as model
+  and Forecasting jobs, but U5 keeps separate index-activation authority.
 
 ## Areas of value
 
@@ -29,7 +32,8 @@ Existing SS task IDs remain planning references, not completed or approved units
 
 ## Planned coverage
 
-The draft contains 67 stories under ten epics and their feature IDs, with four
-human personas and explicit requirement/dependency links. All 58 upstream FR/NFR
+The draft retains 67 stories and 250 uniquely identified acceptance criteria
+under ten epics and their feature IDs, with four human personas and explicit
+requirement/dependency links. All 59 current FR/NFR
 IDs have story mappings in traceability.json. Collaborative review tests
 persona fidelity, story sizing and acceptance precision before independent review.

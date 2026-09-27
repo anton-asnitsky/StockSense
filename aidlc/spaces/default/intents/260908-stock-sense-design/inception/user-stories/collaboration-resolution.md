@@ -70,3 +70,42 @@ maintenance schedule and allowed cleanup lag.
 All Round 2 objections are either integrated or resolved by that owner decision.
 No third mob round is planned. The three contribution files preserve the original
 specialist positions and the lead does not rewrite them as agreement.
+
+## 2026-09-27 formal redo: current collaboration
+
+The owner chose Modify for the existing artifacts and confirmed the revised
+summary. The original policy choices, epic/feature hierarchy and 67 stable story
+IDs remain. This is a new collaboration pass against the freshly approved
+Requirements Analysis, not a continuation of the 2026-09-21 review receipt.
+
+In current Round 1, Design requested operator-visible queue/fence status and a
+complete, accessible view of OQ5 recovery prerequisites. Development identified
+missing U5 build dependencies, uncertain lease-expiry fencing and an overbroad
+setup gate. Quality found four missing reverse traceability links, a 16 GiB versus
+16 GB cluster-budget mismatch, and insufficient U5 completion, resource-profile
+and post-OQ5 recovery oracles. Each objection was a checkable knowledge issue;
+none required a new owner policy decision.
+
+The integrated draft makes U5 candidate builds clients of the one heavy-work
+slot, keeps U5 route activation independent, tests lost lease acknowledgements
+and stale build-complete/route attempts, and exposes safe operator status. It
+pins and separately measures model and embedding-build cluster profiles against
+16 GB/3 CPU, while preserving the distinct 1.5/2 GiB U5 limits. Basic setup
+requires disk sufficiency but not the still-open RPO, RTO or backup-expiry values;
+the recovery drill visibly blocks objective-based acceptance until those and
+the complete disk footprint are confirmed/measured. Current traceability covers
+all 59 FR/NFR IDs in both directions with 67 stories and 250 unique criteria;
+the declared dependency graph is acyclic. Required-section, upstream-coverage
+and traceability sensors passed on the integrated draft. Their own files under
+`contributions/` remain the specialists' evidence; the lead does not rewrite them.
+
+Round 2 resolved the Design and Quality objections and Development's four main
+objections. Development maintained one narrow concern, quoted verbatim from its
+position:
+
+> OBJECT: The sole maintained dissent is AC7.2.1's ambiguous “indexed and retrieved” fixture. Clarify it as retrieval from a validated U5 active route, with candidate/index-wide build and activation accepted under US4.8/US7.12, so US7.2 cannot be read as permission for an unfenced production build.
+
+The lead then revised AC7.2.1 to use a seeded, validated U5 active-route
+fixture and to assign candidate/index-wide build and activation to US4.8/US7.12.
+The two-round limit prevents another mob round; the independent Product Lead
+review must verify that this final edit closes the concern.

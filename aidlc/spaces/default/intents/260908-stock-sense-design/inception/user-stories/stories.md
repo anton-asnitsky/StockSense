@@ -1,7 +1,8 @@
 # StockSense user stories
 
-Date: 2026-09-21
-Status: Approved by owner gate on 2026-09-22; subsequently edited for downstream reconciliation and currently reported as drifted pending revalidation.
+Date: 2026-09-27
+Status: Reopened draft after the formal Inception redo; the 2026-09-22 approval
+is historical and does not approve this revised story set.
 
 ## Scope and priorities
 
@@ -206,7 +207,7 @@ As a Planner, I want to import inventory data, so that I can establish explainab
 
 - Parent: EP02 / FE02.02
 - Priority: Must Have
-- Requirements: FR3,FR4,FR11,FR17
+- Requirements: FR3,FR4,FR11,FR17,NFR1.1
 - Planned tasks: SS-10
 - Depends on: US2.1,US8.2,US9.1
 - INVEST: use an isolated validated inventory imports fixture with the dependencies
@@ -259,7 +260,7 @@ As a Planner, I want to import versioned observed sales, so that I can feed repr
 
 - Parent: EP02 / FE02.02
 - Priority: Must Have
-- Requirements: FR3,FR11
+- Requirements: FR3,FR11,NFR1.1
 - Planned tasks: SS-10
 - Depends on: US2.1,US8.2,US9.1
 - INVEST: isolate the import sales history fixture; completion is this specific
@@ -315,7 +316,7 @@ As a Planner, I want to distinguish validated terms from raw extraction, so that
 
 - Parent: EP03 / FE03.03
 - Priority: Must Have
-- Requirements: FR10.1,FR6
+- Requirements: FR10.1,FR10.2,FR6
 - Planned tasks: SS-21
 - Depends on: US3.2,US9.1
 - INVEST: use an isolated accepted commercial terms fixture with the dependencies
@@ -348,9 +349,9 @@ As a Planner, I want to see versioned demand forecasts, so that I can anticipate
 
 - Parent: EP04 / FE04.01
 - Priority: Must Have
-- Requirements: FR5,FR11
+- Requirements: FR5,FR11,FR13.1
 - Planned tasks: SS-13
-- Depends on: US2.5,US8.5
+- Depends on: US2.5,US8.5,US4.8
 - INVEST: use an isolated daily baseline forecast fixture with the dependencies
   below supplied as capabilities, not prior test executions. Acceptance ends at
   the stated outcome; estimate effort after contract decisions, before scheduling.
@@ -358,6 +359,7 @@ As a Planner, I want to see versioned demand forecasts, so that I can anticipate
 - **AC4.1.1**: **Given** versioned observed history, **when** the daily forecast job executes, **then** daily seasonal-naive/moving-average forecasts identify 28-day horizon and model/data/configuration versions.
 - **AC4.1.2**: **Given** scheduler restart or duplicate local-date delivery, **when** the schedule is replayed, **then** repeated local-date scheduling or restart does not duplicate effects, including DST cases.
 - **AC4.1.3**: **Given** a failed or stale forecast run, **when** results are opened, **then** failure/staleness is visible rather than current; OQ2 freshness is fixed before implementation.
+- **AC4.1.4**: **Given** a due Forecasting batch while another heavy job holds the global slot, **when** scheduling runs or a stale worker tries to publish, **then** the batch queues or reaches its typed deadline outcome, publication requires the current fenced lease, and duplicate local-date delivery cannot bypass either rule.
 
 ### US4.2: Versioned datasets and artifacts
 
@@ -382,9 +384,9 @@ As a Reviewer, I want to compare common baselines and candidates, so that I can 
 
 - Parent: EP04 / FE04.02
 - Priority: Must Have
-- Requirements: FR12,FR3,NFR15
+- Requirements: FR12,FR3,FR13.1,NFR15
 - Planned tasks: SS-17/18
-- Depends on: US4.2,US4.7
+- Depends on: US4.2,US4.7,US4.8
 - INVEST: use an isolated evaluate forecast and inventory outcomes fixture with the dependencies
   below supplied as capabilities, not prior test executions. Acceptance ends at
   the stated outcome; estimate effort after contract decisions, before scheduling.
@@ -394,6 +396,7 @@ As a Reviewer, I want to compare common baselines and candidates, so that I can 
 - **AC4.3.3**: **Given** true demand [10,0] and forecast [8,2], **when** equally weighted observations are scored per retailer, **then** MAE=sum(abs(error))/2=2 units/day and WAPE=100*sum(abs(error))/sum(demand)=40%; zero-demand observations remain included. A wholly zero-demand horizon reports WAPE N/A with MAE retained.
 
 - **AC4.3.4**: **Given** a candidate failed or data was excluded, **when** the report is published, **then** counts, dates, missing-data exclusions, versions, rejected candidates and synthetic-data limits are visible.
+- **AC4.3.5**: **Given** model evaluation while another heavy job holds the global slot, **when** evaluation starts or a stale evaluator publishes, **then** execution waits for a current fenced lease or returns the typed deadline outcome, and stale results cannot become accepted evaluation evidence.
 
 ### US4.4: Tracked model training
 
@@ -401,16 +404,16 @@ As a Operator, I want to train a versioned candidate, so that I can base model c
 
 - Parent: EP04 / FE04.03
 - Priority: Must Have
-- Requirements: FR12,FR13,NFR2
+- Requirements: FR12,FR13,FR13.1,NFR2
 - Planned tasks: SS-18/19
-- Depends on: US4.2,US4.3,US8.3
+- Depends on: US4.2,US4.3,US8.3,US4.8
 - INVEST: use an isolated tracked model training fixture with the dependencies
   below supplied as capabilities, not prior test executions. Acceptance ends at
   the stated outcome; estimate effort after contract decisions, before scheduling.
 
 - **AC4.4.1**: **Given** versioned data/code/configuration, **when** the training job runs, **then** kubernetes training links code, data, configuration, model and evaluations in isolated MLflow metadata.
 - **AC4.4.2**: **Given** an interrupted training job, **when** the job restarts, **then** failed/restarted jobs retain explicit status and provenance and cannot silently promote output.
-- **AC4.4.3**: **Given** an unauthorized MLflow caller or second concurrent ML job, **when** access or scheduling is attempted, **then** operator-only access and one-active-ML-job constraints are tested within the resource policy.
+- **AC4.4.3**: **Given** an unauthorized MLflow caller or a model job requested while training, evaluation, Forecasting or a U5 embedding-index build holds the global heavy-work slot, **when** access or scheduling is attempted, **then** operator-only access is enforced and the second heavy job queues or receives the contract-defined bounded outcome without overlapping execution.
 
 ### US4.5: Model promotion and rollback
 
@@ -464,27 +467,33 @@ As a Reviewer, I want to compare chronological policy simulations, so that I can
 - **AC4.7.2**: **Given** demand10 and stock6, **when** scored, **then** lost units4 and lost-demand rate40% are reported; zero total demand yields rate N/A with lost units reported separately.
 - **AC4.7.3**: **Given** closing on-hand value12,8,0 across three days, **when** averaged, **then** the result is20/3 in that retailer currency; fixed acquisition costs apply, zero-stock days remain in the denominator, inbound/revenue are excluded and currencies are never aggregated.
 
-### US4.8: Coordinate heavy model work
+### US4.8: Coordinate shared heavy work
 
-As a Operator, I want training and forecasting heavy work to share a fenced lease, so that the local cluster remains bounded and stale workers cannot publish results.
+As a Operator, I want training, evaluation, forecasting and embedding-index builds to share a fenced lease, so that the local cluster remains bounded and stale workers cannot publish results.
 
 - Parent: EP04 / FE04.05
 - Priority: Must Have
-- Requirements: FR13.1,NFR2,NFR8.3
-- Planned tasks: SS-18/19/20
-- Depends on: US4.4,US8.2,US8.5
+- Requirements: FR13.1,FR16.3,NFR2,NFR8.3
+- Planned tasks: SS-18/19/20/34
+- Depends on: US8.2,US8.5
 - INVEST: covers one versioned coordination capability with explicit lifecycle and failure outcomes.
 - Readiness: Blocked for implementation/sizing until the lease queue/deadline and
   canonical request-hash contract is versioned in NFR8.3.
 
 Model Lifecycle owns PostgreSQL-backed lease/queue state and fencing-token issuance.
-Training and Forecasting are clients; artifact registration, promotion and forecast
-publication each enforce the current token in the atomic authoritative write.
+Training, evaluation, Forecasting and U5 embedding-index builds are clients;
+artifact registration, promotion and forecast publication enforce the current
+token in their authoritative write. U5 independently fences candidate-index
+validation and route activation; a U6 lease never grants U5 the Forecasting
+shared-transaction finalizer or authority to activate a route.
 
 - **AC4.8.1**: **Given** an authorized heavy job, **when** it acquires, renews or releases the lease with an idempotency key, **then** the API returns a stable state, deadline and monotonically fenced token.
 - **AC4.8.2**: **Given** a queued, expired, duplicate or conflicting request, **when** coordination is evaluated, **then** the contract returns a bounded typed outcome without overlapping heavy execution.
 - **AC4.8.3**: **Given** restart or restore, **when** lease reconciliation runs, **then** stale holders cannot finalize artifacts or forecasts and queue/lease state is reconstructed before new work starts.
-- **AC4.8.4**: **Given** renew after expiry, stale-token release, same-key/different-payload acquire, queued deadline expiry or two finalizers, **when** the operation executes, **then** canonical request-hash conflict and fencing rules permit at most one current owner and one authoritative finalization.
+- **AC4.8.4**: **Given** renew after expiry, stale-token release, same-key/different-payload acquire, queued deadline expiry or two model/forecast finalizers, **when** the operation executes, **then** canonical request-hash conflict and fencing rules permit at most one current owner and one authorized model/forecast finalization.
+- **AC4.8.5**: **Given** overlapping U5 embedding-index build and model/evaluation/Forecasting requests, **when** authenticated callers request, acquire, renew, release or lose the slot, **then** the versioned contract recognizes the U5 build work type, prevents overlapping active heavy jobs and fences a stale U5 builder; a wrong caller/work type is denied and U5 receives no Forecasting publication-finalizer privilege.
+- **AC4.8.6**: **Given** U5 holds token T, its renewal or expiry acknowledgement is lost, and a model/evaluation/Forecasting client requests the slot, **when** lease state is uncertain after timeout, restart or restore, **then** the coordinator returns a typed pending/reconciliation outcome and does not assign token T+1 until U5's authoritative local fence is reconciled; the versioned schedule records holder, queue, fence and eventual reassignment with no overlapping execution.
+- **AC4.8.7**: **Given** queued, running, deadline-reached, lease-lost and reconciliation-required heavy jobs, **when** an authorized Operator inspects status, **then** a UI or CLI identifies the safe job/run ID, work type, waiting state or queue position, deadline, last transition, reason and safe next action without suggesting that a queued or fenced U5 build is running or may activate an index. A browser surface uses keyboard-operable text status and polite material-transition announcements without stealing focus; a CLI uses stable text labels.
 
 ## EP05: Replenishment planning
 
@@ -641,8 +650,8 @@ As a Manager, I want to decide on submitted purchases, so that I can allow only 
 - **AC6.3.2**: **Given** a Submitted proposal selected for rejection, **when** the Manager rejects, **then** rejection transitions Submitted to terminal Rejected; the Planner sees status, decision actor, acting Manager role, time and supplied reason; correction requires a new linked Draft and fresh approval.
 - **AC6.3.3**: **Given** stale inputs, concurrent decisions or unauthorized actors, **when** a decision is submitted, **then** concurrent/stale decisions, unauthorized actors and agent approval attempts cannot produce an invalid committed approval.
 
-- **AC6.3.4**: **Given** changed inventory/terms on a Submitted order, **when** approval revalidation fails, **then** no approval commits, the Submitted proposal remains unapproved, focus moves to a text error summary, changed fields and current status are identified, and the Manager can inspect current evidence and create a linked replacement Draft; quantities are never silently replaced and the stale proposal is never presented as approvable.
-- **AC6.3.5**: **Given** every actor/state/action combination from the approved FR7/FR8 transition table, **when** exercised with isolated fixtures, **then** allowed combinations succeed and all unlisted transitions fail atomically; Manager-only receipt authority and a person with both roles work while Planner-only approval fails. Exact accepted-operation replay returns its original result.
+- **AC6.3.4**: **Given** changed inventory/terms on a Submitted order, **when** approval revalidation fails, **then** no approval commits, the Submitted proposal remains unapproved, focus moves to a text error summary, changed fields and current status are identified, and the Manager can inspect current evidence and hand the proposal back for Planner correction; only an authorized Planner, or a dual-role user explicitly acting as Planner, may create a linked replacement Draft. Quantities are never silently replaced and the stale proposal is never presented as approvable.
+- **AC6.3.5**: **Given** every actor/state/action combination from the approved FR7/FR8 transition table, **when** exercised with isolated fixtures, **then** allowed combinations succeed and all unlisted transitions fail atomically; a Manager-only user may inspect and hand back a stale proposal but cannot create its replacement Draft, an authorized Planner may create that Draft, and a dual-role user may do so only while explicitly acting as Planner. Manager-only receipt authority succeeds while Planner-only approval fails. Exact accepted-operation replay returns its original result.
 
 ### US6.4: Cancel before receipt
 
@@ -733,7 +742,7 @@ As a Planner, I want to retrieve relevant supplier evidence, so that I can groun
   below supplied as capabilities, not prior test executions. Acceptance ends at
   the stated outcome; estimate effort after contract decisions, before scheduling.
 
-- **AC7.2.1**: **Given** authorized source chunks and embedding configuration, **when** evidence is indexed and retrieved, **then** server-owned Qdrant routing isolates collections by retailer and embedding/configuration version.
+- **AC7.2.1**: **Given** a seeded, validated U5 active-route fixture for authorized source chunks and embedding configuration, **when** the Planner retrieves evidence, **then** server-owned Qdrant routing isolates collections by retailer and embedding/configuration version and proves the current PostgreSQL route before serving. This retrieval fixture does not build or activate an index; candidate and index-wide builds require the US4.8 lease and US7.12 generation/route checks.
 - **AC7.2.2**: **Given** a foreign collection, wrong-model vector or deleted source, **when** retrieval is requested, **then** client-selected collections, wrong-model vectors, foreign/deleted documents cannot become evidence.
 - **AC7.2.3**: **Given** a repeated versioned upsert/deletion event, **when** the ingestion consumer replays it, **then** no duplicate chunk effect occurs and deleted evidence is absent; index-wide cutover/rollback/rebuild is accepted under US7.12.
 
@@ -743,15 +752,15 @@ As a Reviewer, I want to compare both embedding candidates, so that I can inspec
 
 - Parent: EP07 / FE07.02
 - Priority: Must Have
-- Requirements: FR16.1,NFR14
+- Requirements: FR16.1,NFR2.1,NFR14
 - Planned tasks: SS-34
-- Depends on: US7.2
+- Depends on: US7.2,US4.8
 - INVEST: use an isolated embedding comparison fixture with the dependencies
   below supplied as capabilities, not prior test executions. Acceptance ends at
   the stated outcome; estimate effort after contract decisions, before scheduling.
 
-- **AC7.3.1**: **Given** held-out English queries for both selected candidates, **when** both embeddings are evaluated, **then** held-out English queries compare EmbeddingGemma-300M and Qwen3-Embedding-0.6B for retrieval quality, citations, CPU latency/memory and reproducible setup.
-- **AC7.3.2**: **Given** different candidate embedding dimensions, **when** candidate indexes are created, **then** separate candidate collections prevent dimension/configuration mixing on the same fixtures.
+- **AC7.3.1**: **Given** a predeclared held-out English query corpus, relevance/citation scoring method, pinned candidate artifacts and latency/memory sampling profile, **when** both embeddings are evaluated on identical fixtures, **then** the report compares EmbeddingGemma-300M and Qwen3-Embedding-0.6B for retrieval quality, citations, CPU latency/memory and reproducible setup without choosing an unmeasured default.
+- **AC7.3.2**: **Given** different candidate embedding dimensions, **when** U5 builds candidate indexes under an authenticated current `embedding-index` heavy-work lease, **then** separate candidate collections prevent dimension/configuration mixing on the same fixtures; stale or unfenced candidate builds cannot publish an accepted result.
 - **AC7.3.3**: **Given** preserved original text and language metadata, **when** a later language fixture is supplied, **then** original text/language metadata allows later multilingual extension without claiming additional language acceptance; OQ1 winner follows evaluation.
 
 ### US7.4: Bounded assistant conversation
@@ -903,9 +912,9 @@ As a Operator, I want to rebuild and switch retrieval indexes, so that I can pre
 
 - Parent: EP07 / FE07.02
 - Priority: Must Have
-- Requirements: FR16,FR16.2,NFR3
+- Requirements: FR16,FR16.2,FR16.3,FR13.1,NFR2,NFR2.1,NFR3
 - Planned tasks: SS-33/34
-- Depends on: US7.2
+- Depends on: US7.2,US4.8
 - INVEST: isolate the manage index lifecycle fixture; completion is this specific
   capability, with final integrated recovery/evidence in US9.6/US10.2.
 
@@ -913,6 +922,7 @@ As a Operator, I want to rebuild and switch retrieval indexes, so that I can pre
 - **AC7.12.2**: **Given** a validated replacement index and expected route version, **when** cutover or rollback occurs through the PostgreSQL routine-owned compare-and-swap route, **then** exactly one intended generation becomes active and vector configurations never mix.
 - **AC7.12.3**: **Given** missing/deleted/foreign sources or interrupted indexing, **when** rebuilt, **then** unauthorized evidence stays unavailable and counts/provenance reconcile before activation.
 - **AC7.12.4**: **Given** startup or restore with a missing/mismatched PostgreSQL route, Qdrant collection, dimension, count or digest, **when** reconciliation runs, **then** retrieval remains unavailable until the active generation is proved or an authorized expected-version rollback/cutover succeeds.
+- **AC7.12.5**: **Given** U5 builds a candidate under token T, then loses, expires or has T revoked and another heavy job validly holds T+1, **when** the late U5 worker attempts build-complete, validation or expected-version route compare-and-swap, **then** no completion or activation commits, the partial Qdrant generation remains inactive with a recorded reconcile/rebuild outcome, and the route version and active generation remain unchanged while T+1 remains valid. The deterministic schedule records final states and effects; a current lease proves build authority only, U5's separate generation fence and PostgreSQL route govern activation, and U5 never invokes the Forecasting shared-transaction finalizer.
 
 ## EP08: Local platform and delivery
 
@@ -949,7 +959,7 @@ As a Operator, I want to check integration schemas, so that I can catch incompat
 - **AC8.2.1**: **Given** the initial inventory/import REST boundary, **when** the reusable contract-validation capability runs, **then** OpenAPI covers payload/auth/tenant/errors for that flow; each later consumer story must add and pass its contracts before acceptance.
 - **AC8.2.2**: **Given** an initial representative job/event fixture, **when** async contract validation runs, **then** AsyncAPI examples validate; later messaging consumers add their own contracts and US10.2 checks final all-flow coverage.
 - **AC8.2.3**: **Given** invalid examples or incompatible schema changes, **when** CI contract validation runs, **then** invalid examples and incompatible changes fail applicable CI validation.
-- **AC8.2.4**: **Given** the browser/BFF, messaging, evidence, heavy-lease, signed-model and recovery-barrier boundaries, **when** catalogue validation runs, **then** their complete versioned schemas, security/idempotency rules, examples and compatibility policies exist; legacy placeholders block dependent code generation.
+- **AC8.2.4**: **Given** the browser/BFF, messaging, evidence, heavy-lease, signed-model and recovery-barrier boundaries, **when** catalogue validation runs, **then** their complete versioned schemas, security/idempotency rules, examples and compatibility policies exist; the heavy-lease contract includes U5 embedding-index build caller/work type and excludes U5 from the Forecasting publication finalizer; legacy placeholders block dependent code generation.
 
 ### US8.3: Provision local Kubernetes
 
@@ -966,7 +976,7 @@ As a Operator, I want to reproduce the local infrastructure, so that I can give 
 
 - **AC8.3.1**: **Given** Docker Desktop and protected bootstrap credentials, **when** Terraform/Terragrunt and Helm apply, **then** terraform/Terragrunt and Helm reproduce local HTTPS, PVCs, probes and service prerequisites.
 - **AC8.3.2**: **Given** local state or an explicitly chosen backend, **when** state is used for an apply, **then** default local or deliberately configured remote state remains protected, backed up and serialized outside ephemeral job workspaces.
-- **AC8.3.3**: **Given** missing disk/resources/bootstrap inputs, **when** prerequisite checks run, **then** missing disk/bootstrap credentials or insufficient resources fail explicitly without assumed extra host capacity or cloud provisioning; OQ5/OQ8 precede setup.
+- **AC8.3.3**: **Given** missing disk/resources/bootstrap inputs, **when** local prerequisite checks run, **then** insufficient disk capacity for downloads/deployment, missing bootstrap credentials or insufficient resources fail explicitly without assumed extra host capacity or cloud provisioning. OQ8 runner/bootstrap choices precede setup; OQ5 RPO, RTO and backup expiry are prerequisites for recovery implementation and acceptance, not for basic local provisioning.
 
 ### US8.4: Provide scoped workload secrets
 
@@ -1113,9 +1123,9 @@ As a Reviewer, I want to inspect measured local resource evidence, so that I can
 
 - Parent: EP09 / FE09.02
 - Priority: Must Have
-- Requirements: NFR1,NFR1.1,NFR1.2,NFR2,NFR2.1,NFR15
+- Requirements: FR16.3,NFR1,NFR1.1,NFR1.2,NFR2,NFR2.1,NFR15
 - Planned tasks: SS-24
-- Depends on: US4.4,US7.5,US9.3
+- Depends on: US4.4,US7.3,US7.12,US7.5,US9.3
 - INVEST: use an isolated measure performance and capacity fixture with the dependencies
   below supplied as capabilities, not prior test executions. Acceptance ends at
   the stated outcome; estimate effort after contract decisions, before scheduling.
@@ -1123,10 +1133,10 @@ As a Reviewer, I want to inspect measured local resource evidence, so that I can
   fixes operation mix, arrival/request count, warm-up, denominator and classifications.
 
 - **AC9.4.1**: **Given** the seeded warm stack and five concurrent users with mix/sample count/duration/hardware fixed before running, **when** ordinary inventory/purchasing reads are benchmarked including authorization, **then** measured p95 is strictly below one second and all parameters/results are published.
-- **AC9.4.2**: **Given** the full demo including OpenSearch/Dashboards, Vault/VSO, Redis, Qdrant, agent services and one active ML job, **when** capacity is measured, **then** sustained and peak RAM/CPU including Kubernetes/VM overhead fit 16GB/3CPU without extra assumed host resources.
+- **AC9.4.2**: **Given** two versioned profiles pinned before measurement—one naming the exact model/evaluation/Forecasting heavy job and one naming the exact U5 embedding-index candidate/build workload, each with dataset/corpus size, baseline services, reference hardware, warm-up, sampling interval and duration—**when** the full demo including OpenSearch/Dashboards, Vault/VSO, Redis, Qdrant and agent services is measured separately under the one-slot schedule, **then** each profile publishes sustained and peak whole-cluster RAM/CPU including Kubernetes/VM overhead against the same 16 GB/3 CPU limit, with throttling/OOM and any exceeded limit reported as failed. Missing pinned inputs are `not-run`/`blocked-prerequisite`, and no extra host resources are assumed.
 - **AC9.4.3**: **Given** startup/download/inference measurements or a failed budget result, **when** the measured report is published, **then** startup/download/LLM measurements are separate; failed fit is reported for owner decision without dropping services or increasing budgets silently.
-- **AC9.4.4**: **Given** the versioned import/reliability profile, **when** Retail Data is measured, **then** admission, queue and active-processing clocks are reported separately, start/deadline/readiness/restart targets are checked, and unexpected errors/timeouts use the profile's fixed operation mix, request count and denominator; that profile is an implementation prerequisite rather than an inferred test mix.
-- **AC9.4.5**: **Given** embedding/model/index and whole-cluster profiles, **when** measured at exact resource boundaries, **then** pinned artifact size, peak RSS, pod/host sampling interval, duration, throttling/OOM state and 1.5/2/16 GiB plus 3 CPU outcomes are recorded; heavy phases serialize and an absent profile is `blocked-prerequisite`.
+- **AC9.4.4**: **Given** the versioned import/reliability profile, **when** Retail Data is measured, **then** admission below 500 ms, start within ten minutes, active 1,000-row/2 MiB inventory import below 30 seconds, active 100,000-row/25 MiB demand import within three minutes, a 30-minute warmed reliability run with at most 1% unexpected errors/timeouts, readiness within 60 seconds and restart recovery within two minutes are reported separately. The profile fixes operation mix, attempted-request count and denominator before the run; absent profile is `not-run`/`blocked-prerequisite`.
+- **AC9.4.5**: **Given** pinned EmbeddingGemma-300M and Qwen3-Embedding-0.6B artifacts and separate U5/model whole-cluster profiles, **when** each candidate is measured, **then** each artifact is at most 1.5 GiB and its evaluation process at most 1.5 GiB peak RSS inside the 2 GiB U5 pod; pinned artifact bytes, process RSS, pod/host sampling interval and duration, throttling/OOM state and the separate 16 GB/3 CPU whole-cluster outcome are recorded. Candidate loading, ingestion/build and serving benchmarks are serialized for measurement; ordinary retrieval serving does not acquire the global heavy-work build lease. Missing pinned inputs are `not-run`/`blocked-prerequisite`.
 
 ### US9.5: Consistent retention
 
@@ -1143,7 +1153,7 @@ As a Operator, I want to expire logs and audits consistently, so that I can prev
 
 - **AC9.5.1**: **Given** configured 7-day operational-log and 90-day business-audit retention, **when** retention maintenance executes, **then** PostgreSQL and OpenSearch compare UTC instants with the same versioned rule: age below the period is retained and age equal to or greater than the period is expired, proven by fixtures immediately before, exactly at and immediately after each cutoff; OQ10 governs only maintenance schedule and allowed cleanup lag.
 - **AC9.5.2**: **Given** an expired event and index rebuild/rollback, **when** the projection is rebuilt, **then** rebuild/rollback cannot resurrect expired audit data.
-- **AC9.5.3**: **Given** a backup containing now-expired records, **when** backup data is restored, **then** restore applies the documented backup-expiry/cleanup policy with boundary fixtures; OQ5/OQ10 specify schedule and allowed lag before implementation.
+- **AC9.5.3**: **Given** a backup containing now-expired records, **when** backup data is restored, **then** restore applies the documented backup-expiry/cleanup policy with boundary fixtures; OQ5 must confirm backup expiry and OQ10 must fix maintenance schedule and allowed lag before implementation.
 
 ### US9.6: Restore the application
 
@@ -1160,7 +1170,8 @@ As a Operator, I want to recover into a clean environment, so that I can demonst
 
 - **AC9.6.1**: **Given** validated store/secret restore capabilities and a recovery manifest, **when** the integrated clean-environment restore runs after explicit Operator confirmation, **then** a visible run identity shows current phase/checkpoint/scope and protected backups restore business/identity PostgreSQL, MongoDB and artifacts with key sets, digests, stock and provenance reconciled.
 - **AC9.6.2**: **Given** retained authoritative source versions, **when** projections are rebuilt, **then** rebuilt audit/vector projections preserve retained source versions, deletions and expiry.
-- **AC9.6.3**: **Given** broker/worker interruption or partial restore failure, **when** replay/rollback/recovery handling executes, **then** the view identifies what remains fenced, what resumed, the authorized next action and terminal Succeeded, Failed, Aborted or Safely resumed status; success is unavailable until reconciliation passes, and OQ5 objectives are fixed and measured.
+- **AC9.6.3**: **Given** broker/worker interruption, partial restore failure or unresolved OQ5 inputs, **when** replay/rollback/recovery handling executes or an authorized Operator inspects it, **then** text identifies what remains fenced, what resumed, the safe next action and terminal Succeeded, Failed, Aborted or Safely resumed state without falsely claiming overall success. RPO, RTO, backup expiry and complete local persistent-disk capacity appear separately with their confirmation/measurement status; missing inputs make objective-based acceptance `not-run`/`blocked-prerequisite` with the missing item named. FR20.1 barrier phase deadlines remain separately measurable. A browser view is keyboard-operable, announces material status changes without stealing focus and restores focus to a named status/error heading after failed confirmation; a CLI uses stable text labels.
+- **AC9.6.4**: **Given** owner-approved versioned OQ5 RPO, RTO and backup-expiry policy plus a measured complete local disk-footprint profile, **when** the clean-environment restore drill runs, **then** evidence reports actual data loss from the recovery cut and elapsed restoration against the approved RPO/RTO measurement method, tests backup expiry immediately before/at/after its cutoff and reports full disk peak against available capacity. Only measured results meeting the confirmed targets may pass; an absent target, profile or measurement remains `not-run`/`blocked-prerequisite` rather than an inferred success.
 
 ### US9.7: Rotate and recover credentials
 
@@ -1238,8 +1249,9 @@ As a Operator, I want to quiesce PostgreSQL and RabbitMQ changes for backup, so 
 - Planned tasks: SS-06/26
 - Depends on: US8.2,US8.5,US9.1
 - INVEST: isolates barrier coordination and externally observable partial-failure behavior from the later full restore drill.
-- Readiness: Recovery policy v1 resolves OQ5 participant and global deadlines;
-  implementation must validate them under the local resource envelope.
+- Readiness: FR20.1 fixes participant and global barrier phase deadlines;
+  implementation must validate them under the local resource envelope. OQ5
+  RPO, RTO and backup expiry remain open for the broader recovery drill.
 
 The story owns a versioned recovery manifest containing barrier ID/generation,
 fencing epoch, PostgreSQL LSN/transaction evidence, included queue identities and
@@ -1287,11 +1299,12 @@ As a Reviewer, I want to trace decisions to demonstrated outcomes, so that I can
   the stated outcome; estimate effort after contract decisions, before scheduling.
 
 - **AC10.2.1**: **Given** an identified released revision, **when** evidence is opened, **then** stable links connect requirements, stories, designs, tasks and actual validation evidence.
-- **AC10.2.2**: **Given** model/resource/recovery evaluation records, **when** evaluation reports are inspected, **then** model/data cards, rejected candidates, resource/recovery findings and synthetic limitations remain visible.
+- **AC10.2.2**: **Given** model/resource/recovery evaluation records, **when** a Reviewer inspects the evidence, **then** model/data cards, rejected candidates, the two pinned heavy-job resource profiles, recovery findings and synthetic limitations remain visible. The report distinguishes fixed FR20.1 barrier deadlines and NFR9 log/audit retention from open OQ5 RPO, RTO, backup expiry and disk capacity, naming missing prerequisites and safe next actions instead of implying a recovery pass.
 - **AC10.2.3**: **Given** explicit owner approval for versioned release, **when** release artifacts are published, **then** owner-approved versioned release identifies demonstrated revision/tag/image without fabricated lifecycle or test outcomes.
 
 - **AC10.2.4**: **Given** all delivered consumer stories, **when** the machine-checkable release coverage matrix is validated, **then** every applicable FR/NFR maps through `requirement_id`, `story_id`, `ac_id`, `test_level`, `oracle/profile`, `evidence_artifact`, `revision/environment` and outcome; every REST/async boundary and sensitive business flow has its own contract/authorization/audit/retry evidence; duplicate or unknown IDs and missing applicable mappings fail the relevant quality gate, and foundation fixture passes alone are insufficient.
 - **AC10.2.5**: **Given** a versioned evidence manifest, **when** validated, **then** every check has exactly one of passed, failed, limited, rejected, unavailable or not-run plus reason, expected/actual result, trace IDs, immutable revision, environment, timing, command profile, artifact hashes and limitations.
+- **AC10.2.6**: **Given** blocked, failed, aborted and safely resumed recovery fixtures, **when** their evidence is opened by a Reviewer, **then** `not-run`/`blocked-prerequisite` names each missing OQ5 item separately, while actual Failed, Aborted and Safely resumed outcomes retain their distinct evidence and no state relies on color alone.
 
 ### US10.3: Verify the supported browser profile
 
@@ -1322,37 +1335,31 @@ resource feasibility checks. The story map preserves the existing SS task IDs.
 
 ## Lifecycle status reconciliation
 
-The authoritative audit record contains `GATE_APPROVED` and `STAGE_COMPLETED`
-receipts for User Stories at 2026-09-22T06:39:38Z. Requirements Analysis had
-already been approved at 2026-09-21T16:36:58Z, including explicit accepted-risk
-dispositions for its four advisory findings. The `NOT-READY` appendix below is
-the immutable advisory review that preceded the User Stories gate; its R-01
-describes the then-stale requirements header rather than the later authoritative
-gate state. The appendix remains historical evidence. Post-approval downstream
-reconciliation edits have caused the framework to mark this completed stage as
-drifted, so approval and revalidation status must be reported separately.
+The 2026-09-22 User Stories gate approved an earlier baseline. Requirements
+Analysis was subsequently reopened and approved again; this revised story set
+is a new draft, and the earlier User Stories approval does not cover its current
+bytes. Its current independent review and a new owner decision are required
+before this stage is complete.
 
 ## Review
 
-**Verdict:** NOT-READY
+**Verdict:** READY
 **Reviewer:** aidlc-product-lead-agent
-**Date:** 2026-09-21T18:45:49Z
-**Iteration:** 1
+**Date:** 2026-09-27T11:49:40Z
+**Iteration:** 2
+**Request Challenge:** review:080d36e9d2c281407345a47b2b482ab1
 
 ### Findings
 
-| ID | Severity | Location | Evidence | Required action | Status |
+| ID | Severity | Location | Finding | Required action | Status |
 |---|---|---|---|---|---|
-| R-01 | Critical | aidlc/spaces/default/intents/260908-stock-sense-design/inception/user-stories/stories.md > Status and Scope and priorities; user-stories-questions.md > Source and Consolidated Summary Confirmation; personas.md > Status; user-stories-assessment.md > Rationale; requirements-analysis/requirements.md > Status and Review | The story package repeatedly describes requirements.md as approved, but requirements.md states that independent review and stage approval are pending and its terminal review verdict is NOT-READY with unresolved findings R-01 through R-04. The package therefore relies on and presents an approval state that the frozen source does not have. | Resolve or explicitly disposition the requirements findings through the requirements-analysis gate, then align every story-package approval claim and any affected story or criterion with the resulting requirements baseline. | Unresolved |
+| R-01 | Major | aidlc/spaces/default/intents/260908-stock-sense-design/inception/user-stories/stories.md > US6.3 > AC6.3.4-AC6.3.5 | The revised criteria now separate Manager-only inspection and handback from replacement-Draft creation. They require an authorized Planner or a dual-role user explicitly acting as Planner, matching FR7's actor boundary; AC6.3.5 tests Manager-only denial, Planner creation and dual-role behavior. | Implement and test the actor matrix as written, including denial of Manager-only Draft creation. | Resolved |
+| R-02 | Major | aidlc/spaces/default/intents/260908-stock-sense-design/inception/user-stories/stories.md > Lifecycle status reconciliation | The paragraph now identifies the 2026-09-22 approval as covering an earlier baseline and says this reopened draft needs its own review and owner decision. It no longer claims the current stage is completed or points to an absent appendix. | Keep the earlier approval scoped to its historical bytes and require a new owner decision for this revision. | Resolved |
 
 ### Validation Results
 
-- `stories.md` contained exactly 105,379 bytes and no pre-existing `## Review` heading before this appendix.
-- Story structure contains 67 unique `USx.y` stories and 242 unique `ACx.y.z` acceptance criteria, matching the owner-confirmed package summary.
-- `traceability.json` contains 58 unique upstream IDs and 58 coverage rows; every row is marked `OK` and targets named story IDs present in `stories.md`.
-- The requirements source explicitly says approval is pending and terminates with `**Verdict:** NOT-READY`; the conflicting approved-baseline claims occur in all four lead Markdown artifacts.
-- The review was bounded to the seven frozen artifacts and the User Stories stage definition supplied for this retry.
+Read-only checks found 59 unique upstream FR/NFR IDs, 67 unique story IDs and 250 unique criterion IDs. All 59 requirements have OK mappings to existing stories; the 199 requirement-to-story links match the story labels in both directions. AC7.2.1 still uses a seeded validated active-route fixture for retrieval, while US4.8 and US7.12 own the shared lease and index build/activation path. Personas, assessment and traceability agree with the reopened story baseline.
 
 ### Summary
 
-The story package is structurally detailed and its declared requirement-to-story coverage is internally complete, but it is founded on a requirements baseline that remains pending and NOT-READY. Engineering cannot treat these stories as approved until that upstream gate is resolved and the package is reconciled to the resulting baseline.
+Both prior findings are resolved in the current bytes. The purchasing actor boundary, lifecycle status and retrieval ownership are now clear enough for the owner to assess this advisory recovery review without a further normal-flow review loop.

@@ -1,7 +1,7 @@
 # StockSense personas
 
-Date: 2026-09-21
-Status: Owner-confirmed draft refreshed from approved requirements; not empirical user research.
+Date: 2026-09-27
+Status: Reopened draft aligned to current requirements; not empirical user research.
 
 ## Persona definitions
 
@@ -9,8 +9,8 @@ Status: Owner-confirmed draft refreshed from approved requirements; not empirica
 | --- | --- | --- | --- |
 | Retail Planner / Planner | Inspect inventory, investigate shortages, compare scenarios/suppliers, prepare drafts and record receipts | Stale or unexplained quantities, disconnected source evidence, uncertainty about review progress | Primary daily business role within explicit retailer memberships; English initial UI |
 | Purchasing Manager / Manager | Review locked proposals, approve/reject, cancel before receipt and inspect business evidence | Stale terms, concurrent decisions, unauthorized purchasing and excessive receipts | Primary decision role; same person may also hold Planner; no mandatory separation of duties was selected |
-| Platform Operator / Operator | Deploy, provision identities/secrets, operate models/jobs, investigate failures and recover tenant data | Hidden setup dependencies, uncertain recovery, unbounded resource use and missing provenance | Supporting privileged role; operator-wide tools remain separate from tenant business APIs |
-| Portfolio Reviewer / Reviewer | Run a clean local demo and trace decisions to measured outcomes | Owner-only credentials/GPU assumptions, irreproducible models and unsupported claims | Supporting evaluator with no owner secrets or assumed AMD GPU; obtains locally provisioned demo roles for the walkthrough |
+| Platform Operator / Operator | Deploy, provision identities/secrets, coordinate model and embedding-index heavy jobs, investigate failures and recover tenant data | Hidden setup dependencies, uncertain recovery, overlapping heavy jobs, unbounded resource use and missing provenance | Supporting privileged role; operator-wide tools remain separate from tenant business APIs |
+| Portfolio Reviewer / Reviewer | Run a clean local demo and trace decisions to measured outcomes | Owner-only credentials/GPU assumptions, irreproducible models, unmeasured model/index resource profiles and unsupported claims | Supporting evaluator with no owner secrets or assumed AMD GPU; obtains locally provisioned demo roles for the walkthrough |
 
 ## Relationships and authority
 
