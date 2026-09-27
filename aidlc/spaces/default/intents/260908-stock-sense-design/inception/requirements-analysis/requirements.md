@@ -1,10 +1,11 @@
 # StockSense requirements
 
-Date: 2026-09-21
+Date: 2026-09-27
 Stage: requirements-analysis
-Status: Approved by owner gate on 2026-09-21; subsequently edited for downstream reconciliation and currently reported as drifted pending revalidation.
+Status: Revised draft after the 2026-09-27 formal backward jump. The 2026-09-21
+owner gate is historical and does not approve these revised bytes.
 Input summary: the owner confirmed the lifecycle-reconciliation summary as
-`Looks correct` on 2026-09-21.
+`Looks correct` on 2026-09-21 and the modified summary on 2026-09-27.
 Revision: authoritative requirements now include the accepted construction NFR
 decisions needed to repair stale contracts and downstream inconsistencies.
 Scope: classic; standard depth and test strategy.
@@ -49,6 +50,11 @@ evaluation. Failed model candidates remain part of the evidence.
   supplier-quality, resource, reliability, browser and clean-run decisions.
 - S12: owner instruction on 2026-09-22 to resolve Domain Design review findings
   R-01 through R-07, including the implementation-blocking recovery deadlines.
+- S13: owner instruction on 2026-09-27 to put Supplier Knowledge embedding-index
+  builds into the shared heavy-work slot, followed by confirmation of the
+  revised Requirements Analysis summary. The owner also chose formal lifecycle
+  redo from the earliest stale Inception stage; that is a process decision, not
+  an application feature.
 
 The original generated `project-description.json` contains only `Let's`; it is
 insufficient as a standalone product description. It is retained as historical
@@ -102,13 +108,14 @@ states observable acceptance evidence, not a claim that a test already exists.
 | FR11 | The system shall enforce one currency and one time zone per retailer, with UTC timestamps and retailer-local aggregation/scheduling. | Mismatched-currency offers are rejected; no implicit FX conversion occurs; date-boundary and DST fixtures preserve scheduling and quota semantics; lead times use calendar days. | S2; ADR 0010; SS-10/13/14/35 |
 | FR12 | The ML workflow shall compare a trained candidate with seasonal-naive and moving-average baselines through reproducible temporal backtests and the evaluation definitions below. | Splits exclude future-data leakage; identical exogenous demand/supply scenarios support comparisons. Reports include uncensored synthetic demand truth, observed sales and lost demand separately, MAE, WAPE with zero-denominator handling, and inventory value per retailer/currency. Retain unsuccessful candidates and synthetic-data limitations. | S2/S4/S5; ADRs 0004, 0008; SS-17/18 |
 | FR13 | MLflow and job metadata shall connect datasets, code, configuration, model versions, evaluations, promotion and rollback. | A result is traceable to a recorded run; failed jobs recover explicitly; promotion has evaluation evidence; rollback selects a known model and preserves prior provenance. | S2/S4; ADR 0008; SS-19/20 |
-| FR13.1 | Model Lifecycle shall coordinate shared heavy work through a versioned lease interface and publish verifiable promoted-model packages. | Authenticated acquire/renew/release operations support idempotency, queue/deadline outcomes, fencing tokens and restore reconciliation. Each promoted release resolves an immutable `skops.io` artifact, canonical manifest, SHA-256 digest, Ed25519 signature, signer key status, trusted-type allowlist version and retained-release revocation/overlap behavior. Forecasting refuses an unfenced lease or unverifiable package. | S11; SS-18/19/20 |
+| FR13.1 | Model Lifecycle shall coordinate training, evaluation, Forecasting batches and Supplier Knowledge embedding-index builds through one durable global heavy-work slot and a versioned lease interface, and shall publish verifiable promoted-model packages. | Authenticated request/acquire/renew/release operations support idempotency, queue/deadline outcomes, fencing tokens and restore reconciliation. Concurrent U5 embedding builds and U6/U7 heavy jobs cannot hold overlapping active slots; uncertain expiry blocks reassignment until the authoritative local fence is reconciled. Each promoted release resolves an immutable `skops.io` artifact, canonical manifest, SHA-256 digest, Ed25519 signature, signer key status, trusted-type allowlist version and retained-release revocation/overlap behavior. Forecasting refuses an unfenced lease or unverifiable package. | S11/S13; SS-18/19/20/34 |
 | FR14 | The assistant shall explain recommendations with authorized evidence and invoke bounded tools for reads, deterministic calculations and draft proposals. | Responses cite applicable source/data versions; missing evidence is disclosed; injected instructions, tenant switching, fabricated citations and attempts to approve orders are rejected in evaluation. | S2/S4; ADR 0014; SS-22/23 |
 | FR14.1 | After a visible, payload-bound confirmation, the assistant may create a new purchase Draft only; it shall not edit an existing Draft, submit, approve, reject, cancel or receive. | The create command binds action-draft identity, confirmation proof, canonical payload hash, expected context/version and idempotency identity. Changed payload, expired confirmation, replay conflict, stale context and unauthorized authority fail without effect. Any later Draft edit is performed by an authorized Planner through the normal purchasing interface. | S11; SS-22/23 |
 | FR15 | Generation shall run locally initially through Python Strands, with an extension boundary for explicitly configured external providers such as Bedrock. | A real CPU inference path works without owner GPU/secrets; provider failures are explicit; no automatic external fallback occurs; optional external configuration preserves StockSense API contracts. | S2; ADRs 0012-0014; SS-36 |
 | FR16 | Authorized retrieval shall use standalone Qdrant collections per retailer and embedding-model/configuration version. | Backend routing rejects client-selected arbitrary collections; wrong-model, cross-tenant and deleted-source tests fail safely; reindex/cutover/rollback reconcile source versions and deletions. | S2; ADRs 0007, 0018; SS-33/34 |
 | FR16.1 | EmbeddingGemma-300M and Qwen3-Embedding-0.6B shall be compared on held-out English retrieval fixtures before choosing the default. | Report quality, citations, CPU latency, memory and setup reproducibility for both candidates; separate indexes prevent mixed dimensions/configurations; multilingual extension remains possible. | S2; ADR 0015; SS-33/34 |
 | FR16.2 | Supplier Knowledge shall own one durable active-index route per retailer and embedding configuration in PostgreSQL, independently of Qdrant. | Routine-only compare-and-swap uses an expected route version and permits exactly one active generation. Activation verifies tenant/configuration/dimension/count/digest consistency; backup/restore preserves the route; startup/crash reconciliation keeps retrieval unavailable until the route and Qdrant generation agree. | S11; SS-33/34 |
+| FR16.3 | Supplier Knowledge embedding-index builds shall obtain and honor a Model Lifecycle heavy-work lease, while Supplier Knowledge alone validates and activates index generations. | A U5 index build starts only with the current authenticated `embedding-index` lease and fencing token; lost, expired, revoked or recovery-fenced work cannot mark its build complete. Partial/stale Qdrant generations remain inactive and are reconciled or rebuilt. Activation uses U5's independent tenant, source, configuration, generation and expected-route checks; the U6 shared-transaction Forecasting finalizer is neither required nor granted to U5. A concurrent U5 build and U6/U7 job demonstrate the single global slot without treating a lease as index-route authority. | S13; SS-33/34 |
 | FR17 | Business audit entries shall commit atomically with required business changes and outbox records; OpenSearch shall receive an idempotent searchable projection through RabbitMQ. | Audit-write failure rolls back the mutation; index outage leaves authoritative records intact; retries do not duplicate indexed events; lag and replay are observable; retained records can rebuild the index. | S2; ADR 0019; SS-37/38 |
 | FR17.1 | Audit history shall cover inventory/purchasing changes, memberships, manual reviews, model promotion, privileged operations and agent tool actions, with actor, tenant, target, outcome and provenance. | Each demonstrated sensitive flow yields the expected event; rejected attempts use a path that survives business rollback; tenant audit queries cannot disclose another retailer's history. | S2; ADR 0019; SS-37/38 |
 | FR18 | Operational logs and searchable audits shall be available through OpenSearch/Dashboards, with operator-only dashboards initially and tenant-authorized business audit APIs. | Correlation connects API, job/message and agent operations; ordinary users cannot access operator-wide searches; required audit recording remains independent of optional telemetry delivery. | S2; ADR 0019; SS-24/38 |
@@ -181,8 +188,8 @@ requirements-stage approval remains pending. No measured improvement is claimed.
 | --- | --- | --- |
 | NFR1 | Ordinary inventory/purchasing reads shall achieve p95 below 1 second with five concurrent local users, the agreed seeded dataset and a warmed running stack. Include normal authentication/authorization. Publish the read mix, sample count, duration, hardware and measured result; LLM generation, downloads and startup are measured separately. Benchmark parameters are fixed before running the acceptance test. | S3 Q8; SS-24 |
 | NFR1.1 | Retail import evidence shall report upload admission, queue delay and active processing separately. Admission is below 500 ms; admitted work starts within ten minutes; the 1,000-row/2 MiB inventory import completes active processing within 30 seconds and the 100,000-row/25 MiB demand import within three minutes. | S11; SS-10/24 |
-| NFR1.2 | The Retail Data local reliability profile shall run for 30 warmed minutes with no more than 1% unexpected errors/timeouts, readiness within 60 seconds and restart recovery within two minutes, excluding only declared maintenance. This is portfolio evidence, not a production availability SLA. | S11; SS-10/24 |
-| NFR2 | The full demonstrated cluster workload, including OpenSearch/Dashboards, Vault/VSO, Redis, Qdrant, agent services and one active ML job, shall fit the 16 GB RAM / 3 CPU planning envelope. Measure sustained/peak usage and Kubernetes/VM overhead; an unmeasured table is insufficient. Extra host RAM/CPU is not pre-authorized. | S1/S2; SS-24/36 |
+| NFR1.2 | The Retail Data local reliability profile shall run for 30 warmed minutes with no more than 1% unexpected errors/timeouts, readiness within 60 seconds and restart recovery within two minutes, excluding only declared maintenance. Fix and publish a versioned workload profile before the run: operation mix, attempted-request volume, tenant distribution and fixture state. The error rate is unexpected failures plus timeouts divided by all attempted profile operations; expected validation/authorization denials are classified separately and cannot be removed from the denominator. Report counts by operation and the aggregate, including excluded maintenance windows. This is portfolio evidence, not a production availability SLA. | S11; SS-10/24 |
+| NFR2 | The full demonstrated cluster workload, including OpenSearch/Dashboards, Vault/VSO, Redis, Qdrant, agent services and one active heavy-work job (model or embedding-index build), shall fit the 16 GB RAM / 3 CPU planning envelope. Measure sustained/peak usage and Kubernetes/VM overhead for both job profiles; an unmeasured table is insufficient. Extra host RAM/CPU is not pre-authorized. | S1/S2/S13; SS-24/34/36 |
 | NFR2.1 | Each Supplier Knowledge embedding candidate artifact shall be no larger than 1.5 GiB and each measured evaluation process shall remain at or below 1.5 GiB peak RSS inside the 2 GiB U5 pod limit. Candidate loading, ingestion/build and serving benchmarks are serialized and the whole cluster must still satisfy NFR2. | S11; SS-24/34 |
 | NFR3 | Tenant isolation shall hold across HTTP, messaging, SQL routines/RLS, document/vector storage, caches, artifact access and audit searches. Negative tests shall cover missing context, identifier substitution, pooled-connection reuse and stale placement generations. | S1/S2/S5; SS-07/12/27/32/34/38 |
 | NFR4 | PostgreSQL application roles shall use parameterized stored procedures/functions exclusively, without direct table reads/writes or EF Core. Runtime roles shall not bypass tenant controls or update/delete audit history; migrations and controlled retention use separate privileges. | S2; SS-07/08/37 |
@@ -247,14 +254,22 @@ numerical requirements. None permits weakening the confirmed scope.
 | A3 | Synthetic fixtures adequately demonstrate correctness and comparison methodology. | Product/ML evaluation reports limitations; actual commercial savings require separate real-world validation. |
 | A4 | Normal local sessions and installations have sufficient persistent disk. | Reviewer/implementer verifies disk requirements before model/data downloads and SS-06 deployment. |
 
+Resolved decision: OQ4's initial supplier file sizes and extraction gates are
+fixed by S11/FR10.2. FR20.1 fixes recovery-barrier participant and global phase
+deadlines; NFR9 fixes the seven-day operational-log and 90-day business-audit
+retention defaults. Neither establishes an RPO, RTO or backup-expiry period.
+OQ5 retains those open decisions and the local disk-capacity question. OQ6's
+messaging retries/DLQ/replay and initial U5 queue/process limits are fixed by
+S11 and NFR2.1; only telemetry capacity and versioning remain open under OQ6.
+These IDs are preserved for downstream traceability.
+
 | ID | Open decision | Needed before / consequence |
 | --- | --- | --- |
 | OQ1 | Exact local generation model/artifact, runtime placement, context/concurrency limits and embedding winner | SS-36/34; compare candidates with memory/latency/tool-use evidence and reproducible downloads. No additional host budget assumed. |
 | OQ2 | Forecast validity/freshness threshold and behavior when no usable forecast exists | SS-13/14/35; require explicit unavailable outcome meanwhile, and define exact acceptance cases before implementation. |
 | OQ3 | Buffer-day defaults, seeded currency/time-zone choices and detailed replenishment examples | SS-10/14; derive buffer choices from simulation, preserving confirmed calendar/currency rules. |
-| OQ4 | Resolved for the initial supplier profile: 20,000-row/5 MiB CSV, 200-page/20 MiB text PDF and the FR10.2 extraction gates | SS-21 implements the confirmed S11 limits; future format expansion requires a new requirement. |
-| OQ5 | RPO 24 hours, RTO two hours, backup retention 30 days, and recovery policy v1 participant/global deadlines are resolved; total persistent-disk capacity remains open | SS-06/26/38 must measure the complete local footprint before deployment. The deadline profile is versioned and must be validated under the local resource envelope before shipping. |
-| OQ6 | Messaging retries/DLQ/replay and Supplier Knowledge queue/resource limits are resolved; remaining metrics/trace versions and storage allocation stay open | SS-24/38 resolves remaining telemetry capacity before implementation. |
+| OQ5 | Recovery point objective (RPO), recovery time objective (RTO), backup-expiry period and total persistent-disk capacity for the full local backup/restore profile | Confirm RPO, RTO and backup expiry with the owner before SS-06/26 recovery implementation; SS-06/26/38 must measure the complete local footprint before deployment. Do not infer these values from FR20.1 barrier deadlines or NFR9 log/audit retention. |
+| OQ6 | Telemetry metric/trace versions and storage allocation | SS-24/38 resolves remaining telemetry capacity before implementation. |
 | OQ7 | Google registration/redirects, session lifetimes, signing-key stores/rotation and recovery integration | SS-08/09/31; exact values/interfaces must be verified, with local demo login independent of Google. |
 | OQ8 | Local runner isolation, reviewer-specific state paths/backend credentials and supported software versions | SS-03/05/06/25; implementation prerequisites, with no cloud account required for the default demo. |
 | OQ9 | Future supported languages and cross-language evaluation criteria | Later multilingual increment; English is the initial acceptance language. |
@@ -285,46 +300,38 @@ The owner may review this requirements baseline with those later decisions expli
 approval does not make their unknown values known.
 
 Revision note: this draft incorporates the owner-confirmed 2026-09-21 lifecycle
-reconciliation. The review below describes an earlier baseline and will be
-replaced by independent verification of this revision.
+reconciliation and the 2026-09-27 shared heavy-work decision. Independent
+verification of the current bytes is required before a new gate.
 
 
 ## Lifecycle status reconciliation
 
 The authoritative audit record contains `GATE_APPROVED` and `STAGE_COMPLETED`
-receipts for Requirements Analysis at 2026-09-21T16:36:58Z. The owner accepted
-review findings R-01 through R-04 as recorded risks at that gate. The
-`NOT-READY` appendix below is the immutable advisory review that preceded the
-gate; it is retained as historical evidence and is not the current stage status.
-Post-approval downstream reconciliation edits have caused the framework to mark
-this completed stage as drifted, so approval and revalidation status must be
-reported separately.
+receipts for the earlier Requirements Analysis baseline at
+2026-09-21T16:36:58Z. The owner accepted then-current findings R-01 through
+R-04 as recorded risks. On 2026-09-27, the owner chose a formal redo and the
+orchestrator jumped backward to Requirements Analysis, resetting its completion
+and downstream stages. Those prior receipts and finding dispositions remain
+historical evidence; they do not approve this revised requirements artifact.
+The new review and gate must evaluate the current bytes.
 
 ## Review
 
-**Verdict:** NOT-READY
+**Verdict:** READY
 **Reviewer:** aidlc-product-lead-agent
-**Date:** 2026-09-21T16:19:54Z
+**Date:** 2026-09-27T08:30:12Z
 **Iteration:** 1
-**Request Challenge:** review:a965d83fcbe4cab0c79330bbc1e3d294
+**Request Challenge:** review:90139c93066833555111feb7db3feee0
 
 ### Findings
 
 | ID | Severity | Location | Finding | Required action | Status |
 |---|---|---|---|---|---|
-| R-01 | Critical | aidlc/spaces/default/intents/260908-stock-sense-design/inception/requirements-analysis/requirements.md > Assumptions & Open Questions > OQ5 | OQ5 declares RPO 24 hours, RTO two hours, and backup retention 30 days resolved, but the confirmed lifecycle-reconciliation summary explicitly lists backup expiry/recovery targets among the remaining implementation decisions and confirms no invented numerical values. The three numbers therefore do not faithfully trace to the authorized confirmation. | Remove the unconfirmed values and keep the targets open, or obtain and record explicit owner confirmation of those exact values before treating them as requirements. | New |
-| R-02 | Major | aidlc/spaces/default/intents/260908-stock-sense-design/inception/requirements-analysis/requirements.md > NFR1.2 | The 30-minute reliability profile permits at most 1% unexpected errors/timeouts but does not define the workload, operation mix, request volume, or denominator. QA can produce materially different pass/fail results from the same implementation. | Define a versioned workload profile and the exact denominator and classification rules used to calculate the 1% threshold. | New |
-| R-03 | Major | aidlc/spaces/default/intents/260908-stock-sense-design/inception/requirements-analysis/requirements.md > FR20.1 | The recovery barrier requires "bounded abort/resume behavior" without specifying a time bound or observable terminal outcomes for partial barrier and snapshot failures. QA cannot determine when recovery has passed or failed. | Specify measurable abort/resume deadlines and the required externally observable state for each partial-failure class, or identify these as an open decision that must be resolved before SS-06/26 implementation. | New |
-| R-04 | Minor | aidlc/spaces/default/intents/260908-stock-sense-design/inception/requirements-analysis/requirements.md > Assumptions & Open Questions > OQ4-OQ6 | The table is titled and structured as open decisions, but OQ4 and part of OQ5/OQ6 are described as resolved. This makes the approval boundary harder to interpret and weakens traceability between genuinely open and settled decisions. | Separate resolved decisions from open decisions, while preserving the existing OQ IDs as stable traceability keys. | New |
-
-### Validation Results
-
-- Required stage sections are present: intent analysis, functional requirements, non-functional requirements, constraints, assumptions/open questions, and out of scope.
-- FR and NFR identifiers are unique and hierarchically stable within the reviewed artifact.
-- The confirmed lifecycle-reconciliation summary is substantially represented, but R-01 is a direct contradiction and blocks faithful incorporation.
-- Scope boundaries and purchasing-state boundaries are explicit; the unresolved acceptance definitions in R-02 and R-03 prevent fully deterministic QA coverage.
-- This review was bounded to the requirements artifact, its questions file, and the requirements-analysis stage definition supplied for this pass.
+| R-01 | Major | aidlc/spaces/default/intents/260908-stock-sense-design/inception/requirements-analysis/requirements.md > Assumptions & Open Questions > OQ5 | OQ5 now leaves RPO, RTO, backup expiry and disk capacity open. The preceding resolved-decision text assigns only barrier phase deadlines to FR20.1 and seven-day log/ninety-day audit defaults to NFR9; Q9 and the confirmed barrier summary support that distinction. No unsupported recovery or backup-retention value is stated. | Obtain owner-confirmed RPO, RTO and backup-expiry values before SS-06/26 recovery implementation, as OQ5 requires. | Resolved |
+| R-02 | Major | aidlc/spaces/default/intents/260908-stock-sense-design/inception/requirements-analysis/requirements.md > NFR1.2 | The revised criterion defines a versioned workload profile, attempted-operation denominator and classification of expected denials; the original testability gap remains addressed. | Publish the operation mix, volume, tenant distribution and fixture state before SS-10/24 acceptance runs. | Resolved |
+| R-03 | Major | aidlc/spaces/default/intents/260908-stock-sense-design/inception/requirements-analysis/requirements.md > FR20.1 | Participant/global abort and resume deadlines, a terminal-phase guard and fenced unresolved-participant outcomes remain specified; the original unbounded-outcome gap remains addressed. | Exercise lost acknowledgements, abort-before-prepare, partial snapshot failure and timeout against these deadlines and terminal outcomes in SS-06/26. | Resolved |
+| R-04 | Minor | aidlc/spaces/default/intents/260908-stock-sense-design/inception/requirements-analysis/requirements.md > Assumptions & Open Questions > OQ4-OQ6 | Resolved OQ4 and OQ6 portions remain outside the open-decision table, while OQ5 and the remaining OQ6 decision stay open with stable IDs. | Preserve the resolved/open distinction when the IDs are carried into downstream artifacts. | Resolved |
 
 ### Summary
 
-The revision is broad, well bounded, and mostly testable, but it promotes unconfirmed recovery numbers into resolved requirements and leaves two acceptance targets non-deterministic. The owner should request correction or explicit confirmation before approval.
+The owner's requested R-01 correction is present and traceable: barrier deadlines and log/audit retention are distinct from the unconfirmed RPO, RTO and backup-expiry decisions. The prior R-02 through R-04 fixes remain intact, and no new approval-relevant contradiction was found; historical Accepted risk dispositions do not approve this revision.

@@ -60,27 +60,34 @@ workflow.
    revalidation. Do not describe the old gate hashes as covering the new
    bytes. Follow the owner's selected lifecycle route for reconciliation.
 
-## Open owner decisions
+## Owner decisions recorded on 2026-09-27
 
-- **U5 embedding resource limit.** The current C07 excludes U5 and
-  `embedding-index`, while U5 still builds candidate Qdrant generations.
-  Recommended: share the one durable global heavy-work slot for U5 *build*
-  jobs, while U5 retains its own independently fenced activation and route
-  authority. This needs a deliberate C07 request/lease role and work-type
-  amendment, without giving U5 the U7 shared-transaction finalizer. The
-  alternative is a separate U5 queue with explicit concurrency and local
-  CPU/memory limits demonstrated under the 3-CPU/16-GiB profile.
-- **Closed-stage drift.** Recommended: formal redo from the earliest affected
-  Inception stage despite the larger review cycle; alternative: continue the
-  engine's advisory route with an explicit, owner-reviewed reconciliation of
-  changed baselines at the Construction gate.
+- **U5 embedding resource limit:** the owner chose to put U5 embedding builds
+  into the shared global heavy-work slot. Preserve U5's own index activation
+  and route authority; extend the request/lease caller and work-type contract
+  deliberately without granting U5 the U7 shared-transaction finalizer.
+- **Closed-stage drift:** the owner chose formal redo rather than advisory
+  reconciliation. The orchestrator-directed backward jump to Requirements
+  Analysis was recorded on 2026-09-27. The engine reset the seven completed
+  Inception stages from Requirements Analysis through Delivery Planning and
+  the in-progress Functional Design stage; their authored files remain as
+  prior drafts. The full jump impact covered 21 in-scope stages, including
+  still-pending later stages.
+
+The owner chose Modify for the reopened Requirements Analysis outputs, confirmed
+the revised summary and approved the Requirements Analysis gate after an R-01
+correction and fresh review. RPO, RTO and backup expiry remain open in OQ5;
+the fixed barrier deadlines and 7/90-day log/audit defaults are separate.
+An older sentence in the confirmed questionnaire still says recovery targets
+were selected. The owner approved with this discrepancy disclosed; reconcile
+that sentence at the next permitted artifact-revision point rather than treating
+it as approval of numerical targets. User Stories is now the active stage.
 
 ## Git disposition
 
 The current branch mixes several design units and an Inception amendment.
 Do not rewrite its published history solely to make it look like one story.
 Keep further story implementation on short-lived story branches and present
-this branch's complete diff for explicit owner merge approval. The uncommitted
-audit-shard addition at the time of this note contains only session/compaction
-events; it is engine-owned and should be staged only after checking the final
-diff.
+this branch's complete diff for explicit owner merge approval. The checkpoint's
+engine-owned audit shard records the formal jump, artifact reuse, questions,
+reviews and gate decisions; preserve it with the state and requirements files.

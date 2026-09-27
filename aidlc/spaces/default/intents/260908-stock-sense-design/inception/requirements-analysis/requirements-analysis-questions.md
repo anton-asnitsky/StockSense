@@ -196,6 +196,18 @@ restores ADR 0011 daily review, buffer precedence and status/quota UI. R-04 make
 ADR 0005 logout and no-email-auto-link checks mandatory. These repairs are submitted
 for review; this answer is not requirements-stage approval.
 
+## Owner revision: shared heavy-work scheduling (2026-09-27)
+
+The owner answered **Yes** to using the one shared global heavy-work slot for
+Supplier Knowledge embedding-index builds. Model Lifecycle therefore arbitrates
+U5 index-build jobs alongside training, evaluation, and batch forecasting.
+U5 still owns Qdrant generation validation and its independently fenced active
+index route. This choice does not grant U5 the shared-transaction finalizer
+used for Forecasting publication, or make a U6 lease an index-activation
+authority. The 16 GiB/3 CPU whole-cluster limit and U5's measured pod/process
+limits remain in force. This is a new owner decision after the prior summary
+confirmation, not a retroactive change to that answer.
+
 
 ## Consolidated Summary Confirmation
 
@@ -238,8 +250,9 @@ for review; this answer is not requirements-stage approval.
 - Commit/push is authorized on working branches; every merge needs owner approval.
   Formal requirements generation does not approve implementation or deployment.
 - Remaining implementation decisions include model/runtime/placement benchmarks,
-  disk capacity, backup expiry/recovery targets, remaining telemetry storage,
-  upload limits, buffer defaults, runner isolation and identity key integration.
+  disk capacity, remaining telemetry storage, buffer defaults, runner isolation
+  and identity key integration. Recovery targets and the initial supplier upload
+  limits have already been selected and are not reopened here.
   No numerical values or owner approval are invented for these open items.
 
 - Purchasing includes manager rejection, cancellation of submitted/approved orders
@@ -266,9 +279,13 @@ for review; this answer is not requirements-stage approval.
 - Evidence manifests will use exactly six outcomes: passed, failed, limited,
   rejected, unavailable, and not-run. Demo Evidence owns C19 semantics and approved
   examples; Contracts owns canonical packaging, schema generation, and validation.
-- Model Lifecycle will own a versioned heavy-compute lease API used by Forecasting,
-  with authenticated acquire/renew/release, idempotency, fencing tokens, queue and
-  timeout outcomes, and restore reconciliation. Promoted model metadata will carry
+- Model Lifecycle will own one durable global heavy-work slot shared by model
+  training, evaluation, Forecasting batches, and Supplier Knowledge embedding-index
+  builds, with authenticated requests/acquire/renew/release, idempotency, fencing
+  tokens, queue and timeout outcomes, and restore reconciliation. U5 retains
+  independently fenced index validation and route activation; the shared-transaction
+  publication finalizer remains limited to its authorized Forecasting path.
+  Promoted model metadata will carry
   immutable skops.io artifact, canonical manifest, SHA-256, Ed25519 signature, key
   status, trusted-type allowlist version, and revocation/overlap information.
 - Recovery evidence will use a versioned platform barrier that quiesces every
