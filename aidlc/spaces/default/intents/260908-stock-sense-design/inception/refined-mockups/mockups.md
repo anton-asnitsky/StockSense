@@ -1,13 +1,13 @@
 # StockSense refined mockups
 
-Date: 2026-09-22
-Status: Draft for owner approval
+Date: 2026-09-27
+Status: Reopened draft; consolidated design summary confirmed, formal review and stage approval pending
 Fidelity: Mid-to-high fidelity structural specification
-Revision: Owner-requested findings addressed after summary reconfirmation on 2026-09-22
+Revision: Reconciled to the 2026-09-27 approved User Stories baseline
 
 ## Purpose and sources
 
-These mockups translate the approved StockSense requirements, 67 user stories and 242 acceptance criteria into a coherent browser experience. They are implementation-neutral layouts for the React, TypeScript, Vite, Ant Design and Ant Design Charts client. They do not claim implemented or tested behavior.
+These mockups translate the approved StockSense requirements, 67 user stories and 250 acceptance criteria into a coherent browser experience. They are implementation-neutral layouts for the React, TypeScript, Vite, Ant Design and Ant Design Charts client. They do not claim implemented or tested behavior.
 
 Sources:
 
@@ -236,7 +236,8 @@ Unavailable forecasts show the exact missing or invalid prerequisite and block d
 ## UI-05 Replenishment workspace
 
 ```text
-Replenishment reviews                    Allowance: 1 of 2 remaining today
+Replenishment reviews          Manual allowance: 1 of 3 accepted requests remaining
+                              Reset: 2026-09-11 00:00 [retailer time zone]
 [Search] [Severity ▾] [Review status ▾]              [Request new review]
 
 SKU      Shortage  Suggested  Pack  Supplier  Evidence status     Action
@@ -246,7 +247,7 @@ SKU      Shortage  Suggested  Pack  Supplier  Evidence status     Action
 Review run  rr-20260910-02 · completed 09:45 · inventory v184 · forecast v7
 ```
 
-The request control discloses allowance, reset time, in-progress job and outcome. A confirmation dialog explains that one accepted request consumes one daily slot. Duplicate clicks and same-job retries show the existing job. When the quota is exhausted, the action remains discoverable but disabled with the reset time and scheduled-run alternative.
+The request control discloses the three-request daily quota, remaining accepted requests, the next reset date/time with the retailer's configured IANA time-zone ID, in-progress job and outcome. A confirmation dialog explains that one accepted request consumes one daily slot. Duplicate clicks and same-job retries show the existing job. When the quota is exhausted, the action remains discoverable but disabled with the reset time and scheduled-run alternative.
 
 The detail drawer shows the calculation inputs, product buffer override, retailer default fallback, pack rounding, minimum order, due date and supplier choice. “Create draft proposal” opens UI-06 with the evidence version pinned.
 
@@ -308,7 +309,7 @@ Purchase reviews — Northstar Home
 └──────────────────────────┴──────────────────────────────────────────────┘
 ```
 
-Approve and reject remain explicit decisions. When one person holds both Planner and Manager roles, the shell and confirmation show the role currently being exercised. Decision receipts show actor, acting role, timestamp and reason. Stale evidence uses the same keyboard-safe recovery pattern as submission: focus the error summary, identify changes, preserve entered reason/context, link current evidence and offer a linked replacement Draft without mutating the source. The UI never presents simultaneous success for racing decisions. Cancellation is available only in submitted or approved states before any receipt and uses a separate confirmation with state/version details.
+Approve and reject remain explicit decisions. When one person holds both Planner and Manager roles, the shell and confirmation show the role currently being exercised. Decision receipts show actor, acting role, timestamp and reason. Stale evidence uses the same keyboard-safe recovery pattern as submission: focus the error summary, identify changes, preserve entered reason/context and link current evidence. A Manager-only user can inspect and hand the outcome back for Planner correction but sees no `Create linked replacement Draft` action; this handback does not change the Submitted proposal's business state. That action is available only to an authorized Planner or a dual-role user explicitly acting as Planner, and it never mutates the source. The UI never presents simultaneous success for racing decisions. Cancellation is available only in submitted or approved states before any receipt and uses a separate confirmation with state/version details.
 
 ## UI-08 Purchase order and receipts
 
@@ -334,17 +335,19 @@ Suppliers — BrightCo
 Documents                                             [Upload document]
 Name                    Version  Parsed  Indexed  Updated       Action
 2026 price list.pdf     v3       Ready   Ready    2026-09-08    Inspect
-delivery-policy.docx    v1       Partial —        2026-09-07    Review
+delivery-policy.pdf     v1       Partial —        2026-09-07    Review
 
-Document drawer
-Source version v3 · checksum …71ac · 12 chunks
+Document drawer — delivery-policy.pdf (text PDF)
+Source version v1 · checksum …71ac · extraction incomplete
 Extraction warning: table on page 4 requires review
-[Open extracted text] [View retrieval citations] [Delete version]
+[Open extracted text] [Resolve omissions] [Delete version]
 ```
 
-Upload is a staged flow: select, validate type/limits, extract, review quality, index and expose. Unsupported or partial extraction remains visible. Deletion distinguishes source deletion from projection cleanup and identifies any rebuild required.
+Upload is a staged flow: select, validate type/limits, extract, review quality, index and expose. This partial text-PDF example has no accepted terms or retrieval citations until validation; unsupported formats such as DOCX are rejected without parsed content. Unsupported or partial extraction remains visible. Deletion distinguishes source deletion from projection cleanup and identifies any rebuild required.
 
-An operator-visible cache panel shows the authoritative source version, active Qdrant collection/alias, embedding profile, projection generation, last reconciliation and route status. `Cache unavailable`, `Active route missing`, `Generation stale` and `Reconciliation required` are explicit fail-closed states: retrieval is blocked and no stale projection is presented as current. Authorized reconciliation and rollback actions review the source/target generations before execution and return stable evidence links.
+An operator-visible cache panel shows the authoritative source version, active Qdrant collection/alias, embedding profile, projection generation, last reconciliation and route status. `Cache unavailable` is a degraded state that falls back to authoritative source and route checks without serving stale cached evidence. `Active route missing`, `Generation stale` and `Reconciliation required` block retrieval until authority is proved; no stale projection is presented as current. Authorized reconciliation and rollback actions review the source/target generations before execution and return stable evidence links.
+
+An index-build detail distinguishes a queued request from a build holding the current authenticated `embedding-index` lease. It shows candidate model/configuration, retailer, source and Qdrant generation, lease identity/fencing status, build-complete validation and the independently authorized PostgreSQL route version. A lost or revoked lease leaves a partial generation inactive; an Operator can inspect the reconcile/rebuild outcome but cannot activate it as current. The UI never treats the shared lease as route-activation authority.
 
 ## UI-10 Contextual assistant panel
 
@@ -378,13 +381,17 @@ Interrupted tool work displays one of `Completed`, `Incomplete` or `Outcome unkn
 
 The operator workspace lists training/evaluation runs, artifacts, baseline comparisons and promotion status. A candidate detail page shows data cutoff, parameters, metrics, resource use, reproducibility identifiers and rejected alternatives. Promotion requires an explicit version, authority, confirmation and rollback reference. Charts always have a metric table and textual conclusion.
 
-Heavy training/evaluation work also shows queue identity, lease owner, lease expiry, heartbeat, fencing token/generation and prerequisite status. A blocked prerequisite names the missing operational-quality result, profile or version and cannot look `Ready`, `Pass`, `Fail` or estimated. If lease authority is lost, the terminal evidence names the prohibited side effect and the safe recovery action; controls never imply that the fenced job is still runnable.
+The shared heavy-work view covers training, evaluation, Forecasting batches and U5 embedding-index builds in one queue. Each row names the safe job/run ID, work type, queue position, deadline, current holder, lease expiry, heartbeat, fencing generation, last transition and next safe action. `Queued`, `Running`, `Deadline reached`, `Authority lost` and `Reconciliation required` are separate text states; a queued or fenced U5 build never looks runnable or eligible to activate an index. After a lost U5 renewal/expiry acknowledgement, the view keeps reassignment pending until U5's authoritative local fence is reconciled; it never announces a new holder or token T+1 merely because a timer elapsed. Model/Forecasting finalization and U5 index validation/route activation have separate capability labels.
+
+A resource-evidence panel keeps two pinned whole-cluster profiles separate: model/evaluation/Forecasting and U5 embedding-index build. Each reports sustained/peak RAM and CPU, Kubernetes/VM overhead, throttling/OOM and pass/fail against the same **16 GB / 3 CPU** planning envelope. The U5 profile additionally records each candidate's artifact size against **1.5 GiB**, evaluation peak RSS against **1.5 GiB**, and the **2 GiB** pod limit. Missing pinned inputs appear as `not-run` / `blocked-prerequisite`; failed measurements remain failed and do not silently relax the machine budget.
 
 ## UI-13 Platform and recovery operations
 
 This workspace is a curated operations surface rather than a replacement for Kubernetes, Vault, MLflow or deployment tools. It links to documented commands and evidence for service health, contracts, migrations, secrets integration, backups, restores and local resource benchmarks. Actions that remain CLI-only are marked “Run using documented procedure”; the UI does not pretend to execute them.
 
 The recovery-barrier view identifies the run, phase, checkpoint, UTC start time, PostgreSQL and RabbitMQ participants and fenced scope. Destructive steps require a separate confirmation that names the affected scope. Only authoritative results may end as `Succeeded`, `Failed`, `Aborted` or `Safely resumed`; an interrupted or ambiguous run remains non-terminal and offers status reconciliation before retry.
+
+The recovery objective panel distinguishes fixed FR20.1 barrier phase deadlines and NFR9's seven-day log/ninety-day audit defaults from open OQ5 RPO, RTO, backup-expiry and complete local persistent-disk capacity. Each open item displays confirmation or measurement status, owner/next action and `not-run` / `blocked-prerequisite` until versioned targets and measured drill evidence exist. A timed-out or fenced participant cannot be presented as a successful restore.
 
 ## UI-14 Audit and observability
 
@@ -411,6 +418,8 @@ Requirements  Stories  Decisions  Contracts  Tests  Resource results
 
 The journey separates instructions from actual completion evidence. A missing prerequisite or artifact shows actionable guidance. The current revision, model/data versions and synthetic-data limitation stay visible. Deterministic concurrency and replay evidence records the initial entity/version, synchronization barrier, competing commands, winner count, final entity/version/status, audit/outbox/inbox/idempotency counts and exact replay response.
 
+Portfolio evidence links separately to the two pinned whole-cluster resource profiles and to each unresolved OQ5 item; it does not use a barrier deadline or log/audit retention period as a substitute for an RPO, RTO or backup-expiry target.
+
 ## UI-16 Supported-browser profile evidence
 
 The browser evidence view records the exact browser/version, operating system, viewport, zoom or reflow setting, keyboard/focus result, text-spacing and non-color result, horizontal-scroll exceptions, tested revision and supported/unsupported disposition. Evidence is a versioned record, never inferred from browser family alone. An in-product compatibility warning appears only when the application can reliably detect an unsupported profile; otherwise the reviewer evidence view reports the result without pretending detection is available.
@@ -431,7 +440,8 @@ The browser evidence view records the exact browser/version, operating system, v
 | Blocked prerequisite | Neutral blocked panel | Missing OQ/profile/version and why work cannot start | Resolve prerequisite |
 | Outcome unknown | Warning alert with operation identity | No success claim; prohibited retry until reconciled | Check status |
 | Authority lost | Error result with fencing evidence | Prohibited side effect and authoritative generation | Inspect/reconcile |
-| Cache unavailable | Error result with source/projection versions | Retrieval is fail-closed and no stale result is current | Diagnose/reconcile |
+| Reconciliation required | Neutral warning with job identity | Uncertain lease holder, local fence and pending reassignment | Check status; no activation or new heavy run claim |
+| Cache unavailable | Degraded status with source/route versions | Authoritative fallback is used; no stale cached result is current | Inspect source/route evidence |
 
 ## Story-to-interface coverage
 
@@ -443,9 +453,9 @@ The browser evidence view records the exact browser/version, operating system, v
 | EP04 Forecasting and ML lifecycle | US4.1 UI-04; US4.2 UI-12; US4.3 UI-04/UI-12; US4.4 UI-04; US4.5 UI-12; US4.6 UI-12/UI-15; US4.7 UI-04; US4.8 UI-12 |
 | EP05 Replenishment planning | US5.1 UI-05/UI-01; US5.2 UI-05; US5.3 UI-05; US5.4 UI-05; US5.5 UI-05/UI-06 |
 | EP06 Purchasing and receipts | US6.1 UI-06; US6.2 UI-06/UI-07; US6.3 UI-07; US6.4 UI-07/UI-08; US6.5 UI-07/UI-08; US6.6 UI-08/UI-15 |
-| EP07 Assistant and agentic workflows | US7.1 UI-10/UI-11; US7.2 UI-10/UI-11; US7.3 UI-10/UI-11; US7.4 UI-10/UI-11; US7.5 UI-15; US7.6 UI-10/UI-11; US7.7 UI-10/UI-11; US7.8 UI-10/UI-11; US7.9 UI-10/UI-11; US7.10 UI-10/UI-11; US7.11 UI-10/UI-11; US7.12 UI-09/UI-13 plus non-UI index lifecycle |
+| EP07 Assistant and agentic workflows | US7.1 UI-10/UI-11; US7.2 UI-10/UI-11; US7.3 UI-09/UI-12/UI-15; US7.4 UI-10/UI-11; US7.5 UI-15; US7.6 UI-10/UI-11; US7.7 UI-10/UI-11; US7.8 UI-10/UI-11; US7.9 UI-10/UI-11; US7.10 UI-10/UI-11; US7.11 UI-10/UI-11; US7.12 UI-09/UI-12/UI-13 plus non-UI index lifecycle |
 | EP08 Local platform and delivery | US8.1 UI-13/UI-15; US8.2 UI-13 plus contract evidence; US8.3 UI-13; US8.4 UI-13; US8.5 UI-13/UI-14; US8.6 UI-01/UI-13; US8.7 UI-12/UI-13; US8.8 UI-13/UI-15 |
-| EP09 Observability, audit and recovery | US9.1 UI-14; US9.2 UI-14; US9.3 UI-14; US9.4 UI-01/UI-14; US9.5 UI-13; US9.6 UI-13/UI-15; US9.7 UI-14; US9.8 UI-13/UI-14; US9.9 UI-13; US9.10 UI-13; US9.11 UI-13/UI-15 |
+| EP09 Observability, audit and recovery | US9.1 UI-14; US9.2 UI-14; US9.3 UI-14; US9.4 UI-12/UI-13/UI-15; US9.5 UI-13; US9.6 UI-13/UI-15; US9.7 UI-14; US9.8 UI-13/UI-14; US9.9 UI-13; US9.10 UI-13; US9.11 UI-13/UI-15 |
 | EP10 Reviewer experience | US10.1 UI-15; US10.2 UI-15; US10.3 UI-15/UI-16 |
 
 ## Design tradeoffs and boundaries
@@ -458,23 +468,26 @@ The browser evidence view records the exact browser/version, operating system, v
 
 ## Open implementation inputs
 
-The design can proceed without inventing values for requirements OQ1–OQ10. Their eventual values populate labels, limits, timestamps and error copy at the stated points of use. Component dimensions and exact token contrast must be validated in the implemented browser; the accessibility checklist defines that evidence.
+The design can proceed without inventing values for requirements OQ1–OQ10. OQ5 specifically leaves RPO, RTO, backup expiry and complete local persistent-disk capacity open; FR20.1 barrier deadlines and NFR9 log/audit retention are already fixed but are different measurements. Their eventual values populate labels, limits, timestamps and error copy at the stated points of use. Component dimensions and exact token contrast must be validated in the implemented browser; the accessibility checklist defines that evidence.
 
 ## Review
 
 **Verdict:** READY
 **Reviewer:** aidlc-product-lead-agent
-**Date:** 2026-09-22T09:08:08Z
-**Iteration:** 1
-**Request Challenge:** review:03f4b1db89864cf6353b9d19496d650c
+**Date:** 2026-09-27T14:49:14Z
+**Iteration:** 2
+**Request Challenge:** review:df9ae003d044c0269f2446f40da1d2b7
 
 ### Findings
 
 | ID | Severity | Location | Finding | Required action | Status |
 |---|---|---|---|---|---|
-| R-01 | Major | aidlc/spaces/default/intents/260908-stock-sense-design/inception/refined-mockups/mockups.md > UI-05 Replenishment workspace and Story-to-interface coverage | US5.3 is mapped to UI-05, but the mockup only lets the user inspect an existing buffer value; it defines no controls or result treatment for comparing configurable buffer scenarios. The interaction specification likewise maps “Manual review request and quota” to US5.3/US5.4, although scenario comparison is US5.3 and status/allowance is US5.5. A developer must infer the comparison interaction and the traceability anchor is inaccurate. | Define the US5.3 scenario-comparison interaction, including editable versus inherited buffer inputs, baseline/comparison results, stale-input behavior, and keyboard/responsive behavior; correct the interaction traceability row to distinguish US5.3 from US5.4/US5.5. | Resolved |
-| R-02 | Minor | aidlc/spaces/default/intents/260908-stock-sense-design/inception/refined-mockups/refined-mockups-questions.md > Document header and Consolidated Summary Confirmation | The header says the plan is awaiting consolidated summary confirmation, while the terminal confirmation records `[Answer]: Looks correct`. This leaves the artifact’s confirmation status internally inconsistent. | Update the header status to reflect the recorded confirmation without changing the confirmed answers. | Resolved |
+| R-01 | Major | aidlc/spaces/default/intents/260908-stock-sense-design/inception/refined-mockups/mockups.md > UI-05 and Story-to-interface coverage; interaction-spec.md > BufferScenarioComparison | US5.3 retains its dedicated inherited-versus-explicit-zero comparison on common versioned inputs, with differences and stale handling. US5.3, US5.4 and US5.5 remain separately mapped. | Preserve this separation during implementation. | Resolved |
+| R-02 | Minor | aidlc/spaces/default/intents/260908-stock-sense-design/inception/refined-mockups/refined-mockups-questions.md > Header | The Q&A header still identifies Refined Mockups and the reopened design plan. | No further action. | Resolved |
+| R-03 | Major | aidlc/spaces/default/intents/260908-stock-sense-design/inception/refined-mockups/mockups.md > UI-09 Supplier knowledge | The partial document example remains a text PDF; accepted terms and retrieval citations are withheld until validation, and unsupported DOCX is rejected without parsed content, consistent with FR10 and FR10.2. | Preserve the supported-format and validation boundary. | Resolved |
+| R-04 | Minor | aidlc/spaces/default/intents/260908-stock-sense-design/inception/refined-mockups/mockups.md > UI-05 Replenishment workspace | The display still shows one of three accepted manual requests remaining and a retailer-local reset, consistent with FR9 and FR9.5. | Preserve the three-request, retailer-local quota presentation. | Resolved |
+| R-05 | Minor | aidlc/spaces/default/intents/260908-stock-sense-design/inception/refined-mockups/design-system-mapping.md > Form conventions | The convention still limits linked replacement-Draft creation to authorized Planners or dual-role users acting as Planner after a fresh capability check; Manager-only users get handback without changing the Submitted proposal. | Preserve the acting-role and capability boundary. | Resolved |
 
 ### Summary
 
-Both prior findings are resolved: the US5.3 comparison is implementable and independently traceable from US5.4/US5.5, and the Q&A status matches the recorded confirmation. Required output validation passes, with no new material findings.
+The LF-normalized artifact retains the reviewed product behavior and maps all 67 approved stories. The five carried findings remain resolved; no new material contradiction was found.

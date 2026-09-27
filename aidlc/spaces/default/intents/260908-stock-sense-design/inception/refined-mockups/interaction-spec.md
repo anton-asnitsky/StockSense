@@ -1,8 +1,8 @@
 # StockSense interaction specification
 
-Date: 2026-09-22
-Status: Draft for owner approval
-Revision: Owner-requested findings addressed after summary reconfirmation on 2026-09-22
+Date: 2026-09-27
+Status: Reopened draft; consolidated design summary confirmed, formal review and stage approval pending
+Revision: Reconciled to the 2026-09-27 approved User Stories baseline
 
 ## Scope and interaction contract
 
@@ -14,6 +14,7 @@ Global rules:
 - A retailer change invalidates incompatible cached queries, closes unsafe mutation surfaces and prevents late responses from rendering under the new retailer.
 - Destructive, financial or authority-changing actions require an explicit review step.
 - A lost or uncertain response is shown as uncertain; the client retrieves authoritative state before offering retry.
+- A shared heavy-work lease permits at most one active training, evaluation, Forecasting batch or U5 embedding-index build. A U5 lease does not confer index-route authority or the Forecasting publication finalizer.
 - Idempotency results remain discoverable for the aggregate lifetime and for 90 days after its terminal state. A reused key whose retained result has expired returns `idempotency-key-expired`; the UI states that no effect occurred and requires a new operation identity.
 - `not-run` and `blocked-prerequisite` name the missing operational-quality result, profile or version and never render as passed, failed, ready or estimated.
 - Typed failures `authority-lost`, `cache-unavailable`, `secret-unavailable`, `secret-access-denied`, `stale-placement-generation` and `idempotency-key-expired` identify the prohibited side effect and a safe next action.
@@ -193,7 +194,7 @@ Success outcome: Exactly one valid state transition is shown with decision evide
 
 Error paths:
 
-- Stale version: focus moves to the error summary; changed fields and current evidence are shown, entered reason is preserved, and a linked replacement Draft is offered without source mutation.
+- Stale version: focus moves to the error summary; changed fields and current evidence are shown and the entered reason is preserved. A Manager-only user can inspect and hand the outcome back to a Planner without changing the Submitted proposal's business state, but has no replacement-Draft creation control. An authorized Planner or a dual-role user explicitly acting as Planner can open a linked replacement Draft without source mutation.
 - Competing decisions: losing action reloads the authoritative result.
 - Unauthorized role/membership: no business effect; safe denial.
 - Receipt already exists: cancel is unavailable and reason is shown.
@@ -231,10 +232,10 @@ Steps:
 
 1. User chooses a supported file and source version.
 2. Client checks known size/type bounds, then uploads for authoritative validation.
-3. Extraction/indexing progress is shown as stages with timestamps.
+3. Extraction and projection progress is shown as stages with timestamps; a candidate index-wide build separately shows whether it is queued or holds the current authenticated `embedding-index` heavy-work lease.
 4. Partial extraction exposes warnings and extracted text for review.
 5. Ready document exposes retrieval citations and version metadata.
-6. Cache status names the authoritative version, embedding profile, active route/alias, projection generation and last reconciliation.
+6. Cache status names the authoritative version, embedding profile, active route/alias, projection generation and last reconciliation. Build completion, generation validation and PostgreSQL route activation are separately labeled U5 decisions.
 7. Delete action explains source deletion and downstream projection cleanup.
 
 Success outcome: A versioned document is either ready, partial with warnings, rejected or deleted with explicit projection state.
@@ -243,7 +244,8 @@ Error paths:
 
 - Unsupported/scanned input: reject with supported-format guidance; no OCR claim.
 - Extraction/index failure: preserve source/version evidence and offer safe retry.
-- Cache or active-route failure: fail closed, mark retrieval unavailable, show no stale projection as current, and offer authorized reconciliation/rollback after previewing generations.
+- Redis/cache outage: use authoritative source and active-route checks, disclose degraded performance and never serve a stale cached result.
+- Missing or mismatched active route: fail closed, mark retrieval unavailable, show no stale projection as current, and offer authorized reconciliation/rollback after previewing generations; a stale build lease never activates a route.
 - Wrong-retailer access: safe denial with no document existence disclosure.
 - Deleted version cited by an old answer: citation shows unavailable/deleted source state.
 
@@ -285,12 +287,14 @@ Steps:
 
 1. Select a versioned run, deployment, contract, trace or recovery exercise.
 2. Inspect summary, configuration fingerprint, timestamps and evidence links.
-3. For heavy work, inspect queue identity, lease owner/expiry, heartbeat, fencing generation and prerequisites before treating the work as runnable.
+3. For heavy work, inspect job/work type, queue position, deadline, lease owner/expiry, heartbeat, fencing generation, last transition and prerequisites before treating the work as runnable. Training, evaluation, Forecasting and U5 embedding-index builds share the one slot. A lost U5 acknowledgement leaves reassignment pending until its local fence is reconciled, and the screen never implies a new token merely from elapsed time.
 4. For recovery, inspect run identity, phase, checkpoint, UTC start, PostgreSQL/RabbitMQ participants and fenced scope before any destructive confirmation.
 5. For browser support, inspect exact browser/version, viewport, zoom/reflow, keyboard/focus, text/non-color and horizontal-scroll results.
 6. Follow stable links across requirements, stories, design, contracts and validation.
-7. Missing evidence remains marked missing and provides the command or task expected to create it.
-8. Reviewer journey records local progress only after an observable result.
+7. Two pinned whole-cluster resource profiles separately report model work and U5 embedding-index builds against 16 GB / 3 CPU. U5 evidence additionally shows each candidate artifact against 1.5 GiB, peak evaluation RSS against 1.5 GiB and the 2 GiB pod limit.
+8. Recovery evidence distinguishes fixed barrier deadlines and 7/90-day log/audit retention from open OQ5 RPO, RTO, backup expiry and persistent-disk capacity. Each missing target remains `not-run` / `blocked-prerequisite` with a named next action.
+9. Missing evidence remains marked missing and provides the command or task expected to create it.
+10. Reviewer journey records local progress only after an observable result.
 
 Success outcome: A reviewer can reproduce the demo and distinguish planned, implemented, tested and measured claims.
 
@@ -299,7 +303,7 @@ Error paths:
 - Missing prerequisite: actionable setup guidance.
 - Backend unavailable: retain static documentation links and mark live evidence unavailable.
 - Revision mismatch: warn that evidence belongs to another revision.
-- Lease/fencing mismatch: return `authority-lost`, name the prohibited side effect and reconcile before replacement work.
+- Lease/fencing mismatch: return `authority-lost`, name the prohibited side effect and reconcile before replacement work; U5 cannot mark build complete, validate or activate a route under a stale token.
 - Missing OQ/profile/version: render `blocked-prerequisite`, never a run result or readiness estimate.
 
 ## Component specifications
@@ -700,6 +704,7 @@ Error paths:
 | `decisionReason` | string | conditional | — | Required according to transition contract |
 | `actingRole` | enum | yes | — | Planner or Manager role exercised for this action |
 | `handoffReceipt` | object or null | conditional | `null` | Submitter/time/locked lines/next actor |
+| `replacementDraftCapability` | boolean | yes | `false` | Server-confirmed Planner authority; Manager-only queue views never infer it from approval rights |
 
 ### Responsive behaviour
 
@@ -878,7 +883,7 @@ Focus enters the title, remains trapped, and returns to the trigger on cancel. T
 
 ### StaleRecoveryPanel
 
-This shared panel handles stale editing, submission and approval. It receives the attempted entity/version, authoritative entity/version, changed-field list, preserved user input, current-evidence links and replacement-Draft capability. Opening focuses a linked error summary. Each change link moves focus to the affected field or evidence. `Create linked replacement Draft` copies preserved context into a new Draft only after confirmation and never mutates or silently replaces the source record.
+This shared panel handles stale editing, submission and approval. It receives the attempted entity/version, authoritative entity/version, changed-field list, preserved user input, current-evidence links, current actor/acting role and the server-confirmed Planner `replacementDraftCapability`. Opening focuses a linked error summary. Each change link moves focus to the affected field or evidence. A Manager-only user sees `Hand back for Planner correction` with the current status/evidence and no creation control; the handback does not introduce a new purchasing transition. `Create linked replacement Draft` appears only for an authorized Planner or a dual-role user explicitly acting as Planner, copies preserved context only after confirmation, and never mutates or silently replaces the source. Role switching requires a fresh capability check; a hidden button is no substitute for backend denial.
 
 ### OperationOutcomePanel
 
@@ -889,7 +894,7 @@ This shared panel handles stale editing, submission and approval. It receives th
 | `Outcome unknown` | Operation identity and explicit absence of a success claim | Check status | Hidden until reconciliation says no effect |
 | `idempotency-key-expired` | Retention expiry and explicit `No effect` | Start a new request | Requires a new key |
 | `authority-lost` | Lease/fencing evidence and prohibited side effect | Reconcile authority | Never continue under the stale generation |
-| `cache-unavailable` | Source/projection versions and fail-closed retrieval state | Diagnose or reconcile | No stale retrieval fallback |
+| `cache-unavailable` | Source/route versions and degraded authoritative-fallback state | Inspect current evidence | No stale cached retrieval result |
 | `secret-unavailable` / `secret-access-denied` | Affected capability without secret material | Diagnose access | No dependent operation |
 | `stale-placement-generation` | Expected/current placement generation | Refresh placement | No write to the stale placement |
 
@@ -897,7 +902,32 @@ The component uses `Alert`, `Result`, `Descriptions` and specific action `Button
 
 ### LeaseStatusPanel
 
-The model-operations panel shows queue identity, requested operation, prerequisite result, lease owner, acquired/expiry UTC timestamps, heartbeat age, fencing token/generation and current authority. Its state set is `queued`, `blocked-prerequisite`, `leased`, `running`, `authority-lost`, `completed`, `failed` and `aborted`. `blocked-prerequisite` cannot show progress or an estimated start. `authority-lost` disables mutation controls and explains which write/promotion side effect is prohibited.
+The model-operations panel shows safe job/run identity, work type (`training`, `evaluation`, `forecast-batch`, `embedding-index`), queue position/deadline, prerequisite result, lease owner, acquired/expiry UTC timestamps, heartbeat age, fencing token/generation, last transition and current authority. Its state set is `queued`, `blocked-prerequisite`, `leased`, `running`, `deadline-reached`, `reconciliation-required`, `authority-lost`, `completed`, `failed` and `aborted`. `blocked-prerequisite` has no progress estimate; `reconciliation-required` blocks T+1 assignment until U5's authoritative local fence is proved; `authority-lost` disables mutation controls and names the prohibited model/Forecasting or U5 build-complete/validation/route side effect. A current U5 lease is build authority only and never exposes the Forecasting finalizer or route-activation control. State transitions use stable text, a polite live announcement and no focus theft.
+
+### ResourceEvidencePanel
+
+| Field | Value |
+| --- | --- |
+| Component | `ResourceEvidencePanel` |
+| Description | Separately pinned model and U5 embedding-build workload measurements. |
+| Category | display |
+
+| State | Description | Trigger |
+| --- | --- | --- |
+| `blocked-prerequisite` | Missing candidate, corpus, sampling profile or reference-host measurement; no readiness claim | Required profile/evidence absent |
+| `passed` / `failed` | Actual sustained/peak RAM and CPU versus 16 GB / 3 CPU, including Kubernetes/VM overhead and throttling/OOM | Versioned run complete |
+
+The U5 row also compares each candidate artifact to 1.5 GiB, peak evaluation RSS to 1.5 GiB and pod memory to 2 GiB. Loading, build and serving measurements are serialized; ordinary retrieval serving does not acquire the build lease. Semantic table headers and text verdicts identify the two profiles; absent evidence never renders as zero.
+
+### RecoveryObjectivePanel
+
+| Field | Value |
+| --- | --- |
+| Component | `RecoveryObjectivePanel` |
+| Description | Shows recovery prerequisites separately from fixed barrier and retention rules. |
+| Category | display |
+
+RPO, RTO, backup expiry and full persistent-disk capacity each show owner-confirmed target or measurement status, version, missing item and next action. FR20.1 phase deadlines and NFR9 seven-day log/ninety-day audit retention appear in separately labeled sections. Missing OQ5 inputs produce `not-run` / `blocked-prerequisite`; only a measured clean-environment drill against confirmed targets can display a recovery pass. Changes use text status and a polite live region without moving focus.
 
 ### RecoveryBarrierPanel
 
@@ -948,12 +978,12 @@ The UI IDs and flows map to all stories through `mockups.md` § Story-to-interfa
 | Import diagnostics and authoritative outcome | US2.2, AC2.2.1–AC2.2.4; US2.5 |
 | Inventory states and cache degradation | US2.3, US2.4 |
 | Supplier cache and active-route safety | US3.4 |
-| Forecast provenance/comparison and heavy-work fencing | US4.1–US4.8 |
+| Forecast provenance/comparison and global heavy-work fencing | US4.1–US4.8, especially AC4.8.5–AC4.8.7; US7.3 and US7.12 U5 build/activation boundary |
 | Buffer-scenario comparison | US5.3, AC5.3.1–AC5.3.3 |
 | Manual review request | US5.4, AC5.4.1–AC5.4.7 |
 | Review status and allowance | US5.5, AC5.5.1–AC5.5.5 |
-| Draft/submit/review/cancel and observable handoff | US6.1–US6.5, especially AC6.1.3, AC6.2.1–AC6.2.3, AC6.3.1–AC6.3.4 |
+| Draft/submit/review/cancel and observable handoff | US6.1–US6.5, especially AC6.1.3, AC6.2.1–AC6.2.3, AC6.3.1–AC6.3.5 |
 | Partial/full receipts and races | US6.6 |
 | Assistant context, evidence, governed action and interruption recovery | US7.1–US7.12, especially AC7.10.1, AC7.10.4–AC7.10.5, AC7.11.1–AC7.11.4, AC7.12.4 |
-| Operations, audit, retention and recovery barrier evidence | US8.1–US9.11, especially AC9.6.1–AC9.6.3 and AC9.11.1–AC9.11.4 |
+| Operations, audit, retention and recovery barrier evidence | US8.1–US9.11, especially AC9.4.2, AC9.4.5, AC9.6.1–AC9.6.4 and AC9.11.1–AC9.11.4 |
 | Reviewer journey and browser profile evidence | US10.1–US10.3 |

@@ -1,10 +1,10 @@
 # StockSense refined mockups questions
 
-Date: 2026-09-22
+Date: 2026-09-27
 Stage: Refined Mockups
-Status: Reconciled design plan; confirmation state recorded below
+Status: Reopened design plan; confirmation answer recorded below
 
-The classic lifecycle intentionally skipped rough mockups. These questions establish the interaction direction directly from the approved requirements and user stories. Confirmed constraints already carried forward: React with TypeScript, Vite, Ant Design, English-first UI, role and retailer isolation, explicit loading/empty/error/stale states, and human approval for purchasing actions. The original guided answers remain valid; this revision reconciles them with the owner-approved 67-story backlog.
+The classic lifecycle intentionally skipped rough mockups. These questions establish the interaction direction directly from the approved requirements and user stories. Confirmed constraints already carried forward: React with TypeScript, Vite, Ant Design, English-first UI, role and retailer isolation, explicit loading/empty/error/stale states, and human approval for purchasing actions. Q1-Q10 retain the owner's prior guided choices. This formal redo reconciles their design implications with the newly approved 67-story, 250-criterion backlog; the earlier summary confirmation does not approve this revision.
 
 ## Q1. Application shell and navigation
 
@@ -116,17 +116,25 @@ There are 67 approved stories, including operational and API-focused work that d
 
 [Answer]: A. Complete key journeys plus reusable screen/state patterns (Recommended) — 2026-09-10T08:26:42Z; **Mode:** guided
 
-## Confirmed backlog reconciliation
+## Revised backlog reconciliation
 
 The approved User Stories revision adds no new navigation, visual-theme or
 responsive-policy choice. The refined artifacts will retain Q1-Q10 and make the
 following observable changes:
 
-- Update coverage from 63 to 67 stories and 242 acceptance criteria.
+- Update coverage to 67 stories and 250 acceptance criteria, with each story
+  mapped to a UI pattern or a named non-UI evidence path.
 - Add Supplier Knowledge cache/active-route status to supplier and operator views,
   including fail-closed retrieval and authorized reconciliation/rollback.
-- Add heavy-work lease/queue status and fencing evidence to model operations,
-  showing blocked prerequisites without implying a runnable job.
+- Show one global heavy-work slot across training, evaluation, Forecasting
+  batches and U5 embedding-index builds. Operator status distinguishes work
+  type, queued/running/fenced/reconciliation states, deadline and safe next
+  action; U5 builds never gain Forecasting finalizer or index-route authority.
+  A lost U5 acknowledgement does not imply the slot can be reassigned.
+- Show candidate embedding measurements against the separately pinned U5 and
+  model whole-cluster profiles: 16 GB RAM / 3 CPU, no larger than 1.5 GiB per
+  embedding artifact, 1.5 GiB peak evaluation RSS and a 2 GiB U5 pod limit.
+  Unmeasured or failed fit remains visible rather than presented as ready.
 - Add a recovery-barrier workspace with run identity, phase, checkpoint,
   PostgreSQL/RabbitMQ participants, fenced scope, explicit destructive-action
   confirmation, and Succeeded/Failed/Aborted/Safely resumed outcomes.
@@ -134,15 +142,22 @@ following observable changes:
   keyboard/focus and unsupported-result reporting.
 - Strengthen purchasing handoff: Submitted confirmation, submitter/time/locked
   lines/next actor, Manager pending-decision visibility, decision actor/time/reason,
-  and explicit acting role when one person has both roles.
+  and explicit acting role when one person has both roles. After failed approval
+  revalidation, a Manager-only user may inspect and hand back the proposal; only
+  an authorized Planner or a dual-role user acting as Planner may create its
+  linked replacement Draft.
 - Add keyboard-safe stale edit/submission/approval recovery that identifies changed
-  fields, preserves entered context, links current evidence and offers a linked
-  replacement Draft without mutating the source.
+  fields, preserves entered context and links current evidence. Offer a linked
+  replacement Draft only where the current actor has Planner authority; never
+  mutate the source.
 - Add payload-complete assistant Draft confirmation with Confirm/Cancel, stale
   invalidation and `Create Draft only`; interrupted work shows Completed,
   Incomplete or Outcome unknown and reconciles before retry.
 - Surface typed cache, authority, secret, stale-placement and idempotency-expiry
   outcomes with prohibited side effects and safe next actions.
+- Distinguish fixed recovery-barrier deadlines and 7/90-day log/audit retention
+  from open OQ5 RPO, RTO, backup expiry and persistent-disk capacity. Missing
+  targets show `not-run`/`blocked-prerequisite`, not a recovery pass.
 - Carry the shared WCAG 2.2 AA, deterministic concurrency-evidence and
   `blocked-prerequisite` rules into every affected screen/state specification.
 - Define US5.3 buffer-scenario comparison with inherited versus explicit-zero
@@ -159,8 +174,12 @@ following observable changes:
 - Keep full desktop/tablet workflows and mobile read/review essentials; unsupported
   dense authoring states provide clear guidance rather than broken controls.
 - Refine complete key journeys and reusable states rather than creating one screen
-  per story. Explicitly map all 67 stories to a UI surface or non-UI evidence path.
-- Apply every item in the confirmed backlog reconciliation above without changing
+  per story. Explicitly map all 67 stories to a UI surface or non-UI evidence
+  path, using the 250 criteria as the verification source.
+- Make Manager-only purchase recovery, U5 shared-slot build status, embedding
+  resource evidence and unresolved OQ5 recovery targets explicit in the affected
+  screen states and accessible interactions.
+- Apply every item in the revised backlog reconciliation above without changing
   domain authority: APIs remain authoritative and the assistant never approves or
   silently commits purchasing actions.
 

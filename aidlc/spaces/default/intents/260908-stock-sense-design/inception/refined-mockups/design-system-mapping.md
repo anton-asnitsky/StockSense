@@ -1,8 +1,8 @@
 # StockSense design system mapping
 
-Date: 2026-09-22
-Status: Draft for owner approval
-Revision: Owner-requested findings addressed after summary reconfirmation on 2026-09-22
+Date: 2026-09-27
+Status: Reopened draft; consolidated design summary confirmed, formal review and stage approval pending
+Revision: Reconciled to the 2026-09-27 approved User Stories baseline
 
 ## Design system decision
 
@@ -93,10 +93,12 @@ Transitions remain under 200ms for navigation affordances and under 300ms for dr
 | Assistant full workspace | `Layout`, `Splitter` if chosen and accessible, `Tabs`, `Drawer` | Preserve keyboard path; resizing cannot be pointer-only |
 | Purchasing queue | `Table`/`List`, `Flex`, `Descriptions`, `Form` | Master-detail with authoritative capability controls |
 | Durable handoff receipt | `Result`, `Descriptions`, `Timeline`, stable `Link` | Submitter/time/locked lines/next actor; mirrored in Manager queue |
-| Stale recovery | `Alert`, linked error summary, `Descriptions`, `Button` | Preserve input, enumerate changes, link current evidence, replacement Draft only |
-| Supplier cache route | `Descriptions`, `Tag`, `Timeline`, guarded `Modal` | Source/profile/alias/generation/reconciliation; fail closed |
-| Lease and fencing | `Descriptions`, `Progress`, `Alert`, `Timeline` | Queue/lease/heartbeat/fencing; blocked prerequisites have no progress estimate |
+| Stale recovery | `Alert`, linked error summary, `Descriptions`, `Button` | Preserve input and current evidence; Manager-only gets handback, while replacement Draft creation requires current Planner authority and explicit acting role |
+| Supplier cache route | `Descriptions`, `Tag`, `Timeline`, guarded `Modal` | Redis outage uses authoritative source/route fallback without stale cache; missing/mismatched active route fails closed |
+| Lease and fencing | `Descriptions`, `Progress`, `Alert`, `Timeline` | One slot for model, Forecasting and U5 embedding builds; work type, queue/deadline, lease/fence and reconciliation status; no progress estimate while blocked |
+| Resource evidence | `Descriptions`, semantic `Table`, `Result` | Separate pinned model and U5 whole-cluster profiles against 16 GB / 3 CPU; U5 artifact/RSS/pod limits and absent evidence explicit |
 | Recovery barrier | `Steps`, `Descriptions`, `Alert`, destructive `Modal` | Run/phase/checkpoint/participants/fenced scope and exact terminal state |
+| Recovery objectives | `Descriptions`, semantic `Table`, `Result` | Open OQ5 RPO/RTO/backup expiry/disk capacity separate from fixed barrier deadlines and log/audit retention |
 | Browser evidence | `Descriptions`, `Table`, `Result` | Exact browser/version/viewport/zoom/focus/non-color/scroll evidence |
 | Deterministic replay evidence | `Descriptions`, semantic `Table`, code text | Initial/final versions, barrier, commands, winner and exact counts/response |
 | Error boundary | `Result`, `Alert`, retry `Button` | State effect and recovery in plain language |
@@ -117,11 +119,11 @@ Use native HTML elements when they express semantics better than a component abs
 | UI-06 Draft proposal | editable `Form`/`Table` + totals `Statistic` + review `Modal` |
 | UI-07 Purchase review | responsive `Flex` split + queue `Table` + detail `Descriptions` + decision `Form` |
 | UI-08 Receipts | order `Descriptions` + progress `Steps`/`Progress` + receipt `Form`/`Table` |
-| UI-09 Suppliers | supplier `Tabs` + document/cache `Table` + upload `Drawer` + extraction/route `Alert` |
+| UI-09 Suppliers | supplier `Tabs` + document/cache `Table` + upload `Drawer` + extraction/route `Alert` + index-build lease/generation `Descriptions` |
 | UI-10 Assistant panel | `Drawer`/secondary `Sider` + conversation `List` + prompt `Form` + citations |
 | UI-11 Assistant workspace | multi-region `Layout` + history `List` + evidence `Tabs`/`Drawer` |
-| UI-12 Model operations | run/lease `Table` + comparison charts + version/fencing `Descriptions` + promotion `Modal` |
-| UI-13 Operations | health `Card` grid + recovery `Steps` + participant/scope `Descriptions` + evidence `Table` |
+| UI-12 Model operations | shared model/U5 work `Table` + resource-profile `Table` + comparison charts + version/fencing `Descriptions` + promotion `Modal` |
+| UI-13 Operations | health `Card` grid + recovery `Steps` + participant/scope `Descriptions` + open-OQ5 evidence `Table` |
 | UI-14 Audit/observability | filter `Form` + virtualized or paginated `Table` + trace `Drawer`/`Timeline` |
 | UI-15 Reviewer | `Steps` + evidence status `Table` + stable-link `List` + setup `Result` states |
 | UI-16 Browser evidence | profile `Descriptions` + check `Table` + supported/unsupported `Result` |
@@ -141,8 +143,10 @@ Use native HTML elements when they express semantics better than a component abs
 | Submitted handoff | Submitted, Pending manager decision | info/processing `Tag` plus receipt | submitter, time, locked lines and next actor |
 | Blocked prerequisite | Not run, Blocked prerequisite | neutral `Result`/`Alert` | missing OQ/profile/version; no pass/fail/readiness cue |
 | Authority lost | Authority lost, Fenced | error `Result` | fencing generation and prohibited side effect |
+| Reconciliation required | Reconciliation required, Holder uncertain | warning `Alert`/`Result` | job/work type, local fence, no T+1 claim and safe status action |
+| Resource fit | Measured pass, Measured fail, Not run | semantic `Table`/`Result` | exact profile, limit, sustained/peak value and missing prerequisite |
 | Recovery terminal | Succeeded, Failed, Aborted, Safely resumed | exact semantic `Tag`/`Result` | full terminal text and evidence link |
-| Cache route failure | Cache unavailable, Active route missing, Generation stale | error/warning `Alert` | fail-closed text and source/projection generations |
+| Cache and route state | Cache unavailable, Active route missing, Generation stale | warning/error `Alert` | authoritative fallback for Redis outage; route failure blocks retrieval with source/projection generations |
 | Idempotency expired | Idempotency key expired | neutral/error `Result` by context | explicit no-effect text and new-request action |
 
 Status vocabulary must match domain contracts. UI wording cannot create extra purchasing states.
@@ -186,7 +190,7 @@ The supported-browser evidence matrix records exact browser versions rather than
 - Numeric fields state unit, range, pack/minimum rule and rounding behavior.
 - Date/time fields identify the retailer-local zone, with UTC available in detail.
 - Autosave reports Saving, Saved and Unsaved changes; consequential transitions remain explicit.
-- Stale submit/approve failures preserve entered values, focus the error summary, enumerate changed fields and expose a linked replacement-Draft action without mutating the source.
+- Stale submit/approve failures preserve entered values, focus the error summary and enumerate changed fields. A Manager-only user may inspect current evidence and hand back a stale approval for Planner correction without changing the Submitted proposal's business state; only an authorized Planner or a dual-role user explicitly acting as Planner may create a linked replacement Draft, after a fresh capability check and without mutating the source.
 
 ## Table conventions
 
@@ -223,4 +227,4 @@ Implementation may use Ant Design `ConfigProvider` theme tokens and component ov
 
 ## Traceability
 
-This mapping implements the confirmed UI technology constraint and Refined Mockups decisions while supporting NFR14 accessibility, NFR11 reproducible local review, NFR3/NFR5 visible tenant/session context and the browser obligations referenced by all UI stories. `mockups.md` maps every story to a screen or explicit non-UI handling; `interaction-spec.md` defines behavior; `accessibility-checklist.md` defines evidence required before claiming conformance.
+This mapping implements the confirmed UI technology constraint and Refined Mockups decisions while supporting NFR14 accessibility, NFR11 reproducible local review, NFR3/NFR5 visible tenant/session context, FR13.1/FR16.3 shared heavy-work boundaries and the browser obligations referenced by all UI stories. `mockups.md` maps every story to a screen or explicit non-UI handling; `interaction-spec.md` defines behavior; `accessibility-checklist.md` defines evidence required before claiming conformance.

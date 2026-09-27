@@ -1,9 +1,9 @@
 # StockSense accessibility checklist
 
-Date: 2026-09-22
+Date: 2026-09-27
 Target: WCAG 2.2 Level AA
-Status: Design checklist; implementation evidence pending
-Revision: Owner-requested findings addressed after summary reconfirmation on 2026-09-22
+Status: Reopened design checklist; summary confirmed, implementation evidence, formal review and stage approval pending
+Revision: Reconciled to the 2026-09-27 approved User Stories baseline
 
 ## Scope and claim boundary
 
@@ -173,7 +173,8 @@ Criteria not relevant to the implemented content must be recorded as Not applica
 - [ ] Mobile decision controls remain separated to prevent accidental activation.
 - [ ] Submitted confirmation exposes submitter, time, locked lines and next actor in text and is reachable from the Manager queue.
 - [ ] Decision receipts expose actor, acting role, time and reason; a dual-role user can verify the role being exercised.
-- [ ] Stale recovery focuses a linked summary, preserves entered context, enumerates changes and offers a replacement Draft without silently mutating the source.
+- [ ] Stale recovery focuses a linked summary, preserves entered context and enumerates changes; Manager-only users hear a handback action and no Draft creation control, while authorized Planners or dual-role users acting as Planner can reach `Create linked replacement Draft` without mutating the source.
+- [ ] Acting-role text and the absence of replacement-Draft capability are understandable without color, icon inference or a hidden control alone; backend denial is exercised separately.
 
 ### UI-09 Supplier knowledge
 
@@ -183,7 +184,8 @@ Criteria not relevant to the implemented content must be recorded as Not applica
 - [ ] Extracted tables preserve headers or provide a linearized alternative.
 - [ ] Delete confirmation explains source and projection effects.
 - [ ] Cache/active-route status exposes source version, profile, alias/generation and reconciliation time without relying on color.
-- [ ] Fail-closed retrieval and authorized reconciliation/rollback states have distinct headings, effects and actions.
+- [ ] Redis outage announces authoritative fallback and degraded performance; missing/mismatched active route announces fail-closed retrieval. Neither state serves stale cached or projected evidence as current.
+- [ ] Index-build status announces work type, queued versus current leased build, source/Qdrant generation, independent route version and the fact that a fenced partial generation cannot activate.
 
 ### UI-10 and UI-11 Assistant
 
@@ -206,8 +208,11 @@ Criteria not relevant to the implemented content must be recorded as Not applica
 - [ ] Missing evidence is labeled missing rather than silently omitted.
 - [ ] External/documentation links disclose destination where useful.
 - [ ] Reviewer steps reflect observed completion and remain keyboard operable.
-- [ ] Lease status exposes queue, owner, expiry, heartbeat, fencing generation and authority as text; `blocked-prerequisite` has no progress/readiness cue.
+- [ ] Shared lease status exposes work type (training, evaluation, Forecasting or U5 embedding-index build), queue position/deadline, owner, expiry, heartbeat, fencing generation and authority as text; `blocked-prerequisite` has no progress/readiness cue.
+- [ ] Lost U5 acknowledgement and pending local-fence reconciliation announce `Reconciliation required` and no T+1/new-holder claim; a queued or fenced build never looks runnable or route-activatable. Material changes use polite announcements without moving focus.
+- [ ] Separate model and U5 resource-profile tables have semantic headings and exact sustained/peak values against 16 GB / 3 CPU. U5 artifact 1.5 GiB, evaluation RSS 1.5 GiB and pod 2 GiB comparisons use text verdicts; missing measurements are `not-run` / `blocked-prerequisite`.
 - [ ] Recovery barrier presents run, phase, checkpoint, UTC start, PostgreSQL/RabbitMQ participants and fenced scope before destructive confirmation.
+- [ ] Recovery objectives identify open OQ5 RPO, RTO, backup expiry and persistent-disk capacity individually, apart from fixed barrier deadlines and 7/90-day log/audit retention. Missing targets never announce a passed restore.
 - [ ] Recovery terminal states read exactly `Succeeded`, `Failed`, `Aborted` or `Safely resumed`; ambiguity remains `Outcome unknown`.
 - [ ] Concurrency/replay evidence exposes initial/final state and version, barrier, commands, winner count, audit/outbox/inbox/idempotency counts and exact replay response.
 - [ ] Browser evidence names exact version, viewport, zoom/reflow, keyboard/focus, text spacing, non-color result and horizontal-scroll exceptions.
@@ -322,9 +327,10 @@ Automated tools cannot establish full conformance. Their pass must be supplement
 | Assistant/tool preview | log semantics, focus, citation names | NVDA conversation and governed action handoff |
 | Operations/reviewer evidence | headings, links, table semantics | full reviewer journey at zoom/keyboard |
 | Submission-to-manager handoff | receipt fields, queue link and acting-role semantics | keyboard handoff and dual-role walkthrough |
-| Stale replacement Draft | summary links, preserved values and no source mutation | keyboard-only conflict recovery |
+| Stale replacement Draft | summary links, preserved values, Manager-only handback and Planner-only creation | keyboard-only Manager, Planner and dual-role conflict recovery |
 | Interrupted assistant work | outcome semantics and conditional retry absence | screen-reader status reconciliation |
-| Lease/recovery barrier | state names, participant/scope relationships and focus | keyboard destructive-confirmation walkthrough |
+| Lease/recovery barrier | work type, queued/fenced/reconciliation states, participant/scope relationships and focus | keyboard U5-to-model handoff and destructive-confirmation walkthrough |
+| Resource and OQ5 evidence | separate semantic tables, limit/value text and blocked-prerequisite names | screen-reader model/U5 profile and open-recovery-target walkthrough |
 | Browser profile evidence | exact profile fields and result semantics | 200%/400% zoom, reflow, focus, text and non-color review |
 
 ## Definition of done for accessibility
@@ -342,4 +348,4 @@ The browser experience may claim the selected target only when:
 
 ## Traceability
 
-This checklist operationalizes NFR14 and the browser obligations attached to every UI story, especially AC1.1.4, AC1.4.4–AC1.4.6, AC1.5.4, AC2.3.2, AC3.1.4, AC3.2.4, AC5.5.1–AC5.5.5, AC6.1.3–AC6.1.5, AC6.2.1–AC6.2.3, AC6.3.1–AC6.3.4, AC7.4.4, AC7.10.1, AC7.10.4–AC7.10.5, AC7.11.1–AC7.11.4, AC7.12.4, AC9.6.1–AC9.6.3, AC9.11.1–AC9.11.4 and AC10.3.1–AC10.3.3. Security and domain authorization remain independently tested; an accessible control does not imply the user is authorized to invoke it.
+This checklist operationalizes NFR14 and the browser obligations attached to every UI story, especially AC1.1.4, AC1.4.4–AC1.4.6, AC1.5.4, AC2.3.2, AC3.1.4, AC3.2.4, AC4.8.5–AC4.8.7, AC5.5.1–AC5.5.5, AC6.1.3–AC6.1.5, AC6.2.1–AC6.2.3, AC6.3.1–AC6.3.5, AC7.4.4, AC7.10.1, AC7.10.4–AC7.10.5, AC7.11.1–AC7.11.4, AC7.12.4–AC7.12.5, AC9.4.2, AC9.4.5, AC9.6.1–AC9.6.4, AC9.11.1–AC9.11.4 and AC10.3.1–AC10.3.3. Security and domain authorization remain independently tested; an accessible control does not imply the user is authorized to invoke it.
