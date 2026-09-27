@@ -1,5 +1,11 @@
 # Claude Code handoff — StockSense, 2026-09-26
 
+> Historical checkpoint. Its U6 escalation instructions were satisfied by an
+> owner Request Changes decision on 2026-09-26 and must not be repeated. For
+> the current continuation assessment, see
+> [Functional Design continuation audit](functional-design-integrity-2026-09-27.md)
+> and verify the engine's live status.
+
 ## Start here
 
 1. Check out `chore/bolt1-retail-data-functional-design` from `origin` and start Claude Code in the repository root. On this Windows machine run `./scripts/Start-Claude.ps1`; it loads the pinned AI-DLC runtime and sets `AIDLC_HARNESS_DIR=.codex`. If `claude` is unavailable, install and sign in to Claude Code first. This handoff was prepared without a local Claude Code CLI, so Claude's own discovery of these files and its native hooks could not be exercised here.
