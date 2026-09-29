@@ -34,6 +34,12 @@
       "path": "tools/contracts/.npmrc"
     },
     {
+      "path": "tools/contracts/.secretlintrc.json"
+    },
+    {
+      "path": "tools/contracts/eslint.config.js"
+    },
+    {
       "path": "tools/contracts/package.json"
     },
     {
@@ -107,6 +113,9 @@
     },
     {
       "path": "tools/contracts/test/unit/validators.test.mjs"
+    },
+    {
+      "path": "tools/contracts/tsconfig.json"
     }
   ]
 }
