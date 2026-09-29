@@ -9,6 +9,19 @@ acceptance claim. The plan's acceptance boundary is not met.
 
 ## Ordered plan steps
 
+### Bolt 1 Definition-of-Done items owned by U1
+
+Bolt 1 asks for U1's **thin** contract package, not the full C01-C27 catalogue.
+
+| Bolt 1 requirement | State |
+| --- | --- |
+| Thin package is a `candidate` | Met — `manifestStatus: candidate`, `releaseReady: false` |
+| Bound to an immutable Git `sourceRevision` | **Met** — bound to `cda7f793` and verified against real blobs |
+| Documents and sidecars identify owner, boundary IDs, version, path, verified `sha256:` digest | Met — enforced by the loader |
+| Demonstrated clients generated from validated inputs before integration | **Not met** — no consumer profile and no OpenAPI document to generate from |
+
+### Ordered plan steps
+
 | Step | State |
 | --- | --- |
 | 1 — Work branch and runnable test runner | Complete |
@@ -69,9 +82,9 @@ Node 24.21.0, pnpm 11.25.0 provisioned through corepack.
 | Check | Result |
 | --- | --- |
 | `pnpm install --frozen-lockfile` | exit 0, clean, no network error |
-| unit | 60 pass, 0 todo, 1 skipped (Windows symlink case) |
-| integration | 19 pass, 1 todo |
-| coverage | 79 pass, 1 todo, 1 skipped; **93.61% lines**, 82.05% branches, 98.33% functions |
+| unit | 65 pass, 0 todo, 1 skipped (Windows symlink case) |
+| integration | 20 pass, 1 todo |
+| coverage | 85 pass, 1 todo, 1 skipped; **94.01% lines**, 82.23% branches, 98.45% functions |
 | `pnpm lint` (eslint 10.11.0) | exit 0 |
 | `pnpm type-check` (tsc 7.0.2) | exit 0 |
 | `pnpm scan:secrets` (secretlint 13.0.6) | exit 0 |
@@ -121,8 +134,8 @@ Three were deliberately **not** vendored, each for a stated reason:
   U2 must enforce it from a protected base workflow before it can be credited.
   R-01 remains an explicit U2 enforcement dependency.
 - **The C01-C27 canonical catalogue is absent.** Only the illustrative C01
-  candidate exists. Its all-zero `sourceRevision` is a fixture placeholder, not
-  Git provenance. It is not a release package and proves no C01-C27 conformance.
+  candidate exists. Its `sourceRevision` is now a real
+  verified commit, but it still covers one boundary. It is not a release package and proves no C01-C27 conformance.
 - The pinned OpenAPI and AsyncAPI validators, and the newly vendored differ and
   generators, are invoked through real seams but **none has been exercised on a
   complete package**, because there are no catalogue documents to run them

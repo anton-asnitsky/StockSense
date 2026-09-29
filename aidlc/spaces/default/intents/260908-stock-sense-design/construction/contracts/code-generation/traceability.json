@@ -238,7 +238,7 @@
     {
       "id": "BR1.7",
       "status": "OK",
-      "target": "tools/contracts/src/package-loader.mjs"
+      "target": "tools/contracts/src/provenance.mjs"
     },
     {
       "id": "BR2.1",

@@ -73,6 +73,9 @@
       "path": "tools/contracts/src/preflight.mjs"
     },
     {
+      "path": "tools/contracts/src/provenance.mjs"
+    },
+    {
       "path": "tools/contracts/src/validate.mjs"
     },
     {
@@ -110,6 +113,9 @@
     },
     {
       "path": "tools/contracts/test/unit/preflight.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/provenance.test.mjs"
     },
     {
       "path": "tools/contracts/test/unit/validators.test.mjs"
