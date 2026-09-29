@@ -1,5 +1,5 @@
 {
-  "fixtureVersion": "1.0.0",
+  "fixtureVersion": "1.1.0",
   "syntheticOnly": true,
   "fixtures": [
     {
@@ -7,8 +7,32 @@
       "boundaryIds": [
         "C01"
       ],
-      "contractElementId": "TenantMessageEnvelope",
-      "scenarioType": "valid"
+      "contractElementId": "MessageEnvelope",
+      "scenarioType": "valid",
+      "expectedOutcome": "pass",
+      "payload": {
+        "messageId": "11111111-1111-4111-8111-111111111111",
+        "messageType": "retail.inventory.updated",
+        "schemaVersion": "1.0.0",
+        "occurredAt": "2026-09-29T10:00:00Z",
+        "retailerId": "22222222-2222-4222-8222-222222222222",
+        "actor": {
+          "type": "service",
+          "subjectId": "retail-data"
+        },
+        "correlationId": "33333333-3333-4333-8333-333333333333",
+        "causationId": "44444444-4444-4444-8444-444444444444",
+        "idempotencyKey": "synthetic-idempotency-key-0001",
+        "placementGeneration": 1,
+        "producer": {
+          "serviceId": "retail-data",
+          "subjectId": "retail-data-service",
+          "audience": "stocksense-internal",
+          "protocolVersion": "1.0.0"
+        },
+        "payloadDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "data": {}
+      }
     },
     {
       "fixtureId": "c01-global-positive",
@@ -16,17 +40,63 @@
         "C01"
       ],
       "contractElementId": "GlobalIdentityAuditEnvelope",
-      "scenarioType": "valid"
+      "scenarioType": "valid",
+      "expectedOutcome": "pass",
+      "payload": {
+        "scope": "global",
+        "messageId": "55555555-5555-4555-8555-555555555555",
+        "messageType": "identity.global.audit.recorded",
+        "schemaVersion": "1.0.0",
+        "occurredAt": "2026-09-29T10:00:00Z",
+        "actor": {
+          "type": "service",
+          "subjectId": "identity-access"
+        },
+        "correlationId": "66666666-6666-4666-8666-666666666666",
+        "causationId": null,
+        "idempotencyKey": "synthetic-idempotency-key-0002",
+        "producer": {
+          "serviceId": "identity-access",
+          "subjectId": "identity-access-service",
+          "audience": "stocksense-internal",
+          "protocolVersion": "1.0.0"
+        },
+        "payloadDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "data": {}
+      }
     },
     {
       "fixtureId": "c01-tenant-no-retailer",
       "boundaryIds": [
         "C01"
       ],
-      "contractElementId": "TenantMessageEnvelope",
+      "contractElementId": "MessageEnvelope",
       "scenarioType": "invalid",
+      "expectedOutcome": "fail",
       "expectedFailureCode": "SCHEMA_REQUIRED",
-      "expectedFailureRuleId": "BR2.4"
+      "expectedFailureRuleId": "BR2.4",
+      "payload": {
+        "messageId": "11111111-1111-4111-8111-111111111111",
+        "messageType": "retail.inventory.updated",
+        "schemaVersion": "1.0.0",
+        "occurredAt": "2026-09-29T10:00:00Z",
+        "actor": {
+          "type": "service",
+          "subjectId": "retail-data"
+        },
+        "correlationId": "33333333-3333-4333-8333-333333333333",
+        "causationId": "44444444-4444-4444-8444-444444444444",
+        "idempotencyKey": "synthetic-idempotency-key-0001",
+        "placementGeneration": 1,
+        "producer": {
+          "serviceId": "retail-data",
+          "subjectId": "retail-data-service",
+          "audience": "stocksense-internal",
+          "protocolVersion": "1.0.0"
+        },
+        "payloadDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "data": {}
+      }
     },
     {
       "fixtureId": "c01-global-with-retailer",
@@ -35,8 +105,32 @@
       ],
       "contractElementId": "GlobalIdentityAuditEnvelope",
       "scenarioType": "invalid",
+      "expectedOutcome": "fail",
       "expectedFailureCode": "SCHEMA_ADDITIONAL_PROPERTY",
-      "expectedFailureRuleId": "BR2.4"
+      "expectedFailureRuleId": "BR2.4",
+      "payload": {
+        "scope": "global",
+        "messageId": "55555555-5555-4555-8555-555555555555",
+        "messageType": "identity.global.audit.recorded",
+        "schemaVersion": "1.0.0",
+        "occurredAt": "2026-09-29T10:00:00Z",
+        "retailerId": "22222222-2222-4222-8222-222222222222",
+        "actor": {
+          "type": "service",
+          "subjectId": "identity-access"
+        },
+        "correlationId": "66666666-6666-4666-8666-666666666666",
+        "causationId": null,
+        "idempotencyKey": "synthetic-idempotency-key-0002",
+        "producer": {
+          "serviceId": "identity-access",
+          "subjectId": "identity-access-service",
+          "audience": "stocksense-internal",
+          "protocolVersion": "1.0.0"
+        },
+        "payloadDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "data": {}
+      }
     }
   ]
 }

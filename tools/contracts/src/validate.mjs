@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { loadPackage, ContractError } from './package-loader.mjs';
 import { enforcePackageBudget, inspectContent, inspectReferences, LIMITS } from './preflight.mjs';
 import { validateCanonical } from './validators.mjs';
+import { assertDeclaredPolicy, runFixtureOracle } from './policy.mjs';
 
 function collectReferences(value, from, references) {
   if (Array.isArray(value)) {
@@ -44,19 +45,24 @@ export async function validateCandidate(root) {
   let policy;
   try { policy = JSON.parse(await readFile(join(root, policyEntry.document), 'utf8')); }
   catch { throw new ContractError('POLICY_PARSE', 'BR1.4', 'Contract package policy is malformed'); }
+  const declaredPolicy = assertDeclaredPolicy(policy, loaded);
   const validatedCanonical = [];
   for (const entry of loaded.entries.filter(item => item.artifactKind !== 'sidecar')) {
     const result = await validateCanonical(entry, join(root, entry.document), { policy });
     validatedCanonical.push({ document: entry.document, dialect: result.dialect, revisionId: result.revisionId });
   }
+  const fixtureResults = await runFixtureOracle(root, loaded);
   return {
     packageVersion: loaded.manifest.packageVersion,
     sourceRevision: loaded.manifest.sourceRevision,
     manifestDigest: loaded.manifestDigest,
     coveredBoundaries: loaded.boundaryIds,
+    candidateScope: declaredPolicy.candidateScope,
+    uncoveredBoundaries: declaredPolicy.uncoveredBoundaries,
     validatedCanonical,
+    fixtureResults,
     releaseReady: false,
-    validationLevel: 'candidate-canonical-validation',
-    limitations: ['Only supplied canonical kinds are validated; fixture oracle, compatibility, generation, release scans and provenance have not run.']
+    validationLevel: 'candidate-canonical-and-fixture-validation',
+    limitations: ['Compatibility, consumer-local generation, release scans, SBOM, attestation and provider conformance have not run.']
   };
 }

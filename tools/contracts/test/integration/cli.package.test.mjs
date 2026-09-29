@@ -35,11 +35,15 @@ test('illustrative C01 sample passes canonical validation as a partial candidate
   assert.equal(result.exitCode, 0);
   assert.deepEqual(result.body.coveredBoundaries, ['C01']);
   assert.equal(result.body.releaseReady, false);
-  assert.equal(result.body.validationLevel, 'candidate-canonical-validation');
+  assert.equal(result.body.validationLevel, 'candidate-canonical-and-fixture-validation');
   assert.deepEqual(result.body.validatedCanonical.map(item => item.dialect), [
     'https://json-schema.org/draft/2020-12/schema',
     'https://json-schema.org/draft/2020-12/schema'
   ]);
+  // The sample covers one boundary and says so; the other 26 stay uncovered.
+  assert.deepEqual(result.body.candidateScope, ['C01']);
+  assert.equal(result.body.uncoveredBoundaries.length, 26);
+  assert.deepEqual(result.body.fixtureResults.map(item => item.observed), ['pass', 'pass', 'fail', 'fail']);
 });
 test('clean repeated CLI run preserves immutable manifest digest', () => {
   assert.equal(run(sample).body.manifestDigest, run(sample).body.manifestDigest);

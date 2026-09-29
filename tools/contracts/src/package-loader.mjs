@@ -27,20 +27,26 @@ const sha = /^sha256:[0-9a-f]{64}$/;
 const revision = /^[0-9a-f]{40}([0-9a-f]{24})?$/;
 const safePath = /^[A-Za-z0-9._/-]+$/;
 const kinds = new Set(['contract-package-policy', 'example-fixture', 'generation-profile', 'generated-output-manifest', 'compatibility-assessment', 'validation-run', 'evidence-record', 'protocol-compatibility-manifest', 'messaging-conformance-profile', 'recovery-policy']);
-const canonicalKinds = {
+// The enforced matrix. A package's own contract-package-policy.json is checked
+// against these values so a declared policy can never claim a weaker rule set.
+export const CANONICAL_KINDS = Object.freeze({
   schema: 'C01 C02 C05 C07 C08 C09 C15 C16 C17 C19 C20 C21 C22 C23',
   openapi: 'C03 C04 C05 C06 C07 C09 C10 C11 C12 C13 C14 C17 C18 C24 C26',
   asyncapi: 'C03 C07 C15 C23 C25 C27'
-};
-const fixedPaths = {
+});
+const canonicalKinds = CANONICAL_KINDS;
+export const FIXED_PATHS = Object.freeze({
   C01: ['common/v1/message-envelope.schema.json', 'common/v1/global-identity-audit-envelope.schema.json'],
   C05: ['common/v1/supplier-authority-head.shared-schema.yaml'],
   C07: ['model-lifecycle/v1/finalize-heavy-work.shared-schema.yaml', 'supplier-knowledge/v1/embedding-build-quiesced.asyncapi.yaml'],
   C09: ['common/v1/supplier-authority-head.shared-schema.yaml'],
   C15: ['common/v1/global-identity-audit-envelope.schema.json']
-};
-const byBoundary = { C01: 'contract-package-policy', C22: 'protocol-compatibility-manifest', C23: 'messaging-conformance-profile', C24: 'recovery-policy', C25: 'recovery-policy', C26: 'recovery-policy', C27: 'recovery-policy' };
-const allBoundaries = Array.from({ length: 27 }, (_, i) => 'C' + String(i + 1).padStart(2, '0'));
+});
+const fixedPaths = FIXED_PATHS;
+export const BOUNDARY_SIDECARS = Object.freeze({ C01: 'contract-package-policy', C22: 'protocol-compatibility-manifest', C23: 'messaging-conformance-profile', C24: 'recovery-policy', C25: 'recovery-policy', C26: 'recovery-policy', C27: 'recovery-policy' });
+const byBoundary = BOUNDARY_SIDECARS;
+export const ALL_BOUNDARIES = Object.freeze(Array.from({ length: 27 }, (_, i) => 'C' + String(i + 1).padStart(2, '0')));
+const allBoundaries = ALL_BOUNDARIES;
 
 export function assertSafePath(path) {
   if (typeof path !== 'string' || !safePath.test(path) || path.startsWith('/') || path.includes('\\') ||
