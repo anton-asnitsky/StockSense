@@ -70,6 +70,23 @@ test('protected content is rejected even with its new digest declared', async ()
     assert.equal(result.body.ruleId, 'NFR6.1');
   });
 });
+
+test('oversized source is rejected before its stale digest is considered', async () => {
+  await withCopy(root => writeFile(join(root, 'governance/example-fixture.json'), Buffer.alloc(1_048_577, 'x')), root => {
+    const result = run(root);
+    assert.equal(result.exitCode, 1);
+    assert.equal(result.body.code, 'SOURCE_SIZE_LIMIT');
+    assert.equal(result.body.ruleId, 'NFR10.1');
+  });
+});
+
+test('oversized manifest is rejected before JSON parsing', async () => {
+  await withCopy(root => writeFile(join(root, 'manifest.json'), Buffer.alloc(1_048_577, 'x')), root => {
+    const result = run(root);
+    assert.equal(result.exitCode, 1);
+    assert.equal(result.body.code, 'SOURCE_SIZE_LIMIT');
+  });
+});
 test('C01-only candidate cannot be relabeled a release', async () => {
   await withCopy(root => editManifest(root, manifest => { manifest.manifestStatus = 'release'; }), root => {
     const result = run(root);

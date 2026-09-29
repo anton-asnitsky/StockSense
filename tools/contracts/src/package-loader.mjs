@@ -138,8 +138,12 @@ function validateCoverage(manifest, entries) {
 export async function loadPackage(root, options = {}) {
   const absolute = resolve(root);
   if (!(await lstat(absolute)).isDirectory()) fail('PACKAGE_ROOT', 'BR1.1', 'Package root is not a directory');
-  const manifestBytes = await readFile(join(absolute, 'manifest.json'));
-  if (options.sourceByteLimit && manifestBytes.length > options.sourceByteLimit) fail('SOURCE_SIZE_LIMIT', 'NFR10.1', 'Manifest exceeds source limit');
+  const manifestPath = join(absolute, 'manifest.json');
+  const manifestStat = await lstat(manifestPath);
+  if (!manifestStat.isFile()) fail('UNSAFE_FILE', 'BR1.5', 'Manifest must be a regular file');
+  if (options.sourceByteLimit && manifestStat.size > options.sourceByteLimit) fail('SOURCE_SIZE_LIMIT', 'NFR10.1', 'Manifest exceeds source limit');
+  if (options.packageByteLimit && manifestStat.size > options.packageByteLimit) fail('PACKAGE_SIZE_LIMIT', 'NFR10.1', 'Package exceeds 32 MiB');
+  const manifestBytes = await readFile(manifestPath);
   let manifest;
   try { manifest = JSON.parse(manifestBytes); } catch { fail('MANIFEST_PARSE', 'BR1.1', 'Manifest JSON is invalid'); }
   const topKeys = ['packageVersion', 'manifestStatus', 'sourceRevision', 'openapi', 'asyncapi', 'schemas', 'governedArtifacts', 'boundaryCoverage'];
@@ -163,7 +167,10 @@ export async function loadPackage(root, options = {}) {
     const full = join(absolute, entry.document);
     const canonical = await realpath(full);
     if (!canonical.startsWith(absolute + sep)) fail('UNSAFE_PATH', 'BR1.5', 'Resolved path escaped package root');
-    if (options.sourceByteLimit && (await lstat(full)).size > options.sourceByteLimit) fail('SOURCE_SIZE_LIMIT', 'NFR10.1', 'Source exceeds 1 MiB');
+    const fileStat = await lstat(full);
+    if (!fileStat.isFile()) fail('UNSAFE_FILE', 'BR1.5', 'Package entry must be a regular file');
+    if (options.sourceByteLimit && fileStat.size > options.sourceByteLimit) fail('SOURCE_SIZE_LIMIT', 'NFR10.1', 'Source exceeds 1 MiB');
+    if (options.packageByteLimit && totalBytes + fileStat.size > options.packageByteLimit) fail('PACKAGE_SIZE_LIMIT', 'NFR10.1', 'Package exceeds 32 MiB');
     const bytes = await readFile(full);
     totalBytes += bytes.length;
     if (options.packageByteLimit && totalBytes > options.packageByteLimit) fail('PACKAGE_SIZE_LIMIT', 'NFR10.1', 'Package exceeds 32 MiB');
