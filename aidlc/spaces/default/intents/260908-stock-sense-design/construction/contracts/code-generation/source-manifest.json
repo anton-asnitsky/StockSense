@@ -1,0 +1,112 @@
+{
+  "stage": "code-generation",
+  "unit": "contracts",
+  "version": 1,
+  "writes": [
+    {
+      "path": "contracts/README.md"
+    },
+    {
+      "path": "contracts/samples/walking-skeleton/common/v1/global-identity-audit-envelope.schema.json"
+    },
+    {
+      "path": "contracts/samples/walking-skeleton/common/v1/message-envelope.schema.json"
+    },
+    {
+      "path": "contracts/samples/walking-skeleton/governance/contract-package-policy.json"
+    },
+    {
+      "path": "contracts/samples/walking-skeleton/governance/example-fixture.json"
+    },
+    {
+      "path": "contracts/samples/walking-skeleton/governance/generation-profile.json"
+    },
+    {
+      "path": "contracts/samples/walking-skeleton/manifest.json"
+    },
+    {
+      "path": "contracts/source/common/v1/global-identity-audit-envelope.schema.json"
+    },
+    {
+      "path": "contracts/source/common/v1/message-envelope.schema.json"
+    },
+    {
+      "path": "tools/contracts/.npmrc"
+    },
+    {
+      "path": "tools/contracts/package.json"
+    },
+    {
+      "path": "tools/contracts/pnpm-lock.yaml"
+    },
+    {
+      "path": "tools/contracts/pnpm-workspace.yaml"
+    },
+    {
+      "path": "tools/contracts/scripts/create-sample.mjs"
+    },
+    {
+      "path": "tools/contracts/src/cli.mjs"
+    },
+    {
+      "path": "tools/contracts/src/compatibility.mjs"
+    },
+    {
+      "path": "tools/contracts/src/evidence.mjs"
+    },
+    {
+      "path": "tools/contracts/src/generation.mjs"
+    },
+    {
+      "path": "tools/contracts/src/package-loader.mjs"
+    },
+    {
+      "path": "tools/contracts/src/policy.mjs"
+    },
+    {
+      "path": "tools/contracts/src/preflight.mjs"
+    },
+    {
+      "path": "tools/contracts/src/validate.mjs"
+    },
+    {
+      "path": "tools/contracts/src/validators.mjs"
+    },
+    {
+      "path": "tools/contracts/test/config.mjs"
+    },
+    {
+      "path": "tools/contracts/test/integration/cli.package.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/integration/cli.release.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/integration/envelopes.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/support/package-fixture.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/compatibility.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/evidence.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/generation.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/package-loader.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/policy.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/preflight.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/validators.test.mjs"
+    }
+  ]
+}
