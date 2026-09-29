@@ -151,7 +151,7 @@ export async function loadPackage(root, options = {}) {
   if (options.packageByteLimit && manifestStat.size > options.packageByteLimit) fail('PACKAGE_SIZE_LIMIT', 'NFR10.1', 'Package exceeds 32 MiB');
   const manifestBytes = await readFile(manifestPath);
   let manifest;
-  try { manifest = JSON.parse(manifestBytes); } catch { fail('MANIFEST_PARSE', 'BR1.1', 'Manifest JSON is invalid'); }
+  try { manifest = JSON.parse(manifestBytes.toString('utf8')); } catch { fail('MANIFEST_PARSE', 'BR1.1', 'Manifest JSON is invalid'); }
   const topKeys = ['packageVersion', 'manifestStatus', 'sourceRevision', 'openapi', 'asyncapi', 'schemas', 'governedArtifacts', 'boundaryCoverage'];
   if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest) ||
       Object.keys(manifest).some(key => !topKeys.includes(key)) || topKeys.some(key => !(key in manifest)) ||

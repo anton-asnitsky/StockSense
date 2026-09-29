@@ -2,10 +2,15 @@ import { spawnSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import Ajv2020 from 'ajv/dist/2020.js';
-import addFormats from 'ajv-formats';
+import Ajv2020Module from 'ajv/dist/2020.js';
+import addFormatsModule from 'ajv-formats';
 import YAML from 'yaml';
 import { ContractError } from './package-loader.mjs';
+
+// ajv and ajv-formats are CommonJS. Node's interop hands back the callable
+// default at runtime; the casts keep the type-checker aligned with that.
+const Ajv2020 = /** @type {any} */ (Ajv2020Module);
+const addFormats = /** @type {any} */ (addFormatsModule);
 
 export const DIALECTS = Object.freeze({
   openapi: 'openapi:3.1.2',
@@ -179,7 +184,12 @@ function runPinnedTool(dialect, sourcePath) {
     'Pinned standards validator rejected the canonical document');
 }
 
-/** Validate one already load-checked package entry at its exact file path. */
+/**
+ * Validate one already load-checked package entry at its exact file path.
+ * @param {any} entry
+ * @param {string} sourcePath
+ * @param {{ policy?: object, runTool?: Function }} [options]
+ */
 export async function validateCanonical(entry, sourcePath, { policy, runTool = runPinnedTool } = {}) {
   const bytes = await readFile(sourcePath);
   const { dialect, source } = detectDialect(entry, bytes, policy);

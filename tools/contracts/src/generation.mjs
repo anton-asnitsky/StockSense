@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join, relative, sep } from 'node:path';
 import { ContractError, digest } from './package-loader.mjs';
 
+/** @returns {never} */
 const fail = (code, rule, message) => { throw new ContractError(code, rule, message); };
 const object = value => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 const string = value => typeof value === 'string' && value.length > 0;
@@ -68,9 +69,15 @@ export function assertNoDrift(expected, observed, consumerId = 'consumer') {
   return true;
 }
 
-/** The pinned generators are not vendored in this package, so they fail closed. */
-function runPinnedGenerator() {
-  fail('GENERATOR_UNAVAILABLE', 'BR3.1', 'The pinned generator is not available in this environment');
+/**
+ * Default generator seam. A caller that supplies no runGenerator gets a closed
+ * door rather than an empty output directory that would read as "no drift".
+ * @param {object} _consumer
+ * @param {string} _workspace
+ * @returns {never} always throws
+ */
+function runPinnedGenerator(_consumer, _workspace) {
+  throw new ContractError('GENERATOR_UNAVAILABLE', 'BR3.1', 'The pinned generator is not available in this environment');
 }
 
 /**

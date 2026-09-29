@@ -1,5 +1,6 @@
 import { ContractError } from './package-loader.mjs';
 
+/** @returns {never} */
 const fail = (code, rule, message) => { throw new ContractError(code, rule, message); };
 const object = value => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 const string = value => typeof value === 'string' && value.length > 0;
@@ -77,14 +78,22 @@ export function bindPredecessors(candidateEntries, baselineEntries, { firstRelea
   return bindings;
 }
 
-/** The pinned differ is not vendored in this package, so it fails closed. */
-function runPinnedDiff() {
-  fail('DIFFER_UNAVAILABLE', 'BR4.3', 'The pinned compatibility differ is not available in this environment');
+/**
+ * Default differ seam. A caller that supplies no runDiff gets a closed door
+ * rather than a silently compatible verdict.
+ * @param {string} _artifactKind
+ * @param {object} _binding
+ * @param {Function} [_resolveSource]
+ * @returns {never} always throws
+ */
+function runPinnedDiff(_artifactKind, _binding, _resolveSource) {
+  throw new ContractError('DIFFER_UNAVAILABLE', 'BR4.3', 'The pinned compatibility differ is not available in this environment');
 }
 
 /**
  * Assess every bound pair. A breaking identity is accepted only with an
  * approval that names the exact predecessor revision and declares an overlap.
+ * @param {{ bindings?: any[], approvals?: Record<string, any>, runDiff?: Function, resolveSource?: Function }} [options]
  */
 export async function assessCompatibility({ bindings, approvals = {}, runDiff = runPinnedDiff, resolveSource } = {}) {
   if (!Array.isArray(bindings)) fail('COMPATIBILITY_INPUT', 'BR4.3', 'Bindings are required');
