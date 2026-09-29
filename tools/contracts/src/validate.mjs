@@ -23,6 +23,11 @@ export async function validateCandidate(root) {
     packageByteLimit: LIMITS.packageBytes,
     inspectBytes: (entry, bytes) => inspectContent(entry.document, bytes)
   });
+  // This command implements candidate validation only. A syntactically complete
+  // release manifest is not evidence of scans, provenance or provider conformance.
+  if (loaded.manifest.manifestStatus === 'release') {
+    throw new ContractError('RELEASE_EVIDENCE_REQUIRED', 'BR6.7', 'Release verification has not been implemented');
+  }
   enforcePackageBudget(loaded);
   const references = [];
   for (const entry of loaded.entries) {
@@ -50,7 +55,7 @@ export async function validateCandidate(root) {
     manifestDigest: loaded.manifestDigest,
     coveredBoundaries: loaded.boundaryIds,
     validatedCanonical,
-    releaseReady: loaded.releaseReady,
+    releaseReady: false,
     validationLevel: 'candidate-canonical-validation',
     limitations: ['Only supplied canonical kinds are validated; fixture oracle, compatibility, generation, release scans and provenance have not run.']
   };

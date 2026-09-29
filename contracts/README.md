@@ -16,6 +16,8 @@ compatibility, generation, scan, attestation or provider conformance evidence.
 The CLI reports `validationLevel: candidate-canonical-validation` and
 `releaseReady: false`.
 Never publish or consume this sample as a release package.
+The candidate CLI rejects release manifests until the release-evidence path is
+implemented and independently verified.
 
 After editing a canonical C01 source, run
 `node tools/contracts/scripts/create-sample.mjs` from the repository root to
