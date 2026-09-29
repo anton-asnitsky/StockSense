@@ -1,0 +1,76 @@
+{
+  "packageVersion": "1.0.0",
+  "manifestStatus": "candidate",
+  "sourceRevision": "0000000000000000000000000000000000000000",
+  "openapi": [],
+  "asyncapi": [],
+  "schemas": [
+    {
+      "owner": "U1 Contracts",
+      "boundaryIds": [
+        "C01"
+      ],
+      "document": "common/v1/message-envelope.schema.json",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:817cadf7573bf718e6ff9d42f67162ce940c4a9a4272d139765a940b88eca9d0"
+    },
+    {
+      "owner": "U1 Contracts",
+      "boundaryIds": [
+        "C01"
+      ],
+      "document": "common/v1/global-identity-audit-envelope.schema.json",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:422b7cf345d91f1ce2a438e4bc0f5b8160cf2796a8d0cd121d09be9c581e17d8"
+    }
+  ],
+  "governedArtifacts": [
+    {
+      "kind": "contract-package-policy",
+      "owner": "U1 Contracts",
+      "boundaryIds": [
+        "C01"
+      ],
+      "document": "governance/contract-package-policy.json",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:6aef6199ceee91c7b9ce2c7f7763af0038756ecfa9f5df20497b3e8eba43c8b9",
+      "sourceRevision": "0000000000000000000000000000000000000000"
+    },
+    {
+      "kind": "example-fixture",
+      "owner": "U1 Contracts",
+      "boundaryIds": [
+        "C01"
+      ],
+      "document": "governance/example-fixture.json",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:85752c9383ced7ed883d8ffd1cb28893936c88f5be1c5e0bff9d2bacd48df621",
+      "sourceRevision": "0000000000000000000000000000000000000000"
+    },
+    {
+      "kind": "generation-profile",
+      "owner": "U1 Contracts",
+      "boundaryIds": [
+        "C01"
+      ],
+      "document": "governance/generation-profile.json",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:c1de1a65686578616431f36a10c50b47368ce9fabe713518aa64431178f52164",
+      "sourceRevision": "0000000000000000000000000000000000000000"
+    }
+  ],
+  "boundaryCoverage": [
+    {
+      "boundaryId": "C01",
+      "canonicalDocuments": [
+        "common/v1/message-envelope.schema.json",
+        "common/v1/global-identity-audit-envelope.schema.json"
+      ],
+      "sidecars": [
+        "governance/contract-package-policy.json",
+        "governance/example-fixture.json",
+        "governance/generation-profile.json"
+      ]
+    }
+  ]
+}

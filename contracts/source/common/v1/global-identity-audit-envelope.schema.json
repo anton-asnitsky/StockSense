@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.stocksense.local/common/v1/global-identity-audit-envelope.schema.json",
+  "title": "GlobalIdentityAuditEnvelope",
+  "type": "object",
+  "required": [
+    "scope", "messageId", "messageType", "schemaVersion", "occurredAt", "actor",
+    "correlationId", "causationId", "idempotencyKey", "producer", "payloadDigest", "data"
+  ],
+  "properties": {
+    "scope": { "const": "global" },
+    "messageId": { "type": "string", "format": "uuid" },
+    "messageType": { "const": "identity.global.audit.recorded" },
+    "schemaVersion": { "const": "1.0.0" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "actor": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "subjectId"],
+          "properties": {
+            "type": { "const": "anonymous" },
+            "subjectId": { "const": "anonymous" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["type", "subjectId"],
+          "properties": {
+            "type": { "enum": ["user", "service", "scheduler"] },
+            "subjectId": { "type": "string", "minLength": 1, "maxLength": 200 }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "correlationId": { "type": "string", "format": "uuid" },
+    "causationId": { "type": ["string", "null"], "format": "uuid" },
+    "idempotencyKey": { "type": "string", "minLength": 16, "maxLength": 128 },
+    "producer": {
+      "type": "object",
+      "required": ["serviceId", "subjectId", "audience", "protocolVersion"],
+      "properties": {
+        "serviceId": { "const": "identity-access" },
+        "subjectId": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "audience": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "protocolVersion": { "type": "string", "pattern": "^[1-9][0-9]*\\.[0-9]+\\.[0-9]+$" }
+      },
+      "additionalProperties": false
+    },
+    "payloadDigest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "traceparent": { "type": "string" },
+    "data": { "type": "object" }
+  },
+  "additionalProperties": false
+}

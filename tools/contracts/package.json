@@ -1,0 +1,32 @@
+{
+  "name": "@stocksense/contracts-governance",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.25.0",
+  "engines": { "node": "24.19.0" },
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "@asyncapi/cli",
+      "@hyperjump/json-pointer",
+      "@hyperjump/json-schema-core",
+      "@hyperjump/json-schema",
+      "@hyperjump/pact",
+      "@scarf/scarf",
+      "yarn"
+    ]
+  },
+  "scripts": {
+    "test:unit": "node --test test/unit/package-loader.test.mjs test/unit/preflight.test.mjs test/unit/validators.test.mjs test/unit/policy.test.mjs test/unit/compatibility.test.mjs test/unit/generation.test.mjs test/unit/evidence.test.mjs",
+    "test:integration": "node --test test/integration/cli.package.test.mjs test/integration/cli.release.test.mjs test/integration/envelopes.test.mjs",
+    "test:coverage": "node --experimental-test-coverage --test --test-coverage-include=src/**/*.mjs test/unit/*.test.mjs test/integration/*.test.mjs"
+  },
+  "dependencies": {
+    "@asyncapi/cli": "6.0.2",
+    "@redocly/cli": "2.51.2",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "openapi-typescript": "7.13.0",
+    "yaml": "2.8.1"
+  }
+}

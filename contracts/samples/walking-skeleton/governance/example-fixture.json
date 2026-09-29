@@ -1,0 +1,42 @@
+{
+  "fixtureVersion": "1.0.0",
+  "syntheticOnly": true,
+  "fixtures": [
+    {
+      "fixtureId": "c01-tenant-positive",
+      "boundaryIds": [
+        "C01"
+      ],
+      "contractElementId": "TenantMessageEnvelope",
+      "scenarioType": "valid"
+    },
+    {
+      "fixtureId": "c01-global-positive",
+      "boundaryIds": [
+        "C01"
+      ],
+      "contractElementId": "GlobalIdentityAuditEnvelope",
+      "scenarioType": "valid"
+    },
+    {
+      "fixtureId": "c01-tenant-no-retailer",
+      "boundaryIds": [
+        "C01"
+      ],
+      "contractElementId": "TenantMessageEnvelope",
+      "scenarioType": "invalid",
+      "expectedFailureCode": "SCHEMA_REQUIRED",
+      "expectedFailureRuleId": "BR2.4"
+    },
+    {
+      "fixtureId": "c01-global-with-retailer",
+      "boundaryIds": [
+        "C01"
+      ],
+      "contractElementId": "GlobalIdentityAuditEnvelope",
+      "scenarioType": "invalid",
+      "expectedFailureCode": "SCHEMA_ADDITIONAL_PROPERTY",
+      "expectedFailureRuleId": "BR2.4"
+    }
+  ]
+}
