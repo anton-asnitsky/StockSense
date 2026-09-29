@@ -5,3 +5,8 @@ set = { AIDLC_RULES_DIR = "aidlc/spaces/default/memory" }
 
 [agents]
 max_depth = 1
+
+# AI-DLC protected approval checkpoints need the native choice prompt in
+# interactive Codex CLI sessions. Keep this project-local; other repos are unaffected.
+[features]
+default_mode_request_user_input = true

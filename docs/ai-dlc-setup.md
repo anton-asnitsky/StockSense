@@ -44,6 +44,15 @@ activation requirement, not an extra project approval gate. Setup does not write
 user-level trust settings. `.codex/trust-seed.toml` is the upstream alternative
 for administrators who deliberately manage trust through user configuration.
 
+For protected Code Generation Plan Approval, start a fresh interactive session
+with `./scripts/Start-Codex.ps1` and resume the existing intent. The project
+config enables Codex's native `request_user_input` tool in default mode. Select
+the **Approve Plan** option in the question UI after the current plan is offered;
+do not rely on an earlier chat answer, manually fill `[Answer]:`, or start
+generation until the matching approval receipt succeeds. If the native choice
+UI is missing, verify `codex features list` reports
+`default_mode_request_user_input true` before presenting the approval again.
+
 The currently running desktop conversation cannot retroactively load a new
 process environment or attest hook execution. For desktop-only use, ensure the
 desktop process inherits the environment from the helper before opening a fresh
