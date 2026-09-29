@@ -5,11 +5,12 @@ import { ContractError } from './package-loader.mjs';
 import { validateCandidate } from './validate.mjs';
 
 export async function main(args) {
-  if (args.length !== 2 || args[0] !== 'validate') {
-    return { exitCode: 2, result: { code: 'USAGE', ruleId: 'BR2.1', message: 'Usage: validate <package-root>' } };
-  }
+  const usage = { exitCode: 2, result: { code: 'USAGE', ruleId: 'BR2.1', message: 'Usage: validate <package-root> [--repo-root <path>]' } };
+  if (args[0] !== 'validate' || (args.length !== 2 && args.length !== 4)) return usage;
+  if (args.length === 4 && args[2] !== '--repo-root') return usage;
+  const repoRoot = args.length === 4 ? resolve(args[3]) : undefined;
   try {
-    return { exitCode: 0, result: await validateCandidate(resolve(args[1])) };
+    return { exitCode: 0, result: await validateCandidate(resolve(args[1]), { repoRoot }) };
   } catch (error) {
     if (error instanceof ContractError) {
       return { exitCode: 1, result: { code: error.code, ruleId: error.ruleId, message: error.message } };

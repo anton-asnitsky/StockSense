@@ -4,6 +4,7 @@ import { loadPackage, ContractError } from './package-loader.mjs';
 import { enforcePackageBudget, inspectContent, inspectReferences, LIMITS } from './preflight.mjs';
 import { validateCanonical } from './validators.mjs';
 import { assertDeclaredPolicy, runFixtureOracle } from './policy.mjs';
+import { verifySourceBinding } from './provenance.mjs';
 
 function collectReferences(value, from, references) {
   if (Array.isArray(value)) {
@@ -16,7 +17,12 @@ function collectReferences(value, from, references) {
   }
 }
 
-export async function validateCandidate(root) {
+/**
+ * @param {string} root package root
+ * @param {{ repoRoot?: string }} [options] when the package sits inside its own
+ *   repository, its recorded sourceRevision is verified against the real blobs
+ */
+export async function validateCandidate(root, { repoRoot } = {}) {
   const manifestBytes = await readFile(join(root, 'manifest.json'));
   inspectContent('manifest.json', manifestBytes);
   const loaded = await loadPackage(root, {
@@ -52,7 +58,16 @@ export async function validateCandidate(root) {
     validatedCanonical.push({ document: entry.document, dialect: result.dialect, revisionId: result.revisionId });
   }
   const fixtureResults = await runFixtureOracle(root, loaded);
+  // A recorded revision is only a binding if the shipped bytes match its blobs.
+  let sourceBinding = 'unverified-no-repository';
+  if (repoRoot) {
+    verifySourceBinding(repoRoot, loaded.manifest.sourceRevision, loaded.entries
+      .filter(entry => entry.artifactKind === 'schema')
+      .map(entry => ({ sourcePath: 'contracts/source/' + entry.document, contentDigest: entry.contentDigest })));
+    sourceBinding = 'verified';
+  }
   return {
+    sourceBinding,
     packageVersion: loaded.manifest.packageVersion,
     sourceRevision: loaded.manifest.sourceRevision,
     manifestDigest: loaded.manifestDigest,

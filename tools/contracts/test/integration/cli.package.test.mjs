@@ -44,6 +44,16 @@ test('illustrative C01 sample passes canonical validation as a partial candidate
   assert.deepEqual(result.body.candidateScope, ['C01']);
   assert.equal(result.body.uncoveredBoundaries.length, 26);
   assert.deepEqual(result.body.fixtureResults.map(item => item.observed), ['pass', 'pass', 'fail', 'fail']);
+  // Without a repository the revision is recorded but not proven.
+  assert.equal(result.body.sourceBinding, 'unverified-no-repository');
+});
+
+test('with a repository the recorded sourceRevision is verified against real blobs', () => {
+  const output = execFileSync(process.execPath, [cli, 'validate', sample, '--repo-root', projectRoot], { encoding: 'utf8' });
+  const body = JSON.parse(output);
+  assert.equal(body.sourceBinding, 'verified');
+  assert.match(body.sourceRevision, /^[0-9a-f]{40}$/);
+  assert.notEqual(body.sourceRevision, '0'.repeat(40));
 });
 test('clean repeated CLI run preserves immutable manifest digest', () => {
   assert.equal(run(sample).body.manifestDigest, run(sample).body.manifestDigest);

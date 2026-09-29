@@ -1,7 +1,7 @@
 {
   "packageVersion": "1.0.0",
   "manifestStatus": "candidate",
-  "sourceRevision": "0000000000000000000000000000000000000000",
+  "sourceRevision": "cda7f793a07c609f68142a395c5747c2ffa96866",
   "openapi": [],
   "asyncapi": [],
   "schemas": [
@@ -34,7 +34,7 @@
       "document": "governance/contract-package-policy.json",
       "semanticVersion": "1.0.0",
       "contentDigest": "sha256:6aef6199ceee91c7b9ce2c7f7763af0038756ecfa9f5df20497b3e8eba43c8b9",
-      "sourceRevision": "0000000000000000000000000000000000000000"
+      "sourceRevision": "cda7f793a07c609f68142a395c5747c2ffa96866"
     },
     {
       "kind": "example-fixture",
@@ -45,7 +45,7 @@
       "document": "governance/example-fixture.json",
       "semanticVersion": "1.0.0",
       "contentDigest": "sha256:a360382a8d181075f911ca67a8b74138d8b67b0e9686427490956ae0edc7dbd6",
-      "sourceRevision": "0000000000000000000000000000000000000000"
+      "sourceRevision": "cda7f793a07c609f68142a395c5747c2ffa96866"
     },
     {
       "kind": "generation-profile",
@@ -55,8 +55,8 @@
       ],
       "document": "governance/generation-profile.json",
       "semanticVersion": "1.0.0",
-      "contentDigest": "sha256:c1de1a65686578616431f36a10c50b47368ce9fabe713518aa64431178f52164",
-      "sourceRevision": "0000000000000000000000000000000000000000"
+      "contentDigest": "sha256:ed5231c91a721d2e0acd58c65b746bf3ca47fa42e0d33c4a53578c729a26c29e",
+      "sourceRevision": "cda7f793a07c609f68142a395c5747c2ffa96866"
     }
   ],
   "boundaryCoverage": [
