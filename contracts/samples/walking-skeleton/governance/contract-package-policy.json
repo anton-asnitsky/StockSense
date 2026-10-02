@@ -92,7 +92,8 @@
     }
   },
   "candidateScope": [
-    "C01"
+    "C01",
+    "C18"
   ],
   "releaseReady": false
 }

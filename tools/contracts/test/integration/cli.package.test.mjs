@@ -30,19 +30,22 @@ async function editManifest(root, edit) {
   await writeFile(path, JSON.stringify(manifest));
 }
 
-test('illustrative C01 sample passes canonical validation as a partial candidate', () => {
+test('the thin C01/C18 candidate passes canonical and fixture validation', () => {
   const result = run(sample);
   assert.equal(result.exitCode, 0);
-  assert.deepEqual(result.body.coveredBoundaries, ['C01']);
+  assert.deepEqual(result.body.coveredBoundaries, ['C01', 'C18']);
   assert.equal(result.body.releaseReady, false);
   assert.equal(result.body.validationLevel, 'candidate-canonical-and-fixture-validation');
+  // The OpenAPI document goes to the pinned standards validator; the envelopes
+  // go to the pinned JSON Schema 2020-12 implementation.
   assert.deepEqual(result.body.validatedCanonical.map(item => item.dialect), [
+    'openapi:3.1.2',
     'https://json-schema.org/draft/2020-12/schema',
     'https://json-schema.org/draft/2020-12/schema'
   ]);
-  // The sample covers one boundary and says so; the other 26 stay uncovered.
-  assert.deepEqual(result.body.candidateScope, ['C01']);
-  assert.equal(result.body.uncoveredBoundaries.length, 26);
+  // The thin package covers two boundaries and says so; the other 25 stay uncovered.
+  assert.deepEqual(result.body.candidateScope, ['C01', 'C18']);
+  assert.equal(result.body.uncoveredBoundaries.length, 25);
   assert.deepEqual(result.body.fixtureResults.map(item => item.observed), ['pass', 'pass', 'fail', 'fail']);
   // Without a repository the revision is recorded but not proven.
   assert.equal(result.body.sourceBinding, 'unverified-no-repository');

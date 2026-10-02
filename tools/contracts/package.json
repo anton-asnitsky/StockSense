@@ -21,7 +21,7 @@
   },
   "scripts": {
     "test:unit": "node --test test/unit/package-loader.test.mjs test/unit/provenance.test.mjs test/unit/preflight.test.mjs test/unit/validators.test.mjs test/unit/policy.test.mjs test/unit/compatibility.test.mjs test/unit/generation.test.mjs test/unit/evidence.test.mjs",
-    "test:integration": "node --test test/integration/cli.package.test.mjs test/integration/cli.release.test.mjs test/integration/envelopes.test.mjs",
+    "test:integration": "node --test test/integration/cli.package.test.mjs test/integration/cli.release.test.mjs test/integration/envelopes.test.mjs test/integration/generation.test.mjs",
     "test:coverage": "node --experimental-test-coverage --test --test-coverage-include=src/**/*.mjs test/unit/*.test.mjs test/integration/*.test.mjs",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
@@ -42,6 +42,6 @@
     "@types/node": "24.9.2",
     "eslint": "10.11.0",
     "secretlint": "13.0.6",
-    "typescript": "7.0.2"
+    "typescript": "5.9.3"
   }
 }

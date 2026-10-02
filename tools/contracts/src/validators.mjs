@@ -32,6 +32,9 @@ const object = value => value !== null && typeof value === 'object' && !Array.is
 const string = value => typeof value === 'string' && value.trim().length > 0;
 const packageRoot = fileURLToPath(new URL('../', import.meta.url));
 const redoclyBin = resolve(packageRoot, 'node_modules/@redocly/cli/bin/cli.js');
+// The ruleset is pinned by this tool, not supplied by the package under test,
+// so a package cannot relax the rules its own documents are judged by.
+const redoclyConfig = resolve(packageRoot, 'redocly.yaml');
 const asyncapiBin = resolve(packageRoot, 'node_modules/@asyncapi/cli/bin/run_bin');
 
 function parseSource(bytes, path) {
@@ -174,7 +177,7 @@ export function createSchemaValidator(schema) {
 
 function runPinnedTool(dialect, sourcePath) {
   const [binary, args] = dialect === DIALECTS.openapi
-    ? [redoclyBin, ['lint', sourcePath, '--format', 'json']]
+    ? [redoclyBin, ['lint', sourcePath, '--config', redoclyConfig, '--format', 'json']]
     : [asyncapiBin, ['validate', sourcePath]];
   const result = spawnSync(process.execPath, [binary, ...args], {
     cwd: packageRoot, encoding: 'utf8', timeout: 120_000, maxBuffer: 1024 * 1024,

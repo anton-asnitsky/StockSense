@@ -78,6 +78,6 @@ export async function validateCandidate(root, { repoRoot } = {}) {
     fixtureResults,
     releaseReady: false,
     validationLevel: 'candidate-canonical-and-fixture-validation',
-    limitations: ['Compatibility, consumer-local generation, release scans, SBOM, attestation and provider conformance have not run.']
+    limitations: ['Compatibility, release scans, SBOM, attestation and provider conformance have not run. Consumer-local generation is verified separately against the generation profile, not by this command.']
   };
 }

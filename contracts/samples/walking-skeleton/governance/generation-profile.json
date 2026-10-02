@@ -1,6 +1,16 @@
 {
-  "generationProfileVersion": "1.0.0",
-  "sourceRevision": "cda7f793a07c609f68142a395c5747c2ffa96866",
-  "consumers": [],
-  "limitation": "No consumer-local generation is evidenced by this C01-only candidate."
+  "generationProfileVersion": "1.1.0",
+  "sourceRevision": "8b2970febd48723afa1e9da3040287fd3cd368ee",
+  "consumers": [
+    {
+      "consumerId": "web-application",
+      "generator": "openapi-typescript",
+      "generatorVersion": "7.13.0",
+      "sourceDocument": "web-bff/v1/browser-api.openapi.yaml",
+      "configurationDigest": "sha256:1d430a591c40aa00247e32275fdb5bb29b1b1c6ce394789222f91c58009c47f3",
+      "expectedOutputs": {
+        "browser-api.d.ts": "sha256:a02074e83cbec224ffad770720b986371a65b4db2e9d6028a714d02e87b8bcda"
+      }
+    }
+  ]
 }

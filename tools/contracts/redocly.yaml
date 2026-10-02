@@ -1,4 +1,4 @@
-# Pinned ruleset for canonical OpenAPI documents.
+# Pinned ruleset for every canonical OpenAPI document this tool validates.
 #
 # Structural correctness is an error: a document that is not a well-formed
 # OpenAPI 3.1 object cannot be packaged or generated from.
