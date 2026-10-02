@@ -323,7 +323,7 @@
     {
       "id": "BR5.1",
       "status": "GAP",
-      "target": "C22-C27 messaging and recovery contracts and their conformance fixtures are absent."
+      "target": "No canonical job or immutable-event document declares the common envelope binding; C01 envelopes exist but no message identity contract references them."
     },
     {
       "id": "BR5.2",
@@ -368,7 +368,7 @@
     {
       "id": "BR5.10",
       "status": "GAP",
-      "target": "C22-C27 messaging and recovery contracts and their conformance fixtures are absent."
+      "target": "Platform identity-audit reads span C02, C17 and C18 authority; only the C18 document exists, and its platform route carries no delegated-token evidence."
     },
     {
       "id": "BR6.1",
@@ -477,8 +477,8 @@
     },
     {
       "id": "NFR8.11",
-      "status": "OK",
-      "target": "contracts/source/web-bff/v1/browser-api.openapi.yaml"
+      "status": "GAP",
+      "target": "C18 validates syntactically, but no example fixture targets it and runFixtureOracle resolves schema entries only, so the required CSRF, idempotency, dashboard, SSE and audit behaviour is unexercised."
     },
     {
       "id": "NFR8.12",
@@ -512,8 +512,8 @@
     },
     {
       "id": "NFR10.1",
-      "status": "OK",
-      "target": "tools/contracts/src/preflight.mjs"
+      "status": "GAP",
+      "target": "Size limits are enforced, but the CLI emits only code, ruleId and message; the severity, bounded location and remediation summary NFR10.1 requires are not produced, and sanitizeFinding, limitFindings, validatorMs and processBytes are unused in production."
     },
     {
       "id": "NFR11.2",
@@ -522,8 +522,8 @@
     },
     {
       "id": "NFR11.3",
-      "status": "OK",
-      "target": "tools/contracts/package.json"
+      "status": "GAP",
+      "target": "No clean hosted run exists; NFR11.3 states that cached local success or fixture-only evidence cannot substitute for it."
     },
     {
       "id": "NFR13.1",

@@ -16,7 +16,7 @@ Bolt 1 asks for U1's **thin** contract package, not the full C01-C27 catalogue.
 | Bolt 1 requirement | State |
 | --- | --- |
 | Thin package is a `candidate` | Met — `manifestStatus: candidate`, `releaseReady: false` |
-| Bound to an immutable Git `sourceRevision` | **Met** — bound to `cda7f793` and verified against real blobs |
+| Bound to an immutable Git `sourceRevision` | **Met** — bound to `8b2970fe`, and every canonical document (OpenAPI and schemas) is verified against its blob at that commit |
 | Documents and sidecars identify owner, boundary IDs, version, path, verified `sha256:` digest | Met — enforced by the loader |
 | Demonstrated clients generated from validated inputs before integration | **Met** — C18 validates, and openapi-typescript 7.13.0 regenerates the declared output reproducibly with drift detection |
 
@@ -36,7 +36,7 @@ Bolt 1 asks for U1's **thin** contract package, not the full C01-C27 catalogue.
 
 ## Files
 
-Thirty-five paths, enumerated in `source-manifest.json`. New in this pass:
+Forty-six paths, enumerated in `source-manifest.json`. New in the governance pass:
 
 - `tools/contracts/src/policy.mjs` — declared-policy check, finding mapping, fixture oracle runner
 - `tools/contracts/src/compatibility.mjs` — baseline binding, predecessor binding, breaking-change approval
@@ -157,6 +157,60 @@ Three were deliberately **not** vendored, each for a stated reason:
 ## Traceability
 
 `traceability.json` enumerates 95 identifiers: 21 acceptance criteria, 40
-business rules and 34 detailed NFRs. **46 are `OK` and 49 are `GAP`.** `OK` is
+business rules and 34 detailed NFRs. **43 are `OK` and 52 are `GAP`.** `OK` is
 claimed only where a workspace file implements and tests the identifier; every
 `GAP` names the missing catalogue, tooling, CI or release evidence behind it.
+
+## Independent architecture review, iteration 1
+
+Verdict **NOT-READY** (advisory), recorded as `REVIEW_COMPLETED`. Five Major and
+six Minor findings; the full table is appended to `code-generation-plan.md`. The
+reviewer independently reproduced every number in this summary.
+
+Acted on before the gate:
+
+- **R-01, Major.** `verifySourceBinding` was called with the schema entries only,
+  so the C18 OpenAPI document was never byte-verified against `sourceRevision`
+  while this summary and `contracts/README.md` both claimed every canonical
+  document was. The call now covers openapi, asyncapi and schema entries, and an
+  integration test tampers the C18 document *with a matching digest* to prove
+  only the source binding can catch it.
+- **R-03, R-04, R-05, Major.** Three identifiers were marked `OK` without
+  substantiation and are now `GAP`: NFR11.3 needs a clean hosted run that does
+  not exist; NFR8.11's C18 behaviour is unexercised because no fixture targets
+  C18 and `runFixtureOracle` resolves schema entries only; NFR10.1's diagnostic
+  shape is not emitted, and `sanitizeFinding`, `limitFindings`,
+  `LIMITS.validatorMs` and `LIMITS.processBytes` are unused in production.
+- **R-07, R-10, Minor.** Corrected: this summary said thirty-five paths against
+  the manifest's forty-six and named `cda7f793` where the manifest records
+  `8b2970fe`; and the BR5.1 and BR5.10 GAP reasons cited the messaging catalogue
+  rather than their real blockers.
+
+Still open and not acted on:
+
+- **R-02, Major.** Systematic `ruleId` misattribution between
+  `package-loader.mjs` and `rules.md` — `DIGEST_MISMATCH` cites BR1.6 where
+  rules.md assigns BR1.1, and similarly for the unsafe-path, duplicate-path,
+  required-kind and boundary-inventory codes. BR6.4 makes rule IDs the evidence
+  spine and BR2.3 makes `ruleId` half the negative-fixture oracle, so this needs
+  a deliberate reconciliation rather than a guess about which side is right.
+- **R-11, Minor.** `tsconfig.json` sets `"strict": false`, which weakens the
+  exit-0 the type-check sensor reports.
+
+## Undisclosed decisions now recorded
+
+- **The approved C18 YAML is malformed, and the package transcription repairs
+  it.** Fifteen lines differ from the C18 block in `contract-summary.md`, all
+  adding quotes around `description` scalars and changing nothing semantically.
+  Unquoted descriptions containing commas inside a YAML flow mapping parse as
+  sibling null keys, which is what produced thirteen structural validator errors.
+  **The same pattern occurs roughly thirty-five more times in
+  `contract-summary.md`**, so every later C02-C27 transcription inherits it. The
+  upstream document needs correcting; this package's copy is a faithful repair,
+  not a contract change.
+- **The redocly ruleset is pinned by the tool, not the package.**
+  `tools/contracts/redocly.yaml` keeps `struct`, `operation-operationId` and
+  `no-unresolved-refs` as errors and turns `operation-summary` off, because the
+  approved contract authors no per-operation summaries and inventing prose here
+  would put this copy out of step with the contract it transcribes. Locating it
+  in the tool means a package cannot relax the rules judging it.
