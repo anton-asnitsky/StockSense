@@ -25,10 +25,16 @@
       "path": "contracts/samples/walking-skeleton/manifest.json"
     },
     {
+      "path": "contracts/samples/walking-skeleton/web-bff/v1/browser-api.openapi.yaml"
+    },
+    {
       "path": "contracts/source/common/v1/global-identity-audit-envelope.schema.json"
     },
     {
       "path": "contracts/source/common/v1/message-envelope.schema.json"
+    },
+    {
+      "path": "contracts/source/web-bff/v1/browser-api.openapi.yaml"
     },
     {
       "path": "tools/contracts/.npmrc"
@@ -49,7 +55,13 @@
       "path": "tools/contracts/pnpm-workspace.yaml"
     },
     {
+      "path": "tools/contracts/redocly.yaml"
+    },
+    {
       "path": "tools/contracts/scripts/create-sample.mjs"
+    },
+    {
+      "path": "tools/contracts/scripts/pin-generation.mjs"
     },
     {
       "path": "tools/contracts/src/cli.mjs"
@@ -62,6 +74,9 @@
     },
     {
       "path": "tools/contracts/src/generation.mjs"
+    },
+    {
+      "path": "tools/contracts/src/generators.mjs"
     },
     {
       "path": "tools/contracts/src/package-loader.mjs"
@@ -92,6 +107,9 @@
     },
     {
       "path": "tools/contracts/test/integration/envelopes.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/integration/generation.test.mjs"
     },
     {
       "path": "tools/contracts/test/support/package-fixture.mjs"

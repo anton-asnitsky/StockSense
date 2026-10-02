@@ -18,7 +18,7 @@ Bolt 1 asks for U1's **thin** contract package, not the full C01-C27 catalogue.
 | Thin package is a `candidate` | Met — `manifestStatus: candidate`, `releaseReady: false` |
 | Bound to an immutable Git `sourceRevision` | **Met** — bound to `cda7f793` and verified against real blobs |
 | Documents and sidecars identify owner, boundary IDs, version, path, verified `sha256:` digest | Met — enforced by the loader |
-| Demonstrated clients generated from validated inputs before integration | **Not met** — no consumer profile and no OpenAPI document to generate from |
+| Demonstrated clients generated from validated inputs before integration | **Met** — C18 validates, and openapi-typescript 7.13.0 regenerates the declared output reproducibly with drift detection |
 
 ### Ordered plan steps
 
@@ -83,8 +83,8 @@ Node 24.21.0, pnpm 11.25.0 provisioned through corepack.
 | --- | --- |
 | `pnpm install --frozen-lockfile` | exit 0, clean, no network error |
 | unit | 65 pass, 0 todo, 1 skipped (Windows symlink case) |
-| integration | 20 pass, 1 todo |
-| coverage | 85 pass, 1 todo, 1 skipped; **94.01% lines**, 82.23% branches, 98.45% functions |
+| integration | 25 pass, 1 todo |
+| coverage | 90 pass, 1 todo, 1 skipped; **94.42% lines**, 82.64% branches, 99.25% functions |
 | `pnpm lint` (eslint 10.11.0) | exit 0 |
 | `pnpm type-check` (tsc 7.0.2) | exit 0 |
 | `pnpm scan:secrets` (secretlint 13.0.6) | exit 0 |
@@ -110,9 +110,16 @@ it is an owner decision rather than a code-generation fix.
 ## Vendored tooling
 
 The owner authorized vendoring the pinned differ, generators and scanners.
-Vendored and working: `eslint`, `typescript` with `@types/node`, `secretlint`
-with the recommended preset, `pnpm audit`, and `openapi-diff@0.24.1`, whose
-`diffSpecs` entry point imports cleanly.
+Vendored and working: `eslint`, `typescript@5.9.3` with `@types/node`,
+`secretlint` with the recommended preset, `pnpm audit`, `openapi-diff@0.24.1`
+(its `diffSpecs` entry point imports cleanly), and `openapi-typescript@7.13.0`,
+now wired through a pinned invocation and proven reproducible.
+
+The TypeScript pin was initially `7.0.2`, chosen because it was latest. That
+violated `openapi-typescript`'s `^5.x` peer range and broke generation outright:
+TypeScript 7 is the native port and no longer exposes the `ts.factory` API the
+generator uses. pnpm warned about peer-dependency issues and the warning was not
+followed up. Repinned to `5.9.3`.
 
 Three were deliberately **not** vendored, each for a stated reason:
 
@@ -134,12 +141,13 @@ Three were deliberately **not** vendored, each for a stated reason:
   U2 must enforce it from a protected base workflow before it can be credited.
   R-01 remains an explicit U2 enforcement dependency.
 - **The C01-C27 canonical catalogue is absent.** Only the illustrative C01
-  candidate exists. Its `sourceRevision` is now a real
-  verified commit, but it still covers one boundary. It is not a release package and proves no C01-C27 conformance.
-- The pinned OpenAPI and AsyncAPI validators, and the newly vendored differ and
-  generators, are invoked through real seams but **none has been exercised on a
-  complete package**, because there are no catalogue documents to run them
-  against. They stay fail-closed until the catalogue exists.
+  candidate exists. Its `sourceRevision` is a real verified
+  commit and it now covers C01 and C18, but that is two boundaries of 27. It is not a release package and proves no C01-C27 conformance.
+- The pinned OpenAPI validator and the openapi-typescript generator are now
+  exercised on a real document: C18 validates inside the pipeline and its client
+  regenerates reproducibly with drift detection. The AsyncAPI validator, the
+  differ and Kiota are still unexercised and stay fail-closed, because no
+  AsyncAPI document, predecessor revision or .NET consumer exists yet.
 - No release scans, SBOM, attestation or provider conformance has been run.
 - Tests are outside `checkJs`; the reason is recorded in `tsconfig.json`.
 - `package.json` pins `engines.node` to exactly `24.19.0` while the installed
@@ -149,6 +157,6 @@ Three were deliberately **not** vendored, each for a stated reason:
 ## Traceability
 
 `traceability.json` enumerates 95 identifiers: 21 acceptance criteria, 40
-business rules and 34 detailed NFRs. **43 are `OK` and 52 are `GAP`.** `OK` is
+business rules and 34 detailed NFRs. **46 are `OK` and 49 are `GAP`.** `OK` is
 claimed only where a workspace file implements and tests the identifier; every
 `GAP` names the missing catalogue, tooling, CI or release evidence behind it.

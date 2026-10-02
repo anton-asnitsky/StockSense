@@ -102,8 +102,8 @@
   "coverage": [
     {
       "id": "AC8.2.1",
-      "status": "GAP",
-      "target": "The C01-C27 canonical catalogue is absent; only the illustrative C01 candidate exists."
+      "status": "OK",
+      "target": "tools/contracts/test/integration/cli.package.test.mjs"
     },
     {
       "id": "AC8.2.2",
@@ -472,13 +472,13 @@
     },
     {
       "id": "NFR8.10",
-      "status": "GAP",
-      "target": "The pinned generators are not vendored and no consumer profile declares outputs."
+      "status": "OK",
+      "target": "tools/contracts/src/generators.mjs"
     },
     {
       "id": "NFR8.11",
-      "status": "GAP",
-      "target": "The pinned generators are not vendored and no consumer profile declares outputs."
+      "status": "OK",
+      "target": "contracts/source/web-bff/v1/browser-api.openapi.yaml"
     },
     {
       "id": "NFR8.12",
