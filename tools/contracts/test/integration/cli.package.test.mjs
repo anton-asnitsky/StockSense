@@ -76,6 +76,27 @@ test('changed bytes fail exact digest before release', async () => {
     assert.equal(result.body.ruleId, 'BR1.6');
   });
 });
+test('a tampered OpenAPI document fails provenance even with a matching digest', async () => {
+  const document = 'web-bff/v1/browser-api.openapi.yaml';
+  await withCopy(async root => {
+    const tampered = await readFile(join(root, document), 'utf8') + '\n# appended after the recorded commit\n';
+    await writeFile(join(root, document), tampered);
+    await editManifest(root, manifest => {
+      manifest.openapi.find(entry => entry.document === document).contentDigest = digest(tampered);
+    });
+  }, root => {
+    // The digest check now passes, so only the source binding can catch this.
+    let body = null;
+    try {
+      execFileSync(process.execPath, [cli, 'validate', root, '--repo-root', projectRoot], { encoding: 'utf8' });
+    } catch (error) {
+      body = JSON.parse(error.stdout);
+    }
+    assert.ok(body, 'expected the CLI to reject a document that drifted from its recorded commit');
+    assert.equal(body.code, 'SOURCE_REVISION_MISMATCH');
+    assert.equal(body.ruleId, 'BR1.7');
+  });
+});
 test('protected content is rejected even with its new digest declared', async () => {
   await withCopy(async root => {
     const content = '{"fullPrompt":"synthetic:disallowed-full-transcript"}';

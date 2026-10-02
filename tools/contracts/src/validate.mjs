@@ -61,8 +61,11 @@ export async function validateCandidate(root, { repoRoot } = {}) {
   // A recorded revision is only a binding if the shipped bytes match its blobs.
   let sourceBinding = 'unverified-no-repository';
   if (repoRoot) {
+    // Every canonical document, not just the schemas. BR1.1 requires a
+    // source-revision mismatch on any declared artifact to fail, so narrowing
+    // this to one kind would leave the others unbound.
     verifySourceBinding(repoRoot, loaded.manifest.sourceRevision, loaded.entries
-      .filter(entry => entry.artifactKind === 'schema')
+      .filter(entry => ['openapi', 'asyncapi', 'schema'].includes(entry.artifactKind))
       .map(entry => ({ sourcePath: 'contracts/source/' + entry.document, contentDigest: entry.contentDigest })));
     sourceBinding = 'verified';
   }

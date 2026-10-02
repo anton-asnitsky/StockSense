@@ -6,12 +6,14 @@ contract package. Their `additionalProperties: false` boundaries keep tenant
 and global messages separate.
 
 `samples/walking-skeleton/` is a **thin candidate package**, not a release
-artifact. It covers only C01. The governance CLI checks its path inventory,
+artifact. It covers C01 and C18 - two boundaries of twenty-seven. The governance CLI checks its path inventory,
 digests, budgets, reference preflight, protected-content rules, the declared
 package policy, the example-fixture oracle, and the canonical documents
-actually present. The sample exercises JSON Schema validation, but not an
-OpenAPI or AsyncAPI document. It does not prove compatibility, generation,
-scan, attestation or provider conformance evidence. The CLI reports
+actually present. The sample exercises JSON Schema validation and, through C18, the pinned
+OpenAPI validator. Its declared consumer regenerates reproducibly with drift
+detection. It does not prove AsyncAPI validation, compatibility, release scans,
+SBOM, attestation or provider conformance evidence, and no fixture yet targets
+C18, so none of C18 behaviour beyond syntax is exercised. The CLI reports
 `validationLevel: candidate-canonical-and-fixture-validation` and
 `releaseReady: false`.
 Never publish or consume this sample as a release package.
@@ -20,8 +22,8 @@ implemented and independently verified.
 
 **Source provenance.** The package records the real Git commit that contains
 its canonical sources, and that record is a binding rather than a label. Run
-the CLI with `--repo-root <path>` and every shipped canonical document is
-compared against the blob at the recorded revision; drifted bytes are rejected
+the CLI with `--repo-root <path>` and every shipped canonical document - OpenAPI
+and schemas alike - is compared against the blob at the recorded revision; drifted bytes are rejected
 with `SOURCE_REVISION_MISMATCH`. Without `--repo-root` the result reports
 `sourceBinding: unverified-no-repository`.
 
