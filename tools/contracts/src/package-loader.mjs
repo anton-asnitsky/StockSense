@@ -51,7 +51,7 @@ const allBoundaries = ALL_BOUNDARIES;
 export function assertSafePath(path) {
   if (typeof path !== 'string' || !safePath.test(path) || path.startsWith('/') || path.includes('\\') ||
       path.split('/').some(part => !part || part === '.' || part === '..') || path.includes('//')) {
-    fail('UNSAFE_PATH', 'BR1.5', 'A package path must be a safe relative slash path');
+    fail('UNSAFE_PATH', 'BR1.1', 'A package path must be a safe relative slash path');
   }
   return path;
 }
@@ -76,7 +76,7 @@ function validateEntry(entry, kind, sourceRevision) {
     fail('MANIFEST_SHAPE', 'BR1.1', 'Invalid boundary IDs');
   }
   if (kind === 'sidecar' && (!kinds.has(entry.kind) || entry.sourceRevision !== sourceRevision)) {
-    fail('SOURCE_REVISION', 'BR1.6', 'Unknown sidecar kind or source revision mismatch');
+    fail('SOURCE_REVISION', 'BR1.1', 'Unknown sidecar kind or source revision mismatch');
   }
   assertSafePath(entry.document);
   return { ...entry, artifactKind: kind, semanticOwner: entry[ownerKey],
@@ -88,10 +88,10 @@ async function enumerate(root, current = '', files = []) {
   for (const dirent of await readdir(join(root, current), { withFileTypes: true })) {
     const relative = current ? current + '/' + dirent.name : dirent.name;
     assertSafePath(relative);
-    if (dirent.isSymbolicLink()) fail('SYMLINK', 'BR1.5', 'Package symlinks are prohibited');
+    if (dirent.isSymbolicLink()) fail('SYMLINK', 'BR1.1', 'Package symlinks are prohibited');
     if (dirent.isDirectory()) await enumerate(root, relative, files);
     else if (dirent.isFile()) files.push(relative);
-    else fail('UNSAFE_FILE', 'BR1.5', 'Unsupported package file type');
+    else fail('UNSAFE_FILE', 'BR1.1', 'Unsupported package file type');
   }
   return files;
 }
@@ -99,45 +99,45 @@ async function enumerate(root, current = '', files = []) {
 function validateCoverage(manifest, entries) {
   const rows = manifest.boundaryCoverage;
   if (!Array.isArray(rows) || !rows.length || rows.length > 27 || new Set(rows.map(row => row.boundaryId)).size !== rows.length) {
-    fail('BOUNDARY_INVENTORY', 'BR1.3', 'Boundary inventory is missing or duplicated');
+    fail('BOUNDARY_INVENTORY', 'BR1.1', 'Boundary inventory is missing or duplicated');
   }
   if (manifest.manifestStatus === 'release' && (rows.length !== 27 || allBoundaries.some(id => !rows.some(row => row.boundaryId === id)))) {
-    fail('INCOMPLETE_RELEASE', 'BR1.3', 'Release requires C01-C27');
+    fail('INCOMPLETE_RELEASE', 'BR1.1', 'Release requires C01-C27');
   }
   for (const row of rows) {
     if (!row || !boundary.test(row.boundaryId) ||
-      Object.keys(row).some(key => !['boundaryId', 'canonicalDocuments', 'sidecars'].includes(key))) fail('BOUNDARY_INVENTORY', 'BR1.3', 'Invalid boundary row');
+      Object.keys(row).some(key => !['boundaryId', 'canonicalDocuments', 'sidecars'].includes(key))) fail('BOUNDARY_INVENTORY', 'BR1.1', 'Invalid boundary row');
     if (!Array.isArray(row.canonicalDocuments) || !row.canonicalDocuments.length ||
         !Array.isArray(row.sidecars) || !row.sidecars.length ||
         new Set(row.canonicalDocuments).size !== row.canonicalDocuments.length ||
         new Set(row.sidecars).size !== row.sidecars.length ||
         [...row.canonicalDocuments, ...row.sidecars].some(path => typeof path !== 'string')) {
-      fail('BOUNDARY_INVENTORY', 'BR1.3', 'Boundary row paths must be unique nonempty arrays');
+      fail('BOUNDARY_INVENTORY', 'BR1.1', 'Boundary row paths must be unique nonempty arrays');
     }
     const matching = entries.filter(entry => entry.boundaryIds.includes(row.boundaryId));
     const canonical = matching.filter(entry => entry.artifactKind !== 'sidecar').map(entry => entry.document).sort();
     const sidecars = matching.filter(entry => entry.artifactKind === 'sidecar').map(entry => entry.document).sort();
     if (canonical.length === 0 || sidecars.length === 0 || canonicalJson(canonical) !== canonicalJson([...row.canonicalDocuments].sort()) ||
-      canonicalJson(sidecars) !== canonicalJson([...row.sidecars].sort())) fail('BOUNDARY_INVENTORY', 'BR1.3', 'Coverage row differs from included entries');
+      canonicalJson(sidecars) !== canonicalJson([...row.sidecars].sort())) fail('BOUNDARY_INVENTORY', 'BR1.1', 'Coverage row differs from included entries');
     for (const [kind, ids] of Object.entries(canonicalKinds)) {
       if (ids.split(' ').includes(row.boundaryId) && !matching.some(entry => entry.artifactKind === kind)) {
-        fail('REQUIRED_KIND', 'BR1.4', 'A required canonical kind is absent');
+        fail('REQUIRED_KIND', 'BR1.1', 'A required canonical kind is absent');
       }
     }
     for (const path of fixedPaths[row.boundaryId] ?? []) {
-      if (!canonical.includes(path)) fail('REQUIRED_PATH', 'BR1.4', 'A fixed canonical path is absent');
+      if (!canonical.includes(path)) fail('REQUIRED_PATH', 'BR1.1', 'A fixed canonical path is absent');
     }
     const requiredSidecars = ['example-fixture', ...(manifest.manifestStatus === 'release' ?
       ['compatibility-assessment', 'validation-run', 'evidence-record'] : []), ...(byBoundary[row.boundaryId] ? [byBoundary[row.boundaryId]] : [])];
     for (const kind of requiredSidecars) if (!matching.some(entry => entry.artifactKind === 'sidecar' && entry.kind === kind)) {
-      fail('REQUIRED_SIDECAR', 'BR1.4', 'A required sidecar kind is absent');
+      fail('REQUIRED_SIDECAR', 'BR1.1', 'A required sidecar kind is absent');
     }
     if (matching.some(entry => entry.artifactKind !== 'sidecar') && !matching.some(entry => entry.kind === 'generation-profile')) {
-      fail('REQUIRED_SIDECAR', 'BR1.4', 'A generation profile is absent');
+      fail('REQUIRED_SIDECAR', 'BR1.1', 'A generation profile is absent');
     }
   }
   for (const entry of entries) if (entry.boundaryIds.some(id => !rows.some(row => row.boundaryId === id))) {
-    fail('BOUNDARY_INVENTORY', 'BR1.3', 'An entry names an undeclared boundary');
+    fail('BOUNDARY_INVENTORY', 'BR1.1', 'An entry names an undeclared boundary');
   }
 }
 
@@ -146,7 +146,7 @@ export async function loadPackage(root, options = {}) {
   if (!(await lstat(absolute)).isDirectory()) fail('PACKAGE_ROOT', 'BR1.1', 'Package root is not a directory');
   const manifestPath = join(absolute, 'manifest.json');
   const manifestStat = await lstat(manifestPath);
-  if (!manifestStat.isFile()) fail('UNSAFE_FILE', 'BR1.5', 'Manifest must be a regular file');
+  if (!manifestStat.isFile()) fail('UNSAFE_FILE', 'BR1.1', 'Manifest must be a regular file');
   if (options.sourceByteLimit && manifestStat.size > options.sourceByteLimit) fail('SOURCE_SIZE_LIMIT', 'NFR10.1', 'Manifest exceeds source limit');
   if (options.packageByteLimit && manifestStat.size > options.packageByteLimit) fail('PACKAGE_SIZE_LIMIT', 'NFR10.1', 'Package exceeds 32 MiB');
   const manifestBytes = await readFile(manifestPath);
@@ -163,24 +163,24 @@ export async function loadPackage(root, options = {}) {
     for (const entry of manifest[array]) entries.push(validateEntry(entry, kind, manifest.sourceRevision));
   }
   const paths = entries.map(entry => entry.document);
-  if (new Set(paths).size !== paths.length) fail('DUPLICATE_PATH', 'BR1.2', 'Manifest paths must be unique');
-  if (new Set(entries.map(entry => entry.logicalId)).size !== entries.length) fail('DUPLICATE_LOGICAL_ID', 'BR1.2', 'One package cannot bind two revisions of a logical contract');
+  if (new Set(paths).size !== paths.length) fail('DUPLICATE_PATH', 'BR1.1', 'Manifest paths must be unique');
+  if (new Set(entries.map(entry => entry.logicalId)).size !== entries.length) fail('DUPLICATE_LOGICAL_ID', 'BR1.6', 'One package cannot bind two revisions of a logical contract');
   validateCoverage(manifest, entries);
   const actualFiles = await enumerate(absolute);
-  if (canonicalJson(actualFiles.sort()) !== canonicalJson(['manifest.json', ...paths].sort())) fail('UNLISTED_FILE', 'BR1.5', 'Package file inventory does not match manifest');
+  if (canonicalJson(actualFiles.sort()) !== canonicalJson(['manifest.json', ...paths].sort())) fail('UNLISTED_FILE', 'BR1.1', 'Package file inventory does not match manifest');
   let totalBytes = manifestBytes.length;
   for (const entry of entries) {
     const full = join(absolute, entry.document);
     const canonical = await realpath(full);
-    if (!canonical.startsWith(absolute + sep)) fail('UNSAFE_PATH', 'BR1.5', 'Resolved path escaped package root');
+    if (!canonical.startsWith(absolute + sep)) fail('UNSAFE_PATH', 'BR1.1', 'Resolved path escaped package root');
     const fileStat = await lstat(full);
-    if (!fileStat.isFile()) fail('UNSAFE_FILE', 'BR1.5', 'Package entry must be a regular file');
+    if (!fileStat.isFile()) fail('UNSAFE_FILE', 'BR1.1', 'Package entry must be a regular file');
     if (options.sourceByteLimit && fileStat.size > options.sourceByteLimit) fail('SOURCE_SIZE_LIMIT', 'NFR10.1', 'Source exceeds 1 MiB');
     if (options.packageByteLimit && totalBytes + fileStat.size > options.packageByteLimit) fail('PACKAGE_SIZE_LIMIT', 'NFR10.1', 'Package exceeds 32 MiB');
     const bytes = await readFile(full);
     totalBytes += bytes.length;
     if (options.packageByteLimit && totalBytes > options.packageByteLimit) fail('PACKAGE_SIZE_LIMIT', 'NFR10.1', 'Package exceeds 32 MiB');
-    if (digest(bytes) !== entry.contentDigest) fail('DIGEST_MISMATCH', 'BR1.6', 'A declared content digest does not match');
+    if (digest(bytes) !== entry.contentDigest) fail('DIGEST_MISMATCH', 'BR1.1', 'A declared content digest does not match');
     if (options.inspectBytes) options.inspectBytes(entry, bytes);
   }
   return Object.freeze({ manifest: Object.freeze(manifest), entries: Object.freeze(entries), manifestDigest: digest(manifestBytes),

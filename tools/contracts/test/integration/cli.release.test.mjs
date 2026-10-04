@@ -41,7 +41,7 @@ test('a partial package claiming release status is refused on coverage', async (
       // release requires C01-C27. RELEASE_EVIDENCE_REQUIRED sits behind it for
       // a package that does reach full coverage.
       assert.equal(result.body.code, 'INCOMPLETE_RELEASE');
-      assert.equal(result.body.ruleId, 'BR1.3');
+      assert.equal(result.body.ruleId, 'BR1.1');
     }
   );
 });

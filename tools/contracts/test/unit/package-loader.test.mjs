@@ -9,7 +9,8 @@ async function withPackage(change, check) {
   const fixture = await makePackage({ change });
   try { await check(fixture); } finally { await rm(fixture.root, { recursive: true, force: true }); }
 }
-const rejectsCode = (promise, code) => assert.rejects(promise, error => error instanceof ContractError && error.code === code);
+const rejectsCode = (promise, code, ruleId = 'BR1.1') => assert.rejects(promise,
+  error => error instanceof ContractError && error.code === code && error.ruleId === ruleId);
 
 test('C01 candidate loads exact listed bytes and remains incomplete', async () => {
   await withPackage(null, async ({ root }) => {

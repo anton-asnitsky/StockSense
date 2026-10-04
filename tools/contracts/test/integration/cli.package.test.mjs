@@ -66,14 +66,14 @@ test('malformed coverage input reports stable code and rule', async () => {
     const result = run(root);
     assert.equal(result.exitCode, 1);
     assert.equal(result.body.code, 'BOUNDARY_INVENTORY');
-    assert.equal(result.body.ruleId, 'BR1.3');
+    assert.equal(result.body.ruleId, 'BR1.1');
   });
 });
 test('changed bytes fail exact digest before release', async () => {
   await withCopy(root => writeFile(join(root, 'governance/example-fixture.json'), '{}'), root => {
     const result = run(root);
     assert.equal(result.body.code, 'DIGEST_MISMATCH');
-    assert.equal(result.body.ruleId, 'BR1.6');
+    assert.equal(result.body.ruleId, 'BR1.1');
   });
 });
 test('a tampered OpenAPI document fails provenance even with a matching digest', async () => {
@@ -129,7 +129,7 @@ test('C01-only candidate cannot be relabeled a release', async () => {
   await withCopy(root => editManifest(root, manifest => { manifest.manifestStatus = 'release'; }), root => {
     const result = run(root);
     assert.equal(result.body.code, 'INCOMPLETE_RELEASE');
-    assert.equal(result.body.ruleId, 'BR1.3');
+    assert.equal(result.body.ruleId, 'BR1.1');
   });
 });
 
