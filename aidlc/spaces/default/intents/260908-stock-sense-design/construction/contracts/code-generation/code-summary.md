@@ -83,10 +83,10 @@ Node 24.21.0, pnpm 11.25.0 provisioned through corepack.
 | --- | --- |
 | `pnpm install --frozen-lockfile` | exit 0, clean, no network error |
 | unit | 65 pass, 0 todo, 1 skipped (Windows symlink case) |
-| integration | 25 pass, 1 todo |
-| coverage | 90 pass, 1 todo, 1 skipped; **94.42% lines**, 82.64% branches, 99.25% functions |
+| integration | 26 pass, 1 todo |
+| coverage | 91 pass, 1 todo, 1 skipped; **94.44% lines**, 82.76% branches, 99.25% functions |
 | `pnpm lint` (eslint 10.11.0) | exit 0 |
-| `pnpm type-check` (tsc 7.0.2) | exit 0 |
+| direct `tsc --noEmit` (tsc 5.9.3) | exit 0, with `strictNullChecks: true` |
 | `pnpm scan:secrets` (secretlint 13.0.6) | exit 0 |
 | `pnpm scan:vuln` (pnpm audit) | **exit 1 — 46 vulnerabilities** |
 
@@ -96,7 +96,7 @@ was not lowered.
 
 ### Vulnerability scan finding
 
-`pnpm audit` reports **46 vulnerabilities: 3 low, 19 moderate, 20 high, 4
+The last recorded `pnpm audit` reports **46 vulnerabilities: 3 low, 19 moderate, 20 high, 4
 critical**. Every one of the 91 advisory paths traces to a single pinned
 dependency, `@asyncapi/cli@6.0.2`, which pulls a large transitive tree including
 `@asyncapi/studio`, `next` and `postcss`.
@@ -165,7 +165,8 @@ claimed only where a workspace file implements and tests the identifier; every
 
 Verdict **NOT-READY** (advisory), recorded as `REVIEW_COMPLETED`. Five Major and
 six Minor findings; the full table is appended to `code-generation-plan.md`. The
-reviewer independently reproduced every number in this summary.
+reviewer reproduced the pre-correction test numbers; the current numbers above
+were rerun after the R-02/R-11 changes and await independent re-check.
 
 Acted on before the gate:
 
@@ -186,16 +187,22 @@ Acted on before the gate:
   `8b2970fe`; and the BR5.1 and BR5.10 GAP reasons cited the messaging catalogue
   rather than their real blockers.
 
-Still open and not acted on:
+Corrected after the first review, awaiting a fresh review receipt:
 
-- **R-02, Major.** Systematic `ruleId` misattribution between
-  `package-loader.mjs` and `rules.md` — `DIGEST_MISMATCH` cites BR1.6 where
-  rules.md assigns BR1.1, and similarly for the unsafe-path, duplicate-path,
-  required-kind and boundary-inventory codes. BR6.4 makes rule IDs the evidence
-  spine and BR2.3 makes `ruleId` half the negative-fixture oracle, so this needs
-  a deliberate reconciliation rather than a guess about which side is right.
-- **R-11, Minor.** `tsconfig.json` sets `"strict": false`, which weakens the
-  exit-0 the type-check sensor reports.
+- **R-02, Major.** The approved U1 `rules.md` YAML assigns package completeness,
+  duplicate paths, boundary inventory, required kinds/sidecars, unsafe paths,
+  symlinks, unlisted files and digest mismatches to BR1.1; duplicate logical
+  identity belongs to BR1.6. `package-loader.mjs` now emits those IDs, and its
+  unit and CLI integration assertions check the pair of finding code and rule ID.
+- **R-11, Minor.** Production `checkJs` now enables `strictNullChecks: true`.
+  Direct TypeScript 5.9.3 checking passes. The other strictness flags remain off;
+  tests remain outside `checkJs` for the reason documented in `tsconfig.json`.
+
+The corrected source is pushed as `9901084` on
+`feat/contracts-governance-foundation`. The first advisory NOT-READY verdict is
+still the recorded review outcome until the permitted stale-receipt recovery
+is requested and completed. Do not present these two fixes as independently
+reviewed yet.
 
 ## Undisclosed decisions now recorded
 
