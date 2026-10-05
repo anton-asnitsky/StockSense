@@ -1,7 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { ALL_BOUNDARIES, CANONICAL_KINDS, FIXED_PATHS, ContractError } from './package-loader.mjs';
-import { assertFixtureOracle, createSchemaValidator } from './validators.mjs';
+import YAML from 'yaml';
+import { ALL_BOUNDARIES, BOUNDARY_SIDECARS, CANONICAL_KINDS, FIXED_PATHS, ContractError, digest } from './package-loader.mjs';
+import { C07_PORT_PATH, DIALECTS, SUPPLIER_HEAD_PATH, assertFixtureOracle, createSchemaValidator } from './validators.mjs';
 
 const fail = (code, rule, message) => { throw new ContractError(code, rule, message); };
 const object = value => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -16,6 +17,19 @@ const FINDING_CODES = Object.freeze({
 
 const findingCode = keyword =>
   FINDING_CODES[keyword] ?? 'SCHEMA_' + String(keyword).replace(/([A-Z])/g, '_$1').toUpperCase();
+
+const SIDECAR_MATRIX = Object.freeze({
+  candidateEveryBoundary: ['example-fixture'],
+  releaseEveryBoundary: ['example-fixture', 'compatibility-assessment', 'validation-run', 'evidence-record'],
+  candidateForCanonicalDocuments: ['generation-profile'],
+  releaseForGeneratedConsumers: ['generated-output-manifest'],
+  candidateByBoundary: BOUNDARY_SIDECARS
+});
+
+function sameMembers(actual, expected) {
+  return Array.isArray(actual) && actual.length === expected.length &&
+    new Set(actual).size === actual.length && expected.every(item => actual.includes(item));
+}
 
 /** Translate pinned-validator errors into revision-bound findings. */
 export function mapSchemaFindings(errors, { revisionId, contractElementId, ruleId = 'BR2.4' }) {
@@ -56,14 +70,18 @@ export function assertDeclaredPolicy(policy, loaded) {
   if (!Array.isArray(scope) || !scope.length || scope.some(id => !loaded.boundaryIds.includes(id))) {
     fail('POLICY_SCOPE', 'BR2.6', 'Candidate scope must be non-empty and covered by the manifest');
   }
-  for (const boundaryId of scope) {
-    const enforced = FIXED_PATHS[boundaryId];
-    if (!enforced) continue;
-    const declared = policy.requiredCanonicalPaths?.[boundaryId];
-    if (!Array.isArray(declared) || declared.length !== enforced.length ||
-        enforced.some(path => !declared.includes(path))) {
-      fail('POLICY_PATH_SET', 'BR2.6', 'Declared canonical paths must match the enforced paths in scope');
-    }
+  if (!object(policy.requiredCanonicalPaths) ||
+      Object.keys(policy.requiredCanonicalPaths).length !== Object.keys(FIXED_PATHS).length ||
+      Object.entries(FIXED_PATHS).some(([id, paths]) => !sameMembers(policy.requiredCanonicalPaths[id], paths))) {
+    fail('POLICY_PATH_SET', 'BR2.6', 'Declared canonical paths must match the complete enforced matrix');
+  }
+  const sidecars = policy.requiredSidecarKinds;
+  if (!object(sidecars) || Object.keys(sidecars).length !== Object.keys(SIDECAR_MATRIX).length ||
+      Object.entries(SIDECAR_MATRIX).some(([key, expected]) => key !== 'candidateByBoundary' && !sameMembers(sidecars[key], expected)) ||
+      !object(sidecars.candidateByBoundary) ||
+      Object.keys(sidecars.candidateByBoundary).length !== Object.keys(BOUNDARY_SIDECARS).length ||
+      Object.entries(BOUNDARY_SIDECARS).some(([id, kind]) => !sameMembers(sidecars.candidateByBoundary[id], [kind]))) {
+    fail('POLICY_SIDECAR_MATRIX', 'BR2.6', 'Declared sidecar kinds must match the complete enforced matrix');
   }
   if (policy.releaseReady !== (loaded.manifest.manifestStatus === 'release')) {
     fail('POLICY_RELEASE_CLAIM', 'BR2.6', 'Declared release readiness contradicts the manifest status');
@@ -77,22 +95,60 @@ export function assertDeclaredPolicy(policy, loaded) {
  * exact declared code, rule, revision and element.
  */
 export async function runFixtureOracle(root, loaded) {
-  const read = async document => readFile(join(root, document), 'utf8');
+  const read = async entry => {
+    const bytes = await readFile(join(root, entry.document));
+    if (entry.contentDigest !== undefined && digest(bytes) !== entry.contentDigest) {
+      fail('DIGEST_MISMATCH', 'BR1.1', 'A declared content digest does not match');
+    }
+    return bytes.toString('utf8');
+  };
   const schemas = new Map();
+  const references = new Map();
   for (const entry of loaded.entries.filter(item => item.artifactKind === 'schema')) {
     let source;
-    try { source = JSON.parse(await read(entry.document)); }
+    const bytes = await read(entry);
+    try {
+      if (entry.document.endsWith('.json')) source = JSON.parse(bytes);
+      else if (entry.document.endsWith('.yaml') || entry.document.endsWith('.yml')) {
+        const document = YAML.parseDocument(bytes, { uniqueKeys: true, strict: true });
+        if (document.errors.length) throw document.errors[0];
+        source = document.toJS();
+      } else fail('SOURCE_PARSE', 'BR2.7', 'A canonical schema has an unsupported format');
+    }
     catch { fail('SOURCE_PARSE', 'BR2.7', 'A canonical schema is malformed'); }
-    if (typeof source.title !== 'string' || !source.title) fail('SCHEMA_TITLE', 'BR2.7', 'A canonical schema needs a title to bind fixtures');
-    if (schemas.has(source.title)) fail('FIXTURE_TARGET_AMBIGUOUS', 'BR2.8', 'Two canonical schemas share one element title');
-    schemas.set(source.title, { entry, source });
+    if (!object(source)) fail('SOURCE_PARSE', 'BR2.7', 'A canonical schema is malformed');
+    const typedPort = entry.document === C07_PORT_PATH ||
+      [DIALECTS.typedPort, 'urn:stocksense:dialect:typed-port:1'].includes(entry.schemaDialect ?? source.dialect) ||
+      source.kind === 'typed-port';
+    const governedRecord = entry.document === SUPPLIER_HEAD_PATH || source.kind === 'vault-kv-authority-head' ||
+      [DIALECTS.governedRecord, 'urn:stocksense:dialect:governed-record:1'].includes(entry.schemaDialect ?? source.dialect) ||
+      source.kind === 'governed-record';
+    if (typedPort || governedRecord) {
+      if (source.$schema || (typedPort && governedRecord)) fail('DIALECT_CONFLICT', 'BR1.3', 'Schema dialect markers conflict');
+      continue;
+    }
+    if (source.$schema !== DIALECTS.schema || (entry.schemaDialect && entry.schemaDialect !== DIALECTS.schema) || source.dialect) {
+      fail('DIALECT_CONFLICT', 'BR1.3', 'Expected JSON Schema 2020-12');
+    }
+    if (source.title !== undefined && (typeof source.title !== 'string' || !source.title)) {
+      fail('SCHEMA_TITLE', 'BR2.7', 'A canonical schema title must be nonempty');
+    }
+    if (source.title) {
+      if (schemas.has(source.title)) fail('FIXTURE_TARGET_AMBIGUOUS', 'BR2.8', 'Two canonical schemas share one element title');
+      schemas.set(source.title, { entry, source });
+    }
+    if (source.$id) {
+      if (references.has(source.$id)) fail('SCHEMA_INVALID', 'NFR8.4', 'Two canonical schemas share one identity');
+      references.set(source.$id, source);
+    }
   }
   const fixtureEntries = loaded.entries.filter(item => item.kind === 'example-fixture');
   if (!fixtureEntries.length) fail('FIXTURES_MISSING', 'BR2.7', 'A candidate package requires example fixtures');
   const results = [];
   for (const fixtureEntry of fixtureEntries) {
     let file;
-    try { file = JSON.parse(await read(fixtureEntry.document)); }
+    const bytes = await read(fixtureEntry);
+    try { file = JSON.parse(bytes); }
     catch { fail('FIXTURE_PARSE', 'BR2.7', 'An example-fixture sidecar is malformed'); }
     if (file?.syntheticOnly !== true) fail('FIXTURE_SYNTHETIC', 'BR2.9', 'Fixture payloads must be declared synthetic');
     if (!Array.isArray(file.fixtures) || !file.fixtures.length) fail('FIXTURES_MISSING', 'BR2.7', 'An example-fixture sidecar declares no fixtures');
@@ -100,7 +156,7 @@ export async function runFixtureOracle(root, loaded) {
       if (!object(fixture) || !object(fixture.payload)) fail('FIXTURE_PAYLOAD', 'BR2.7', 'Every fixture needs an object payload');
       const target = schemas.get(fixture.contractElementId);
       if (!target) fail('FIXTURE_TARGET', 'BR2.8', 'Fixture element does not resolve to a canonical schema');
-      const validate = createSchemaValidator(target.source);
+      const validate = createSchemaValidator(target.source, references);
       const valid = validate(fixture.payload);
       const findings = valid ? [] : mapSchemaFindings(validate.errors, {
         revisionId: target.entry.revisionId,

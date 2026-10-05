@@ -30,6 +30,14 @@ async function editManifest(root, edit) {
   await writeFile(path, JSON.stringify(manifest));
 }
 
+async function replaceOpenApi(root, content) {
+  const document = 'web-bff/v1/browser-api.openapi.yaml';
+  await writeFile(join(root, document), content);
+  await editManifest(root, manifest => {
+    manifest.openapi.find(entry => entry.document === document).contentDigest = digest(content);
+  });
+}
+
 test('the thin C01/C18 candidate passes canonical and fixture validation', () => {
   const result = run(sample);
   assert.equal(result.exitCode, 0);
@@ -49,6 +57,18 @@ test('the thin C01/C18 candidate passes canonical and fixture validation', () =>
   assert.deepEqual(result.body.fixtureResults.map(item => item.observed), ['pass', 'pass', 'fail', 'fail']);
   // Without a repository the revision is recorded but not proven.
   assert.equal(result.body.sourceBinding, 'unverified-no-repository');
+});
+
+test('candidate validation refuses an unpinned standards image instead of falling back to host tools', () => {
+  let body;
+  try {
+    execFileSync(process.execPath, [cli, 'validate', sample],
+      { encoding: 'utf8', env: { ...process.env, STOCKSENSE_STANDARDS_IMAGE: '' } });
+  } catch (error) {
+    body = JSON.parse(error.stdout);
+  }
+  assert.equal(body?.code, 'STANDARDS_IMAGE_PIN');
+  assert.equal(body.ruleId, 'NFR6.2');
 });
 
 test('with a repository the recorded sourceRevision is verified against real blobs', () => {
@@ -149,4 +169,42 @@ test('canonical schema dialect failure is surfaced after a matching manifest dig
     assert.equal(result.exitCode, 1);
     assert.equal(result.body.code, 'DIALECT_CONFLICT');
   });
+});
+
+test('preflight: YAML remote reference is rejected before the standards validator', async () => {
+  await withCopy(root => replaceOpenApi(root, 'openapi: 3.1.2\nitem: { $ref: "https://example.invalid/schema.yaml" }\n'), root => {
+    const result = run(root);
+    assert.equal(result.exitCode, 1);
+    assert.equal(result.body.code, 'REFERENCE_POLICY');
+    assert.equal(result.body.ruleId, 'NFR6.2');
+  });
+});
+
+test('preflight: YAML traversal reference is rejected before the standards validator', async () => {
+  await withCopy(root => replaceOpenApi(root, 'openapi: 3.1.2\nitem: { $ref: "../../outside.yaml" }\n'), root => {
+    const result = run(root);
+    assert.equal(result.exitCode, 1);
+    assert.equal(result.body.code, 'REFERENCE_POLICY');
+    assert.equal(result.body.ruleId, 'NFR6.2');
+  });
+});
+
+test('preflight: the real C18 candidate passes at 1024 references and fails at 1025', async () => {
+  for (const count of [1024, 1025]) {
+    await withCopy(async root => {
+      const document = 'web-bff/v1/browser-api.openapi.yaml';
+      const source = await readFile(join(root, document), 'utf8');
+      const existing = (source.match(/\$ref:/g) ?? []).length;
+      const added = Array.from({ length: count - existing }, () => '  - { $ref: "#/components/schemas/SessionResponse" }').join('\n');
+      await replaceOpenApi(root, source + `\nx-reference-budget:\n${added}\n`);
+    }, root => {
+      const result = run(root);
+      if (count === 1024) assert.equal(result.exitCode, 0, JSON.stringify(result.body));
+      else {
+        assert.equal(result.exitCode, 1);
+        assert.equal(result.body.code, 'REFERENCE_LIMIT');
+        assert.equal(result.body.ruleId, 'NFR10.1');
+      }
+    });
+  }
 });

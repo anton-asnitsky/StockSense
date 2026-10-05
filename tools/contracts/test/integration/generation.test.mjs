@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createPinnedGeneratorRunner, generatorConfigurationDigest } from '../../src/generators.mjs';
 import { assertGenerationProfile, regenerateConsumer } from '../../src/generation.mjs';
+import { digest } from '../../src/package-loader.mjs';
 
 const repoRoot = fileURLToPath(new URL('../../../../', import.meta.url));
 const profilePath = join(repoRoot, 'contracts/samples/walking-skeleton/governance/generation-profile.json');
@@ -55,4 +56,48 @@ test('a consumer whose configuration digest does not match the pinned invocation
     regenerateConsumer({ ...consumer, configurationDigest: 'sha256:' + 'c'.repeat(64) }, { runGenerator }),
     error => error.code === 'GENERATOR_CONFIGURATION'
   );
+});
+
+test('a generated fullPrompt file fails even when its expected digest matches', async () => {
+  const [consumer] = (await loadProfile()).consumers;
+  const outputPath = Object.keys(consumer.expectedOutputs)[0];
+  const bytes = 'export const fullPrompt = "synthetic:blocked";\n';
+  await assert.rejects(regenerateConsumer({ ...consumer, expectedOutputs: { [outputPath]: digest(Buffer.from(bytes)) } }, {
+    runGenerator: async (_consumer, workspace) => writeFile(join(workspace, outputPath), bytes)
+  }), error => error.code === 'PROTECTED_CONTENT' && error.ruleId === 'NFR6.1');
+});
+
+test('a generated supplier-content filename fails before drift can pass', async () => {
+  const [consumer] = (await loadProfile()).consumers;
+  const path = 'supplierSourceContent.d.ts';
+  const bytes = 'export type Safe = never;\n';
+  await assert.rejects(regenerateConsumer({ ...consumer, expectedOutputs: { [path]: digest(Buffer.from(bytes)) } }, {
+    runGenerator: async (_consumer, workspace) => writeFile(join(workspace, path), bytes)
+  }), error => error.code === 'PROTECTED_CONTENT' && error.ruleId === 'NFR6.1');
+});
+
+test('a generated protected variant fails despite an exact declared digest', async () => {
+  const [consumer] = (await loadProfile()).consumers;
+  const outputPath = Object.keys(consumer.expectedOutputs)[0];
+  for (const bytes of ['export const fullPromptText = "synthetic:blocked";\n', 'export const supplierSourceContentText = "synthetic:blocked";\n', 'const password = "letmein9";\n']) {
+    await assert.rejects(regenerateConsumer({ ...consumer, expectedOutputs: { [outputPath]: digest(Buffer.from(bytes)) } }, {
+      runGenerator: async (_consumer, workspace) => writeFile(join(workspace, outputPath), bytes)
+    }), error => error.code === 'PROTECTED_CONTENT' && error.ruleId === 'NFR6.1');
+  }
+});
+
+test('a generated Deno task manifest fails despite an exact declared digest', async () => {
+  const [consumer] = (await loadProfile()).consumers;
+  const bytes = '{"tasks":{"build":"deno run build.ts"}}\n';
+  await assert.rejects(regenerateConsumer({ ...consumer, expectedOutputs: { 'deno.json': digest(Buffer.from(bytes)) } }, {
+    runGenerator: async () => assert.fail('Executable manifest reached generator')
+  }), error => error.code === 'GENERATED_FILE_TYPE' && error.ruleId === 'NFR6.2');
+});
+
+test('generated package hook manifest cannot be credited as a matching output', async () => {
+  const [consumer] = (await loadProfile()).consumers;
+  const bytes = '{"scripts":{"postinstall":"echo synthetic"}}\n';
+  await assert.rejects(regenerateConsumer({ ...consumer, expectedOutputs: { 'package.json': digest(Buffer.from(bytes)) } }, {
+    runGenerator: async () => assert.fail('Unsafe path reached generator')
+  }), error => error.code === 'GENERATED_FILE_TYPE' && error.ruleId === 'NFR6.2');
 });

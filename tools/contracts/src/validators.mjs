@@ -1,7 +1,4 @@
-import { spawnSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import Ajv2020Module from 'ajv/dist/2020.js';
 import addFormatsModule from 'ajv-formats';
 import YAML from 'yaml';
@@ -21,6 +18,7 @@ export const DIALECTS = Object.freeze({
 });
 export const C07_PORT_PATH = 'model-lifecycle/v1/finalize-heavy-work.shared-schema.yaml';
 export const C07_PORT_NAME = 'model_lifecycle.finalize_heavy_work_v1';
+export const SUPPLIER_HEAD_PATH = 'common/v1/supplier-authority-head.shared-schema.yaml';
 const C07_REQUIRED_ARGUMENTS = ['callerService', 'retailerId', 'workType', 'requestId', 'leaseId', 'workerId',
   'fencingToken', 'placementGeneration', 'recoveryGeneration', 'resultDigest', 'operationId',
   'idempotencyKey', 'expectedOwnerVersion'];
@@ -30,12 +28,6 @@ const C07_REQUIRED_RESULTS = ['disposition', 'terminalResultId', 'resultDigest',
 const fail = (code, rule, message) => { throw new ContractError(code, rule, message); };
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const string = value => typeof value === 'string' && value.trim().length > 0;
-const packageRoot = fileURLToPath(new URL('../', import.meta.url));
-const redoclyBin = resolve(packageRoot, 'node_modules/@redocly/cli/bin/cli.js');
-// The ruleset is pinned by this tool, not supplied by the package under test,
-// so a package cannot relax the rules its own documents are judged by.
-const redoclyConfig = resolve(packageRoot, 'redocly.yaml');
-const asyncapiBin = resolve(packageRoot, 'node_modules/@asyncapi/cli/bin/run_bin');
 
 function parseSource(bytes, path) {
   const source = Buffer.isBuffer(bytes) ? bytes.toString('utf8') : bytes;
@@ -55,6 +47,18 @@ function parseSource(bytes, path) {
 
 function schemaDialect(entry, source, policy) {
   const path = entry.document;
+  if (source.kind === 'vault-kv-authority-head' && path !== SUPPLIER_HEAD_PATH) {
+    fail('SUPPLIER_HEAD_PATH', 'BR1.3', 'Supplier authority head requires the fixed path');
+  }
+  if (path === SUPPLIER_HEAD_PATH) {
+    if (entry.artifactKind !== 'schema' || !['C05', 'C09'].every(id => entry.boundaryIds?.includes(id) &&
+        policy?.requiredCanonicalPaths?.[id]?.includes(SUPPLIER_HEAD_PATH)) ||
+        (entry.schemaDialect && ![DIALECTS.governedRecord, 'urn:stocksense:dialect:governed-record:1'].includes(entry.schemaDialect)) ||
+        source.kind !== 'vault-kv-authority-head' || source.$schema || source.dialect) {
+      fail('SUPPLIER_HEAD_DISPATCH', 'BR1.3', 'Supplier authority head conflicts with its fixed governed-record boundary');
+    }
+    return DIALECTS.governedRecord;
+  }
   const isC07Path = path === C07_PORT_PATH;
   const isC07PortClaim = entry.boundaryIds?.includes('C07') &&
     (path.endsWith('/finalize-heavy-work.shared-schema.yaml') || entry.schemaDialect === DIALECTS.typedPort || entry.schemaDialect === 'urn:stocksense:dialect:typed-port:1');
@@ -159,6 +163,23 @@ function validateTypedPort(source, entry) {
 }
 
 function validateGovernedRecord(source) {
+  if (source.kind === 'vault-kv-authority-head') {
+    const requiredFields = ['schemaVersion', 'retailerId', 'productId', 'sourceVersion', 'acceptedTermVersion',
+      'state', 'revocationEpoch', 'placementGeneration', 'recoveryGeneration', 'sourceMutationId', 'updatedAt'];
+    if (source.name !== 'SupplierSelectionAuthorityHead' || source.owner !== 'U5 Supplier Knowledge' ||
+        source.store !== 'existing-in-cluster-vault-kv-v2' || source.casRequired !== true ||
+        source.pathTemplate !== 'stocksense/supplier-authority/v1/{retailerId}/{productId}' ||
+        !string(source.writerIdentity) || !string(source.readerIdentity) ||
+        !string(source.authorityRevision) || !string(source.digest) ||
+        !Array.isArray(source.key) || source.key.join(',') !== 'retailerId,productId' ||
+        !Array.isArray(source.fields) || !requiredFields.every(field => source.fields.includes(field)) ||
+        !Array.isArray(source.states) || source.states.join(',') !== 'updating,active' ||
+        !Array.isArray(source.rules) || !source.rules.length ||
+        !Array.isArray(source.fixtures) || !source.fixtures.length) {
+      fail('SUPPLIER_HEAD_SHAPE', 'BR1.3', 'Fixed supplier authority head is incomplete');
+    }
+    return;
+  }
   for (const field of ['kind', 'owner', 'store', 'cas', 'key', 'fields', 'states', 'digest', 'revision', 'rules', 'fixtures']) {
     if (source[field] === undefined || source[field] === null ||
         (typeof source[field] === 'string' && !source[field].trim())) {
@@ -167,24 +188,17 @@ function validateGovernedRecord(source) {
   }
 }
 
-export function createSchemaValidator(schema) {
+export function createSchemaValidator(schema, references = new Map()) {
   if (!object(schema) || schema.$schema !== DIALECTS.schema) fail('DIALECT_CONFLICT', 'BR1.3', 'Expected JSON Schema 2020-12');
   const ajv = new Ajv2020({ strict: true, allErrors: true, validateFormats: true });
   addFormats(ajv);
-  try { return ajv.compile(schema); }
+  try {
+    for (const [identity, reference] of references) {
+      if (identity !== schema.$id) ajv.addSchema(reference);
+    }
+    return ajv.compile(schema);
+  }
   catch { fail('SCHEMA_INVALID', 'NFR8.4', 'JSON Schema does not compile with the pinned 2020-12 validator'); }
-}
-
-function runPinnedTool(dialect, sourcePath) {
-  const [binary, args] = dialect === DIALECTS.openapi
-    ? [redoclyBin, ['lint', sourcePath, '--config', redoclyConfig, '--format', 'json']]
-    : [asyncapiBin, ['validate', sourcePath]];
-  const result = spawnSync(process.execPath, [binary, ...args], {
-    cwd: packageRoot, encoding: 'utf8', timeout: 120_000, maxBuffer: 1024 * 1024,
-    env: { ...process.env, NO_UPDATE_NOTIFIER: '1' }
-  });
-  if (result.error || result.status !== 0) fail('STANDARDS_VALIDATION', dialect === DIALECTS.openapi ? 'NFR8.5' : 'NFR8.6',
-    'Pinned standards validator rejected the canonical document');
 }
 
 /**
@@ -193,13 +207,17 @@ function runPinnedTool(dialect, sourcePath) {
  * @param {string} sourcePath
  * @param {{ policy?: object, runTool?: Function }} [options]
  */
-export async function validateCanonical(entry, sourcePath, { policy, runTool = runPinnedTool } = {}) {
+export async function validateCanonical(entry, sourcePath, { policy, runTool } = {}) {
   const bytes = await readFile(sourcePath);
   const { dialect, source } = detectDialect(entry, bytes, policy);
-  if (dialect === DIALECTS.schema) createSchemaValidator(source);
-  else if (dialect === DIALECTS.typedPort) validateTypedPort(source, entry);
+  if (dialect === DIALECTS.typedPort) validateTypedPort(source, entry);
   else if (dialect === DIALECTS.governedRecord) validateGovernedRecord(source);
-  else await runTool(dialect, sourcePath);
+  else {
+    if (typeof runTool === 'function') {
+      await runTool(dialect, sourcePath);
+      if (dialect === DIALECTS.asyncapi) await runTool('asyncapi-payloads:2020-12', sourcePath);
+    } else fail('STANDARDS_ENGINE', 'NFR6.2', 'Isolated standards validator is required');
+  }
   return { dialect, revisionId: entry.revisionId, valid: true };
 }
 

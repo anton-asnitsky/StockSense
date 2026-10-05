@@ -77,6 +77,8 @@ test('BR6.5: a detached receipt fails on any digest or binding mismatch', () => 
   expectCode(() => verifyReceipt({ ...built, limitations: ['edited'] }, receipt), 'RECEIPT_DIGEST_MISMATCH');
   // Re-pointing the receipt leaves the record digest intact, so it is a binding failure.
   expectCode(() => verifyReceipt(built, { ...receipt, revision: 'c'.repeat(40) }), 'RECEIPT_BINDING');
+  assert.throws(() => verifyReceipt({ ...built, fullPrompt: 'synthetic:blocked' }, receipt),
+    error => error.code === 'PROTECTED_CONTENT' && error.ruleId === 'NFR6.1');
 });
 
 test('BR6.6: a forged attestation subject or untrusted identity is rejected', () => {
@@ -90,8 +92,65 @@ test('BR6.6: a forged attestation subject or untrusted identity is rejected', ()
 test('BR6.4: published evidence may not leak protected content', () => {
   const clean = record();
   assert.equal(assertEvidenceContentSafe(clean.record), true);
-  const leaky = record({ checks: [detail({ checkId: 'c', actualResult: 'authorization=abcdef0123456789abcd' })] });
-  expectCode(() => assertEvidenceContentSafe(leaky.record), 'PROTECTED_CONTENT');
+  for (const actualResult of ['authorization=abcdef0123456789abcd', 'password="!"', 'client_secret="!"', 'fullPrompt', 'supplierSourceContent']) {
+    assert.throws(() => record({ checks: [detail({ checkId: 'c', actualResult })] }),
+      error => error.code === 'PROTECTED_CONTENT' && error.ruleId === 'NFR6.1');
+  }
+});
+
+test('BR6.4: nested evidence fields, filenames and scan diagnostics fail before receipt construction', () => {
+  for (const overrides of [
+    { checks: [detail({ checkId: 'c', diagnostics: { fullPrompt: 'synthetic:blocked' } })] },
+    { gates: gates({ sbom: detail({ reportDigest: sha('c'), actualResult: { supplierSourceContent: 'synthetic:blocked' } }) }) },
+    { artifacts: [{ artifactId: 'reports/fullPrompt.json', contentDigest: sha('d') }] },
+    { limitations: ['reports/client_secret.txt'] }
+  ]) {
+    assert.throws(() => record(overrides),
+      error => error.code === 'PROTECTED_CONTENT' && error.ruleId === 'NFR6.1');
+  }
+});
+
+test('NFR6.1: protected field variants are rejected before an evidence digest exists', () => {
+  for (const input of [
+    { checks: [detail({ checkId: 'c', fullPromptText: 'synthetic:blocked' })] },
+    { gates: gates({ sbom: detail({ reportDigest: sha('c'), supplierSourceContentText: 'synthetic:blocked' }) }) },
+    { artifacts: [{ artifactId: 'safe', contentDigest: sha('d'), clientSecretValue: 'synthetic:blocked' }] }
+  ]) {
+    assert.throws(() => record(input), error => error.code === 'PROTECTED_CONTENT' && error.ruleId === 'NFR6.1');
+  }
+});
+
+test('BR6.1: evidence rejects undeclared fields instead of silently dropping them', () => {
+  assert.throws(() => record({ diagnosticBlob: 'synthetic:arbitrary' }),
+    error => error.code === 'EVIDENCE_FIELD' && error.ruleId === 'BR6.1');
+  assert.throws(() => record({ checks: [detail({ checkId: 'c', arbitrary: 'synthetic:arbitrary' })] }),
+    error => error.code === 'EVIDENCE_FIELD' && error.ruleId === 'BR6.1');
+  const built = record();
+  assert.throws(() => verifyReceipt({ ...built.record, unknown: 'synthetic:arbitrary' }, built.receipt),
+    error => error.code === 'EVIDENCE_FIELD' && error.ruleId === 'BR6.1');
+  assert.throws(() => record({ gates: { ...gates(), extraScan: detail({ reportDigest: sha('c') }) } }),
+    error => error.code === 'EVIDENCE_FIELD' && error.ruleId === 'BR6.1');
+  assert.throws(() => verifyReceipt({ ...built.record, gates: [{ gate: 'sbom', outcome: 'unknown' }] }, built.receipt),
+    error => error.code === 'EVIDENCE_FIELD' && error.ruleId === 'BR6.1');
+});
+
+test('BR6.1: nested limitations cannot smuggle unlisted objects into a signed receipt', () => {
+  assert.throws(() => record({ checks: [detail({ checkId: 'c', limitations: [{ arbitrary: 'accepted' }] })] }),
+    error => error.code === 'EVIDENCE_FIELD' && error.ruleId === 'BR6.1');
+  assert.throws(() => record({ gates: gates({ sbom: detail({ reportDigest: sha('c'), limitations: [{ arbitrary: 'accepted' }] }) }) }),
+    error => error.code === 'EVIDENCE_FIELD' && error.ruleId === 'BR6.1');
+  const built = record();
+  assert.throws(() => verifyReceipt({ ...built.record,
+    checks: [detail({ checkId: 'c', limitations: [{ arbitrary: 'accepted' }] })] }, built.receipt),
+  error => error.code === 'EVIDENCE_FIELD' && error.ruleId === 'BR6.1');
+});
+
+test('BR6.1: caller-controlled check ids cannot inject diagnostic lines', () => {
+  const checkId = 'check\n::error::injected';
+  assert.throws(() => record({ checks: [detail({ checkId, reason: '' })] }),
+    error => error.code === 'CHECK_OUTCOME' && error.ruleId === 'BR6.1' && !error.message.includes('::error::'));
+  assert.throws(() => assertCheckResult(detail({ checkId: 'safe', reason: '' })),
+    error => error.code === 'CHECK_DETAIL' && error.ruleId === 'BR6.1' && !error.message.includes('safe'));
 });
 
 test('BR6.7: an untrusted public-PR workflow is rejected on trigger, runner and permissions', () => {

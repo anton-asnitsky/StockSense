@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { digest } from '../../src/package-loader.mjs';
+import { ContractError, digest } from '../../src/package-loader.mjs';
 import {
   assertGenerationProfile, assertNoDrift, digestDirectory, regenerateConsumer
 } from '../../src/generation.mjs';
@@ -90,4 +90,84 @@ test('BR3.3: a generator writing an unexpected file is drift and the workspace i
     'GENERATION_DRIFT'
   );
   await assert.rejects(digestDirectory(captured));
+});
+
+test('NFR6.1: matching generated digest cannot hide fullPrompt content', async () => {
+  const bytes = 'export const fullPrompt = "synthetic:blocked";\n';
+  await assert.rejects(regenerateConsumer(consumer({ expectedOutputs: { 'bff.d.ts': digest(Buffer.from(bytes)) } }), {
+    runGenerator: async (_consumer, workspace) => writeFile(join(workspace, 'bff.d.ts'), bytes)
+  }), error => error.code === 'PROTECTED_CONTENT' && error.ruleId === 'NFR6.1');
+});
+
+test('NFR6.1: generated credential and supplier source content fail before hashing', async () => {
+  for (const bytes of ['const client_secret = "abcdefghijklmnop";\n', 'const password = "letmein9";\n', 'const password = "!";\n', 'supplierSourceContent']) {
+    await assert.rejects(regenerateConsumer(consumer({ expectedOutputs: { 'bff.d.ts': digest(Buffer.from(bytes)) } }), {
+      runGenerator: async (_consumer, workspace) => writeFile(join(workspace, 'bff.d.ts'), bytes)
+    }), error => error.code === 'PROTECTED_CONTENT' && error.ruleId === 'NFR6.1');
+  }
+});
+
+test('NFR6.1: generated filenames and declared output paths cannot carry protected labels', async () => {
+  await assert.rejects(regenerateConsumer(consumer({ expectedOutputs: { 'nested/fullPrompt.d.ts': sha('a') } }), {
+    runGenerator: async (_consumer, workspace) => {
+      await mkdir(join(workspace, 'nested'), { recursive: true });
+      await writeFile(join(workspace, 'nested/fullPrompt.d.ts'), 'export type Safe = never;\n');
+    }
+  }), error => error.code === 'PROTECTED_CONTENT' && error.ruleId === 'NFR6.1');
+  expectCode(() => assertNoDrift({ 'supplierSourceContent.json': sha('a') }, {}), 'PROTECTED_CONTENT');
+});
+
+test('NFR6.1: generator diagnostic output is replaced with a stable safe finding', async () => {
+  await assert.rejects(regenerateConsumer(consumer(), {
+    runGenerator: async () => { throw new Error('fullPrompt: synthetic:blocked'); }
+  }), error => error.code === 'GENERATOR_FAILED' && error.ruleId === 'BR3.1' && !/fullPrompt/.test(error.message));
+});
+
+test('NFR6.1: generator metadata cannot become a passing result or drift diagnostic', async () => {
+  await assert.rejects(regenerateConsumer(consumer({ consumerId: 'fullPrompt' }), {
+    runGenerator: async (_consumer, workspace) => writeFile(join(workspace, 'bff.d.ts'), 'export type Api = never;\n')
+  }), error => error.code === 'PROTECTED_CONTENT' && error.ruleId === 'NFR6.1');
+  expectCode(() => assertNoDrift({}, { 'safe.ts': sha('a') }, 'supplierSourceContent'), 'PROTECTED_CONTENT');
+});
+
+test('NFR6.1: protected generated variants fail even when expected digests match', async () => {
+  for (const bytes of ['export const fullPromptText = "synthetic:blocked";\n', 'export const supplierSourceContentText = "synthetic:blocked";\n']) {
+    await assert.rejects(regenerateConsumer(consumer({ expectedOutputs: { 'bff.d.ts': digest(Buffer.from(bytes)) } }), {
+      runGenerator: async (_consumer, workspace) => writeFile(join(workspace, 'bff.d.ts'), bytes)
+    }), error => error.code === 'PROTECTED_CONTENT' && error.ruleId === 'NFR6.1');
+  }
+});
+
+test('NFR6.2: executable hook manifests and unsupported generated files are rejected before drift hashing', async () => {
+  for (const path of ['package.json', 'deno.json', 'scripts/run.sh', '.github/workflows/build.yaml']) {
+    await assert.rejects(regenerateConsumer(consumer({ expectedOutputs: { [path]: sha('a') } }), {
+      runGenerator: async () => assert.fail('Unsafe output path reached generator')
+    }), error => error.code === 'GENERATED_FILE_TYPE' && error.ruleId === 'NFR6.2');
+  }
+  const bytes = 'scripts: {prepare: echo synthetic}\n';
+  await assert.rejects(regenerateConsumer(consumer({ expectedOutputs: { 'settings.yaml': digest(Buffer.from(bytes)) } }), {
+    runGenerator: async (_consumer, workspace) => writeFile(join(workspace, 'settings.yaml'), bytes)
+  }), error => error.code === 'HOOK_FORBIDDEN' && error.ruleId === 'NFR6.2');
+});
+
+test('NFR6.2: Deno tasks cannot pass with a matching output digest', async () => {
+  const bytes = '{"tasks":{"build":"deno run build.ts"}}\n';
+  await assert.rejects(regenerateConsumer(consumer({ expectedOutputs: { 'deno.json': digest(Buffer.from(bytes)) } }), {
+    runGenerator: async () => assert.fail('Executable manifest reached generator')
+  }), error => error.code === 'GENERATED_FILE_TYPE' && error.ruleId === 'NFR6.2');
+});
+
+test('BR3.1: caller-controlled consumer id cannot inject diagnostic lines', async () => {
+  const consumerId = 'web\n::error::injected';
+  await assert.rejects(regenerateConsumer(consumer({ consumerId }), {
+    runGenerator: async () => assert.fail('Unsafe consumer reached generator')
+  }), error => error.code === 'GENERATION_CONSUMER_SHAPE' && error.ruleId === 'BR3.1' && !error.message.includes('::error::'));
+  assert.throws(() => assertNoDrift({ 'a.ts': sha('a') }, {}, consumerId),
+    error => error.code === 'GENERATION_CONSUMER_SHAPE' && error.ruleId === 'BR3.1' && !error.message.includes('::error::'));
+});
+
+test('BR3.1: forged generator diagnostic code and rule cannot be emitted', async () => {
+  await assert.rejects(regenerateConsumer(consumer(), {
+    runGenerator: async () => { throw new ContractError('PROTECTED_CONTENT', 'NFR6.1', 'fullPromptText synthetic:blocked'); }
+  }), error => error.code === 'GENERATOR_FAILED' && error.ruleId === 'BR3.1' && !/fullPrompt/i.test(error.message));
 });

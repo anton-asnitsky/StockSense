@@ -1,3 +1,7 @@
+import { spawnSync } from 'node:child_process';
+import { realpathSync, statSync } from 'node:fs';
+import { isAbsolute, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { ContractError } from './package-loader.mjs';
 
 /** @returns {never} */
@@ -8,6 +12,10 @@ const string = value => typeof value === 'string' && value.length > 0;
 const COMMIT = /^[0-9a-f]{40}([0-9a-f]{24})?$/;
 const PACKAGE_VERSION = /^([0-9]+)\.[0-9]+\.[0-9]+$/;
 const DIFFABLE = new Set(['openapi', 'asyncapi', 'schema']);
+const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
+const oasdiff = resolve(repoRoot, '.tools', 'oasdiff', '1.28.0', `${process.platform}-${process.arch}`,
+  process.platform === 'win32' ? 'oasdiff.exe' : 'oasdiff');
+const oasdiffConfig = resolve(repoRoot, 'tools', 'contracts', 'oasdiff.yaml');
 
 /**
  * The integration baseline must be an exact immutable commit. A branch or tag
@@ -79,15 +87,51 @@ export function bindPredecessors(candidateEntries, baselineEntries, { firstRelea
 }
 
 /**
- * Default differ seam. A caller that supplies no runDiff gets a closed door
- * rather than a silently compatible verdict.
- * @param {string} _artifactKind
- * @param {object} _binding
- * @param {Function} [_resolveSource]
- * @returns {never} always throws
+ * The pinned OpenAPI differ consumes only immutable local source files.
+ * Other canonical kinds stay unavailable until an approved pinned policy exists.
+ * @param {string} artifactKind
+ * @param {object} binding
+ * @param {Function} resolveSource
+ * @returns {Promise<{breakingChanges: Array<{id:string,level:number,operation:string|null,path:string}>}>}
  */
-function runPinnedDiff(_artifactKind, _binding, _resolveSource) {
-  throw new ContractError('DIFFER_UNAVAILABLE', 'BR4.3', 'The pinned compatibility differ is not available in this environment');
+async function runPinnedDiff(artifactKind, binding, resolveSource) {
+  if (artifactKind !== 'openapi' || typeof resolveSource !== 'function') {
+    fail('DIFFER_UNAVAILABLE', 'BR4.3', 'A pinned differ and immutable local source resolver are required');
+  }
+  const paths = await resolveSource(binding);
+  const localFile = value => {
+    if (typeof value !== 'string' || !isAbsolute(value)) {
+      fail('DIFF_SOURCE', 'BR4.3', 'Diff inputs must be absolute local files');
+    }
+    try {
+      const path = realpathSync(value);
+      if (!statSync(path).isFile()) fail('DIFF_SOURCE', 'BR4.3', 'Diff input is not a regular file');
+      return path;
+    } catch {
+      fail('DIFF_SOURCE', 'BR4.3', 'Diff input cannot be read');
+    }
+  };
+  const base = localFile(paths?.predecessorPath);
+  const candidate = localFile(paths?.candidatePath);
+  const result = spawnSync(oasdiff,
+    ['breaking', base, candidate, '--allow-external-refs=false', '--format', 'json', '--config', oasdiffConfig],
+    { cwd: repoRoot, encoding: 'utf8', timeout: 60_000, maxBuffer: 1024 * 1024, windowsHide: true });
+  if (result.error || result.status !== 0) {
+    fail('DIFFER_UNAVAILABLE', 'BR4.3', 'Pinned OpenAPI differ failed; inspect the local tool setup');
+  }
+  let changes;
+  try { changes = JSON.parse(result.stdout); }
+  catch { fail('DIFF_RESULT_SHAPE', 'BR4.3', 'Pinned differ returned malformed JSON'); }
+  if (!Array.isArray(changes) || changes.some(change => !object(change) ||
+      typeof change.id !== 'string' || !/^[a-z0-9-]+$/.test(change.id) ||
+      !Number.isInteger(change.level) || typeof change.path !== 'string')) {
+    fail('DIFF_RESULT_SHAPE', 'BR4.3', 'Pinned differ returned malformed changes');
+  }
+  return { breakingChanges: changes.map(change => ({
+    id: change.id, level: change.level,
+    operation: typeof change.operation === 'string' ? change.operation : null,
+    path: change.path
+  })) };
 }
 
 /**

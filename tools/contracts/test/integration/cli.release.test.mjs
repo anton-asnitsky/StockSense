@@ -5,6 +5,7 @@ import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
+import { buildEvidenceRecord, REQUIRED_GATES } from '../../src/evidence.mjs';
 
 const projectRoot = fileURLToPath(new URL('../../../../', import.meta.url));
 const sample = join(projectRoot, 'contracts/samples/walking-skeleton');
@@ -52,6 +53,39 @@ test('the candidate result never reports release readiness', () => {
   assert.equal(result.body.releaseReady, false);
   assert.match(result.body.validationLevel, /^candidate-/);
   assert.ok(result.body.limitations.length > 0);
+});
+
+test('release evidence construction rejects protected nested findings before receipt creation', () => {
+  const check = {
+    checkId: 'canonical-validation', outcome: 'passed', reason: 'synthetic', expectedResult: 'clean',
+    actualResult: 'clean', startedAt: '2026-09-29T10:00:00Z', completedAt: '2026-09-29T10:01:00Z',
+    limitations: []
+  };
+  const gates = Object.fromEntries(REQUIRED_GATES.map(name => [name, { ...check, reportDigest: 'sha256:' + 'a'.repeat(64) }]));
+  for (const input of [
+    { checks: [{ ...check, findings: [{ fullPrompt: 'synthetic:blocked' }] }] },
+    { checks: [{ ...check, fullPromptText: 'synthetic:blocked' }] },
+    { artifacts: [{ artifactId: 'supplierSourceContent.txt', contentDigest: 'sha256:' + 'b'.repeat(64) }] },
+    { gates: { ...gates, sbom: { ...gates.sbom, actualResult: 'client_secret=abcdefghijklmnop' } } },
+    { gates: { ...gates, sbom: { ...gates.sbom, supplierSourceContentText: 'synthetic:blocked' } } }
+  ]) {
+    assert.throws(() => buildEvidenceRecord({
+      revision: 'b'.repeat(40), packageDigest: 'sha256:' + 'c'.repeat(64), checks: [check], gates,
+      ...input
+    }), error => error.code === 'PROTECTED_CONTENT' && error.ruleId === 'NFR6.1');
+  }
+});
+
+test('release evidence rejects unlisted fields instead of constructing a passing receipt', () => {
+  const check = {
+    checkId: 'canonical-validation', outcome: 'passed', reason: 'synthetic', expectedResult: 'clean',
+    actualResult: 'clean', startedAt: '2026-09-29T10:00:00Z', completedAt: '2026-09-29T10:01:00Z', limitations: []
+  };
+  const gates = Object.fromEntries(REQUIRED_GATES.map(name => [name, { ...check, reportDigest: 'sha256:' + 'a'.repeat(64) }]));
+  assert.throws(() => buildEvidenceRecord({
+    revision: 'b'.repeat(40), packageDigest: 'sha256:' + 'c'.repeat(64),
+    checks: [check], gates, diagnosticBlob: 'synthetic:arbitrary'
+  }), error => error.code === 'EVIDENCE_FIELD' && error.ruleId === 'BR6.1');
 });
 
 // Full C01-C27 release verification stays unimplemented on purpose. It needs the

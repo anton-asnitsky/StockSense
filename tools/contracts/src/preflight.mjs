@@ -3,7 +3,7 @@ import { ContractError } from './package-loader.mjs';
 export const LIMITS = Object.freeze({
   sourceBytes: 1_048_576,
   packageBytes: 33_554_432,
-  references: 128,
+  references: 1024,
   referenceDepth: 32,
   validatorMs: 60_000,
   generatorMs: 120_000,
@@ -12,9 +12,10 @@ export const LIMITS = Object.freeze({
 });
 
 const deny = (code, ruleId, message) => { throw new ContractError(code, ruleId, message); };
+const credentialAssignment = /(?:api[_-]?key|access[_-]?token|client[_-]?secret|password|authorization)["']?\s*[:=]\s*(?:"([^"\r\n]*)"|'([^'\r\n]*)'|([^\s,;}\]\r\n]+))/gi;
+const credentialPlaceholder = /^(?:synthetic:|example:|placeholder:|\$\{)/i;
 const protectedPatterns = [
   { rule: 'NFR6.1', name: 'private key', pattern: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/i },
-  { rule: 'NFR6.1', name: 'credential', pattern: /(?:api[_-]?key|access[_-]?token|client[_-]?secret|password|authorization)["']?\s*[:=]\s*["']?(?!synthetic:|example:|placeholder:|\$\{)[A-Za-z0-9_+\/.=-]{12,}/i },
   { rule: 'NFR6.1', name: 'raw supplier document', pattern: /(?:rawSupplierDocument|supplierSourceContent|supplierDocumentBase64|supplierPdfBytes|raw_catalog_text)["']?\s*[:=]/i },
   { rule: 'NFR6.1', name: 'full prompt', pattern: /(?:fullPrompt|systemPromptText|promptTranscript|completePrompt)["']?\s*[:=]/i },
   { rule: 'NFR6.1', name: 'hidden reasoning', pattern: /(?:hiddenReasoning|chainOfThought|privateReasoning|reasoningTrace)["']?\s*[:=]/i }
@@ -26,11 +27,20 @@ export function inspectContent(path, bytes) {
   if (input.subarray(0, 5).toString() === '%PDF-') deny('PROTECTED_CONTENT', 'NFR6.1', 'Raw supplier documents are prohibited');
   const value = input.toString('utf8');
   if (Buffer.from(value, 'utf8').length !== input.length || value.includes('\0')) deny('BINARY_CONTENT', 'NFR6.1', 'Canonical inputs must be UTF-8 text');
+  for (const match of value.matchAll(credentialAssignment)) {
+    const assigned = match[1] ?? match[2] ?? match[3];
+    if (!credentialPlaceholder.test(assigned)) deny('PROTECTED_CONTENT', 'NFR6.1', 'Prohibited credential content');
+  }
   for (const { rule, name, pattern } of protectedPatterns) {
     if (pattern.test(value)) deny('PROTECTED_CONTENT', rule, 'Prohibited ' + name + ' content');
   }
-  if (/(?:^|\n)\s*(?:preinstall|postinstall|prepare|prepublish|scripts|x-generator-hook|x-exec)\s*:/i.test(value) ||
-      /"(?:preinstall|postinstall|prepare|prepublish|x-generator-hook|x-exec)"\s*:/i.test(value)) {
+  const declaration = /\.d\.ts$/i.test(path);
+  const executableManifest = /(?:^|[\\/])(?:package|deno)\.json$/i.test(path);
+  if (!declaration && (
+    /(?:^|\n)\s*(?:preinstall|postinstall|prepare|prepublish|scripts|x-generator-hook|x-exec)\s*:/i.test(value) ||
+    /"(?:preinstall|postinstall|prepare|prepublish|x-generator-hook|x-exec)"\s*:/i.test(value) ||
+    executableManifest && /(?:"(?:scripts|tasks)"\s*:|(?:^|\n)\s*(?:scripts|tasks)\s*:)/i.test(value)
+  )) {
     deny('HOOK_FORBIDDEN', 'NFR6.2', 'Repository-controlled execution hooks are prohibited');
   }
   return true;
@@ -38,7 +48,7 @@ export function inspectContent(path, bytes) {
 
 export function inspectReferences(references, { allowedRemote = {} } = {}) {
   if (!Array.isArray(references)) deny('REFERENCE_POLICY', 'NFR6.2', 'Reference list is invalid');
-  if (references.length > LIMITS.references) deny('REFERENCE_LIMIT', 'NFR10.1', 'Reference count exceeds 128');
+  if (references.length > LIMITS.references) deny('REFERENCE_LIMIT', 'NFR10.1', 'Reference count exceeds 1024');
   const nodes = new Map();
   for (const ref of references) {
     if (!ref || typeof ref.from !== 'string' || typeof ref.to !== 'string') deny('REFERENCE_POLICY', 'NFR6.2', 'Reference is malformed');

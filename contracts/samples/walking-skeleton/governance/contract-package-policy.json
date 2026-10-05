@@ -76,18 +76,58 @@
     "C01": [
       "common/v1/message-envelope.schema.json",
       "common/v1/global-identity-audit-envelope.schema.json"
+    ],
+    "C05": [
+      "common/v1/supplier-authority-head.shared-schema.yaml"
+    ],
+    "C07": [
+      "model-lifecycle/v1/finalize-heavy-work.shared-schema.yaml",
+      "supplier-knowledge/v1/embedding-build-quiesced.asyncapi.yaml"
+    ],
+    "C09": [
+      "common/v1/supplier-authority-head.shared-schema.yaml"
+    ],
+    "C15": [
+      "common/v1/global-identity-audit-envelope.schema.json"
     ]
   },
   "requiredSidecarKinds": {
     "candidateEveryBoundary": [
       "example-fixture"
     ],
+    "releaseEveryBoundary": [
+      "example-fixture",
+      "compatibility-assessment",
+      "validation-run",
+      "evidence-record"
+    ],
     "candidateForCanonicalDocuments": [
       "generation-profile"
+    ],
+    "releaseForGeneratedConsumers": [
+      "generated-output-manifest"
     ],
     "candidateByBoundary": {
       "C01": [
         "contract-package-policy"
+      ],
+      "C22": [
+        "protocol-compatibility-manifest"
+      ],
+      "C23": [
+        "messaging-conformance-profile"
+      ],
+      "C24": [
+        "recovery-policy"
+      ],
+      "C25": [
+        "recovery-policy"
+      ],
+      "C26": [
+        "recovery-policy"
+      ],
+      "C27": [
+        "recovery-policy"
       ]
     }
   },

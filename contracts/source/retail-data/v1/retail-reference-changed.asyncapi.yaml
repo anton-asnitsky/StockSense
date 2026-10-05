@@ -1,0 +1,30 @@
+asyncapi: 3.0.0
+info:
+  title: Retail Reference Events
+  version: 1.0.0
+channels:
+  retailReferenceChanged:
+    address: stocksense.retail-data.reference.v1
+    messages:
+      retailReferenceChanged:
+        payload:
+          schemaFormat: 'application/schema+json;version=draft-2020-12'
+          schema:
+            allOf:
+              - $ref: 'https://contracts.stocksense.local/common/v1/message-envelope.schema.json'
+              - type: object
+                properties:
+                  messageType: { const: retail.reference.changed }
+                  schemaVersion: { const: 1.0.0 }
+                  data:
+                    type: object
+                    required: [sourceVersion, changedProductIds]
+                    properties:
+                      sourceVersion: { type: string }
+                      changedProductIds:
+                        type: array
+                        items: { type: string, format: uuid }
+operations:
+  receiveRetailReferenceChanged:
+    action: receive
+    channel: { $ref: '#/channels/retailReferenceChanged' }

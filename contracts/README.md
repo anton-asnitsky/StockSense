@@ -37,3 +37,36 @@ From the repository root, run `pnpm --dir tools/contracts test:unit` and
 `pnpm --dir tools/contracts test:integration`. The integration suite also
 validates both envelope profiles with JSON Schema 2020-12 and checks that
 tenant and global fields cannot be substituted for one another.
+
+Candidate OpenAPI and AsyncAPI validation requires the local Linux Docker
+engine and an exact, locally present validator image ID. Build the image from
+`tools/contracts/Dockerfile.validator`, inspect its ID, and pass that ID to
+the CLI and integration suite:
+
+```powershell
+docker build --file tools/contracts/Dockerfile.validator --tag stocksense-validator:local tools/contracts
+$env:STOCKSENSE_STANDARDS_IMAGE = docker image inspect stocksense-validator:local --format '{{.Id}}'
+node tools/contracts/src/cli.mjs validate contracts/samples/walking-skeleton
+```
+
+The runner rejects a missing digest and never invokes a host standards CLI.
+It mounts only a digest-checked copy of the declared package graph in a
+read-only Linux container with no network, a 60-second wall limit, and a
+2 GiB memory/swap limit. The image tag is only a build convenience; validation
+uses the inspected immutable image ID. The current C01/C18 sample is not the
+full C01-C27 resource-acceptance proof.
+
+Kiota is pinned separately as the local .NET tool
+`Microsoft.OpenApi.Kiota` 1.35.0 in `.config/dotnet-tools.json`. Restore it
+from the repository root with
+`dotnet tool restore --configfile tools/contracts/nuget.config`, then check
+`dotnet tool run kiota -- --version`. This installs the generator for
+consumer-local client generation; its presence alone does not prove clean
+regeneration or authorize a contract release.
+
+For OpenAPI compatibility checks, `node --use-system-ca
+tools/contracts/scripts/setup-oasdiff.mjs` downloads the approved oasdiff
+1.28.0 asset for the host platform, verifies its repository-pinned SHA-256
+checksum, and installs the executable under the ignored `.tools/` directory.
+The tool must still compare the actual immutable Git integration baseline;
+installing it alone is not a compatibility result.

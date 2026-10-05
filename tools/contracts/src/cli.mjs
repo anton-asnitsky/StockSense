@@ -10,7 +10,8 @@ export async function main(args) {
   if (args.length === 4 && args[2] !== '--repo-root') return usage;
   const repoRoot = args.length === 4 ? resolve(args[3]) : undefined;
   try {
-    return { exitCode: 0, result: await validateCandidate(resolve(args[1]), { repoRoot }) };
+    return { exitCode: 0, result: await validateCandidate(resolve(args[1]),
+      { repoRoot, standardsImage: process.env.STOCKSENSE_STANDARDS_IMAGE }) };
   } catch (error) {
     if (error instanceof ContractError) {
       return { exitCode: 1, result: { code: error.code, ruleId: error.ruleId, message: error.message } };
