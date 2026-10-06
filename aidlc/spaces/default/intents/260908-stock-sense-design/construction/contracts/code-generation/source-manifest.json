@@ -4,6 +4,18 @@
   "version": 1,
   "writes": [
     {
+      "path": "contracts/catalogue/v1/boundary-sources.json"
+    },
+    {
+      "path": ".config/dotnet-tools.json"
+    },
+    {
+      "path": "contracts/profiles/messaging-platform/v1/platform.profile.yaml"
+    },
+    {
+      "path": "contracts/profiles/messaging-platform/v1/protocol-compatibility.profile.yaml"
+    },
+    {
       "path": "contracts/README.md"
     },
     {
@@ -28,13 +40,118 @@
       "path": "contracts/samples/walking-skeleton/web-bff/v1/browser-api.openapi.yaml"
     },
     {
+      "path": "contracts/source/assistant/v1/generation-port.shared-schema.yaml"
+    },
+    {
+      "path": "contracts/source/audit-evidence/v1/authoritative-audit.asyncapi.yaml"
+    },
+    {
+      "path": "contracts/source/common/v1/contract-package.shared-schema.yaml"
+    },
+    {
       "path": "contracts/source/common/v1/global-identity-audit-envelope.schema.json"
     },
     {
       "path": "contracts/source/common/v1/message-envelope.schema.json"
     },
     {
+      "path": "contracts/source/common/v1/supplier-authority-head.shared-schema.yaml"
+    },
+    {
+      "path": "contracts/source/demo-evidence/v1/evidence-manifest.shared-schema.yaml"
+    },
+    {
+      "path": "contracts/source/forecasting/v1/assistant-forecasts.openapi.yaml"
+    },
+    {
+      "path": "contracts/source/forecasting/v1/planning-forecasts.openapi.yaml"
+    },
+    {
+      "path": "contracts/source/identity-access/v1/bff-integration.shared-schema.yaml"
+    },
+    {
+      "path": "contracts/source/identity-access/v1/global-audit-read.openapi.yaml"
+    },
+    {
+      "path": "contracts/source/identity-access/v1/google-federation.shared-schema.yaml"
+    },
+    {
+      "path": "contracts/source/identity-access/v1/identity-metadata.openapi.yaml"
+    },
+    {
+      "path": "contracts/source/identity-access/v1/platform-operator-grant.schema.json"
+    },
+    {
+      "path": "contracts/source/messaging-platform/v1/platform-profile.shared-schema.yaml"
+    },
+    {
+      "path": "contracts/source/messaging-platform/v1/protocol-compatibility.shared-schema.yaml"
+    },
+    {
+      "path": "contracts/source/messaging-platform/v1/transport-conformance.asyncapi.yaml"
+    },
+    {
+      "path": "contracts/source/model-lifecycle/v1/finalize-heavy-work.shared-schema.yaml"
+    },
+    {
+      "path": "contracts/source/model-lifecycle/v1/heavy-work.openapi.yaml"
+    },
+    {
+      "path": "contracts/source/model-lifecycle/v1/supplier-policy-evaluations.openapi.yaml"
+    },
+    {
+      "path": "contracts/source/planning-purchasing/v1/assistant-purchasing.openapi.yaml"
+    },
+    {
+      "path": "contracts/source/recovery-coordination/v1/bootstrap-participant.openapi.yaml"
+    },
+    {
+      "path": "contracts/source/recovery-coordination/v1/control-status.openapi.yaml"
+    },
+    {
+      "path": "contracts/source/recovery-coordination/v1/participant-protocol.asyncapi.yaml"
+    },
+    {
+      "path": "contracts/source/recovery-coordination/v1/recovery-audit.asyncapi.yaml"
+    },
+    {
+      "path": "contracts/source/retail-data/v1/assistant-inventory.openapi.yaml"
+    },
+    {
+      "path": "contracts/source/retail-data/v1/dataset-exports.openapi.yaml"
+    },
+    {
+      "path": "contracts/source/retail-data/v1/forecast-inputs.openapi.yaml"
+    },
+    {
+      "path": "contracts/source/retail-data/v1/inventory-operations.shared-schema.yaml"
+    },
+    {
+      "path": "contracts/source/retail-data/v1/retail-reference-changed.asyncapi.yaml"
+    },
+    {
+      "path": "contracts/source/retail-data/v1/supplier-reference.openapi.yaml"
+    },
+    {
+      "path": "contracts/source/supplier-knowledge/v1/accepted-terms.openapi.yaml"
+    },
+    {
+      "path": "contracts/source/supplier-knowledge/v1/assistant-retrieval.openapi.yaml"
+    },
+    {
+      "path": "contracts/source/supplier-knowledge/v1/embedding-build-quiesced.asyncapi.yaml"
+    },
+    {
+      "path": "contracts/source/supplier-knowledge/v1/embedding-port.shared-schema.yaml"
+    },
+    {
       "path": "contracts/source/web-bff/v1/browser-api.openapi.yaml"
+    },
+    {
+      "path": "contracts/source/web-bff/v1/identity-session.openapi.yaml"
+    },
+    {
+      "path": "contracts/source/web-bff/v1/provider-registry.shared-schema.yaml"
     },
     {
       "path": "tools/contracts/.npmrc"
@@ -43,7 +160,16 @@
       "path": "tools/contracts/.secretlintrc.json"
     },
     {
+      "path": "tools/contracts/Dockerfile.validator"
+    },
+    {
       "path": "tools/contracts/eslint.config.js"
+    },
+    {
+      "path": "tools/contracts/nuget.config"
+    },
+    {
+      "path": "tools/contracts/oasdiff.yaml"
     },
     {
       "path": "tools/contracts/package.json"
@@ -61,13 +187,31 @@
       "path": "tools/contracts/scripts/create-sample.mjs"
     },
     {
+      "path": "tools/contracts/scripts/build-source-inventory.mjs"
+    },
+    {
       "path": "tools/contracts/scripts/pin-generation.mjs"
+    },
+    {
+      "path": "tools/contracts/scripts/setup-oasdiff.mjs"
     },
     {
       "path": "tools/contracts/src/cli.mjs"
     },
     {
+      "path": "tools/contracts/src/catalogue.mjs"
+    },
+    {
       "path": "tools/contracts/src/compatibility.mjs"
+    },
+    {
+      "path": "tools/contracts/src/container-fixture-oracle.mjs"
+    },
+    {
+      "path": "tools/contracts/src/container-schema-validator.mjs"
+    },
+    {
+      "path": "tools/contracts/src/container-standards-runner.mjs"
     },
     {
       "path": "tools/contracts/src/evidence.mjs"
@@ -91,6 +235,9 @@
       "path": "tools/contracts/src/provenance.mjs"
     },
     {
+      "path": "tools/contracts/src/reference-preflight.mjs"
+    },
+    {
       "path": "tools/contracts/src/validate.mjs"
     },
     {
@@ -100,10 +247,25 @@
       "path": "tools/contracts/test/config.mjs"
     },
     {
+      "path": "tools/contracts/test/fixtures/compatibility/base.openapi.yaml"
+    },
+    {
+      "path": "tools/contracts/test/fixtures/compatibility/removed.openapi.yaml"
+    },
+    {
+      "path": "tools/contracts/test/integration/c23-offline.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/integration/catalogue-resource.test.mjs"
+    },
+    {
       "path": "tools/contracts/test/integration/cli.package.test.mjs"
     },
     {
       "path": "tools/contracts/test/integration/cli.release.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/integration/compatibility.tool.test.mjs"
     },
     {
       "path": "tools/contracts/test/integration/envelopes.test.mjs"
@@ -112,16 +274,46 @@
       "path": "tools/contracts/test/integration/generation.test.mjs"
     },
     {
+      "path": "tools/contracts/test/integration/offline-references.test.mjs"
+    },
+    {
       "path": "tools/contracts/test/support/package-fixture.mjs"
     },
     {
+      "path": "tools/contracts/test/unit/c08-port.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/c18-syntax.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/catalogue-source.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/catalogue.test.mjs"
+    },
+    {
       "path": "tools/contracts/test/unit/compatibility.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/container-fixture-oracle.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/container-schema-validator.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/container-standards-runner.test.mjs"
     },
     {
       "path": "tools/contracts/test/unit/evidence.test.mjs"
     },
     {
       "path": "tools/contracts/test/unit/generation.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/identity-profile-source.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/messaging-profile-source.test.mjs"
     },
     {
       "path": "tools/contracts/test/unit/package-loader.test.mjs"
