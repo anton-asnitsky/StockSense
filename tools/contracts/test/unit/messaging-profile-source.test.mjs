@@ -1,10 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import YAML from 'yaml';
 import { detectDialect, DIALECTS } from '../../src/validators.mjs';
+import { deriveIdentity, digest } from '../../src/package-loader.mjs';
+import { runFixtureOracle } from '../../src/policy.mjs';
 
 const root = resolve(import.meta.dirname, '../../../../contracts');
 const protocolPath = 'messaging-platform/v1/protocol-compatibility.shared-schema.yaml';
@@ -81,6 +84,38 @@ test('governed C22 and C23 profile candidates validate against their canonical d
   const { protocol, platform, validateProtocol, validatePlatform } = await fixture();
   assert.equal(validateProtocol(protocol), true, JSON.stringify(validateProtocol.errors));
   assert.equal(validatePlatform(platform), true, JSON.stringify(validatePlatform.errors));
+});
+
+test('C22/C23 candidate fixtures target immutable schema revisions and exact required-field findings', async () => {
+  const rootDir = await mkdtemp(join(tmpdir(), 'stocksense-messaging-fixtures-'));
+  try {
+    const entries = [];
+    for (const [source, document, boundaryIds, kind] of [
+      [`source/${protocolPath}`, protocolPath, ['C22'], 'schema'],
+      [`source/${platformPath}`, platformPath, ['C23'], 'schema'],
+      ['fixtures/messaging-platform/v1/example-fixture.json',
+        'messaging-platform/v1/example-fixture.json', ['C22', 'C23'], 'sidecar']
+    ]) {
+      const bytes = await readFile(resolve(root, source));
+      const target = join(rootDir, document);
+      await mkdir(dirname(target), { recursive: true });
+      await writeFile(target, bytes);
+      const contentDigest = digest(bytes);
+      entries.push({ document, boundaryIds, artifactKind: kind,
+        ...(kind === 'sidecar' ? { kind: 'example-fixture' } : {}), contentDigest,
+        ...deriveIdentity(kind === 'sidecar' ? 'example-fixture' : kind,
+          kind === 'sidecar' ? 'U1 Contracts' : 'U14 Messaging Platform', document, '1.0.0', contentDigest) });
+    }
+    const fixtures = JSON.parse(await readFile(resolve(root, 'fixtures/messaging-platform/v1/example-fixture.json')));
+    const { protocol, platform } = await fixture();
+    assert.deepEqual(fixtures.fixtures[0].payload, protocol);
+    assert.deepEqual(fixtures.fixtures[2].payload, platform);
+    const results = await runFixtureOracle(rootDir, { entries });
+    assert.deepEqual(results.map(result => result.observed), ['pass', 'fail', 'pass', 'fail']);
+    assert.ok(results.every(result => result.revisionId.startsWith('sha256:')));
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
 });
 
 test('C22 rejects missing global envelope and unregistered nested protocol fields', async () => {

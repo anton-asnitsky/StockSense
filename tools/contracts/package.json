@@ -28,7 +28,8 @@
     "scan:secrets": "secretlint \"src/**/*\" \"test/**/*\" \"scripts/**/*\"",
     "scan:vuln": "pnpm audit --audit-level moderate",
     "setup:oasdiff": "node --use-system-ca scripts/setup-oasdiff.mjs",
-    "inventory:sources": "node scripts/build-source-inventory.mjs"
+    "inventory:sources": "node scripts/build-source-inventory.mjs",
+    "fixtures:messaging": "node scripts/build-messaging-fixtures.mjs"
   },
   "dependencies": {
     "@asyncapi/cli": "6.0.2",

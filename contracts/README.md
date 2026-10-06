@@ -20,6 +20,12 @@ root. It inventories every canonical file, checks each required artifact kind,
 and verifies all 38 source digests against the Git `sourceRevision` it reports.
 This is an input to package assembly, not a validated package or release claim.
 
+`fixtures/messaging-platform/v1/example-fixture.json` contains candidate C22/C23
+positive and negative examples. It is regenerated from the governed profile
+candidates with `node tools/contracts/scripts/build-messaging-fixtures.mjs`.
+The fixture oracle checks the exact schema revision, stable finding code, rule,
+and element; it does not assert that a messaging runtime has passed conformance.
+
 `samples/walking-skeleton/` is a **thin candidate package**, not a release
 artifact. It covers C01 and C18 - two boundaries of twenty-seven. The governance CLI checks its path inventory,
 digests, budgets, reference preflight, protected-content rules, the declared

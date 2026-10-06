@@ -81,7 +81,7 @@ test('every present source selects its declared dialect without profile fallback
 });
 
 test('draft canonical sources and governed profile candidates pass the protected-content gate', async () => {
-  for (const root of [sourceRoot, join(repository, 'contracts/profiles')]) {
+  for (const root of [sourceRoot, join(repository, 'contracts/profiles'), join(repository, 'contracts/fixtures')]) {
     for (const path of await sourceFiles(root)) {
       const bytes = await readFile(join(root, path));
       assert.doesNotThrow(() => inspectContent(path, bytes), path);
