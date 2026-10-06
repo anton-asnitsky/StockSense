@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import YAML from 'yaml';
+import Ajv2020 from 'ajv/dist/2020.js';
 
 const source = resolve(import.meta.dirname, '../../../../contracts/source');
 const profiles = resolve(import.meta.dirname, '../../../../contracts/profiles');
@@ -20,6 +21,15 @@ function assertAuditProfiles(contract) {
   assert.ok(!tenant.allOf[1].properties.messageType.enum.includes('identity.global.audit.recorded'));
   assert.equal(global.allOf[1].properties.messageType.const, 'identity.global.audit.recorded');
 }
+
+test('C01 package schema compiles under the approved strict 2020-12 validator', async () => {
+  const schema = await document('common/v1/contract-package.shared-schema.yaml');
+  const validate = new Ajv2020({ strict: true, allErrors: true }).compile(schema);
+  assert.equal(typeof validate, 'function');
+  for (const field of ['openapi', 'asyncapi', 'schemas', 'boundaryCoverage']) {
+    assert.equal(schema.allOf[0].then.properties[field].type, 'array');
+  }
+});
 
 test('C15 tenant and retailerless global routes bind distinct closed envelope profiles', async () => {
   assertAuditProfiles(await document('audit-evidence/v1/authoritative-audit.asyncapi.yaml'));

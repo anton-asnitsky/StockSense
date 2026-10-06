@@ -77,10 +77,10 @@ allOf:
   - if: { properties: { manifestStatus: { const: release } }, required: [manifestStatus] }
     then:
       properties:
-        openapi: { minItems: 1 }
-        asyncapi: { minItems: 1 }
-        schemas: { minItems: 1 }
-        boundaryCoverage: { minItems: 27 }
+        openapi: { type: array, minItems: 1 }
+        asyncapi: { type: array, minItems: 1 }
+        schemas: { type: array, minItems: 1 }
+        boundaryCoverage: { type: array, minItems: 27 }
 $defs:
   boundaryId: { type: string, pattern: '^C(0[1-9]|1[0-9]|2[0-7])$' }
   boundaryIds: { type: array, minItems: 1, uniqueItems: true, items: { $ref: '#/$defs/boundaryId' } }
