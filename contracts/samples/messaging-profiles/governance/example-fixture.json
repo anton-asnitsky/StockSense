@@ -96,7 +96,8 @@
         },
         "payloadDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
         "data": {}
-      }
+      },
+      "expectedFailurePath": "/retailerId"
     },
     {
       "fixtureId": "c01-global-with-retailer",
@@ -130,7 +131,8 @@
         },
         "payloadDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
         "data": {}
-      }
+      },
+      "expectedFailurePath": "/retailerId"
     },
     {
       "fixtureId": "c22-protocol-positive",
@@ -383,7 +385,8 @@
           "protocol": "new-major-and-routing-identity",
           "package": "independent-major-with-declared-protocol-range"
         }
-      }
+      },
+      "expectedFailurePath": "/protocol/asyncapiBaseline"
     },
     {
       "fixtureId": "c23-platform-positive",
@@ -538,7 +541,8 @@
             "authoritative-state-reconciliation"
           ]
         }
-      }
+      },
+      "expectedFailurePath": "/delivery/publisherConfirm"
     }
   ]
 }

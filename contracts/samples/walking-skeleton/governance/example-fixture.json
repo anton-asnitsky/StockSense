@@ -96,7 +96,8 @@
         },
         "payloadDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
         "data": {}
-      }
+      },
+      "expectedFailurePath": "/retailerId"
     },
     {
       "fixtureId": "c01-global-with-retailer",
@@ -130,7 +131,8 @@
         },
         "payloadDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
         "data": {}
-      }
+      },
+      "expectedFailurePath": "/retailerId"
     },
     {
       "fixtureId": "c18-manual-review-positive",
@@ -159,7 +161,8 @@
       "expectedFailureRuleId": "BR2.4",
       "payload": {
         "expectedInventoryVersion": "inventory-v1"
-      }
+      },
+      "expectedFailurePath": "/expectedSupplierTermsVersion"
     },
     {
       "fixtureId": "c18-reconciliation-positive",
@@ -189,7 +192,8 @@
       "payload": {
         "expectedOperationVersion": 1,
         "action": "synthetic-unknown-action"
-      }
+      },
+      "expectedFailurePath": "/action"
     },
     {
       "fixtureId": "c18-assistant-turn-positive",
@@ -219,7 +223,8 @@
       "payload": {
         "message": "",
         "expectedConversationVersion": 0
-      }
+      },
+      "expectedFailurePath": "/message"
     }
   ]
 }

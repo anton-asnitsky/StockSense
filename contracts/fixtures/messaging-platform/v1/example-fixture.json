@@ -253,7 +253,8 @@
           "protocol": "new-major-and-routing-identity",
           "package": "independent-major-with-declared-protocol-range"
         }
-      }
+      },
+      "expectedFailurePath": "/protocol/asyncapiBaseline"
     },
     {
       "fixtureId": "c23-platform-positive",
@@ -408,7 +409,8 @@
             "authoritative-state-reconciliation"
           ]
         }
-      }
+      },
+      "expectedFailurePath": "/delivery/publisherConfirm"
     }
   ]
 }
