@@ -13,6 +13,13 @@ The C23 AsyncAPI source names distinct tenant and global identity routes.
 that validate against those schemas. These drafts are not yet bound into a
 complete, revision-stamped package with fixtures and release evidence.
 
+`catalogue/v1/boundary-sources.json` is the checked C01-C27 source-to-boundary
+map. After committing canonical source edits, run
+`node tools/contracts/scripts/build-source-inventory.mjs` from the repository
+root. It inventories every canonical file, checks each required artifact kind,
+and verifies all 38 source digests against the Git `sourceRevision` it reports.
+This is an input to package assembly, not a validated package or release claim.
+
 `samples/walking-skeleton/` is a **thin candidate package**, not a release
 artifact. It covers C01 and C18 - two boundaries of twenty-seven. The governance CLI checks its path inventory,
 digests, budgets, reference preflight, protected-content rules, the declared
