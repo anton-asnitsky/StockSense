@@ -1,0 +1,95 @@
+{
+  "fixtureVersion": "1.1.0",
+  "syntheticOnly": true,
+  "fixtures": [
+    {
+      "fixtureId": "c18-manual-review-positive",
+      "boundaryIds": [
+        "C18"
+      ],
+      "contractElementId": "ManualReviewRequest",
+      "documentRevisionId": "sha256:a82fcd75d567085c01b69b2132ebc4e9c291e07f34598fd6ea107f4e259d1d6c",
+      "scenarioType": "valid",
+      "expectedOutcome": "pass",
+      "payload": {
+        "expectedInventoryVersion": "inventory-v1",
+        "expectedSupplierTermsVersion": "terms-v1"
+      }
+    },
+    {
+      "fixtureId": "c18-manual-review-missing-version",
+      "boundaryIds": [
+        "C18"
+      ],
+      "contractElementId": "ManualReviewRequest",
+      "documentRevisionId": "sha256:a82fcd75d567085c01b69b2132ebc4e9c291e07f34598fd6ea107f4e259d1d6c",
+      "scenarioType": "invalid",
+      "expectedOutcome": "fail",
+      "expectedFailureCode": "SCHEMA_REQUIRED",
+      "expectedFailureRuleId": "BR2.4",
+      "payload": {
+        "expectedInventoryVersion": "inventory-v1"
+      }
+    },
+    {
+      "fixtureId": "c18-reconciliation-positive",
+      "boundaryIds": [
+        "C18"
+      ],
+      "contractElementId": "ReconciliationRequest",
+      "documentRevisionId": "sha256:a82fcd75d567085c01b69b2132ebc4e9c291e07f34598fd6ea107f4e259d1d6c",
+      "scenarioType": "valid",
+      "expectedOutcome": "pass",
+      "payload": {
+        "expectedOperationVersion": 1,
+        "action": "compare-authoritative-state"
+      }
+    },
+    {
+      "fixtureId": "c18-reconciliation-invalid-action",
+      "boundaryIds": [
+        "C18"
+      ],
+      "contractElementId": "ReconciliationRequest",
+      "documentRevisionId": "sha256:a82fcd75d567085c01b69b2132ebc4e9c291e07f34598fd6ea107f4e259d1d6c",
+      "scenarioType": "invalid",
+      "expectedOutcome": "fail",
+      "expectedFailureCode": "SCHEMA_ENUM",
+      "expectedFailureRuleId": "BR2.4",
+      "payload": {
+        "expectedOperationVersion": 1,
+        "action": "synthetic-unknown-action"
+      }
+    },
+    {
+      "fixtureId": "c18-assistant-turn-positive",
+      "boundaryIds": [
+        "C18"
+      ],
+      "contractElementId": "AssistantTurnRequest",
+      "documentRevisionId": "sha256:a82fcd75d567085c01b69b2132ebc4e9c291e07f34598fd6ea107f4e259d1d6c",
+      "scenarioType": "valid",
+      "expectedOutcome": "pass",
+      "payload": {
+        "message": "Synthetic inventory question",
+        "expectedConversationVersion": 0
+      }
+    },
+    {
+      "fixtureId": "c18-assistant-turn-empty-message",
+      "boundaryIds": [
+        "C18"
+      ],
+      "contractElementId": "AssistantTurnRequest",
+      "documentRevisionId": "sha256:a82fcd75d567085c01b69b2132ebc4e9c291e07f34598fd6ea107f4e259d1d6c",
+      "scenarioType": "invalid",
+      "expectedOutcome": "fail",
+      "expectedFailureCode": "SCHEMA_MIN_LENGTH",
+      "expectedFailureRuleId": "BR2.4",
+      "payload": {
+        "message": "",
+        "expectedConversationVersion": 0
+      }
+    }
+  ]
+}
