@@ -4,10 +4,13 @@
   "version": 1,
   "writes": [
     {
+      "path": ".config/dotnet-tools.json"
+    },
+    {
       "path": "contracts/catalogue/v1/boundary-sources.json"
     },
     {
-      "path": ".config/dotnet-tools.json"
+      "path": "contracts/fixtures/messaging-platform/v1/example-fixture.json"
     },
     {
       "path": "contracts/profiles/messaging-platform/v1/platform.profile.yaml"
@@ -17,6 +20,42 @@
     },
     {
       "path": "contracts/README.md"
+    },
+    {
+      "path": "contracts/samples/messaging-profiles/common/v1/contract-package.shared-schema.yaml"
+    },
+    {
+      "path": "contracts/samples/messaging-profiles/common/v1/global-identity-audit-envelope.schema.json"
+    },
+    {
+      "path": "contracts/samples/messaging-profiles/common/v1/message-envelope.schema.json"
+    },
+    {
+      "path": "contracts/samples/messaging-profiles/governance/contract-package-policy.json"
+    },
+    {
+      "path": "contracts/samples/messaging-profiles/governance/example-fixture.json"
+    },
+    {
+      "path": "contracts/samples/messaging-profiles/governance/generation-profile.json"
+    },
+    {
+      "path": "contracts/samples/messaging-profiles/governance/platform.profile.yaml"
+    },
+    {
+      "path": "contracts/samples/messaging-profiles/governance/protocol-compatibility.profile.yaml"
+    },
+    {
+      "path": "contracts/samples/messaging-profiles/manifest.json"
+    },
+    {
+      "path": "contracts/samples/messaging-profiles/messaging-platform/v1/platform-profile.shared-schema.yaml"
+    },
+    {
+      "path": "contracts/samples/messaging-profiles/messaging-platform/v1/protocol-compatibility.shared-schema.yaml"
+    },
+    {
+      "path": "contracts/samples/messaging-profiles/messaging-platform/v1/transport-conformance.asyncapi.yaml"
     },
     {
       "path": "contracts/samples/walking-skeleton/common/v1/global-identity-audit-envelope.schema.json"
@@ -184,10 +223,16 @@
       "path": "tools/contracts/redocly.yaml"
     },
     {
-      "path": "tools/contracts/scripts/create-sample.mjs"
+      "path": "tools/contracts/scripts/build-messaging-fixtures.mjs"
     },
     {
       "path": "tools/contracts/scripts/build-source-inventory.mjs"
+    },
+    {
+      "path": "tools/contracts/scripts/create-messaging-sample.mjs"
+    },
+    {
+      "path": "tools/contracts/scripts/create-sample.mjs"
     },
     {
       "path": "tools/contracts/scripts/pin-generation.mjs"
@@ -196,10 +241,10 @@
       "path": "tools/contracts/scripts/setup-oasdiff.mjs"
     },
     {
-      "path": "tools/contracts/src/cli.mjs"
+      "path": "tools/contracts/src/catalogue.mjs"
     },
     {
-      "path": "tools/contracts/src/catalogue.mjs"
+      "path": "tools/contracts/src/cli.mjs"
     },
     {
       "path": "tools/contracts/src/compatibility.mjs"
@@ -257,6 +302,9 @@
     },
     {
       "path": "tools/contracts/test/integration/catalogue-resource.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/integration/cli.messaging-sample.test.mjs"
     },
     {
       "path": "tools/contracts/test/integration/cli.package.test.mjs"
