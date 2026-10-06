@@ -1,0 +1,544 @@
+{
+  "fixtureVersion": "1.1.0",
+  "syntheticOnly": true,
+  "fixtures": [
+    {
+      "fixtureId": "c01-tenant-positive",
+      "boundaryIds": [
+        "C01"
+      ],
+      "contractElementId": "MessageEnvelope",
+      "scenarioType": "valid",
+      "expectedOutcome": "pass",
+      "payload": {
+        "messageId": "11111111-1111-4111-8111-111111111111",
+        "messageType": "retail.inventory.updated",
+        "schemaVersion": "1.0.0",
+        "occurredAt": "2026-09-29T10:00:00Z",
+        "retailerId": "22222222-2222-4222-8222-222222222222",
+        "actor": {
+          "type": "service",
+          "subjectId": "retail-data"
+        },
+        "correlationId": "33333333-3333-4333-8333-333333333333",
+        "causationId": "44444444-4444-4444-8444-444444444444",
+        "idempotencyKey": "synthetic-idempotency-key-0001",
+        "placementGeneration": 1,
+        "producer": {
+          "serviceId": "retail-data",
+          "subjectId": "retail-data-service",
+          "audience": "stocksense-internal",
+          "protocolVersion": "1.0.0"
+        },
+        "payloadDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "data": {}
+      }
+    },
+    {
+      "fixtureId": "c01-global-positive",
+      "boundaryIds": [
+        "C01"
+      ],
+      "contractElementId": "GlobalIdentityAuditEnvelope",
+      "scenarioType": "valid",
+      "expectedOutcome": "pass",
+      "payload": {
+        "scope": "global",
+        "messageId": "55555555-5555-4555-8555-555555555555",
+        "messageType": "identity.global.audit.recorded",
+        "schemaVersion": "1.0.0",
+        "occurredAt": "2026-09-29T10:00:00Z",
+        "actor": {
+          "type": "service",
+          "subjectId": "identity-access"
+        },
+        "correlationId": "66666666-6666-4666-8666-666666666666",
+        "causationId": null,
+        "idempotencyKey": "synthetic-idempotency-key-0002",
+        "producer": {
+          "serviceId": "identity-access",
+          "subjectId": "identity-access-service",
+          "audience": "stocksense-internal",
+          "protocolVersion": "1.0.0"
+        },
+        "payloadDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "data": {}
+      }
+    },
+    {
+      "fixtureId": "c01-tenant-no-retailer",
+      "boundaryIds": [
+        "C01"
+      ],
+      "contractElementId": "MessageEnvelope",
+      "scenarioType": "invalid",
+      "expectedOutcome": "fail",
+      "expectedFailureCode": "SCHEMA_REQUIRED",
+      "expectedFailureRuleId": "BR2.4",
+      "payload": {
+        "messageId": "11111111-1111-4111-8111-111111111111",
+        "messageType": "retail.inventory.updated",
+        "schemaVersion": "1.0.0",
+        "occurredAt": "2026-09-29T10:00:00Z",
+        "actor": {
+          "type": "service",
+          "subjectId": "retail-data"
+        },
+        "correlationId": "33333333-3333-4333-8333-333333333333",
+        "causationId": "44444444-4444-4444-8444-444444444444",
+        "idempotencyKey": "synthetic-idempotency-key-0001",
+        "placementGeneration": 1,
+        "producer": {
+          "serviceId": "retail-data",
+          "subjectId": "retail-data-service",
+          "audience": "stocksense-internal",
+          "protocolVersion": "1.0.0"
+        },
+        "payloadDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "data": {}
+      }
+    },
+    {
+      "fixtureId": "c01-global-with-retailer",
+      "boundaryIds": [
+        "C01"
+      ],
+      "contractElementId": "GlobalIdentityAuditEnvelope",
+      "scenarioType": "invalid",
+      "expectedOutcome": "fail",
+      "expectedFailureCode": "SCHEMA_ADDITIONAL_PROPERTY",
+      "expectedFailureRuleId": "BR2.4",
+      "payload": {
+        "scope": "global",
+        "messageId": "55555555-5555-4555-8555-555555555555",
+        "messageType": "identity.global.audit.recorded",
+        "schemaVersion": "1.0.0",
+        "occurredAt": "2026-09-29T10:00:00Z",
+        "retailerId": "22222222-2222-4222-8222-222222222222",
+        "actor": {
+          "type": "service",
+          "subjectId": "identity-access"
+        },
+        "correlationId": "66666666-6666-4666-8666-666666666666",
+        "causationId": null,
+        "idempotencyKey": "synthetic-idempotency-key-0002",
+        "producer": {
+          "serviceId": "identity-access",
+          "subjectId": "identity-access-service",
+          "audience": "stocksense-internal",
+          "protocolVersion": "1.0.0"
+        },
+        "payloadDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "data": {}
+      }
+    },
+    {
+      "fixtureId": "c22-protocol-positive",
+      "boundaryIds": [
+        "C22"
+      ],
+      "contractElementId": "MessagingProtocolCompatibilityManifest",
+      "scenarioType": "valid",
+      "expectedOutcome": "pass",
+      "payload": {
+        "kind": "messaging-protocol-compatibility-manifest",
+        "version": "1.0.0",
+        "protocol": {
+          "owner": "contracts",
+          "name": "stocksense-messaging",
+          "semanticVersion": "1.0.0",
+          "asyncapiBaseline": "3.0.0",
+          "envelopeSchemas": {
+            "tenant": "common/v1/message-envelope.schema.json",
+            "globalIdentity": "common/v1/global-identity-audit-envelope.schema.json"
+          }
+        },
+        "packages": [
+          {
+            "language": "dotnet",
+            "owner": "messaging-platform",
+            "package": "StockSense.Messaging",
+            "semanticVersion": "1.0.0",
+            "supportedProtocolRange": ">=1.0.0 <2.0.0"
+          },
+          {
+            "language": "python",
+            "owner": "messaging-platform",
+            "package": "stocksense-messaging",
+            "semanticVersion": "1.0.0",
+            "supportedProtocolRange": ">=1.0.0 <2.0.0"
+          }
+        ],
+        "bootstrapPublishers": [
+          {
+            "owner": "identity-access",
+            "implementation": "service-local",
+            "protocolRange": ">=1.0.0 <2.0.0",
+            "fixtures": [
+              "tenant-envelope",
+              "global-identity-envelope",
+              "cross-profile-rejection",
+              "authenticated-producer",
+              "publisher-confirm",
+              "exact-replay",
+              "changed-payload-conflict",
+              "poison-message",
+              "retry-expiry",
+              "dead-letter",
+              "authorized-replay",
+              "authoritative-reconciliation",
+              "ordering",
+              "payload-limit",
+              "telemetry"
+            ]
+          },
+          {
+            "owner": "retail-data",
+            "implementation": "service-local",
+            "protocolRange": ">=1.0.0 <2.0.0",
+            "fixtures": [
+              "tenant-envelope",
+              "authenticated-producer",
+              "publisher-confirm",
+              "exact-replay",
+              "changed-payload-conflict",
+              "poison-message",
+              "retry-expiry",
+              "dead-letter",
+              "authorized-replay",
+              "authoritative-reconciliation",
+              "ordering",
+              "payload-limit",
+              "telemetry"
+            ]
+          }
+        ],
+        "conformance": {
+          "fixtureVersion": "1.0.0",
+          "requiredSuites": [
+            "tenant-envelope",
+            "global-identity-envelope",
+            "cross-profile-rejection",
+            "authenticated-producer",
+            "publisher-confirm",
+            "exact-replay",
+            "changed-payload-conflict",
+            "poison-message",
+            "retry-expiry",
+            "dead-letter",
+            "authorized-replay",
+            "authoritative-reconciliation",
+            "ordering",
+            "payload-limit",
+            "telemetry"
+          ],
+          "crossLanguageResult": "required",
+          "bootstrapPublisherResult": "required-per-service-for-applicable-suites"
+        },
+        "wireRules": {
+          "canonicalization": "RFC-8785",
+          "digest": "sha256-of-canonical-data",
+          "authenticatedProducerBinding": "token-subject-client-audience-must-match-envelope-and-registration",
+          "envelopeMaximumBytes": 65536,
+          "maxTotalDeliveries": 5,
+          "initialDeliveryAttempt": 1,
+          "deterministicBackoffSecondsForAttempts2Through5": [
+            1,
+            2,
+            4,
+            8
+          ],
+          "backoffFormula": "min-2-power-attempt-minus-2-and-30-seconds-no-jitter",
+          "deadLetterRetentionDays": 7,
+          "authorizedReplayBatchMaximum": 100
+        },
+        "breakingChange": {
+          "protocol": "new-major-and-routing-identity",
+          "package": "independent-major-with-declared-protocol-range"
+        }
+      }
+    },
+    {
+      "fixtureId": "c22-missing-asyncapi-baseline",
+      "boundaryIds": [
+        "C22"
+      ],
+      "contractElementId": "MessagingProtocolCompatibilityManifest",
+      "scenarioType": "invalid",
+      "expectedOutcome": "fail",
+      "expectedFailureCode": "SCHEMA_REQUIRED",
+      "expectedFailureRuleId": "BR2.4",
+      "payload": {
+        "kind": "messaging-protocol-compatibility-manifest",
+        "version": "1.0.0",
+        "protocol": {
+          "owner": "contracts",
+          "name": "stocksense-messaging",
+          "semanticVersion": "1.0.0",
+          "envelopeSchemas": {
+            "tenant": "common/v1/message-envelope.schema.json",
+            "globalIdentity": "common/v1/global-identity-audit-envelope.schema.json"
+          }
+        },
+        "packages": [
+          {
+            "language": "dotnet",
+            "owner": "messaging-platform",
+            "package": "StockSense.Messaging",
+            "semanticVersion": "1.0.0",
+            "supportedProtocolRange": ">=1.0.0 <2.0.0"
+          },
+          {
+            "language": "python",
+            "owner": "messaging-platform",
+            "package": "stocksense-messaging",
+            "semanticVersion": "1.0.0",
+            "supportedProtocolRange": ">=1.0.0 <2.0.0"
+          }
+        ],
+        "bootstrapPublishers": [
+          {
+            "owner": "identity-access",
+            "implementation": "service-local",
+            "protocolRange": ">=1.0.0 <2.0.0",
+            "fixtures": [
+              "tenant-envelope",
+              "global-identity-envelope",
+              "cross-profile-rejection",
+              "authenticated-producer",
+              "publisher-confirm",
+              "exact-replay",
+              "changed-payload-conflict",
+              "poison-message",
+              "retry-expiry",
+              "dead-letter",
+              "authorized-replay",
+              "authoritative-reconciliation",
+              "ordering",
+              "payload-limit",
+              "telemetry"
+            ]
+          },
+          {
+            "owner": "retail-data",
+            "implementation": "service-local",
+            "protocolRange": ">=1.0.0 <2.0.0",
+            "fixtures": [
+              "tenant-envelope",
+              "authenticated-producer",
+              "publisher-confirm",
+              "exact-replay",
+              "changed-payload-conflict",
+              "poison-message",
+              "retry-expiry",
+              "dead-letter",
+              "authorized-replay",
+              "authoritative-reconciliation",
+              "ordering",
+              "payload-limit",
+              "telemetry"
+            ]
+          }
+        ],
+        "conformance": {
+          "fixtureVersion": "1.0.0",
+          "requiredSuites": [
+            "tenant-envelope",
+            "global-identity-envelope",
+            "cross-profile-rejection",
+            "authenticated-producer",
+            "publisher-confirm",
+            "exact-replay",
+            "changed-payload-conflict",
+            "poison-message",
+            "retry-expiry",
+            "dead-letter",
+            "authorized-replay",
+            "authoritative-reconciliation",
+            "ordering",
+            "payload-limit",
+            "telemetry"
+          ],
+          "crossLanguageResult": "required",
+          "bootstrapPublisherResult": "required-per-service-for-applicable-suites"
+        },
+        "wireRules": {
+          "canonicalization": "RFC-8785",
+          "digest": "sha256-of-canonical-data",
+          "authenticatedProducerBinding": "token-subject-client-audience-must-match-envelope-and-registration",
+          "envelopeMaximumBytes": 65536,
+          "maxTotalDeliveries": 5,
+          "initialDeliveryAttempt": 1,
+          "deterministicBackoffSecondsForAttempts2Through5": [
+            1,
+            2,
+            4,
+            8
+          ],
+          "backoffFormula": "min-2-power-attempt-minus-2-and-30-seconds-no-jitter",
+          "deadLetterRetentionDays": 7,
+          "authorizedReplayBatchMaximum": 100
+        },
+        "breakingChange": {
+          "protocol": "new-major-and-routing-identity",
+          "package": "independent-major-with-declared-protocol-range"
+        }
+      }
+    },
+    {
+      "fixtureId": "c23-platform-positive",
+      "boundaryIds": [
+        "C23"
+      ],
+      "contractElementId": "MessagingPlatformProfile",
+      "scenarioType": "valid",
+      "expectedOutcome": "pass",
+      "payload": {
+        "kind": "messaging-platform-profile",
+        "version": "1.0.0",
+        "delivery": {
+          "guarantee": "at-least-once",
+          "publisherConfirm": "required",
+          "acknowledgement": "after-participant-inbox-and-effect-commit",
+          "deliveryIdentity": "messageId",
+          "correlation": [
+            "correlationId",
+            "causationId",
+            "traceparent"
+          ],
+          "authenticatedProducerBinding": "required-before-publish-and-before-consume",
+          "canonicalPayloadDigest": "sha256-rfc8785-data",
+          "envelopeMaximumBytes": 65536
+        },
+        "policies": {
+          "retry": {
+            "maxTotalDeliveries": 5,
+            "attemptCounting": "initial-delivery-is-attempt-1",
+            "backoffSecondsForAttempts2Through5": [
+              1,
+              2,
+              4,
+              8
+            ],
+            "formula": "min-2-power-attempt-minus-2-and-30-seconds-no-jitter"
+          },
+          "deadLetter": {
+            "requiredAfterDeliveryFive": true,
+            "retentionDays": 7,
+            "expiredMessageDisposition": "retain-expiry-evidence-and-reconcile-authoritative-state"
+          },
+          "replay": {
+            "authority": "operator",
+            "auditRequired": true,
+            "maximumBatchMessages": 100,
+            "exactReplayReturnsDurablePriorResult": true,
+            "changedPayloadSameIdentity": "quarantine-conflict-no-business-effect"
+          },
+          "payloadLimit": "enforced-before-publish-and-after-receive",
+          "ordering": "no-global-order-claim",
+          "duplicateTransportDelivery": "expected"
+        },
+        "domainResponsibilities": {
+          "messageMeaning": "producer",
+          "schemaEvolution": "producer-and-contracts",
+          "transactionalOutboxInbox": "domain-unit",
+          "authorizationAndFencing": "domain-unit",
+          "atomicBusinessEffects": "domain-unit"
+        },
+        "libraryConstraints": {
+          "stateless": true,
+          "tenantAuthority": "none",
+          "directBusinessStorageAccess": "prohibited"
+        },
+        "acceptanceEvidence": {
+          "required": [
+            "exact-replay",
+            "changed-payload-conflict",
+            "poison-message-to-dlq",
+            "seven-day-expiry",
+            "replay-batch-limit",
+            "authoritative-state-reconciliation"
+          ]
+        }
+      }
+    },
+    {
+      "fixtureId": "c23-missing-publisher-confirm",
+      "boundaryIds": [
+        "C23"
+      ],
+      "contractElementId": "MessagingPlatformProfile",
+      "scenarioType": "invalid",
+      "expectedOutcome": "fail",
+      "expectedFailureCode": "SCHEMA_REQUIRED",
+      "expectedFailureRuleId": "BR2.4",
+      "payload": {
+        "kind": "messaging-platform-profile",
+        "version": "1.0.0",
+        "delivery": {
+          "guarantee": "at-least-once",
+          "acknowledgement": "after-participant-inbox-and-effect-commit",
+          "deliveryIdentity": "messageId",
+          "correlation": [
+            "correlationId",
+            "causationId",
+            "traceparent"
+          ],
+          "authenticatedProducerBinding": "required-before-publish-and-before-consume",
+          "canonicalPayloadDigest": "sha256-rfc8785-data",
+          "envelopeMaximumBytes": 65536
+        },
+        "policies": {
+          "retry": {
+            "maxTotalDeliveries": 5,
+            "attemptCounting": "initial-delivery-is-attempt-1",
+            "backoffSecondsForAttempts2Through5": [
+              1,
+              2,
+              4,
+              8
+            ],
+            "formula": "min-2-power-attempt-minus-2-and-30-seconds-no-jitter"
+          },
+          "deadLetter": {
+            "requiredAfterDeliveryFive": true,
+            "retentionDays": 7,
+            "expiredMessageDisposition": "retain-expiry-evidence-and-reconcile-authoritative-state"
+          },
+          "replay": {
+            "authority": "operator",
+            "auditRequired": true,
+            "maximumBatchMessages": 100,
+            "exactReplayReturnsDurablePriorResult": true,
+            "changedPayloadSameIdentity": "quarantine-conflict-no-business-effect"
+          },
+          "payloadLimit": "enforced-before-publish-and-after-receive",
+          "ordering": "no-global-order-claim",
+          "duplicateTransportDelivery": "expected"
+        },
+        "domainResponsibilities": {
+          "messageMeaning": "producer",
+          "schemaEvolution": "producer-and-contracts",
+          "transactionalOutboxInbox": "domain-unit",
+          "authorizationAndFencing": "domain-unit",
+          "atomicBusinessEffects": "domain-unit"
+        },
+        "libraryConstraints": {
+          "stateless": true,
+          "tenantAuthority": "none",
+          "directBusinessStorageAccess": "prohibited"
+        },
+        "acceptanceEvidence": {
+          "required": [
+            "exact-replay",
+            "changed-payload-conflict",
+            "poison-message-to-dlq",
+            "seven-day-expiry",
+            "replay-batch-limit",
+            "authoritative-state-reconciliation"
+          ]
+        }
+      }
+    }
+  ]
+}

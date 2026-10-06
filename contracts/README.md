@@ -26,6 +26,14 @@ candidates with `node tools/contracts/scripts/build-messaging-fixtures.mjs`.
 The fixture oracle checks the exact schema revision, stable finding code, rule,
 and element; it does not assert that a messaging runtime has passed conformance.
 
+`samples/messaging-profiles/` is a separate C01/C22/C23 **candidate** built with
+`node tools/contracts/scripts/create-messaging-sample.mjs`. Its six canonical
+documents bind to one Git source revision, and the pinned isolated validators
+check the AsyncAPI route, five schemas and eight exact fixtures. Its generation
+profile explicitly records that consumer generation is unverified. The package
+does not claim C02-C21/C24-C27 coverage, runtime messaging conformance, or
+release readiness.
+
 `samples/walking-skeleton/` is a **thin candidate package**, not a release
 artifact. It covers C01 and C18 - two boundaries of twenty-seven. The governance CLI checks its path inventory,
 digests, budgets, reference preflight, protected-content rules, the declared

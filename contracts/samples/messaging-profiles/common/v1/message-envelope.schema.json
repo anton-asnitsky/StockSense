@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.stocksense.local/common/v1/message-envelope.schema.json",
+  "title": "MessageEnvelope",
+  "type": "object",
+  "required": [
+    "messageId", "messageType", "schemaVersion", "occurredAt", "retailerId",
+    "actor", "correlationId", "causationId", "idempotencyKey",
+    "placementGeneration", "producer", "payloadDigest", "data"
+  ],
+  "properties": {
+    "messageId": { "type": "string", "format": "uuid" },
+    "messageType": { "type": "string", "pattern": "^[a-z][a-z0-9.]+$" },
+    "schemaVersion": { "type": "string", "pattern": "^[1-9][0-9]*\\.[0-9]+\\.[0-9]+$" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "retailerId": { "type": "string", "format": "uuid" },
+    "actor": {
+      "type": "object",
+      "required": ["type", "subjectId"],
+      "properties": {
+        "type": { "enum": ["user", "service", "scheduler"] },
+        "subjectId": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "correlationId": { "type": "string", "format": "uuid" },
+    "causationId": { "type": "string", "format": "uuid" },
+    "idempotencyKey": { "type": "string", "minLength": 16, "maxLength": 128 },
+    "placementGeneration": { "type": "integer", "minimum": 1 },
+    "producer": {
+      "type": "object",
+      "required": ["serviceId", "subjectId", "audience", "protocolVersion"],
+      "properties": {
+        "serviceId": { "type": "string", "pattern": "^[a-z][a-z0-9-]{2,63}$" },
+        "subjectId": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "audience": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "protocolVersion": { "type": "string", "pattern": "^[1-9][0-9]*\\.[0-9]+\\.[0-9]+$" }
+      },
+      "additionalProperties": false
+    },
+    "payloadDigest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "SHA-256 of the RFC 8785 canonical JSON representation of data."
+    },
+    "traceparent": { "type": "string" },
+    "data": { "type": "object" }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,163 @@
+{
+  "packageVersion": "1.0.0",
+  "manifestStatus": "candidate",
+  "sourceRevision": "6ad2c038b9ce665892a634865ac22069fef7dc29",
+  "openapi": [],
+  "asyncapi": [
+    {
+      "producer": "U14 Messaging Platform",
+      "boundaryIds": [
+        "C23"
+      ],
+      "document": "messaging-platform/v1/transport-conformance.asyncapi.yaml",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:e903fe65d0e577628a9a89554b7aab7fcbfc3a739ff4e49b99cf7d6c5298b43f"
+    }
+  ],
+  "schemas": [
+    {
+      "owner": "U1 Contracts",
+      "boundaryIds": [
+        "C01"
+      ],
+      "document": "common/v1/contract-package.shared-schema.yaml",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:b1c916dbee4f430a283c2ff6a7fd3479f8bac4f14725e9a90dac4804a9a0e968"
+    },
+    {
+      "owner": "U1 Contracts",
+      "boundaryIds": [
+        "C01"
+      ],
+      "document": "common/v1/global-identity-audit-envelope.schema.json",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:422b7cf345d91f1ce2a438e4bc0f5b8160cf2796a8d0cd121d09be9c581e17d8"
+    },
+    {
+      "owner": "U1 Contracts",
+      "boundaryIds": [
+        "C01"
+      ],
+      "document": "common/v1/message-envelope.schema.json",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:817cadf7573bf718e6ff9d42f67162ce940c4a9a4272d139765a940b88eca9d0"
+    },
+    {
+      "owner": "U14 Messaging Platform",
+      "boundaryIds": [
+        "C23"
+      ],
+      "document": "messaging-platform/v1/platform-profile.shared-schema.yaml",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:0485792141132e224e06d7677a8537845f67c321929e62aaca275a1e3fdb9754"
+    },
+    {
+      "owner": "U14 Messaging Platform",
+      "boundaryIds": [
+        "C22"
+      ],
+      "document": "messaging-platform/v1/protocol-compatibility.shared-schema.yaml",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:2f0efbdaf2f374b61085f762bd0ddb24927ca95a068fa37c241ed2930fa45572"
+    }
+  ],
+  "governedArtifacts": [
+    {
+      "kind": "contract-package-policy",
+      "owner": "U1 Contracts",
+      "boundaryIds": [
+        "C01"
+      ],
+      "document": "governance/contract-package-policy.json",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:1ff9113a3b3bc353827b5a134b00aca580099c381a3480570111e02d36e0efb7",
+      "sourceRevision": "6ad2c038b9ce665892a634865ac22069fef7dc29"
+    },
+    {
+      "kind": "example-fixture",
+      "owner": "U1 Contracts",
+      "boundaryIds": [
+        "C01",
+        "C22",
+        "C23"
+      ],
+      "document": "governance/example-fixture.json",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:5d01fb49d11213bc8d8208bb7612fa62a957204712c32c8381fbc5343eb4a0fb",
+      "sourceRevision": "6ad2c038b9ce665892a634865ac22069fef7dc29"
+    },
+    {
+      "kind": "generation-profile",
+      "owner": "U1 Contracts",
+      "boundaryIds": [
+        "C01",
+        "C22",
+        "C23"
+      ],
+      "document": "governance/generation-profile.json",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:51cad0a3b12fe49055f2edcb58588b794a251f30aef9c25637fcfa38a8ab5e3e",
+      "sourceRevision": "6ad2c038b9ce665892a634865ac22069fef7dc29"
+    },
+    {
+      "kind": "protocol-compatibility-manifest",
+      "owner": "U14 Messaging Platform",
+      "boundaryIds": [
+        "C22"
+      ],
+      "document": "governance/protocol-compatibility.profile.yaml",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:4f5c5005637563214735918462649f7a596632c41f099d805c6c2e5d2b75b22e",
+      "sourceRevision": "6ad2c038b9ce665892a634865ac22069fef7dc29"
+    },
+    {
+      "kind": "messaging-conformance-profile",
+      "owner": "U14 Messaging Platform",
+      "boundaryIds": [
+        "C23"
+      ],
+      "document": "governance/platform.profile.yaml",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:d3a6b808bd92f495ead2d9abcf49787723e84620e1c359159bb220b53227377b",
+      "sourceRevision": "6ad2c038b9ce665892a634865ac22069fef7dc29"
+    }
+  ],
+  "boundaryCoverage": [
+    {
+      "boundaryId": "C01",
+      "canonicalDocuments": [
+        "common/v1/contract-package.shared-schema.yaml",
+        "common/v1/global-identity-audit-envelope.schema.json",
+        "common/v1/message-envelope.schema.json"
+      ],
+      "sidecars": [
+        "governance/contract-package-policy.json",
+        "governance/example-fixture.json",
+        "governance/generation-profile.json"
+      ]
+    },
+    {
+      "boundaryId": "C22",
+      "canonicalDocuments": [
+        "messaging-platform/v1/protocol-compatibility.shared-schema.yaml"
+      ],
+      "sidecars": [
+        "governance/example-fixture.json",
+        "governance/generation-profile.json",
+        "governance/protocol-compatibility.profile.yaml"
+      ]
+    },
+    {
+      "boundaryId": "C23",
+      "canonicalDocuments": [
+        "messaging-platform/v1/platform-profile.shared-schema.yaml",
+        "messaging-platform/v1/transport-conformance.asyncapi.yaml"
+      ],
+      "sidecars": [
+        "governance/example-fixture.json",
+        "governance/generation-profile.json",
+        "governance/platform.profile.yaml"
+      ]
+    }
+  ]
+}
