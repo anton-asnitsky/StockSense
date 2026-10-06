@@ -1,0 +1,71 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://contracts.stocksense.local/identity-access/v1/bff-integration.schema.json
+title: BffIdentityIntegrationProfile
+description: U3-owned C16 protocol boundary with U11-owned browser session controls; this profile does not implement either service.
+type: object
+required: [kind, version, provider, consumer, browserOidcClient, flow, pkce, oidcResponseValidation, callback, tokens, session, csrf, logout, delegatedRecovery]
+properties:
+  kind: { const: oidc-bff-integration-profile }
+  version: { const: 1.0.0 }
+  provider: { const: identity-access }
+  consumer: { const: web-bff }
+  browserOidcClient: { const: web-bff-only }
+  flow: { const: authorization_code }
+  pkce: { const: S256 }
+  oidcResponseValidation:
+    type: object
+    required: [state, nonce, code, codeReplay]
+    properties:
+      state: { const: required }
+      nonce: { const: required }
+      code: { const: one-time }
+      codeReplay: { const: reject }
+    additionalProperties: false
+  callback:
+    type: object
+    required: [registeredRedirectPath, browserContinuationPath, continuation]
+    properties:
+      registeredRedirectPath: { const: /signin-oidc }
+      browserContinuationPath: { const: /auth/callback }
+      continuation: { const: post-middleware-validated-only }
+    additionalProperties: false
+  tokens:
+    type: object
+    required: [storage, browserExposure]
+    properties:
+      storage: { const: server-side }
+      browserExposure: { const: prohibited }
+    additionalProperties: false
+  session:
+    type: object
+    required: [cookieName, secure, httpOnly, rotation, invalidatedCookieReplay]
+    properties:
+      cookieName: { const: __Host-stocksense-session }
+      secure: { const: true }
+      httpOnly: { const: true }
+      rotation: { const: required }
+      invalidatedCookieReplay: { const: reject }
+    additionalProperties: false
+  csrf:
+    type: object
+    required: [mutations]
+    properties:
+      mutations: { const: validate }
+    additionalProperties: false
+  logout:
+    type: object
+    required: [bffSession]
+    properties:
+      bffSession: { const: invalidate }
+    additionalProperties: false
+  delegatedRecovery:
+    type: object
+    required: [audience, principal, tokenSource, clientCredentials, callerSuppliedSubjectHeader]
+    properties:
+      audience: { const: stocksense-recovery }
+      principal: { const: human-operator }
+      tokenSource: { const: server-held-delegated-user-access-token }
+      clientCredentials: { const: prohibited }
+      callerSuppliedSubjectHeader: { const: prohibited }
+    additionalProperties: false
+additionalProperties: false

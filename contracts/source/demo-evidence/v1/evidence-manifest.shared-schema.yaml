@@ -1,0 +1,159 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://contracts.stocksense.local/demo/v1/evidence-manifest.schema.json
+title: DemoEvidenceManifest
+type: object
+required: [schemaVersion, manifestId, revision, requirementsVersion, status, publishedAt, scenario, environment, commandProfile, resourceProfiles, recoveryDrill, startedAt, completedAt, checks, artifacts, limitations]
+properties:
+  schemaVersion: { const: 1.0.0 }
+  manifestId: { type: string, format: uuid }
+  revision: { type: string, pattern: '^[0-9a-f]{40}$', description: Immutable Git commit tested by this manifest. }
+  requirementsVersion: { type: string, minLength: 1 }
+  status: { enum: [complete, incomplete] }
+  publishedAt: { type: string, format: date-time }
+  scenario:
+    type: object
+    required: [seed, retailers, storesPerRetailer, productsPerRetailer, historyMonths]
+    properties:
+      seed: { type: integer }
+      retailers: { const: 3 }
+      storesPerRetailer: { const: 1 }
+      productsPerRetailer: { const: 100 }
+      historyMonths: { const: 18 }
+  environment:
+    type: object
+    required: [profileId, kubernetesVersion, cpuLimit, memoryLimitGiB, cpuOnly, manifestDigest]
+    properties:
+      profileId: { type: string }
+      kubernetesVersion: { type: string }
+      cpuLimit: { maximum: 3 }
+      memoryLimitGiB: { maximum: 16 }
+      cpuOnly: { const: true }
+      optionalGpuPathMeasured: { type: boolean }
+      manifestDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+    additionalProperties: false
+  commandProfile:
+    type: object
+    required: [profileId, profileVersion, profileDigest, command, argumentsDigest, containerImageDigest]
+    properties:
+      profileId: { type: string, minLength: 1 }
+      profileVersion: { const: 1.0.0 }
+      profileDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+      command: { enum: [validate, deployLocal, seed, smoke, recover, collectEvidence] }
+      argumentsDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+      containerImageDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+    additionalProperties: false
+  resourceProfiles:
+    type: object
+    required: [modelJob, embeddingBuild]
+    properties:
+      modelJob: { allOf: [{ $ref: '#/$defs/measuredWorkProfile' }, { properties: { jobKind: { const: model-job } } }] }
+      embeddingBuild: { allOf: [{ $ref: '#/$defs/measuredWorkProfile' }, { properties: { jobKind: { const: embedding-build } } }] }
+    additionalProperties: false
+  recoveryDrill:
+    type: object
+    required: [runId, restoreExecutionId, sourceRecoveryCutDigest, measuredDurationSeconds, actualDataLossSeconds, backupAgeDays, measuredRetainedGiB, peakPersistentDiskGiB, objectiveTargets, objectiveAssessment]
+    properties:
+      runId: { type: [string, 'null'], format: uuid }
+      restoreExecutionId: { type: [string, 'null'], format: uuid }
+      sourceRecoveryCutDigest: { type: [string, 'null'], pattern: '^sha256:[0-9a-f]{64}$' }
+      measuredDurationSeconds: { type: [number, 'null'], minimum: 0 }
+      actualDataLossSeconds: { type: [number, 'null'], minimum: 0 }
+      backupAgeDays: { type: [number, 'null'], minimum: 0 }
+      measuredRetainedGiB: { type: [number, 'null'], minimum: 0 }
+      peakPersistentDiskGiB: { type: [number, 'null'], minimum: 0 }
+      objectiveTargets:
+        type: object
+        required: [rpoSeconds, rtoSeconds, backupExpiryDays, totalDiskGiB]
+        properties:
+          rpoSeconds: { type: [integer, 'null'], minimum: 1 }
+          rtoSeconds: { type: [integer, 'null'], minimum: 1 }
+          backupExpiryDays: { type: [integer, 'null'], minimum: 1 }
+          totalDiskGiB: { type: [number, 'null'], exclusiveMinimum: 0 }
+        additionalProperties: false
+      objectiveAssessment: { enum: [passed, failed, not-run-missing-objectives, blocked-prerequisite] }
+    if:
+      properties:
+        objectiveTargets:
+          anyOf:
+            - { properties: { rpoSeconds: { const: null } }, required: [rpoSeconds] }
+            - { properties: { rtoSeconds: { const: null } }, required: [rtoSeconds] }
+            - { properties: { backupExpiryDays: { const: null } }, required: [backupExpiryDays] }
+            - { properties: { totalDiskGiB: { const: null } }, required: [totalDiskGiB] }
+      required: [objectiveTargets]
+    then: { properties: { objectiveAssessment: { enum: [not-run-missing-objectives, blocked-prerequisite] } } }
+    else: { properties: { objectiveAssessment: { enum: [passed, failed, blocked-prerequisite] } } }
+    additionalProperties: false
+  startedAt: { type: string, format: date-time }
+  completedAt: { type: string, format: date-time }
+  checks:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      required: [checkId, requirementIds, command, commandProfileVersion, outcome, reason, expectedResult, actualResult, traceIds, startedAt, completedAt, durationMs, artifactDigests, limitations]
+      properties:
+        checkId: { type: string, pattern: '^[A-Z0-9][A-Z0-9._-]{2,79}$' }
+        requirementIds: { type: array, minItems: 1, uniqueItems: true, items: { type: string } }
+        command: { type: string }
+        commandProfileVersion: { const: 1.0.0 }
+        outcome: { enum: [passed, failed, limited, rejected, unavailable, not-run] }
+        reason: { type: string, minLength: 1 }
+        expectedResult: {}
+        actualResult: {}
+        traceIds: { type: array, minItems: 1, uniqueItems: true, items: { type: string, pattern: '^[0-9a-f]{32}$' } }
+        startedAt: { type: string, format: date-time }
+        completedAt: { type: string, format: date-time }
+        durationMs: { type: integer, minimum: 0 }
+        artifactDigests: { type: array, uniqueItems: true, items: { type: string, pattern: '^sha256:[0-9a-f]{64}$' } }
+        limitations: { type: array, items: { type: string, minLength: 1 } }
+      additionalProperties: false
+  artifacts:
+    type: array
+    items:
+      type: object
+      required: [artifactId, path, mediaType, sizeBytes, sha256]
+      properties:
+        artifactId: { type: string }
+        path: { type: string }
+        mediaType: { type: string }
+        sizeBytes: { type: integer, minimum: 0 }
+        sha256: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+      additionalProperties: false
+  limitations: { type: array, items: { type: string, minLength: 1 } }
+$defs:
+  measuredWorkProfile:
+    type: object
+    required: [profileId, profileRevision, jobKind, imageDigest, inputDigest, baselineDigest, hostHardwareDigest, kubernetesVersion, vmOverheadGiB, warmupSeconds, sampleIntervalMs, sampleCount, clusterCpuSustained, clusterCpuPeak, clusterMemorySustainedGiB, clusterMemoryPeakGiB, artifactBytes, processRssPeakGiB, podMemoryLimitGiB, cpuThrottledSeconds, oomKilled, overlappedHeavyJobCount, durationSeconds, measurementArtifactId, outcome]
+    properties:
+      profileId: { type: string, minLength: 1 }
+      profileRevision: { type: string, minLength: 1 }
+      jobKind: { enum: [model-job, embedding-build] }
+      imageDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+      inputDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+      baselineDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+      hostHardwareDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+      kubernetesVersion: { type: string, minLength: 1 }
+      vmOverheadGiB: { type: [number, 'null'], minimum: 0 }
+      warmupSeconds: { type: [number, 'null'], minimum: 0 }
+      sampleIntervalMs: { type: [integer, 'null'], minimum: 1 }
+      sampleCount: { type: [integer, 'null'], minimum: 1 }
+      clusterCpuSustained: { type: [number, 'null'], minimum: 0 }
+      clusterCpuPeak: { type: [number, 'null'], minimum: 0 }
+      clusterMemorySustainedGiB: { type: [number, 'null'], minimum: 0 }
+      clusterMemoryPeakGiB: { type: [number, 'null'], minimum: 0 }
+      artifactBytes: { type: [integer, 'null'], minimum: 0 }
+      processRssPeakGiB: { type: [number, 'null'], minimum: 0 }
+      podMemoryLimitGiB: { type: [number, 'null'], minimum: 0 }
+      cpuThrottledSeconds: { type: [number, 'null'], minimum: 0 }
+      oomKilled: { type: [boolean, 'null'] }
+      overlappedHeavyJobCount: { type: [integer, 'null'], minimum: 0 }
+      durationSeconds: { type: [number, 'null'], minimum: 0 }
+      measurementArtifactId: { type: [string, 'null'], minLength: 1 }
+      outcome: { enum: [measured, unavailable, not-run] }
+    if: { properties: { outcome: { const: measured } }, required: [outcome] }
+    then:
+      properties: { vmOverheadGiB: { type: number }, warmupSeconds: { type: number }, sampleIntervalMs: { type: integer }, sampleCount: { type: integer }, clusterCpuSustained: { type: number }, clusterCpuPeak: { type: number }, clusterMemorySustainedGiB: { type: number }, clusterMemoryPeakGiB: { type: number }, artifactBytes: { type: integer }, processRssPeakGiB: { type: number }, podMemoryLimitGiB: { type: number }, cpuThrottledSeconds: { type: number }, oomKilled: { type: boolean }, overlappedHeavyJobCount: { type: integer }, durationSeconds: { type: number }, measurementArtifactId: { type: string } }
+    else:
+      properties: { vmOverheadGiB: { const: null }, warmupSeconds: { const: null }, sampleIntervalMs: { const: null }, sampleCount: { const: null }, clusterCpuSustained: { const: null }, clusterCpuPeak: { const: null }, clusterMemorySustainedGiB: { const: null }, clusterMemoryPeakGiB: { const: null }, artifactBytes: { const: null }, processRssPeakGiB: { const: null }, podMemoryLimitGiB: { const: null }, cpuThrottledSeconds: { const: null }, oomKilled: { const: null }, overlappedHeavyJobCount: { const: null }, durationSeconds: { const: null }, measurementArtifactId: { const: null } }
+    additionalProperties: false
+additionalProperties: false

@@ -1,0 +1,103 @@
+asyncapi: 3.0.0
+info:
+  title: StockSense Authoritative Audit Events
+  version: 1.0.0
+defaultContentType: application/json
+servers:
+  localRabbitMq:
+    host: rabbitmq.stocksense.svc.cluster.local:5672
+    protocol: amqp
+channels:
+  auditEvents:
+    address: stocksense.audit.v1
+    messages:
+      auditEvent:
+        name: AuditEventV1
+        title: Immutable authoritative business audit event
+        payload:
+          schemaFormat: 'application/schema+json;version=draft-2020-12'
+          schema:
+            allOf:
+              - $ref: 'https://contracts.stocksense.local/common/v1/message-envelope.schema.json'
+              - type: object
+                properties:
+                  messageType:
+                    enum:
+                      - identity.audit.recorded
+                      - tenant.audit.recorded
+                      - inventory.audit.recorded
+                      - demand.audit.recorded
+                      - supplier.audit.recorded
+                      - model.audit.recorded
+                      - forecast.audit.recorded
+                      - replenishment.audit.recorded
+                      - purchasing.audit.recorded
+                      - assistant.audit.recorded
+                      - recovery.audit.recorded
+                  schemaVersion: { const: 1.0.0 }
+                  data:
+                    type: object
+                    required: [action, resourceType, resourceId, outcome]
+                    properties:
+                      action: { type: string }
+                      resourceType: { type: string }
+                      resourceId: { type: string }
+                      outcome: { enum: [accepted, denied, failed] }
+                      beforeVersion: { type: [string, 'null'] }
+                      afterVersion: { type: [string, 'null'] }
+  globalIdentityAuditEvents:
+    address: stocksense.identity.audit.global.v1
+    messages:
+      globalIdentityAuditEvent:
+        name: GlobalIdentityAuditEventV1
+        title: Immutable retailerless identity-security audit event
+        payload:
+          schemaFormat: 'application/schema+json;version=draft-2020-12'
+          schema:
+            allOf:
+              - $ref: 'https://contracts.stocksense.local/common/v1/global-identity-audit-envelope.schema.json'
+              - type: object
+                properties:
+                  messageType: { const: identity.global.audit.recorded }
+                  schemaVersion: { const: 1.0.0 }
+                  data:
+                    type: object
+                    required: [action, resourceType, resourceId, outcome, reasonCode]
+                    properties:
+                      action: { type: string, minLength: 1 }
+                      resourceType: { type: string, minLength: 1 }
+                      resourceId: { type: string, minLength: 1 }
+                      outcome: { enum: [accepted, denied, failed] }
+                      reasonCode: { type: string, minLength: 1 }
+                      beforeVersion: { type: [string, 'null'] }
+                      afterVersion: { type: [string, 'null'] }
+                    additionalProperties: false
+operations:
+  publishAuditEvent:
+    action: send
+    channel: { $ref: '#/channels/auditEvents' }
+  projectAuditEvent:
+    action: receive
+    channel: { $ref: '#/channels/auditEvents' }
+  publishGlobalIdentityAuditEvent:
+    action: send
+    channel: { $ref: '#/channels/globalIdentityAuditEvents' }
+  projectGlobalIdentityAuditEvent:
+    action: receive
+    channel: { $ref: '#/channels/globalIdentityAuditEvents' }
+x-stocksense-delivery:
+  guarantee: at-least-once
+  publisherConfirm: required
+  acknowledgeAfter: inbox-and-projection-checkpoint-commit
+  maxTotalDeliveries: 5
+  attemptCounting: initial-delivery-is-attempt-1
+  backoffSecondsForAttempts2Through5: [1, 2, 4, 8]
+  backoffFormula: min-2-power-attempt-minus-2-and-30-seconds-no-jitter
+  deadLetterAddresses:
+    tenant: stocksense.audit.v1.dlq
+    globalIdentity: stocksense.identity.audit.global.v1.dlq
+  deadLetterRetentionDays: 7
+  replayAuthority: operator
+  replayBatchMaximum: 100
+  replayIdentity: [messageId, idempotencyKey, payloadDigest]
+  envelopeMaximumBytes: 65536

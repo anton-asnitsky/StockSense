@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import YAML from 'yaml';
 import { ALL_BOUNDARIES, BOUNDARY_SIDECARS, CANONICAL_KINDS, FIXED_PATHS, ContractError, digest } from './package-loader.mjs';
-import { C07_PORT_PATH, DIALECTS, SUPPLIER_HEAD_PATH, assertFixtureOracle, createSchemaValidator } from './validators.mjs';
+import { C07_PORT_PATH, C08_PORT_PATH, DIALECTS, SUPPLIER_HEAD_PATH, assertFixtureOracle, createSchemaValidator } from './validators.mjs';
 
 const fail = (code, rule, message) => { throw new ContractError(code, rule, message); };
 const object = value => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -120,11 +120,16 @@ export async function runFixtureOracle(root, loaded) {
     const typedPort = entry.document === C07_PORT_PATH ||
       [DIALECTS.typedPort, 'urn:stocksense:dialect:typed-port:1'].includes(entry.schemaDialect ?? source.dialect) ||
       source.kind === 'typed-port';
+    const inProcessPort = entry.document === C08_PORT_PATH ||
+      (entry.schemaDialect ?? source.dialect) === DIALECTS.inProcessPort ||
+      source.kind === 'in-process-port';
     const governedRecord = entry.document === SUPPLIER_HEAD_PATH || source.kind === 'vault-kv-authority-head' ||
       [DIALECTS.governedRecord, 'urn:stocksense:dialect:governed-record:1'].includes(entry.schemaDialect ?? source.dialect) ||
       source.kind === 'governed-record';
-    if (typedPort || governedRecord) {
-      if (source.$schema || (typedPort && governedRecord)) fail('DIALECT_CONFLICT', 'BR1.3', 'Schema dialect markers conflict');
+    if (typedPort || inProcessPort || governedRecord) {
+      if (source.$schema || Number(typedPort) + Number(inProcessPort) + Number(governedRecord) !== 1) {
+        fail('DIALECT_CONFLICT', 'BR1.3', 'Schema dialect markers conflict');
+      }
       continue;
     }
     if (source.$schema !== DIALECTS.schema || (entry.schemaDialect && entry.schemaDialect !== DIALECTS.schema) || source.dialect) {

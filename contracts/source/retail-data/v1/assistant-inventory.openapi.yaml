@@ -1,0 +1,45 @@
+openapi: 3.1.2
+info:
+  title: Retail Data Assistant Tools API
+  version: 1.0.0
+paths:
+  /api/v1/retailers/{retailerId}/assistant-tools/inventory-query:
+    parameters:
+      - in: path
+        name: retailerId
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: queryInventoryForAssistant
+      responses:
+        "200":
+          description: Bounded inventory facts with source versions and evidence identifiers
+        "403":
+          description: Current user lacks retailer or resource authority
+  /api/v1/retailers/{retailerId}/assistant-tools/demand-query:
+    parameters:
+      - in: path
+        name: retailerId
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: queryDemandForAssistant
+      responses:
+        "200":
+          description: Bounded demand facts and provenance through an allowed cutoff
+        "422":
+          description: Requested scope, time range or aggregation is unsupported
+servers:
+  - url: /
+security:
+  - serviceToken: []
+components:
+  securitySchemes:
+    serviceToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

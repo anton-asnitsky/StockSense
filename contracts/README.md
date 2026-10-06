@@ -5,6 +5,14 @@ identity-audit envelope schemas. These are canonical source documents for the
 contract package. Their `additionalProperties: false` boundaries keep tenant
 and global messages separate.
 
+`source/` also contains draft canonical documents for every required C01-C27
+artifact kind. The C08 inventory port uses a closed in-process dialect; C16 and
+C20 identity profiles and C22/C23 messaging profiles use JSON Schema 2020-12.
+The C23 AsyncAPI source names distinct tenant and global identity routes.
+`profiles/messaging-platform/` holds governed C22/C23 profile **candidates**
+that validate against those schemas. These drafts are not yet bound into a
+complete, revision-stamped package with fixtures and release evidence.
+
 `samples/walking-skeleton/` is a **thin candidate package**, not a release
 artifact. It covers C01 and C18 - two boundaries of twenty-seven. The governance CLI checks its path inventory,
 digests, budgets, reference preflight, protected-content rules, the declared

@@ -6,9 +6,10 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import YAML from 'yaml';
-import { ALL_BOUNDARIES, CANONICAL_KINDS, digest } from '../../src/package-loader.mjs';
-import { LIMITS } from '../../src/preflight.mjs';
+import { ALL_BOUNDARIES, CANONICAL_KINDS, FIXED_PATHS, digest } from '../../src/package-loader.mjs';
+import { LIMITS, inspectContent } from '../../src/preflight.mjs';
 import { preflightCanonicalReferences } from '../../src/reference-preflight.mjs';
+import { DIALECTS, detectDialect } from '../../src/validators.mjs';
 
 const repository = resolve(import.meta.dirname, '../../../..');
 const sourceRoot = join(repository, 'contracts/source');
@@ -18,20 +19,33 @@ const c18 = 'web-bff/v1/browser-api.openapi.yaml';
 // Update this map as real canonical sources arrive; the file-set assertion below
 // prevents a new source from silently escaping the measured package graph.
 const sourcesByBoundary = Object.freeze({
-  C01: ['common/v1/message-envelope.schema.json', 'common/v1/global-identity-audit-envelope.schema.json'],
+  C01: ['common/v1/contract-package.shared-schema.yaml', 'common/v1/message-envelope.schema.json', 'common/v1/global-identity-audit-envelope.schema.json'],
   C02: ['identity-access/v1/identity-metadata.openapi.yaml', 'identity-access/v1/platform-operator-grant.schema.json'],
   C03: ['retail-data/v1/supplier-reference.openapi.yaml', 'retail-data/v1/retail-reference-changed.asyncapi.yaml'],
   C04: ['retail-data/v1/dataset-exports.openapi.yaml'],
   C05: ['model-lifecycle/v1/supplier-policy-evaluations.openapi.yaml', 'common/v1/supplier-authority-head.shared-schema.yaml'],
   C06: ['retail-data/v1/forecast-inputs.openapi.yaml'],
-  C07: ['model-lifecycle/v1/finalize-heavy-work.shared-schema.yaml', 'supplier-knowledge/v1/embedding-build-quiesced.asyncapi.yaml'],
-  C08: [],
-  C09: ['common/v1/supplier-authority-head.shared-schema.yaml'],
-  C10: [], C11: [], C12: [], C13: [], C14: [],
-  C15: ['common/v1/global-identity-audit-envelope.schema.json'],
-  C16: [], C17: [],
+  C07: ['model-lifecycle/v1/heavy-work.openapi.yaml', 'model-lifecycle/v1/finalize-heavy-work.shared-schema.yaml', 'supplier-knowledge/v1/embedding-build-quiesced.asyncapi.yaml'],
+  C08: ['retail-data/v1/inventory-operations.shared-schema.yaml'],
+  C09: ['common/v1/supplier-authority-head.shared-schema.yaml', 'supplier-knowledge/v1/accepted-terms.openapi.yaml'],
+  C10: ['forecasting/v1/planning-forecasts.openapi.yaml'],
+  C11: ['retail-data/v1/assistant-inventory.openapi.yaml'],
+  C12: ['supplier-knowledge/v1/assistant-retrieval.openapi.yaml'],
+  C13: ['forecasting/v1/assistant-forecasts.openapi.yaml'],
+  C14: ['planning-purchasing/v1/assistant-purchasing.openapi.yaml'],
+  C15: ['common/v1/global-identity-audit-envelope.schema.json', 'audit-evidence/v1/authoritative-audit.asyncapi.yaml'],
+  C16: ['web-bff/v1/identity-session.openapi.yaml', 'identity-access/v1/bff-integration.shared-schema.yaml'],
+  C17: ['web-bff/v1/provider-registry.shared-schema.yaml', 'identity-access/v1/global-audit-read.openapi.yaml'],
   C18: [c18],
-  C19: [], C20: [], C21: [], C22: [], C23: [], C24: [], C25: [], C26: [], C27: []
+  C19: ['demo-evidence/v1/evidence-manifest.shared-schema.yaml'],
+  C20: ['identity-access/v1/google-federation.shared-schema.yaml'],
+  C21: ['assistant/v1/generation-port.shared-schema.yaml', 'supplier-knowledge/v1/embedding-port.shared-schema.yaml'],
+  C22: ['messaging-platform/v1/protocol-compatibility.shared-schema.yaml'],
+  C23: ['messaging-platform/v1/platform-profile.shared-schema.yaml', 'messaging-platform/v1/transport-conformance.asyncapi.yaml'],
+  C24: ['recovery-coordination/v1/bootstrap-participant.openapi.yaml'],
+  C25: ['recovery-coordination/v1/participant-protocol.asyncapi.yaml'],
+  C26: ['recovery-coordination/v1/control-status.openapi.yaml'],
+  C27: ['recovery-coordination/v1/recovery-audit.asyncapi.yaml']
 });
 
 async function sourceFiles(root, prefix = '') {
@@ -74,8 +88,33 @@ test('C01-C27 inventory maps every present canonical source and exposes missing 
   const gaps = ALL_BOUNDARIES.filter(id => requiredKinds[id].some(kind =>
     !sourcesByBoundary[id].some(path => kindOf(path) === kind)));
   t.diagnostic(`present=${actual.length}; incomplete=${gaps.join(',')}; required kinds=${JSON.stringify(requiredKinds)}`);
-  assert.ok(gaps.includes('C08') && gaps.includes('C27'), 'absent boundaries must remain explicit gaps');
+  assert.deepEqual(gaps, [], 'every required canonical kind must have a real source');
   assert.deepEqual(requiredKinds.C18, ['openapi']);
+});
+
+test('every present source selects its declared dialect without profile fallback', async () => {
+  const policy = { requiredCanonicalPaths: FIXED_PATHS };
+  for (const path of await sourceFiles(sourceRoot)) {
+    const boundaryIds = ALL_BOUNDARIES.filter(id => sourcesByBoundary[id].includes(path));
+    const artifactKind = kindOf(path);
+    const { dialect } = detectDialect({ document: path, artifactKind, boundaryIds },
+      await readFile(join(sourceRoot, path)), policy);
+    if (artifactKind === 'openapi') assert.equal(dialect, DIALECTS.openapi, path);
+    else if (artifactKind === 'asyncapi') assert.equal(dialect, DIALECTS.asyncapi, path);
+    else if (path.endsWith('/finalize-heavy-work.shared-schema.yaml')) assert.equal(dialect, DIALECTS.typedPort, path);
+    else if (path.endsWith('/supplier-authority-head.shared-schema.yaml')) assert.equal(dialect, DIALECTS.governedRecord, path);
+    else if (path.endsWith('/inventory-operations.shared-schema.yaml')) assert.equal(dialect, DIALECTS.inProcessPort, path);
+    else assert.equal(dialect, DIALECTS.schema, path);
+  }
+});
+
+test('draft canonical sources and governed profile candidates pass the protected-content gate', async () => {
+  for (const root of [sourceRoot, join(repository, 'contracts/profiles')]) {
+    for (const path of await sourceFiles(root)) {
+      const bytes = await readFile(join(root, path));
+      assert.doesNotThrow(() => inspectContent(path, bytes), path);
+    }
+  }
 });
 
 test('actual present sources stay within the package-wide 1024 reference cap', async t => {
@@ -168,11 +207,8 @@ test('pinned C18 validator reports elapsed time and its own peak RSS below retai
 test('full C01-C27 catalogue resource acceptance awaits real required canonical kinds', async t => {
   const missing = ALL_BOUNDARIES.filter(id => Object.entries(CANONICAL_KINDS).some(([kind, ids]) =>
     ids.split(' ').includes(id) && !sourcesByBoundary[id].some(path => kindOf(path) === kind)));
-  if (missing.length) {
-    t.todo(`real canonical kinds absent for ${missing.join(',')}; no full-catalogue time/RSS claim`);
-    return;
-  }
-  // Reaching this point requires an inventory update and a package-level
-  // supervised validator run. Fail closed until that evidence is implemented.
-  assert.fail('Complete inventory requires a full-catalogue validator and process-RSS measurement');
+  assert.deepEqual(missing, [], 'canonical kind inventory must stay complete');
+  // Kind inventory alone cannot establish BR1.3 validation, revision-bound
+  // fixtures, sidecars, or a full-catalogue supervised resource measurement.
+  t.todo('full-catalogue package validation and process-RSS measurement remain required');
 });

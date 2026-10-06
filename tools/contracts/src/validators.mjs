@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import Ajv2020Module from 'ajv/dist/2020.js';
 import addFormatsModule from 'ajv-formats';
 import YAML from 'yaml';
+import { isDeepStrictEqual } from 'node:util';
 import { ContractError } from './package-loader.mjs';
 
 // ajv and ajv-formats are CommonJS. Node's interop hands back the callable
@@ -14,8 +15,10 @@ export const DIALECTS = Object.freeze({
   asyncapi: 'asyncapi:3.0.0',
   schema: 'https://json-schema.org/draft/2020-12/schema',
   typedPort: 'typed-port:1',
+  inProcessPort: 'in-process-port:1',
   governedRecord: 'governed-record:1'
 });
+export const C08_PORT_PATH = 'retail-data/v1/inventory-operations.shared-schema.yaml';
 export const C07_PORT_PATH = 'model-lifecycle/v1/finalize-heavy-work.shared-schema.yaml';
 export const C07_PORT_NAME = 'model_lifecycle.finalize_heavy_work_v1';
 export const SUPPLIER_HEAD_PATH = 'common/v1/supplier-authority-head.shared-schema.yaml';
@@ -47,6 +50,17 @@ function parseSource(bytes, path) {
 
 function schemaDialect(entry, source, policy) {
   const path = entry.document;
+  if (source.kind === 'in-process-port' && path !== C08_PORT_PATH) {
+    fail('C08_PATH', 'BR1.3', 'C08 in-process port requires its canonical path');
+  }
+  if (path === C08_PORT_PATH) {
+    if (entry.artifactKind !== 'schema' || !entry.boundaryIds?.includes('C08') ||
+        (entry.schemaDialect && entry.schemaDialect !== DIALECTS.inProcessPort) ||
+        source.kind !== 'in-process-port' || source.$schema || source.dialect) {
+      fail('C08_DISPATCH', 'BR1.3', 'C08 in-process port conflicts with its fixed boundary');
+    }
+    return DIALECTS.inProcessPort;
+  }
   if (source.kind === 'vault-kv-authority-head' && path !== SUPPLIER_HEAD_PATH) {
     fail('SUPPLIER_HEAD_PATH', 'BR1.3', 'Supplier authority head requires the fixed path');
   }
@@ -97,6 +111,9 @@ export function detectDialect(entry, bytes, policy) {
   if (!object(entry) || !string(entry.document)) fail('DIALECT_ENTRY', 'BR1.3', 'Canonical entry is missing its path');
   const kind = entry.artifactKind;
   if (!['openapi', 'asyncapi', 'schema'].includes(kind)) fail('DIALECT_KIND', 'BR1.3', 'Unsupported canonical kind');
+  if (entry.document === C08_PORT_PATH && kind !== 'schema') {
+    fail('C08_DISPATCH', 'BR1.3', 'C08 fixed path must use the in-process schema kind');
+  }
   if (entry.document === C07_PORT_PATH && kind !== 'schema') {
     fail('C07_DISPATCH', 'NFR8.14', 'C07 fixed path must be a schema-kind typed port');
   }
@@ -188,6 +205,55 @@ function validateGovernedRecord(source) {
   }
 }
 
+// C08 is a versioned, in-process transaction contract, not an HTTP or broker
+// document. The v1 descriptor is deliberately closed: an added operation or a
+// weakened receipt/transaction invariant requires a reviewed new version.
+const C08_PORT_V1 = Object.freeze({
+  kind: 'in-process-port',
+  name: 'RetailOperationsInventoryPort',
+  version: '1.0.0',
+  deploymentBoundary: 'retail-operations-v1',
+  transaction: {
+    owner: 'planning-purchasing-command-handler',
+    database: 'shared-postgresql-instance',
+    atomicEffects: ['purchasing-state-and-idempotency-result', 'inventory-inbound-commitment',
+      'stock-movement-on-receipt', 'authoritative-audit-and-outbox'],
+    crossSchemaSql: 'prohibited'
+  },
+  operations: {
+    getInventorySnapshot: {
+      input: ['retailerId', 'placementGeneration', 'asOf'],
+      output: ['inventoryVersion', 'movementWatermark', 'positions', 'datedInboundCommitments']
+    },
+    createApprovedCommitments: {
+      input: ['retailerId', 'orderId', 'expectedOrderVersion', 'approvedLines'],
+      invariant: 'all-lines-or-none'
+    },
+    cancelOpenCommitments: {
+      input: ['retailerId', 'orderId', 'expectedOrderVersion'],
+      invariant: 'rejected-after-any-receipt'
+    },
+    recordReceipt: {
+      input: ['retailerId', 'orderId', 'expectedOrderVersion', 'idempotencyKey', 'receiptLines'],
+      invariant: 'cumulative-receipts-never-exceed-approved-quantity'
+    }
+  },
+  errors: {
+    'stale-authority': 'forbidden',
+    'stale-placement-generation': 'conflict',
+    'stale-order-version': 'conflict',
+    'idempotency-hash-mismatch': 'conflict',
+    'over-receipt': 'conflict',
+    'validation-failed': 'unprocessable'
+  }
+});
+
+function validateInProcessPort(source) {
+  if (!isDeepStrictEqual(source, C08_PORT_V1)) {
+    fail('C08_PORT_SHAPE', 'BR1.3', 'C08 v1 in-process port differs from its closed transaction contract');
+  }
+}
+
 export function createSchemaValidator(schema, references = new Map()) {
   if (!object(schema) || schema.$schema !== DIALECTS.schema) fail('DIALECT_CONFLICT', 'BR1.3', 'Expected JSON Schema 2020-12');
   const ajv = new Ajv2020({ strict: true, allErrors: true, validateFormats: true });
@@ -211,6 +277,7 @@ export async function validateCanonical(entry, sourcePath, { policy, runTool } =
   const bytes = await readFile(sourcePath);
   const { dialect, source } = detectDialect(entry, bytes, policy);
   if (dialect === DIALECTS.typedPort) validateTypedPort(source, entry);
+  else if (dialect === DIALECTS.inProcessPort) validateInProcessPort(source);
   else if (dialect === DIALECTS.governedRecord) validateGovernedRecord(source);
   else {
     if (typeof runTool === 'function') {
