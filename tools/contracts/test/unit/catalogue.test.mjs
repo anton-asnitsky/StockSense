@@ -11,6 +11,11 @@ test('full source inventory binds every canonical kind to committed bytes', asyn
   assert.match(inventory.sourceRevision, /^[0-9a-f]{40}$/);
   assert.match(inventory.mapDigest, /^sha256:[0-9a-f]{64}$/);
   assert.equal(inventory.entries.length, 38);
+  assert.ok(inventory.entries.every(entry => /^U(1|3|4|5|6|7|8|9|10|11|13|14|15) /.test(entry.semanticOwner)));
+  assert.equal(inventory.entries.find(entry => entry.document === 'common/v1/message-envelope.schema.json')?.semanticOwner,
+    'U1 Contracts');
+  assert.equal(inventory.entries.find(entry => entry.document === 'web-bff/v1/browser-api.openapi.yaml')?.semanticOwner,
+    'U11 Web BFF');
   const covered = new Set(inventory.entries.flatMap(entry => entry.boundaryIds));
   assert.deepEqual([...covered].sort(), [...ALL_BOUNDARIES]);
   for (const id of ALL_BOUNDARIES) {

@@ -3,6 +3,24 @@ import { join, resolve } from 'node:path';
 import { ALL_BOUNDARIES, CANONICAL_KINDS, ContractError, assertSafePath, digest } from './package-loader.mjs';
 import { assertSourcesCommitted, resolveSourceRevision, verifySourceBinding } from './provenance.mjs';
 
+// Unit ownership follows the approved Units Generation map. Shared canonical
+// documents live under common/ and remain U1-owned even when reused by others.
+export const OWNER_BY_AREA = Object.freeze({
+  common: 'U1 Contracts',
+  'identity-access': 'U3 Identity Access',
+  'retail-data': 'U4 Retail Data',
+  'supplier-knowledge': 'U5 Supplier Knowledge',
+  'model-lifecycle': 'U6 Model Lifecycle',
+  forecasting: 'U7 Forecasting',
+  'planning-purchasing': 'U8 Planning Purchasing',
+  assistant: 'U9 Assistant',
+  'audit-evidence': 'U10 Audit Evidence',
+  'web-bff': 'U11 Web BFF',
+  'demo-evidence': 'U13 Demo Evidence',
+  'messaging-platform': 'U14 Messaging Platform',
+  'recovery-coordination': 'U15 Recovery Coordination'
+});
+
 const kindOf = path => {
   if (path.endsWith('.openapi.yaml')) return 'openapi';
   if (path.endsWith('.asyncapi.yaml')) return 'asyncapi';
@@ -65,8 +83,12 @@ export async function buildSourceInventory(repoRoot) {
     document,
     boundaryIds: pathBoundaries.get(document),
     artifactKind: kindOf(document),
+    semanticOwner: OWNER_BY_AREA[document.split('/')[0]],
     contentDigest: digest(await readFile(join(root, 'contracts/source', document)))
   })));
+  if (entries.some(entry => !entry.semanticOwner)) {
+    throw new ContractError('CATALOGUE_OWNER', 'BR1.1', 'Canonical source has no approved unit owner');
+  }
   verifySourceBinding(root, sourceRevision, entries.map(entry => ({
     sourcePath: `contracts/source/${entry.document}`, contentDigest: entry.contentDigest
   })));
