@@ -5,7 +5,7 @@ import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
-import { digest, loadPackage } from '../../src/package-loader.mjs';
+import { deriveIdentity, digest, loadPackage } from '../../src/package-loader.mjs';
 import { runFixtureOracle } from '../../src/policy.mjs';
 
 const projectRoot = fileURLToPath(new URL('../../../../', import.meta.url));
@@ -61,8 +61,25 @@ async function editManifest(root, edit) {
 async function replaceOpenApi(root, content) {
   const document = 'web-bff/v1/browser-api.openapi.yaml';
   await writeFile(join(root, document), content);
+  const fixturePath = join(root, 'governance/example-fixture.json');
+  const sidecar = JSON.parse(await readFile(fixturePath, 'utf8'));
+  let revisionId;
   await editManifest(root, manifest => {
-    manifest.openapi.find(entry => entry.document === document).contentDigest = digest(content);
+    const entry = manifest.openapi.find(item => item.document === document);
+    entry.contentDigest = digest(content);
+    revisionId = deriveIdentity('openapi', entry.provider, document, entry.semanticVersion, entry.contentDigest).revisionId;
+  });
+  // A C18 fixture binds its target by a revision derived from the document
+  // digest, so replacing the document moves that revision and the fixtures
+  // have to come with it. Otherwise every test that edits this document
+  // fails in the oracle for a reason it is not testing.
+  for (const fixture of sidecar.fixtures) {
+    if (fixture.documentRevisionId) fixture.documentRevisionId = revisionId;
+  }
+  const bytes = JSON.stringify(sidecar, null, 2) + '\n';
+  await writeFile(fixturePath, bytes);
+  await editManifest(root, manifest => {
+    manifest.governedArtifacts.find(item => item.kind === 'example-fixture').contentDigest = digest(bytes);
   });
 }
 

@@ -116,6 +116,30 @@ export async function validateCandidate(root, { repoRoot, standardsImage } = {})
   const declaredPolicy = assertDeclaredPolicy(policy, loaded);
   const fixtureEntry = loaded.entries.find(item => item.kind === 'example-fixture');
   if (!fixtureEntry) throw new ContractError('FIXTURES_MISSING', 'BR2.7', 'A candidate package requires example fixtures');
+  // Provenance before the standards containers, not after. A document whose
+  // bytes drifted from the recorded commit should be rejected for that, and
+  // the fixture oracle would otherwise speak first: a fixture binds its target
+  // by a revision derived from the document digest, so tampering a canonical
+  // document breaks the binding and the run ends on a validator code that says
+  // nothing about provenance. Proving the bytes first also means no container
+  // ever runs over bytes this package has not yet shown it is entitled to ship.
+  let sourceBinding = 'unverified-no-repository';
+  if (repoRoot) {
+    // Every canonical document, not just the schemas. BR1.1 requires a
+    // source-revision mismatch on any declared artifact to fail, so narrowing
+    // this to one kind would leave the others unbound. These are verified
+    // first, so a drifted canonical document reports its own provenance
+    // verdict and is never pre-empted by a sidecar path question.
+    verifySourceBinding(repoRoot, loaded.manifest.sourceRevision, loaded.entries
+      .filter(entry => ['openapi', 'asyncapi', 'schema'].includes(entry.artifactKind))
+      .map(entry => ({ sourcePath: 'contracts/source/' + entry.document, contentDigest: entry.contentDigest })));
+    const sidecarBindings = governedSidecarSourceBindings(repoRoot, root, loaded.entries);
+    if (sidecarBindings === null) sourceBinding = 'verified-canonical-package-outside-repository';
+    else {
+      verifySourceBinding(repoRoot, loaded.manifest.sourceRevision, sidecarBindings);
+      sourceBinding = 'verified';
+    }
+  }
   const validatedCanonical = [];
   let fixtureResults;
   const graphRoot = await mkdtemp(join(tmpdir(), 'stocksense-verified-graph-'));
@@ -151,23 +175,6 @@ export async function validateCandidate(root, { repoRoot, standardsImage } = {})
     await rm(graphRoot, { recursive: true, force: true });
   }
   // A recorded revision is only a binding if the shipped bytes match its blobs.
-  let sourceBinding = 'unverified-no-repository';
-  if (repoRoot) {
-    // Every canonical document, not just the schemas. BR1.1 requires a
-    // source-revision mismatch on any declared artifact to fail, so narrowing
-    // this to one kind would leave the others unbound. These are verified
-    // first, so a drifted canonical document reports its own provenance
-    // verdict and is never pre-empted by a sidecar path question.
-    verifySourceBinding(repoRoot, loaded.manifest.sourceRevision, loaded.entries
-      .filter(entry => ['openapi', 'asyncapi', 'schema'].includes(entry.artifactKind))
-      .map(entry => ({ sourcePath: 'contracts/source/' + entry.document, contentDigest: entry.contentDigest })));
-    const sidecarBindings = governedSidecarSourceBindings(repoRoot, root, loaded.entries);
-    if (sidecarBindings === null) sourceBinding = 'verified-canonical-package-outside-repository';
-    else {
-      verifySourceBinding(repoRoot, loaded.manifest.sourceRevision, sidecarBindings);
-      sourceBinding = 'verified';
-    }
-  }
   return {
     sourceBinding,
     packageVersion: loaded.manifest.packageVersion,

@@ -112,6 +112,13 @@ $env:STOCKSENSE_STANDARDS_IMAGE = docker image inspect stocksense-validator:loca
 node tools/contracts/src/cli.mjs validate contracts/samples/walking-skeleton
 ```
 
+The image bakes in a copy of `tools/contracts/src`, so the fixture oracle that
+runs inside it is the oracle as of the build, not as of the working tree.
+**Rebuild it after any change under `tools/contracts/src`**, or the suite will
+report a stale tool's verdict - a passing run against an old image proves
+nothing about the current rules, and a failing one may be reporting a defect
+that no longer exists.
+
 The runner rejects a missing digest and never invokes a host standards CLI.
 It mounts only a digest-checked copy of the declared package graph in a
 read-only Linux container with no network, a 60-second wall limit, and a
