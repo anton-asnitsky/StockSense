@@ -25,8 +25,8 @@ properties:
     properties:
       profileId: { type: string }
       kubernetesVersion: { type: string }
-      cpuLimit: { maximum: 3 }
-      memoryLimitGiB: { maximum: 16 }
+      cpuLimit: { type: number, maximum: 3 }
+      memoryLimitGiB: { type: number, maximum: 16 }
       cpuOnly: { const: true }
       optionalGpuPathMeasured: { type: boolean }
       manifestDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
@@ -46,8 +46,8 @@ properties:
     type: object
     required: [modelJob, embeddingBuild]
     properties:
-      modelJob: { allOf: [{ $ref: '#/$defs/measuredWorkProfile' }, { properties: { jobKind: { const: model-job } } }] }
-      embeddingBuild: { allOf: [{ $ref: '#/$defs/measuredWorkProfile' }, { properties: { jobKind: { const: embedding-build } } }] }
+      modelJob: { allOf: [{ $ref: '#/$defs/measuredWorkProfile' }, { type: object, properties: { jobKind: { const: model-job } } }] }
+      embeddingBuild: { allOf: [{ $ref: '#/$defs/measuredWorkProfile' }, { type: object, properties: { jobKind: { const: embedding-build } } }] }
     additionalProperties: false
   recoveryDrill:
     type: object
@@ -72,16 +72,17 @@ properties:
         additionalProperties: false
       objectiveAssessment: { enum: [passed, failed, not-run-missing-objectives, blocked-prerequisite] }
     if:
+      type: object
       properties:
         objectiveTargets:
           anyOf:
-            - { properties: { rpoSeconds: { const: null } }, required: [rpoSeconds] }
-            - { properties: { rtoSeconds: { const: null } }, required: [rtoSeconds] }
-            - { properties: { backupExpiryDays: { const: null } }, required: [backupExpiryDays] }
-            - { properties: { totalDiskGiB: { const: null } }, required: [totalDiskGiB] }
+            - { type: object, properties: { rpoSeconds: { const: null } }, required: [rpoSeconds] }
+            - { type: object, properties: { rtoSeconds: { const: null } }, required: [rtoSeconds] }
+            - { type: object, properties: { backupExpiryDays: { const: null } }, required: [backupExpiryDays] }
+            - { type: object, properties: { totalDiskGiB: { const: null } }, required: [totalDiskGiB] }
       required: [objectiveTargets]
-    then: { properties: { objectiveAssessment: { enum: [not-run-missing-objectives, blocked-prerequisite] } } }
-    else: { properties: { objectiveAssessment: { enum: [passed, failed, blocked-prerequisite] } } }
+    then: { type: object, properties: { objectiveAssessment: { enum: [not-run-missing-objectives, blocked-prerequisite] } } }
+    else: { type: object, properties: { objectiveAssessment: { enum: [passed, failed, blocked-prerequisite] } } }
     additionalProperties: false
   startedAt: { type: string, format: date-time }
   completedAt: { type: string, format: date-time }
@@ -150,10 +151,12 @@ $defs:
       durationSeconds: { type: [number, 'null'], minimum: 0 }
       measurementArtifactId: { type: [string, 'null'], minLength: 1 }
       outcome: { enum: [measured, unavailable, not-run] }
-    if: { properties: { outcome: { const: measured } }, required: [outcome] }
+    if: { type: object, properties: { outcome: { const: measured } }, required: [outcome] }
     then:
+      type: object
       properties: { vmOverheadGiB: { type: number }, warmupSeconds: { type: number }, sampleIntervalMs: { type: integer }, sampleCount: { type: integer }, clusterCpuSustained: { type: number }, clusterCpuPeak: { type: number }, clusterMemorySustainedGiB: { type: number }, clusterMemoryPeakGiB: { type: number }, artifactBytes: { type: integer }, processRssPeakGiB: { type: number }, podMemoryLimitGiB: { type: number }, cpuThrottledSeconds: { type: number }, oomKilled: { type: boolean }, overlappedHeavyJobCount: { type: integer }, durationSeconds: { type: number }, measurementArtifactId: { type: string } }
     else:
+      type: object
       properties: { vmOverheadGiB: { const: null }, warmupSeconds: { const: null }, sampleIntervalMs: { const: null }, sampleCount: { const: null }, clusterCpuSustained: { const: null }, clusterCpuPeak: { const: null }, clusterMemorySustainedGiB: { const: null }, clusterMemoryPeakGiB: { const: null }, artifactBytes: { const: null }, processRssPeakGiB: { const: null }, podMemoryLimitGiB: { const: null }, cpuThrottledSeconds: { const: null }, oomKilled: { const: null }, overlappedHeavyJobCount: { const: null }, durationSeconds: { const: null }, measurementArtifactId: { const: null } }
     additionalProperties: false
 additionalProperties: false

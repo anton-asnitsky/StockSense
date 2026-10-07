@@ -306,7 +306,15 @@ export async function runContainerStandardsValidator(dialect, sourceDocument, op
       await writeFile(config, 'extends:\n  - recommended\nrules:\n  struct: error\n  operation-summary: off\n  operation-4xx-response: warn\n  operation-operationId: error\n  no-unresolved-refs: error\n', { flag: 'wx' })
         .catch(() => fail('STANDARDS_ENGINE', 'NFR6.2', 'Validator configuration could not be written'));
     } else if (schemaDialect || payloadDialect) {
-      const schemas = files.filter(file => file.artifactKind === 'schema')
+      // A manifest declares C07's typed port, C08's in-process port and the
+      // C05/C09 governed record as schema-kind entries, because that is what
+      // they are in the inventory - but they are closed dialects, not JSON
+      // Schema. The worker compiles every schema it is given into one shared
+      // registry, so handing it a typed port fails the registry build and with
+      // it *every* schema and AsyncAPI-payload validation in the package, not
+      // just that document. The caller marks them `jsonSchema: false`; they
+      // stay in the digest-checked graph and only leave the registry.
+      const schemas = files.filter(file => file.artifactKind === 'schema' && file.jsonSchema !== false)
         .map(file => ({ document: file.document, digest: file.digest }));
       const selected = files.find(file => file.document === sourceDocument);
       const source = { document: sourceDocument, digest: selected?.digest,

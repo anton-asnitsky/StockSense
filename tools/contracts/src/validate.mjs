@@ -33,6 +33,26 @@ export function materializeOfflineReferences(bytes, document, references) {
   return Buffer.from(document.endsWith('.json') ? JSON.stringify(tree) : YAML.stringify(tree));
 }
 
+/**
+ * Whether a declared `schema` entry really is JSON Schema 2020-12.
+ *
+ * A manifest declares C07's typed port, C08's in-process port and the C05/C09
+ * governed record as schema-kind entries, because that is what they are in the
+ * inventory - but they are closed dialects, not JSON Schema, and the pinned
+ * Ajv worker compiles every schema it is handed into one shared registry.
+ * Handing it a typed port fails the registry build, which fails *every* schema
+ * and AsyncAPI-payload validation in the package rather than just that
+ * document. No sample package contains a typed port, so only a full C01-C27
+ * catalogue reaches this.
+ */
+function isJsonSchemaDialect(bytes, document) {
+  try {
+    const source = document.endsWith('.json') ? JSON.parse(bytes.toString('utf8')) :
+      YAML.parse(bytes.toString('utf8'), { strict: true, uniqueKeys: true });
+    return source?.$schema === 'https://json-schema.org/draft/2020-12/schema';
+  } catch { return false; }
+}
+
 /** Register only schema bytes copied into the immutable validation snapshot. */
 export async function readOfflineSchemaRegistry(graphRoot, entries, snapshotDigests) {
   const schemas = new Map();
@@ -145,6 +165,7 @@ export async function validateCandidate(root, { repoRoot, standardsImage } = {})
   const graphRoot = await mkdtemp(join(tmpdir(), 'stocksense-verified-graph-'));
   try {
     const snapshotDigests = new Map();
+    const jsonSchemaDocuments = new Set();
     for (const entry of loaded.entries) {
       const bytes = await readFile(join(root, entry.document));
       if (digest(bytes) !== entry.contentDigest) {
@@ -155,10 +176,17 @@ export async function validateCandidate(root, { repoRoot, standardsImage } = {})
       const snapshot = materializeOfflineReferences(bytes, entry.document, offlineReferences);
       await writeFile(target, snapshot);
       snapshotDigests.set(entry.document, digest(snapshot));
+      if (entry.artifactKind === 'schema' && isJsonSchemaDialect(snapshot, entry.document)) {
+        jsonSchemaDocuments.add(entry.document);
+      }
     }
     await readOfflineSchemaRegistry(graphRoot, loaded.entries, snapshotDigests);
-    const files = loaded.entries.map(entry =>
-      ({ document: entry.document, digest: snapshotDigests.get(entry.document), artifactKind: entry.artifactKind }));
+    // A closed-dialect document still travels in the verified graph with its
+    // own kind, and is still digest-checked; the flag only keeps it out of the
+    // shared Ajv registry, which is the one thing it cannot take part in.
+    const files = loaded.entries.map(entry => ({ document: entry.document,
+      digest: snapshotDigests.get(entry.document), artifactKind: entry.artifactKind,
+      ...(entry.artifactKind === 'schema' ? { jsonSchema: jsonSchemaDocuments.has(entry.document) } : {}) }));
     for (const entry of loaded.entries.filter(item => item.artifactKind !== 'sidecar')) {
       const result = await validateCanonical(entry, join(graphRoot, entry.document),
         { policy,
