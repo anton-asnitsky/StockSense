@@ -108,7 +108,7 @@
     {
       "id": "AC8.2.2",
       "status": "GAP",
-      "target": "The C01-C27 canonical catalogue is absent; only the illustrative C01 candidate exists."
+      "target": "All 38 draft canonical sources cover C01-C27 required kinds in contracts/source/ and every one now validates through its selected dialect under the retained resource bounds (tools/contracts/test/integration/catalogue-resource.test.mjs). No complete revision-stamped package with sidecars and exact fixtures for every applicable revision exists."
     },
     {
       "id": "AC8.2.3",
@@ -118,62 +118,62 @@
     {
       "id": "AC8.2.4",
       "status": "GAP",
-      "target": "The C01-C27 canonical catalogue is absent; only the illustrative C01 candidate exists."
+      "target": "All 38 draft canonical sources cover C01-C27 required kinds in contracts/source/ and every one now validates through the validator its own dialect selects, under the retained resource bounds, in tools/contracts/test/integration/catalogue-resource.test.mjs. No complete revision-stamped C01-C27 package, and no exact fixtures for every applicable revision, exists: the candidates cover C01/C18 and C01/C22/C23 only."
     },
     {
       "id": "AC8.5.1",
       "status": "GAP",
-      "target": "C22-C27 messaging and recovery contracts and their conformance fixtures are absent."
+      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
     },
     {
       "id": "AC8.5.2",
       "status": "GAP",
-      "target": "C22-C27 messaging and recovery contracts and their conformance fixtures are absent."
+      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
     },
     {
       "id": "AC8.5.3",
       "status": "GAP",
-      "target": "C22-C27 messaging and recovery contracts and their conformance fixtures are absent."
+      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
     },
     {
       "id": "AC8.5.4",
       "status": "GAP",
-      "target": "C22-C27 messaging and recovery contracts and their conformance fixtures are absent."
+      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
     },
     {
       "id": "AC8.7.1",
       "status": "GAP",
-      "target": "No CI workflow exists and U2 has not anchored the protected required check."
+      "target": "The U1 worktree has no .github/workflows files; U2 CI design is design-only. No protected-base required public-PR check or clean hosted U1 run exists; AC8.7.1 remains blocked."
     },
     {
       "id": "AC8.7.2",
       "status": "GAP",
-      "target": "No CI workflow exists and U2 has not anchored the protected required check."
+      "target": "The U1 worktree has no .github/workflows files; U2 CI design is design-only. No protected-base required public-PR check or clean hosted U1 run exists; AC8.7.1 remains blocked."
     },
     {
       "id": "AC8.7.3",
       "status": "GAP",
-      "target": "No CI workflow exists and U2 has not anchored the protected required check."
+      "target": "The U1 worktree has no .github/workflows files; U2 CI design is design-only. No protected-base required public-PR check or clean hosted U1 run exists; AC8.7.1 remains blocked."
     },
     {
       "id": "AC9.11.1",
       "status": "GAP",
-      "target": "C22-C27 messaging and recovery contracts and their conformance fixtures are absent."
+      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
     },
     {
       "id": "AC9.11.2",
       "status": "GAP",
-      "target": "C22-C27 messaging and recovery contracts and their conformance fixtures are absent."
+      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
     },
     {
       "id": "AC9.11.3",
       "status": "GAP",
-      "target": "C22-C27 messaging and recovery contracts and their conformance fixtures are absent."
+      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
     },
     {
       "id": "AC9.11.4",
       "status": "GAP",
-      "target": "C22-C27 messaging and recovery contracts and their conformance fixtures are absent."
+      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
     },
     {
       "id": "AC10.2.1",
@@ -193,7 +193,7 @@
     {
       "id": "AC10.2.4",
       "status": "GAP",
-      "target": "The C01-C27 canonical catalogue is absent; only the illustrative C01 candidate exists."
+      "target": "All 38 draft canonical sources cover C01-C27 required kinds and validate under the retained bounds in tools/contracts/test/integration/catalogue-resource.test.mjs. No complete revision-stamped package or release evidence exists."
     },
     {
       "id": "AC10.2.5",
@@ -203,7 +203,7 @@
     {
       "id": "AC10.2.6",
       "status": "GAP",
-      "target": "C22-C27 messaging and recovery contracts and their conformance fixtures are absent."
+      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
     },
     {
       "id": "BR1.1",
@@ -313,7 +313,7 @@
     {
       "id": "BR4.3",
       "status": "GAP",
-      "target": "The pinned compatibility differ is not vendored, so the check fails closed and cannot pass."
+      "target": "oasdiff 1.28.0 was locally pinned and exercised on identical/breaking fixtures; no complete immutable-baseline compatibility run for the C01-C27 package exists."
     },
     {
       "id": "BR4.4",
@@ -323,37 +323,37 @@
     {
       "id": "BR5.1",
       "status": "GAP",
-      "target": "No canonical job or immutable-event document declares the common envelope binding; C01 envelopes exist but no message identity contract references them."
+      "target": "Draft job and event documents now exist in contracts/source/, including C01/C03/C07/C23. The full package, exact event fixtures and owner-runtime envelope binding evidence remain absent."
     },
     {
       "id": "BR5.2",
       "status": "GAP",
-      "target": "C22-C27 messaging and recovery contracts and their conformance fixtures are absent."
+      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
     },
     {
       "id": "BR5.3",
       "status": "GAP",
-      "target": "C22-C27 messaging and recovery contracts and their conformance fixtures are absent."
+      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
     },
     {
       "id": "BR5.4",
       "status": "GAP",
-      "target": "C22-C27 messaging and recovery contracts and their conformance fixtures are absent."
+      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
     },
     {
       "id": "BR5.5",
       "status": "GAP",
-      "target": "C22-C27 messaging and recovery contracts and their conformance fixtures are absent."
+      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
     },
     {
       "id": "BR5.6",
       "status": "GAP",
-      "target": "C22-C27 messaging and recovery contracts and their conformance fixtures are absent."
+      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
     },
     {
       "id": "BR5.7",
       "status": "GAP",
-      "target": "C22-C27 messaging and recovery contracts and their conformance fixtures are absent."
+      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
     },
     {
       "id": "BR5.8",
@@ -363,12 +363,12 @@
     {
       "id": "BR5.9",
       "status": "GAP",
-      "target": "C22-C27 messaging and recovery contracts and their conformance fixtures are absent."
+      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
     },
     {
       "id": "BR5.10",
       "status": "GAP",
-      "target": "Platform identity-audit reads span C02, C17 and C18 authority; only the C18 document exists, and its platform route carries no delegated-token evidence."
+      "target": "Draft C02, C17 and C18 sources exist. A complete package and delegated-token/platform-route conformance evidence are absent."
     },
     {
       "id": "BR6.1",
@@ -378,7 +378,7 @@
     {
       "id": "BR6.2",
       "status": "GAP",
-      "target": "No CI workflow exists and U2 has not anchored the protected required check."
+      "target": "The U1 worktree has no .github/workflows files; U2 CI design is design-only. No protected-base required public-PR check or clean hosted U1 run exists; AC8.7.1 remains blocked."
     },
     {
       "id": "BR6.3",
@@ -408,12 +408,12 @@
     {
       "id": "NFR3.1",
       "status": "GAP",
-      "target": "The C01-C27 canonical catalogue is absent; only the illustrative C01 candidate exists."
+      "target": "All 38 draft canonical sources cover C01-C27 required kinds and each selects its declared dialect under the retained bounds (tools/contracts/test/integration/catalogue-resource.test.mjs). No complete revision-stamped C01-C27 package with per-revision fixtures exists."
     },
     {
       "id": "NFR5.1",
       "status": "GAP",
-      "target": "The C01-C27 canonical catalogue is absent; only the illustrative C01 candidate exists."
+      "target": "All 38 draft canonical sources cover C01-C27 required kinds and validate through their selected dialects (tools/contracts/test/integration/catalogue-resource.test.mjs). No complete revision-stamped C01-C27 package with per-revision fixtures exists."
     },
     {
       "id": "NFR6.1",
@@ -428,17 +428,17 @@
     {
       "id": "NFR7.2",
       "status": "GAP",
-      "target": "The C01-C27 canonical catalogue is absent; only the illustrative C01 candidate exists."
+      "target": "All 38 draft canonical sources cover C01-C27 required kinds in contracts/source/, but no complete revision-stamped package, exact fixtures for every applicable revision, or full-catalogue validation/resource proof exists."
     },
     {
       "id": "NFR7.3",
       "status": "GAP",
-      "target": "The C01-C27 canonical catalogue is absent; only the illustrative C01 candidate exists."
+      "target": "All 38 draft canonical sources cover C01-C27 required kinds in contracts/source/, but no complete revision-stamped package, exact fixtures for every applicable revision, or full-catalogue validation/resource proof exists."
     },
     {
       "id": "NFR7.4",
       "status": "GAP",
-      "target": "The C01-C27 canonical catalogue is absent; only the illustrative C01 candidate exists."
+      "target": "All 38 draft canonical sources cover C01-C27 required kinds in contracts/source/, but no complete revision-stamped package, exact fixtures for every applicable revision, or full-catalogue validation/resource proof exists."
     },
     {
       "id": "NFR8.4",
@@ -463,12 +463,12 @@
     {
       "id": "NFR8.8",
       "status": "GAP",
-      "target": "The pinned compatibility differ is not vendored, so the check fails closed and cannot pass."
+      "target": "oasdiff 1.28.0 was locally pinned and exercised on identical/breaking fixtures; no complete immutable-baseline compatibility run for the C01-C27 package exists."
     },
     {
       "id": "NFR8.9",
       "status": "GAP",
-      "target": "The pinned generators are not vendored and no consumer profile declares outputs."
+      "target": "Kiota 1.35.0 is restored from the checked-in .config/dotnet-tools.json manifest and exercised through the pinned runner by tools/contracts/test/integration/generation.test.mjs: two clean workspaces produce byte-identical output, 104 C# files. openapi-typescript sample generation passes with declared-output drift detection. The .NET client is not wired into a consumer profile output manifest, because that machinery maps file paths to digests and this generator emits a directory tree, so no complete consumer-local .NET/message output manifest or full-catalogue drift run exists."
     },
     {
       "id": "NFR8.10",
@@ -478,12 +478,12 @@
     {
       "id": "NFR8.11",
       "status": "GAP",
-      "target": "C18 validates syntactically, but no example fixture targets it and runFixtureOracle resolves schema entries only, so the required CSRF, idempotency, dashboard, SSE and audit behaviour is unexercised."
+      "target": "Six exact revision-bound C18 OpenAPI request-body fixtures in contracts/fixtures/web-bff/v1/example-fixture.json pass through tools/contracts/src/policy.mjs and tools/contracts/test/integration/cli.package.test.mjs. CSRF, idempotency, dashboard, SSE, audit and runtime behavior still lack full fixture/conformance evidence."
     },
     {
       "id": "NFR8.12",
       "status": "GAP",
-      "target": "The pinned compatibility differ is not vendored, so the check fails closed and cannot pass."
+      "target": "oasdiff 1.28.0 was locally pinned and exercised on identical/breaking fixtures; no complete immutable-baseline compatibility run for the C01-C27 package exists."
     },
     {
       "id": "NFR8.13",
@@ -508,12 +508,12 @@
     {
       "id": "NFR8.17",
       "status": "GAP",
-      "target": "The C01-C27 canonical catalogue is absent; only the illustrative C01 candidate exists."
+      "target": "All 38 draft canonical sources parse and validate through the pinned validators (tools/contracts/test/integration/catalogue-resource.test.mjs), including the C18 quoting repair and the demo-evidence strict-mode repair. The Contract Design disposition for both repairs is not recorded, so upstream source approval remains a GAP."
     },
     {
       "id": "NFR10.1",
       "status": "GAP",
-      "target": "Size limits are enforced, but the CLI emits only code, ruleId and message; the severity, bounded location and remediation summary NFR10.1 requires are not produced, and sanitizeFinding, limitFindings, validatorMs and processBytes are unused in production."
+      "target": "Size and reference limits are enforced, and the isolated validator runner sets 60 seconds and 2 GiB. The full C01-C27 catalogue is now measured under those bounds by tools/contracts/test/integration/catalogue-resource.test.mjs with the pinned image: 332 reference occurrences against the 1024 cap, slowest single document 7.0 s, peak RSS 151 MB. The CLI diagnostic shape still lacks complete severity, bounded location and remediation evidence, so this identifier remains a GAP on that clause alone."
     },
     {
       "id": "NFR11.2",
@@ -553,27 +553,27 @@
     {
       "id": "NFR15.1",
       "status": "GAP",
-      "target": "No CI workflow exists and U2 has not anchored the protected required check."
+      "target": "The U1 worktree has no .github/workflows files; U2 CI design is design-only. No protected-base required public-PR check or clean hosted U1 run exists; AC8.7.1 remains blocked."
     },
     {
       "id": "NFR15.2",
       "status": "GAP",
-      "target": "No CI workflow exists and U2 has not anchored the protected required check."
+      "target": "The U1 worktree has no .github/workflows files; U2 CI design is design-only. No protected-base required public-PR check or clean hosted U1 run exists; AC8.7.1 remains blocked."
     },
     {
       "id": "NFR15.3",
       "status": "GAP",
-      "target": "No CI workflow exists and U2 has not anchored the protected required check."
+      "target": "The U1 worktree has no .github/workflows files; U2 CI design is design-only. No protected-base required public-PR check or clean hosted U1 run exists; AC8.7.1 remains blocked."
     },
     {
       "id": "NFR15.4",
       "status": "GAP",
-      "target": "No CI workflow exists and U2 has not anchored the protected required check."
+      "target": "The U1 worktree has no .github/workflows files; U2 CI design is design-only. No protected-base required public-PR check or clean hosted U1 run exists; AC8.7.1 remains blocked."
     },
     {
       "id": "NFR15.5",
       "status": "GAP",
-      "target": "No CI workflow exists and U2 has not anchored the protected required check."
+      "target": "The U1 worktree has no .github/workflows files; U2 CI design is design-only. No protected-base required public-PR check or clean hosted U1 run exists; AC8.7.1 remains blocked."
     }
   ]
 }

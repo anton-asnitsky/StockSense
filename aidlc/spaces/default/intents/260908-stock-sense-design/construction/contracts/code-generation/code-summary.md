@@ -27,21 +27,24 @@ Local Node 24.21.0 and pnpm 11.25.0:
 
 | Check | Current result |
 | --- | --- |
-| Direct Node unit and integration suite with exact local standards image | After the messaging candidate: 223 tests, 219 pass, 2 Windows symlink privilege skips, 2 TODOs (full release and full-catalogue package/resource acceptance), 0 fail; 93.70% lines, 84.38% branches. |
+| Exact `pnpm --dir tools/contracts test:unit` with system CA | 191 tests: 189 pass, 2 Windows symlink privilege skips, 0 fail. |
+| Exact `pnpm --dir tools/contracts test:integration` | 56 tests: 54 pass, 0 fail, 0 skip, 2 TODO. Every container-backed test now executes: the Docker engine is running and the standards image is built from this tree. No test is skipped for a missing image. |
+| Coverage (`test:coverage`, unit and integration) | 247 tests, 243 pass, 0 fail. 94.53% U1 lines, 85.23% branches, 92.06% functions; the 80% line floor remains enforced and was not lowered. |
 | ESLint and TypeScript check | Pass |
 | Targeted Secretlint scan | Pass |
 | Lockfile and frozen install | Current lockfile passed pnpm's supply-chain verification with NODE_OPTIONS=--use-system-ca; a clean frozen install then completed using pnpm's temporary trustLockfile setting for this already verified lockfile and an engine-strict override for local Node 24.21.0 |
 | Pinned oasdiff | Exact local Windows binary verified by published SHA-256; identical-spec and breaking-path integration tests pass |
-| Kiota | Exact 1.35.0 dotnet tool restored from the checked-in tool manifest and version command passed |
-| Standards validation | C01/C18 and C01/C22/C23 candidate CLI checks, bounded Ajv schema and fixture compilation, and C03/C07/C23 offline-reference/payload cases pass through the pinned Docker image `sha256:0dfa6bb4607c1145acd1ca67070c413dcb02c1473da48bfb0dca9d9ac32ae8af`; missing image fails with `STANDARDS_IMAGE_PIN`. All 38 present sources select their declared dialect and resolve 332 references below the 1024 cap. All 17 OpenAPI drafts lint with zero errors. Protected-content checks cover draft sources, profiles and fixtures. C18 derived 1024/1025 cases and depth 32/33 pass. Full 27-boundary package validation, fixture coverage and resource acceptance remain TODO. |
+| Pinned Kiota | Exact 1.35.0 restored from the checked-in tool manifest and exercised through the pinned runner: two clean workspaces produce byte-identical output, 104 C# files, tree digest `sha256:a12f3847`. Not wired into a consumer output manifest; see the deviations below. |
+| Standards validation | The whole C01-C27 catalogue now validates: all 38 canonical sources pass the validator each one's own dialect selects (17 OpenAPI, 6 AsyncAPI with their payload pass, 12 JSON Schema, 3 closed dialects), measured under the retained bounds at 332 reference occurrences against the 1024 cap, slowest single document 7.0 s against the 60 s validator bound, peak RSS 151 MB against the 2 GiB process bound. The C01/C18 and C01/C22/C23 candidates both validate end to end with `sourceBinding: verified`. Full 27-boundary **packaging** - sidecars and revision-bound fixtures for every boundary - remains open; this is catalogue validation, not a release package. |
+| Standards image | No image digest is pinned in this record. The image bakes in a copy of `tools/contracts/src`, the build is not bit-reproducible, and the runner refuses an image whose recorded tool-source digest does not match the tree (`STANDARDS_IMAGE_STALE`/`NFR6.2`), so every environment builds its own with `pnpm --dir tools/contracts build:standards-image`. |
 
-The clean install first stalled while removing a partial prior virtual store. After clearing only this worktree's generated node_modules, the frozen install completed from the verified lockfile, and the post-upgrade local suite above passed. A later pnpm-script check attempted online metadata refresh and failed certificate verification; direct invocation of the installed local binaries produced the stated test, lint and type-check results. The pinned package engine version 24.19.0 has not been reproduced on this host; the temporary install overrides are not hosted CI evidence.
+The clean install first stalled while removing a partial prior virtual store. After clearing only this worktree's generated node_modules, the frozen install completed from the verified lockfile, and the post-upgrade local suite above passed. An initial pnpm-script check attempted online metadata refresh and failed certificate verification. With NODE_OPTIONS=--use-system-ca, the exact pnpm unit and integration scripts executed; direct invocation of installed local binaries produced the coverage, lint, type-check and Secretlint results. The pinned package engine version 24.19.0 has not been reproduced on this host; the temporary install overrides are not hosted CI evidence.
 
 ## Traceability
 
 The existing traceability map contains 95 upstream identifiers. The last reviewed baseline had 43 OK and 52 GAP. This checkpoint adds local source evidence but does not automatically upgrade any GAP without the required exact fixture, owner-runtime, CI, or release proof.
 
-R-12's technical finding has focused independent READY review. All 38 present canonical sources enter package reference preflight with 1024-occurrence and 32-depth tests. The declared C01 HTTPS identities map to digest-checked graph bytes; pinned AsyncAPI resolver, containerized CLI and offline Ajv tests cover both tenant and global envelopes. The actual candidate CLI has no host standards-tool fallback. Preflight rejects fragment-only references whose nested `$id` changes the selected physical node. Canonical JSON Schema, AsyncAPI payload, and fixture Ajv compilation run against digest-checked snapshots inside the 60-second/2 GiB container profile; C07 typed-port, C08 in-process-port and governed-record YAML do not enter the JSON Schema fixture oracle. The approved Step 10 remains unchecked until full-catalogue package validation and time/RSS proof run. R-13's local source gates reject short and punctuation-only credential assignments, protected generated bytes and filenames before hashing, executable Deno/package manifests, undeclared or nested evidence fields, and caller-controlled diagnostic identifiers. Release publication remains unimplemented and fail-closed, so R-13 and Step 11 are not closed. R-14 remains open because the three-boundary candidate does not provide all required sidecars, revision-bound fixtures or full validator/resource proof for C01-C27. C16's registered `/signin-oidc` redirect and `/auth/callback` continuation now align in draft sources and U3's accepted functional design, but the inception C16 OpenAPI excerpt still needs formal reconciliation. R-15 remains open because the protected U2 required check, hosted CI and vulnerability disposition are absent. The current lockfile audit reports 47 advisories, including 26 High/Critical, all through the pinned AsyncAPI CLI tree. The finding inventory is in verification/u1-vulnerability-audit-2026-10-05.json. R-16 remains open despite the oasdiff/Kiota pins because the remaining approved toolchain and release evidence are absent. R-17's C18 comma-bearing flow descriptions were quoted without changing their values in the upstream design and canonical source; final U1 review has not closed it.
+R-12's technical finding has focused independent READY review. All 38 present canonical sources enter package reference preflight with 1024-occurrence and 32-depth tests. The declared C01 HTTPS identities map to digest-checked graph bytes; pinned AsyncAPI resolver, containerized CLI and offline Ajv tests cover both tenant and global envelopes. The actual candidate CLI has no host standards-tool fallback. Preflight rejects fragment-only references whose nested `$id` changes the selected physical node. Canonical JSON Schema, AsyncAPI payload, and fixture Ajv compilation run against digest-checked snapshots inside the 60-second/2 GiB container profile; C07 typed-port, C08 in-process-port and governed-record YAML do not enter the JSON Schema fixture oracle. Step 10's remaining acceptance clause is now met: `tools/contracts/test/integration/catalogue-resource.test.mjs` validates all 38 canonical sources through their selected dialects and records 332 reference occurrences against the 1024 cap, a slowest single document of 7.0 s against the 60 s bound, and 151 MB peak RSS against the 2 GiB bound. Step 10 itself stays unchecked only because the approved plan files are byte-bound to the protected approval and no checklist mark may be made here. R-13's local source gates reject short and punctuation-only credential assignments, protected generated bytes and filenames before hashing, executable Deno/package manifests, undeclared or nested evidence fields, and caller-controlled diagnostic identifiers. Release publication remains unimplemented and fail-closed, so R-13 and Step 11 are not closed. R-14 is partly closed: full-catalogue validation and the supervised resource measurement now exist and pass. It remains open because the C01/C18 and C01/C22/C23 candidates still do not provide sidecars or revision-bound fixtures for all 27 boundaries. C16's registered `/signin-oidc` redirect and `/auth/callback` continuation now align in draft sources and U3's accepted functional design, but the inception C16 OpenAPI excerpt still needs formal reconciliation. R-15 remains open because the protected U2 required check, hosted CI and vulnerability disposition are absent. The 2026-10-05 lockfile audit recorded 47 advisories, including 26 High/Critical, in verification/u1-vulnerability-audit-2026-10-05.json. A 2026-10-07 scan fails with 55 advisories (4 low, 20 moderate, 25 high, 6 critical), every path tracing to the approved-plan pin `@asyncapi/cli`; the older inventory is historical and needs finding-specific refresh and an owner disposition. R-16 is partly closed: `openapi-diff` is gone, oasdiff 1.28.0 is pinned and exercised, and Kiota 1.35.0 now runs reproducibly through the pinned runner. It remains open because the SBOM generator, AsyncAPI template, runner/scanner versions and attestation action are unpinned pending the owning CI Design decision, and because the .NET client is not bound to a declared consumer output manifest. R-17's C18 comma-bearing flow descriptions were quoted without changing their values in the upstream design and canonical source; final U1 review has not closed it.
 
 The C22/C23 fixture candidates now contain one positive and one exact required-field negative for each canonical schema. The local fixture oracle binds the expected finding code, rule, element and revision; the generated file is reproducible from the governed profile candidates. This is four schema examples, not cross-language or provider-runtime conformance evidence.
 
@@ -52,3 +55,81 @@ The latest formal U1 review remains NOT-READY. Focused independent R-12 and R-13
 ## Next work
 
 Use the source-bound inventory as package-assembly input. Build the full C01-C27 package with required C22/C23 governed sidecars and exact positive/negative fixtures. Reconcile C16's inception excerpt and the U3 grant invariant, complete full-catalogue resource proof, toolchain and hosted CI evidence with U2, update traceability, then request a fresh independent architecture and AI-DLC process review. Do not merge or claim U1 acceptance while the open findings remain.
+
+## 2026-10-06 U1 execution checkpoint
+
+The walking-skeleton C01/C18 package now carries six C18 request-body examples: three passing and three exact negative fixtures for manual review, reconciliation and assistant turns. `tools/contracts/src/policy.mjs` resolves each OpenAPI component through the declared `documentRevisionId`, checks local component references, and rejects an absent revision, missing element, remote reference or unrelated expected finding. The source fixture file is reusable by `tools/contracts/scripts/create-sample.mjs`, which rejects a stale C18 revision before refreshing the sample sidecar digest. `tools/contracts/test/unit/policy.test.mjs`, `tools/contracts/test/unit/container-fixture-oracle.test.mjs` and `tools/contracts/test/integration/cli.package.test.mjs` exercise this path. C18 CSRF, idempotency, dashboard, SSE, audit and runtime behavior still lack full evidence, so NFR8.11 remains `GAP`.
+
+The unit command passes (191 tests, 189 pass, 2 Windows symlink skips) and the integration command passes with every container-backed test executing (56 tests, 54 pass, 0 fail, 0 skip, 2 TODO). Combined coverage is 94.53% lines, 85.23% branches, 92.06% functions over 247 tests. The full-catalogue supervised run now exists: 38 canonical sources, 332 reference occurrences, slowest document 7.0 s, peak RSS 151 MB, all inside the retained bounds. ESLint, TypeScript and Secretlint pass. The vulnerability scan still fails with 55 advisories, 31 of them High or Critical; no exception or upgrade disposition was invented.
+
+The changed application paths are listed exactly in `source-manifest.json`, now 130 entries after adding `contracts/fixtures/common/v1/example-fixture.json`, `tools/contracts/src/source-digest.mjs` and `tools/contracts/scripts/build-standards-image.mjs`; the recorded set is set-equal to the branch diff against the Bolt base. `traceability.json` still has 43 `OK` and 52 `GAP` entries; stale claims that the draft C01-C27 and C22-C27 sources or C18 examples were absent have been corrected without upgrading unsupported outcomes. The approved plan and unit-test instructions remain byte-for-byte unchanged to preserve the protected approval fingerprint. Step 12 has quote-only repair, parser/lint/bundle checks and focused independent review evidence, ready for final reviewer confirmation before a checklist change. Steps 10-11 and 13-16 are still incomplete. R-14 needs the complete package and exact fixtures, R-15 needs U2's independently protected hosted check and vulnerability disposition, and R-16 needs the remaining approved toolchain and clean-consumer provenance runs. Targeted local oasdiff compatibility tests passed 3/3 and TypeScript generation tests passed 10/10. Kiota 1.35.0 is now restored and generates a reproducible 104-file C# client through the pinned runner, proven by two clean workspaces; it is not credited as consumer-local drift evidence because it is not bound to a declared output manifest. All 130 source-manifest paths exist in the focused worktree. AC8.7.1 and the U2 hosted check remain `GAP`; no U1 acceptance or release claim is made.
+
+## Defects found by running the container for the first time
+
+Every container-backed check had been unexercised until the Docker engine and a
+matching standards image were both available. Running them surfaced five
+defects that no local run could have shown, four of them in work that had
+already passed review.
+
+- **A stale standards image silently answers for an older tool.** The image
+  bakes in a copy of `tools/contracts/src`, so the oracle inside it is the
+  oracle as of the build. The image on the development host was two days old,
+  had no `documentRevisionId` support, and rejected a valid package for a
+  feature it did not have; an equally old image would have passed a package the
+  current rules reject, and the run would have looked identical. The build now
+  records a tool-source digest into the image and the runner reads it back out
+  and refuses a mismatch with `STANDARDS_IMAGE_STALE`. Because the build is not
+  bit-reproducible, the stable identity is that digest, not the image ID: no
+  image ID can be committed and every environment builds its own with
+  `pnpm --dir tools/contracts build:standards-image`.
+- **One closed dialect failed every schema in the package.** The container's
+  shared Ajv registry was built from every entry declared `artifactKind:
+  schema`, which includes C07's typed port, C08's in-process port and the
+  C05/C09 governed record - inventory-correct, but not JSON Schema. Compiling
+  one failed the shared registry, so a single such document failed *all* schema
+  and AsyncAPI-payload validation rather than only its own. No sample package
+  contains a typed port, so only the full catalogue reached it.
+- **One uncompilable source had the same whole-package effect.**
+  `demo-evidence/v1/evidence-manifest.shared-schema.yaml` did not compile under
+  the pinned strict validator. `cpuLimit` and `memoryLimitGiB` declared
+  `maximum` with no `type`, so a string value bypassed the limit entirely - a
+  real defect, not a notation preference. Its `allOf`, `if`, `then` and `else`
+  branches used `properties` without `type: object`; the parent already
+  declares it, so stating it changes nothing. Recorded as a repair, not an
+  approval: no Contract Design disposition was sought, so C01-C27 source
+  approval stays `GAP` exactly as Step 12 requires for the C18 repair.
+- **Provenance ran after the containers.** A fixture binds its target by a
+  revision derived from the document digest, so tampering a canonical document
+  breaks that binding and the fixture oracle spoke first: a drifted C18
+  document was rejected as `STANDARDS_VALIDATION`, saying nothing about
+  provenance, and the test written to prove the source-revision binding was
+  asserting a verdict it could never reach. Provenance is now verified before
+  any container runs, which also means no validator ever runs over bytes the
+  package has not yet shown it is entitled to ship.
+- **The messaging-sample test asserted a stale fixture inventory.** It expected
+  eight fixture outcomes after the C01 package-manifest pair took the sidecar
+  to ten. It is skipped without the image, so it passed locally and would have
+  failed the first hosted run.
+
+## What a hosted run still needs
+
+`assertCiPolicy` - the policy this unit defines - refuses a pull request that
+changes `.github/workflows` with `CI_WORKFLOW_CHANGE`/`BR6.7`, because the
+protected base workflow must already exist to judge its own introduction.
+Authoring that workflow is therefore U2's unit and the owner's decision, not
+something this branch can self-certify. What U1 owes it is in place: the build
+script that produces the exact image ID a job must pass as
+`STOCKSENSE_STANDARDS_IMAGE`, and `assertCiPolicy` itself to judge the workflow
+once it exists. AC8.7.1 and AC8.7.2-AC8.7.3 stay `GAP` until a hosted run is
+recorded.
+
+## Owner decisions this record does not make
+
+1. Disposition for the 55 vulnerability advisories, 31 High or Critical, all
+   tracing to the approved-plan pin `@asyncapi/cli`.
+2. Whether U2 authors the protected workflow, and whether hosted CI minutes are
+   authorized.
+3. Contract Design disposition for two canonical-source repairs: the C18
+   quoting repair (R-17) and the demo-evidence strict-mode repair above.
+4. The SBOM generator, AsyncAPI template, runner/scanner versions and
+   attestation action, which Step 14 assigns to the owning CI Design decision.

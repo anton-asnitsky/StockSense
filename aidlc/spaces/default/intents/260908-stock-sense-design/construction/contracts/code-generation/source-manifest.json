@@ -7,19 +7,25 @@
       "path": ".config/dotnet-tools.json"
     },
     {
+      "path": "contracts/README.md"
+    },
+    {
       "path": "contracts/catalogue/v1/boundary-sources.json"
     },
     {
+      "path": "contracts/fixtures/common/v1/example-fixture.json"
+    },
+    {
       "path": "contracts/fixtures/messaging-platform/v1/example-fixture.json"
+    },
+    {
+      "path": "contracts/fixtures/web-bff/v1/example-fixture.json"
     },
     {
       "path": "contracts/profiles/messaging-platform/v1/platform.profile.yaml"
     },
     {
       "path": "contracts/profiles/messaging-platform/v1/protocol-compatibility.profile.yaml"
-    },
-    {
-      "path": "contracts/README.md"
     },
     {
       "path": "contracts/samples/messaging-profiles/common/v1/contract-package.shared-schema.yaml"
@@ -229,6 +235,9 @@
       "path": "tools/contracts/scripts/build-source-inventory.mjs"
     },
     {
+      "path": "tools/contracts/scripts/build-standards-image.mjs"
+    },
+    {
       "path": "tools/contracts/scripts/create-messaging-sample.mjs"
     },
     {
@@ -281,6 +290,9 @@
     },
     {
       "path": "tools/contracts/src/reference-preflight.mjs"
+    },
+    {
+      "path": "tools/contracts/src/source-digest.mjs"
     },
     {
       "path": "tools/contracts/src/validate.mjs"
