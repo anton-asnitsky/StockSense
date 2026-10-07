@@ -288,6 +288,47 @@ export async function validateCanonical(entry, sourcePath, { policy, runTool } =
   return { dialect, revisionId: entry.revisionId, valid: true };
 }
 
+/**
+ * The canonical kinds a fixture may name through documentRevisionId. This is
+ * exactly the set the fixture oracle has a payload extractor for: advertising
+ * a kind it cannot load let a package declare coverage the oracle could never
+ * check. AsyncAPI documents are validated as documents by the pinned standards
+ * runner, not by payload fixtures.
+ */
+export const DOCUMENT_FIXTURE_KINDS = Object.freeze(['openapi']);
+
+const POINTER = /^\/(?:[^~]|~[01])*(?:\/(?:[^~]|~[01])*)*$/;
+
+/**
+ * The findings a negative fixture declares, as a set of exact locations.
+ *
+ * A composite keyword such as oneOf legitimately reports several errors at
+ * once, so requiring exactly one observed finding made those rules
+ * inexpressible rather than merely strict. The invariant that actually matters
+ * is set equality: every declared finding observed, and no undeclared finding
+ * observed. The single-field form stays the one-element case of it.
+ */
+function declaredFailures(fixture) {
+  const rows = Array.isArray(fixture.expectedFailures) ? fixture.expectedFailures :
+    [{ code: fixture.expectedFailureCode, ruleId: fixture.expectedFailureRuleId, path: fixture.expectedFailurePath }];
+  if (Array.isArray(fixture.expectedFailures) &&
+      (!rows.length || fixture.expectedFailureCode !== undefined ||
+       fixture.expectedFailureRuleId !== undefined || fixture.expectedFailurePath !== undefined)) {
+    fail('FIXTURE_ORACLE_MISSING', 'NFR8.13', 'Declare a negative oracle either as single fields or as expectedFailures, not both');
+  }
+  for (const row of rows) {
+    if (!object(row) || !string(row.code) || !string(row.ruleId) || typeof row.path !== 'string' ||
+        (row.path !== '' && !POINTER.test(row.path))) {
+      fail('FIXTURE_ORACLE_MISSING', 'NFR8.13', 'Negative fixture needs a code, rule and JSON-pointer failure path');
+    }
+  }
+  const keys = rows.map(row => `${row.code}\u0000${row.ruleId}\u0000${row.path}`);
+  if (new Set(keys).size !== keys.length) {
+    fail('FIXTURE_ORACLE_MISSING', 'NFR8.13', 'A negative fixture declares the same finding twice');
+  }
+  return new Set(keys);
+}
+
 /** An invalid fixture succeeds only for the declared finding on its immutable target. */
 export function assertFixtureOracle(fixture, findings, entries) {
   if (!object(fixture) || !Array.isArray(findings) || !Array.isArray(entries) || !string(fixture.contractElementId)) {
@@ -297,7 +338,7 @@ export function assertFixtureOracle(fixture, findings, entries) {
   if (Boolean(documentRevisionId) === Boolean(schemaRevisionId)) fail('FIXTURE_TARGET', 'BR2.3', 'Exactly one immutable target is required');
   const revisionId = documentRevisionId ?? schemaRevisionId;
   const entry = entries.find(item => item.revisionId === revisionId);
-  if (!entry || (documentRevisionId && !['openapi', 'asyncapi'].includes(entry.artifactKind)) ||
+  if (!entry || (documentRevisionId && !DOCUMENT_FIXTURE_KINDS.includes(entry.artifactKind)) ||
       (schemaRevisionId && entry.artifactKind !== 'schema') || !Array.isArray(fixture.boundaryIds) ||
       !fixture.boundaryIds.length || fixture.boundaryIds.some(id => !entry.boundaryIds?.includes(id))) {
     fail('FIXTURE_TARGET', 'BR2.3', 'Fixture target is absent, wrong kind or outside its boundary');
@@ -309,18 +350,23 @@ export function assertFixtureOracle(fixture, findings, entries) {
     fail('FIXTURE_SHAPE', 'BR2.3', 'Fixture scenario and outcome conflict');
   }
   if (fixture.expectedOutcome === 'pass') {
-    if (fixture.expectedFailureCode !== undefined || fixture.expectedFailureRuleId !== undefined || findings.length) {
+    if (fixture.expectedFailureCode !== undefined || fixture.expectedFailureRuleId !== undefined ||
+        fixture.expectedFailurePath !== undefined || fixture.expectedFailures !== undefined || findings.length) {
       fail('FIXTURE_UNEXPECTED_FAILURE', 'BR2.3', 'Positive fixture has an oracle or observed finding');
     }
     return true;
   }
-  if (!string(fixture.expectedFailureCode) || !string(fixture.expectedFailureRuleId)) {
-    fail('FIXTURE_ORACLE_MISSING', 'NFR8.13', 'Negative fixture needs a code and rule');
+  const declared = declaredFailures(fixture);
+  // Every observed finding must sit on the fixture's own target and element,
+  // so a violation elsewhere can never be mistaken for the declared one.
+  if (findings.some(finding => finding.revisionId !== revisionId ||
+      finding.contractElementId !== fixture.contractElementId)) {
+    fail('FIXTURE_ORACLE_MISMATCH', 'NFR8.13', 'Findings must exactly match the declared code, rule, revision, element and location');
   }
-  if (!findings.some(finding => finding.findingCode === fixture.expectedFailureCode &&
-      finding.ruleId === fixture.expectedFailureRuleId && finding.revisionId === revisionId &&
-      finding.contractElementId === fixture.contractElementId)) {
-    fail('FIXTURE_ORACLE_MISMATCH', 'NFR8.13', 'No finding matches the declared code, rule, revision and element');
+  const observed = new Set(findings.map(finding =>
+    `${finding.findingCode}\u0000${finding.ruleId}\u0000${finding.instancePath}`));
+  if (observed.size !== declared.size || [...declared].some(key => !observed.has(key))) {
+    fail('FIXTURE_ORACLE_MISMATCH', 'NFR8.13', 'Findings must exactly match the declared code, rule, revision, element and location');
   }
   return true;
 }

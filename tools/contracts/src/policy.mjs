@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import YAML from 'yaml';
 import { ALL_BOUNDARIES, BOUNDARY_SIDECARS, CANONICAL_KINDS, FIXED_PATHS, ContractError, digest } from './package-loader.mjs';
-import { C07_PORT_PATH, C08_PORT_PATH, DIALECTS, SUPPLIER_HEAD_PATH, assertFixtureOracle, createSchemaValidator } from './validators.mjs';
+import { C07_PORT_PATH, C08_PORT_PATH, DIALECTS, DOCUMENT_FIXTURE_KINDS, SUPPLIER_HEAD_PATH, assertFixtureOracle, createSchemaValidator } from './validators.mjs';
 
 const fail = (code, rule, message) => { throw new ContractError(code, rule, message); };
 const object = value => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -17,6 +17,32 @@ const FINDING_CODES = Object.freeze({
 
 const findingCode = keyword =>
   FINDING_CODES[keyword] ?? 'SCHEMA_' + String(keyword).replace(/([A-Z])/g, '_$1').toUpperCase();
+const pointerPart = value => String(value).replace(/~/g, '~0').replace(/\//g, '~1');
+// Every keyword that scopes its violation to a property reports instancePath on
+// the *containing* object and names the property in params. Left at the
+// container, two unrelated violations in one object share a location, and a
+// negative fixture then passes for a rule it never exercised - the exact hole
+// an exact-path oracle exists to close. Any keyword added to Ajv's vocabulary
+// that carries a property must be listed here, so the set is closed and
+// anything unlisted keeps the container path rather than guessing.
+const PROPERTY_PARAMS = Object.freeze({
+  required: 'missingProperty',
+  dependentRequired: 'missingProperty',
+  dependencies: 'missingProperty',
+  additionalProperties: 'additionalProperty',
+  unevaluatedProperties: 'unevaluatedProperty',
+  propertyNames: 'propertyName'
+});
+const findingPath = error => {
+  const base = typeof error?.instancePath === 'string' ? error.instancePath : '';
+  const param = PROPERTY_PARAMS[error?.keyword];
+  if (param === undefined) return base;
+  const property = error?.params?.[param];
+  // "" is a legal JSON member name and its pointer is a bare trailing slash,
+  // so only a non-string location is a validator shape error.
+  if (typeof property !== 'string') fail('FINDING_SHAPE', 'BR2.4', 'Validator property location is invalid');
+  return `${base}/${pointerPart(property)}`;
+};
 
 const SIDECAR_MATRIX = Object.freeze({
   candidateEveryBoundary: ['example-fixture'],
@@ -39,8 +65,82 @@ export function mapSchemaFindings(errors, { revisionId, contractElementId, ruleI
     ruleId,
     revisionId,
     contractElementId,
-    instancePath: typeof error?.instancePath === 'string' ? error.instancePath : ''
+    instancePath: findingPath(error)
   }));
+}
+
+/**
+ * Resolve the canonical entry a fixture is actually validated against.
+ *
+ * The coverage check and the validation run have to agree on this, so both go
+ * through here. While coverage read the fixture's own declared revision, a
+ * fixture could be credited against a document the validator never loads: the
+ * validation path overwrites a declared schemaRevisionId with the resolved
+ * target before the oracle sees it, so the declared value was believed by one
+ * side and discarded by the other.
+ * @returns {any} the canonical entry, or null when nothing resolves
+ */
+function resolveFixtureTarget(fixture, loaded, schemas) {
+  if (fixture?.documentRevisionId) {
+    return loaded.entries.find(item => item.revisionId === fixture.documentRevisionId &&
+      DOCUMENT_FIXTURE_KINDS.includes(item.artifactKind)) ?? null;
+  }
+  return schemas.get(fixture?.contractElementId)?.entry ?? null;
+}
+
+/**
+ * Whether a fixture can be bound to this canonical document at all: a titled
+ * JSON Schema is addressed by element title, an OpenAPI document by revision
+ * through its components. An AsyncAPI document has no payload oracle here, so
+ * it cannot carry fixtures and must not be credited as though it could.
+ */
+function fixtureBindable(entry, schemas) {
+  if (DOCUMENT_FIXTURE_KINDS.includes(entry.artifactKind)) return true;
+  return entry.artifactKind === 'schema' &&
+    [...schemas.values()].some(item => item.entry === entry);
+}
+
+function openApiFixtureSchema(document, element) {
+  if (document?.openapi !== '3.1.2' || !object(document.components?.schemas) ||
+      !Object.hasOwn(document.components.schemas, element)) {
+    fail('FIXTURE_TARGET', 'BR2.8', 'OpenAPI fixture element is absent from its declared document');
+  }
+  const definitions = {};
+  const pending = [element];
+  // A YAML anchor may refer to its own ancestor, which parses without error and
+  // yields a genuinely cyclic object. Walking that unguarded exhausts the stack
+  // and dies as a RangeError carrying no finding code or rule - a fail-crash
+  // where a governance tool owes a governed refusal. The cross-component guard
+  // below cannot see this, because the cycle lives inside one component's own
+  // value tree, so the recursion tracks the path it is currently on.
+  const rewrite = (value, path) => {
+    if (!object(value) && !Array.isArray(value)) return value;
+    if (path.has(value)) {
+      fail('FIXTURE_CYCLE', 'BR2.8', 'OpenAPI fixture component contains a cyclic alias');
+    }
+    path.add(value);
+    try {
+      if (Array.isArray(value)) return value.map(item => rewrite(item, path));
+      const copy = {};
+      for (const [key, child] of Object.entries(value)) {
+        if (key === '$ref') {
+          const match = typeof child === 'string' && /^#\/components\/schemas\/([A-Za-z][A-Za-z0-9_.-]*)$/.exec(child);
+          if (!match || !Object.hasOwn(document.components.schemas, match[1])) {
+            throw new ContractError('FIXTURE_REFERENCE', 'BR2.8', 'OpenAPI fixture reference is outside the declared component graph');
+          }
+          pending.push(match[1]);
+          copy.$ref = `#/$defs/${match[1]}`;
+        } else copy[key] = rewrite(child, path);
+      }
+      return copy;
+    } finally { path.delete(value); }
+  };
+  while (pending.length) {
+    const name = pending.pop();
+    if (Object.hasOwn(definitions, name)) continue;
+    definitions[name] = rewrite(document.components.schemas[name], new Set());
+  }
+  return { $schema: DIALECTS.schema, $ref: `#/$defs/${element}`, $defs: definitions };
 }
 
 /**
@@ -149,29 +249,72 @@ export async function runFixtureOracle(root, loaded) {
   }
   const fixtureEntries = loaded.entries.filter(item => item.kind === 'example-fixture');
   if (!fixtureEntries.length) fail('FIXTURES_MISSING', 'BR2.7', 'A candidate package requires example fixtures');
-  const results = [];
-  for (const fixtureEntry of fixtureEntries) {
+  const sidecars = [];
+  for (const entry of fixtureEntries) {
+    const bytes = await read(entry);
     let file;
-    const bytes = await read(fixtureEntry);
     try { file = JSON.parse(bytes); }
     catch { fail('FIXTURE_PARSE', 'BR2.7', 'An example-fixture sidecar is malformed'); }
     if (file?.syntheticOnly !== true) fail('FIXTURE_SYNTHETIC', 'BR2.9', 'Fixture payloads must be declared synthetic');
     if (!Array.isArray(file.fixtures) || !file.fixtures.length) fail('FIXTURES_MISSING', 'BR2.7', 'An example-fixture sidecar declares no fixtures');
-    for (const fixture of file.fixtures) {
+    sidecars.push({ entry, fixtures: file.fixtures });
+  }
+  for (const { entry, fixtures } of sidecars) {
+    for (const boundaryId of entry.boundaryIds ?? []) {
+      const canonical = loaded.entries.filter(item => ['schema', 'openapi', 'asyncapi'].includes(item.artifactKind) &&
+        item.boundaryIds?.includes(boundaryId));
+      if (!canonical.length) fail('FIXTURE_COVERAGE', 'BR2.7', 'A claimed fixture boundary has no canonical revision');
+      const bindable = canonical.filter(item => fixtureBindable(item, schemas));
+      // A boundary every one of whose canonical documents is unbindable would
+      // satisfy a pair rule vacuously, which is the claim-with-zero-fixtures
+      // hole this check exists to close. Refuse instead of passing silently.
+      if (!bindable.length) {
+        fail('FIXTURE_COVERAGE', 'BR2.7', 'A claimed fixture boundary has no canonical revision a fixture can target');
+      }
+      for (const target of bindable) {
+        const scenarios = fixtures.filter(fixture => fixture?.boundaryIds?.includes(boundaryId) &&
+          resolveFixtureTarget(fixture, loaded, schemas) === target);
+        if (!scenarios.some(fixture => fixture.scenarioType === 'valid' && fixture.expectedOutcome === 'pass') ||
+            !scenarios.some(fixture => fixture.scenarioType === 'invalid' && fixture.expectedOutcome === 'fail')) {
+          fail('FIXTURE_COVERAGE', 'BR2.7', 'A claimed canonical revision lacks positive and negative fixtures');
+        }
+      }
+    }
+  }
+  const results = [];
+  for (const { fixtures } of sidecars) {
+    for (const fixture of fixtures) {
       if (!object(fixture) || !object(fixture.payload)) fail('FIXTURE_PAYLOAD', 'BR2.7', 'Every fixture needs an object payload');
-      const target = schemas.get(fixture.contractElementId);
-      if (!target) fail('FIXTURE_TARGET', 'BR2.8', 'Fixture element does not resolve to a canonical schema');
-      const validate = createSchemaValidator(target.source, references);
+      const target = resolveFixtureTarget(fixture, loaded, schemas);
+      if (!target) {
+        fail('FIXTURE_TARGET', 'BR2.8', fixture.documentRevisionId ? 'Fixture document revision is absent' :
+          'Fixture element does not resolve to a canonical schema');
+      }
+      let validationSchema;
+      if (fixture.documentRevisionId) {
+        // Read outside the parse guard so a digest mismatch keeps its own code
+        // instead of being reported as a malformed document.
+        const bytes = await read(target);
+        let document;
+        try {
+          const parsed = YAML.parseDocument(bytes, { uniqueKeys: true, strict: true });
+          if (parsed.errors.length) throw parsed.errors[0];
+          document = parsed.toJS();
+        } catch { fail('FIXTURE_TARGET', 'BR2.8', 'Fixture OpenAPI document is malformed'); }
+        validationSchema = openApiFixtureSchema(document, fixture.contractElementId);
+      } else validationSchema = schemas.get(fixture.contractElementId).source;
+      const validate = createSchemaValidator(validationSchema, references);
       const valid = validate(fixture.payload);
       const findings = valid ? [] : mapSchemaFindings(validate.errors, {
-        revisionId: target.entry.revisionId,
+        revisionId: target.revisionId,
         contractElementId: fixture.contractElementId
       });
-      assertFixtureOracle({ ...fixture, schemaRevisionId: target.entry.revisionId }, findings, loaded.entries);
+      assertFixtureOracle(fixture.documentRevisionId ? fixture :
+        { ...fixture, schemaRevisionId: target.revisionId }, findings, loaded.entries);
       results.push({
         fixtureId: fixture.fixtureId,
         contractElementId: fixture.contractElementId,
-        revisionId: target.entry.revisionId,
+        revisionId: target.revisionId,
         scenarioType: fixture.scenarioType,
         observed: valid ? 'pass' : 'fail'
       });

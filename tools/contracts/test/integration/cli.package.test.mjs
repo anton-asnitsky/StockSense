@@ -5,11 +5,39 @@ import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
-import { digest } from '../../src/package-loader.mjs';
+import { digest, loadPackage } from '../../src/package-loader.mjs';
+import { runFixtureOracle } from '../../src/policy.mjs';
 
 const projectRoot = fileURLToPath(new URL('../../../../', import.meta.url));
 const sample = join(projectRoot, 'contracts/samples/walking-skeleton');
 const cli = fileURLToPath(new URL('../../src/cli.mjs', import.meta.url));
+test('C18 package examples bind the OpenAPI revision and exact positive/negative outcomes', async () => {
+  const loaded = await loadPackage(sample);
+  const c18 = loaded.entries.find(entry => entry.document === 'web-bff/v1/browser-api.openapi.yaml');
+  const fixture = JSON.parse(await readFile(join(sample, 'governance/example-fixture.json')));
+  const c18Fixtures = fixture.fixtures.filter(item => item.boundaryIds.includes('C18'));
+  const canonicalFixtures = JSON.parse(await readFile(join(projectRoot,
+    'contracts/fixtures/web-bff/v1/example-fixture.json')));
+  assert.equal(canonicalFixtures.syntheticOnly, true);
+  assert.deepEqual(c18Fixtures, canonicalFixtures.fixtures);
+  assert.equal(c18Fixtures.length, 6);
+  assert.ok(c18Fixtures.every(item => item.documentRevisionId === c18.revisionId));
+  const rows = (await runFixtureOracle(sample, loaded)).filter(item => item.fixtureId.startsWith('c18-'));
+  assert.deepEqual(rows.map(item => item.observed), ['pass', 'fail', 'pass', 'fail', 'pass', 'fail']);
+  await withCopy(async root => {
+    const path = join(root, 'governance/example-fixture.json');
+    const changed = JSON.parse(await readFile(path));
+    changed.fixtures.find(item => item.fixtureId === 'c18-manual-review-missing-version').expectedFailureCode = 'SCHEMA_ENUM';
+    const bytes = JSON.stringify(changed);
+    await writeFile(path, bytes);
+    await editManifest(root, manifest => {
+      manifest.governedArtifacts.find(entry => entry.kind === 'example-fixture').contentDigest = digest(bytes);
+    });
+  }, async root => {
+    await assert.rejects(runFixtureOracle(root, await loadPackage(root)),
+      error => error.code === 'FIXTURE_ORACLE_MISMATCH' && error.ruleId === 'NFR8.13');
+  });
+});
 function run(root) {
   try {
     const output = execFileSync(process.execPath, [cli, 'validate', root], { encoding: 'utf8' });
@@ -54,7 +82,8 @@ test('the thin C01/C18 candidate passes canonical and fixture validation', () =>
   // The thin package covers two boundaries and says so; the other 25 stay uncovered.
   assert.deepEqual(result.body.candidateScope, ['C01', 'C18']);
   assert.equal(result.body.uncoveredBoundaries.length, 25);
-  assert.deepEqual(result.body.fixtureResults.map(item => item.observed), ['pass', 'pass', 'fail', 'fail']);
+  assert.deepEqual(result.body.fixtureResults.map(item => item.observed),
+    ['pass', 'pass', 'fail', 'fail', 'pass', 'fail', 'pass', 'fail', 'pass', 'fail']);
   // Without a repository the revision is recorded but not proven.
   assert.equal(result.body.sourceBinding, 'unverified-no-repository');
 });

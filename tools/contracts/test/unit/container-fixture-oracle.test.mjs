@@ -35,8 +35,9 @@ test('image worker runs the real policy fixture oracle over the verified sample 
   await withSample(async ({ root, indexPath, sourceDocument }) => {
     const result = JSON.parse(await runFixtureWorker(root, indexPath, sourceDocument));
     assert.equal(result.version, 1);
-    assert.equal(result.fixtureResults.length, 4);
-    assert.deepEqual(result.fixtureResults.map(row => row.observed), ['pass', 'pass', 'fail', 'fail']);
+    assert.equal(result.fixtureResults.length, 10);
+    assert.deepEqual(result.fixtureResults.map(row => row.observed),
+      ['pass', 'pass', 'fail', 'fail', 'pass', 'fail', 'pass', 'fail', 'pass', 'fail']);
   });
 });
 
@@ -53,7 +54,7 @@ test('image worker accepts post-materialization canonical digest with original r
     index.files.find(file => file.document === canonical.document).digest = snapshotDigest;
     await writeIndex();
     const result = JSON.parse(await runFixtureWorker(root, indexPath, sourceDocument));
-    assert.equal(result.fixtureResults.length, 4);
+    assert.equal(result.fixtureResults.length, 10);
     assert.equal(canonical.revisionId, originalRevisionId);
   });
 });

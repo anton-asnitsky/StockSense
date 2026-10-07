@@ -25,14 +25,28 @@ positive and negative examples. It is regenerated from the governed profile
 candidates with `node tools/contracts/scripts/build-messaging-fixtures.mjs`.
 The fixture oracle checks the exact schema revision, stable finding code, rule,
 and element; it does not assert that a messaging runtime has passed conformance.
+`fixtures/web-bff/v1/example-fixture.json` contains six C18 request-body
+examples bound to the OpenAPI document revision. The thin sample builder copies
+them into its governed fixture sidecar and refuses a stale revision.
+`fixtures/common/v1/example-fixture.json` carries the C01 package-manifest
+examples. Every canonical document a fixture can be bound to needs its own
+positive and negative example, and the package meta-schema is one of them: a
+manifest is a payload for it.
 
 `samples/messaging-profiles/` is a separate C01/C22/C23 **candidate** built with
 `node tools/contracts/scripts/create-messaging-sample.mjs`. Its six canonical
 documents bind to one Git source revision, and the pinned isolated validators
-check the AsyncAPI route, five schemas and eight exact fixtures. Its generation
+check the AsyncAPI route, five schemas and ten exact fixtures. Its generation
 profile explicitly records that consumer generation is unverified. The package
 does not claim C02-C21/C24-C27 coverage, runtime messaging conformance, or
 release readiness.
+
+Building it runs in two passes, because a sidecar's bytes are what the stamp is
+resolved from: `--rewrite-sidecars` writes the bound sidecars and stops, you
+commit them, and the default run then resolves the revision, refuses to stamp
+while any bound path is uncommitted, and proves every binding against the blobs
+at that commit. A generation profile records the revision inside its own bytes,
+so it is stamped but never blob-bound - there is no fixpoint to bind it to.
 
 `samples/walking-skeleton/` is a **thin candidate package**, not a release
 artifact. It covers C01 and C18 - two boundaries of twenty-seven. The governance CLI checks its path inventory,
@@ -41,8 +55,10 @@ package policy, the example-fixture oracle, and the canonical documents
 actually present. The sample exercises JSON Schema validation and, through C18, the pinned
 OpenAPI validator. Its declared consumer regenerates reproducibly with drift
 detection. It does not prove AsyncAPI validation, compatibility, release scans,
-SBOM, attestation or provider conformance evidence, and no fixture yet targets
-C18, so none of C18 behaviour beyond syntax is exercised. The CLI reports
+SBOM, attestation or provider conformance evidence. Six revision-bound C18
+request-body fixtures now check manual review, reconciliation and assistant-turn
+shapes with exact positive and negative outcomes. They do not establish C18
+CSRF, idempotency, dashboard, SSE, audit or runtime behavior. The CLI reports
 `validationLevel: candidate-canonical-and-fixture-validation` and
 `releaseReady: false`.
 Never publish or consume this sample as a release package.
@@ -55,6 +71,18 @@ the CLI with `--repo-root <path>` and every shipped canonical document - OpenAPI
 and schemas alike - is compared against the blob at the recorded revision; drifted bytes are rejected
 with `SOURCE_REVISION_MISMATCH`. Without `--repo-root` the result reports
 `sourceBinding: unverified-no-repository`.
+
+The governed sidecars are bound the same way, by their path inside the
+repository, so a fixture sidecar cannot drift from the commit it claims. A
+package validated from outside the repository - a temporary copy, say - cannot
+have those paths, and the result then reports
+`sourceBinding: verified-canonical-package-outside-repository`: the canonical
+documents were still proven, the sidecars were not, and neither fact is
+overstated. Three provenance failures are reported apart, because they call for
+different actions: `SOURCE_REVISION_MISMATCH` means the shipped bytes drifted,
+`SOURCE_PATH_ABSENT` means the recorded commit does not contain a path the
+package ships, `SOURCE_REVISION_UNKNOWN` means the commit is not in this
+repository at all, and only `GIT_UNAVAILABLE` means the toolchain failed.
 
 After editing a canonical C01 source, commit it, then run
 `node tools/contracts/scripts/create-sample.mjs` from the repository root to

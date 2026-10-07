@@ -164,15 +164,55 @@ test('negative fixture accepts only its declared code, rule, revision and elemen
   const contract = entry('schema', 'schema.json', { boundaryIds: ['C01'] });
   const fixture = { scenarioType: 'invalid', expectedOutcome: 'fail', schemaRevisionId: contract.revisionId,
     boundaryIds: ['C01'], contractElementId: 'MessageEnvelope', expectedFailureCode: 'SCHEMA_REQUIRED',
-    expectedFailureRuleId: 'BR2.4' };
+    expectedFailureRuleId: 'BR2.4', expectedFailurePath: '/retailerId' };
   const finding = { findingCode: 'SCHEMA_REQUIRED', ruleId: 'BR2.4', revisionId: contract.revisionId,
-    contractElementId: 'MessageEnvelope' };
+    contractElementId: 'MessageEnvelope', instancePath: '/retailerId' };
   assert.equal(assertFixtureOracle(fixture, [finding], [contract]), true);
   expectCode(() => assertFixtureOracle({ ...fixture, expectedFailureRuleId: undefined }, [finding], [contract]),
     'FIXTURE_ORACLE_MISSING');
   for (const wrong of [
     { findingCode: 'SCHEMA_TYPE' }, { ruleId: 'BR1.3' },
-    { revisionId: 'sha256:' + 'b'.repeat(64) }, { contractElementId: 'OtherElement' }
+    { revisionId: 'sha256:' + 'b'.repeat(64) }, { contractElementId: 'OtherElement' },
+    { instancePath: '/messageId' }
   ]) expectCode(() => assertFixtureOracle(fixture, [{ ...finding, ...wrong }], [contract]), 'FIXTURE_ORACLE_MISMATCH');
   expectCode(() => assertFixtureOracle(fixture, [], [contract]), 'FIXTURE_ORACLE_MISMATCH');
+  expectCode(() => assertFixtureOracle(fixture, [finding, { ...finding, instancePath: '/messageId' }], [contract]),
+    'FIXTURE_ORACLE_MISMATCH');
+  expectCode(() => assertFixtureOracle({ ...fixture, expectedFailurePath: undefined }, [finding], [contract]),
+    'FIXTURE_ORACLE_MISSING');
+});
+
+test('a negative fixture may declare a composite failure as an exact finding set', () => {
+  // Requiring exactly one observed finding made composite keywords such as
+  // oneOf inexpressible rather than merely strict: ajv reports several errors
+  // for one violation. The invariant that matters is set equality - every
+  // declared finding observed and no undeclared finding observed.
+  const contract = entry('schema', 'schema.json', { boundaryIds: ['C01'] });
+  const base = { scenarioType: 'invalid', expectedOutcome: 'fail', schemaRevisionId: contract.revisionId,
+    boundaryIds: ['C01'], contractElementId: 'MessageEnvelope' };
+  const finding = (findingCode, instancePath) => ({ findingCode, ruleId: 'BR2.4',
+    revisionId: contract.revisionId, contractElementId: 'MessageEnvelope', instancePath });
+  const fixture = { ...base, expectedFailures: [
+    { code: 'SCHEMA_REQUIRED', ruleId: 'BR2.4', path: '/a' },
+    { code: 'SCHEMA_REQUIRED', ruleId: 'BR2.4', path: '/b' },
+    { code: 'SCHEMA_ONE_OF', ruleId: 'BR2.4', path: '' }
+  ] };
+  const observed = [finding('SCHEMA_REQUIRED', '/a'), finding('SCHEMA_REQUIRED', '/b'), finding('SCHEMA_ONE_OF', '')];
+  assert.equal(assertFixtureOracle(fixture, observed, [contract]), true);
+  // An undeclared extra finding is still a mismatch, and so is a missing one.
+  expectCode(() => assertFixtureOracle(fixture, [...observed, finding('SCHEMA_TYPE', '/c')], [contract]),
+    'FIXTURE_ORACLE_MISMATCH');
+  expectCode(() => assertFixtureOracle(fixture, observed.slice(0, 2), [contract]), 'FIXTURE_ORACLE_MISMATCH');
+  // The two declaration forms are alternatives, not a pair to be mixed.
+  expectCode(() => assertFixtureOracle({ ...fixture, expectedFailureCode: 'SCHEMA_REQUIRED' }, observed, [contract]),
+    'FIXTURE_ORACLE_MISSING');
+  expectCode(() => assertFixtureOracle({ ...base, expectedFailures: [] }, [], [contract]), 'FIXTURE_ORACLE_MISSING');
+  expectCode(() => assertFixtureOracle({ ...base, expectedFailures: [
+    { code: 'SCHEMA_REQUIRED', ruleId: 'BR2.4', path: '/a' },
+    { code: 'SCHEMA_REQUIRED', ruleId: 'BR2.4', path: '/a' }
+  ] }, [finding('SCHEMA_REQUIRED', '/a')], [contract]), 'FIXTURE_ORACLE_MISSING');
+  // A positive fixture may not carry the set form either.
+  expectCode(() => assertFixtureOracle({ ...base, scenarioType: 'valid', expectedOutcome: 'pass',
+    expectedFailures: [{ code: 'SCHEMA_REQUIRED', ruleId: 'BR2.4', path: '/a' }] }, [], [contract]),
+  'FIXTURE_UNEXPECTED_FAILURE');
 });

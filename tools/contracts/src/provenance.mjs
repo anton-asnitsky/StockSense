@@ -21,13 +21,23 @@ function gitText(repoRoot, args) {
 }
 
 /**
+ * A governance tool must not report a false provenance claim with the same code
+ * as a broken toolchain: the first blames the package, the second blames the
+ * environment, and only the operator can act on the difference. So a failure to
+ * run Git stays GIT_UNAVAILABLE, while Git running and reporting that the path
+ * is not in the recorded commit is a binding failure in its own right.
  * @param {string} repoRoot
- * @param {string[]} args
+ * @param {string} revision
+ * @param {string} sourcePath
  * @returns {Buffer}
  */
-function gitBytes(repoRoot, args) {
-  const result = spawnSync('git', args, { ...GIT_OPTIONS, cwd: repoRoot });
-  if (gitFailed(result)) fail('GIT_UNAVAILABLE', 'BR1.7', 'Git provenance could not be read for the contract sources');
+function readBlob(repoRoot, revision, sourcePath) {
+  const result = spawnSync('git', ['show', `${revision}:${sourcePath}`], { ...GIT_OPTIONS, cwd: repoRoot });
+  if (result.error) fail('GIT_UNAVAILABLE', 'BR1.7', 'Git provenance could not be read for the contract sources');
+  if (result.status !== 0) {
+    fail('SOURCE_PATH_ABSENT', 'BR1.7',
+      `The recorded revision does not contain ${sourcePath}, so it cannot describe the bytes being packaged`);
+  }
   return result.stdout;
 }
 
@@ -63,9 +73,17 @@ export function verifySourceBinding(repoRoot, revision, bindings) {
   if (!COMMIT.test(String(revision))) {
     fail('SOURCE_REVISION_SHAPE', 'BR1.7', 'A package must record a full 40-character commit');
   }
+  // Resolve the commit once, so a revision this repository does not contain is
+  // reported as such rather than as a missing path for every binding after it.
+  const resolved = spawnSync('git', ['rev-parse', '--verify', '--quiet', `${revision}^{commit}`],
+    { ...GIT_OPTIONS, cwd: repoRoot, encoding: 'utf8' });
+  if (resolved.error) fail('GIT_UNAVAILABLE', 'BR1.7', 'Git provenance could not be read for the contract sources');
+  if (resolved.status !== 0) {
+    fail('SOURCE_REVISION_UNKNOWN', 'BR1.7', 'The recorded revision names no commit in this repository');
+  }
   const verified = [];
   for (const { sourcePath, contentDigest } of bindings) {
-    const blob = gitBytes(repoRoot, ['show', `${revision}:${sourcePath}`]);
+    const blob = readBlob(repoRoot, revision, sourcePath);
     const actual = digest(Buffer.from(blob));
     if (actual !== contentDigest) {
       fail('SOURCE_REVISION_MISMATCH', 'BR1.7',

@@ -1,6 +1,6 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, isAbsolute, join, relative } from 'node:path';
 import { loadPackage, ContractError, digest } from './package-loader.mjs';
 import { enforcePackageBudget, inspectContent, LIMITS } from './preflight.mjs';
 import { validateCanonical } from './validators.mjs';
@@ -58,6 +58,34 @@ export async function readOfflineSchemaRegistry(graphRoot, entries, snapshotDige
   return schemas;
 }
 
+// A generation profile records the source revision inside its own bytes, so
+// binding it to that revision has no fixpoint: stamping changes the bytes,
+// which changes the commit, which changes the stamp. It stays stamped-but-
+// unbound, and the result says so rather than implying it was verified.
+const REVISION_BEARING_SIDECARS = Object.freeze(['generation-profile']);
+
+/**
+ * Bind a package's governed sidecars to the exact repository blobs it ships.
+ *
+ * Returns null when the package under validation does not live inside the
+ * declared repository - a temporary copy, for instance. That is not a
+ * provenance violation and must not be reported as one. Throwing here
+ * pre-empted every genuine verdict, the canonical-document tamper check
+ * included, because the throw happened while the binding list was still being
+ * built; the caller now reports the unbound state instead of claiming a
+ * verification it did not perform.
+ */
+export function governedSidecarSourceBindings(repoRoot, packageRoot, entries) {
+  const packagePath = relative(repoRoot, packageRoot).replaceAll('\\', '/');
+  if (!packagePath || packagePath === '..' || packagePath.startsWith('../') ||
+      isAbsolute(packagePath)) {
+    return null;
+  }
+  return entries
+    .filter(entry => entry.artifactKind === 'sidecar' && !REVISION_BEARING_SIDECARS.includes(entry.kind))
+    .map(entry => ({ sourcePath: `${packagePath}/${entry.document}`, contentDigest: entry.contentDigest }));
+}
+
 /**
  * @param {string} root package root
  * @param {{ repoRoot?: string, standardsImage?: string }} [options] when the package sits inside its own
@@ -86,6 +114,8 @@ export async function validateCandidate(root, { repoRoot, standardsImage } = {})
   try { policy = JSON.parse(await readFile(join(root, policyEntry.document), 'utf8')); }
   catch { throw new ContractError('POLICY_PARSE', 'BR1.4', 'Contract package policy is malformed'); }
   const declaredPolicy = assertDeclaredPolicy(policy, loaded);
+  const fixtureEntry = loaded.entries.find(item => item.kind === 'example-fixture');
+  if (!fixtureEntry) throw new ContractError('FIXTURES_MISSING', 'BR2.7', 'A candidate package requires example fixtures');
   const validatedCanonical = [];
   let fixtureResults;
   const graphRoot = await mkdtemp(join(tmpdir(), 'stocksense-verified-graph-'));
@@ -112,8 +142,6 @@ export async function validateCandidate(root, { repoRoot, standardsImage } = {})
             { graphRoot, files, image: standardsImage }) });
       validatedCanonical.push({ document: entry.document, dialect: result.dialect, revisionId: result.revisionId });
     }
-    const fixtureEntry = loaded.entries.find(item => item.kind === 'example-fixture');
-    if (!fixtureEntry) throw new ContractError('FIXTURES_MISSING', 'BR2.7', 'A candidate package requires example fixtures');
     const snapshotEntries = loaded.entries.map(entry =>
       ({ ...entry, contentDigest: snapshotDigests.get(entry.document) }));
     const fixtureRun = await runContainerStandardsValidator('fixture-oracle:2020-12', fixtureEntry.document,
@@ -127,11 +155,18 @@ export async function validateCandidate(root, { repoRoot, standardsImage } = {})
   if (repoRoot) {
     // Every canonical document, not just the schemas. BR1.1 requires a
     // source-revision mismatch on any declared artifact to fail, so narrowing
-    // this to one kind would leave the others unbound.
+    // this to one kind would leave the others unbound. These are verified
+    // first, so a drifted canonical document reports its own provenance
+    // verdict and is never pre-empted by a sidecar path question.
     verifySourceBinding(repoRoot, loaded.manifest.sourceRevision, loaded.entries
       .filter(entry => ['openapi', 'asyncapi', 'schema'].includes(entry.artifactKind))
       .map(entry => ({ sourcePath: 'contracts/source/' + entry.document, contentDigest: entry.contentDigest })));
-    sourceBinding = 'verified';
+    const sidecarBindings = governedSidecarSourceBindings(repoRoot, root, loaded.entries);
+    if (sidecarBindings === null) sourceBinding = 'verified-canonical-package-outside-repository';
+    else {
+      verifySourceBinding(repoRoot, loaded.manifest.sourceRevision, sidecarBindings);
+      sourceBinding = 'verified';
+    }
   }
   return {
     sourceBinding,
@@ -145,6 +180,10 @@ export async function validateCandidate(root, { repoRoot, standardsImage } = {})
     fixtureResults,
     releaseReady: false,
     validationLevel: 'candidate-canonical-and-fixture-validation',
-    limitations: ['Compatibility, release scans, SBOM, attestation and provider conformance have not run. Consumer-local generation is verified separately against the generation profile, not by this command.']
+    limitations: [
+      'Compatibility, release scans, SBOM, attestation and provider conformance have not run. Consumer-local generation is verified separately against the generation profile, not by this command.',
+      'AsyncAPI documents carry no payload fixtures: the fixture oracle has no extractor for them, so a covered AsyncAPI document is validated as a document only and its message payloads are unexercised.',
+      'A generation-profile sidecar records the source revision in its own bytes, so it is stamped but not blob-bound to that revision.'
+    ]
   };
 }
