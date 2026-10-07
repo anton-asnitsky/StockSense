@@ -248,7 +248,7 @@ async function snapshotGraph(graphRoot, files, sourceDocument) {
  * so no declared schema can be silently omitted from the shared Ajv registry.
  * @param {'openapi:3.1.2'|'asyncapi:3.0.0'|'https://json-schema.org/draft/2020-12/schema'|'asyncapi-payloads:2020-12'|'fixture-oracle:2020-12'} dialect
  * @param {string} sourceDocument safe graph-relative path
- * @param {{graphRoot?:string, files?:Array<{document:string,digest:string,artifactKind?:string}>, image?:string, entries?:Array<any>, spawn?:typeof spawnSync}} [options]
+ * @param {{graphRoot?:string, files?:Array<{document:string,digest:string,artifactKind?:string,jsonSchema?:boolean}>, image?:string, entries?:Array<any>, spawn?:typeof spawnSync}} [options]
  */
 export async function runContainerStandardsValidator(dialect, sourceDocument, options = {}) {
   if (!options || typeof options !== 'object' || Array.isArray(options)) {

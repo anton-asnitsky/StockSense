@@ -6,6 +6,11 @@ import { LIMITS } from './preflight.mjs';
 
 const packageRoot = fileURLToPath(new URL('../', import.meta.url));
 const openapiTypescriptBin = resolve(packageRoot, 'node_modules/openapi-typescript/bin/cli.js');
+// Kiota is a .NET local tool, not a Node CLI. Resolve the host the same way the
+// standards runner resolves Docker: an absolute path, not a PATH search, so an
+// untrusted checkout cannot put its own `dotnet` ahead of the real one.
+export const DOTNET_HOST = process.env.STOCKSENSE_DOTNET_PATH ?? (process.platform === 'win32'
+  ? 'C:\\Program Files\\dotnet\\dotnet.exe' : '/usr/bin/dotnet');
 
 /**
  * Pinned generator invocations. A consumer names one of these; the arguments
@@ -18,6 +23,26 @@ export const GENERATORS = Object.freeze({
     bin: openapiTypescriptBin,
     /** @param {string} sourcePath @param {string} outputPath */
     args: (sourcePath, outputPath) => [sourcePath, '--output', outputPath]
+  }),
+  // The approved .NET generator. It runs through the dotnet host from the
+  // repository root, because `dotnet tool run` resolves the pinned version
+  // from `.config/dotnet-tools.json` by walking up from its working
+  // directory; it still writes only into the disposable workspace that
+  // --output names. Class and namespace are fixed here with every other
+  // argument, so a consumer profile cannot steer the generated surface.
+  kiota: Object.freeze({
+    version: '1.35.0',
+    command: DOTNET_HOST,
+    cwd: 'repository',
+    /** @param {string} sourcePath @param {string} outputPath */
+    // --log-level None suppresses the .kiota.log diagnostic file. It is not
+    // part of the generated client, and a dot-prefixed, non-declarative file
+    // is refused by the generated-output policy - correctly, since that policy
+    // exists to stop a generator writing anything but reviewable client code.
+    args: (sourcePath, outputPath) => ['tool', 'run', 'kiota', '--', 'generate',
+      '--openapi', sourcePath, '--language', 'CSharp', '--output', outputPath,
+      '--class-name', 'BrowserApiClient', '--namespace-name', 'StockSense.WebBff',
+      '--clean-output', '--log-level', 'None']
   })
 });
 
@@ -58,9 +83,17 @@ export function createPinnedGeneratorRunner(repoRoot) {
         `Consumer ${consumer.consumerId} declares a configuration digest that does not match the pinned invocation`);
     }
     const sourcePath = resolve(repoRoot, 'contracts/source', consumer.sourceDocument);
-    const result = spawnSync(process.execPath, [generator.bin, ...generator.args(sourcePath, join(workspace, outputPath))], {
-      cwd: workspace, encoding: 'utf8', timeout: LIMITS.generatorMs, maxBuffer: 1024 * 1024,
-      env: { ...process.env, NO_UPDATE_NOTIFIER: '1' }
+    const target = join(workspace, outputPath);
+    // A Node generator is spawned through this process's own runtime; a .NET
+    // one through its resolved host. Either way the argument vector comes from
+    // the registry above, never from the consumer profile.
+    const file = generator.command ?? process.execPath;
+    const argv = generator.command ? generator.args(sourcePath, target)
+      : [generator.bin, ...generator.args(sourcePath, target)];
+    const result = spawnSync(file, argv, {
+      cwd: generator.cwd === 'repository' ? repoRoot : workspace,
+      encoding: 'utf8', timeout: LIMITS.generatorMs, maxBuffer: 1024 * 1024,
+      env: { ...process.env, NO_UPDATE_NOTIFIER: '1', DOTNET_CLI_TELEMETRY_OPTOUT: '1' }
     });
     if (result.error || result.status !== 0) {
       throw new ContractError('GENERATION_FAILED', 'BR3.1',

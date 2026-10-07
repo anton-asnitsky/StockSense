@@ -1,15 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import YAML from 'yaml';
 import { ALL_BOUNDARIES, CANONICAL_KINDS, FIXED_PATHS, digest } from '../../src/package-loader.mjs';
 import { LIMITS, inspectContent } from '../../src/preflight.mjs';
 import { preflightCanonicalReferences } from '../../src/reference-preflight.mjs';
-import { DIALECTS, detectDialect } from '../../src/validators.mjs';
+import { DIALECTS, detectDialect, validateCanonical } from '../../src/validators.mjs';
+import { buildSourceInventory } from '../../src/catalogue.mjs';
+import { isJsonSchemaDialect, materializeOfflineReferences, readOfflineSchemaRegistry } from '../../src/validate.mjs';
+import { runContainerStandardsValidator } from '../../src/container-standards-runner.mjs';
 
 const repository = resolve(import.meta.dirname, '../../../..');
 const sourceRoot = join(repository, 'contracts/source');
@@ -180,7 +183,85 @@ test('full C01-C27 catalogue resource acceptance awaits real required canonical 
   const missing = ALL_BOUNDARIES.filter(id => Object.entries(CANONICAL_KINDS).some(([kind, ids]) =>
     ids.split(' ').includes(id) && !sourcesByBoundary[id].some(path => kindOf(path) === kind)));
   assert.deepEqual(missing, [], 'canonical kind inventory must stay complete');
-  // Kind inventory alone cannot establish BR1.3 validation, revision-bound
-  // fixtures, sidecars, or a full-catalogue supervised resource measurement.
-  t.todo('full-catalogue package validation and process-RSS measurement remain required');
+  // Kind inventory alone cannot establish revision-bound fixtures or sidecars
+  // for all 27 boundaries; the measurement below is the part now covered.
+  t.todo('revision-bound fixtures and sidecars for all 27 boundaries remain required');
+});
+
+test('every canonical source in the catalogue validates within the retained resource bounds', async t => {
+  if (!process.env.STOCKSENSE_STANDARDS_IMAGE) {
+    t.skip('exact local standards image ID required for isolated integration validation');
+    return;
+  }
+  // The whole catalogue through the real pinned validators, which is what
+  // Step 10's cap proof and Step 13's supervised measurement both ask for.
+  // Running it this way found two defects no sample package can reach: a
+  // closed dialect in the shared Ajv registry, and one source that did not
+  // compile under strict mode - either of which failed every schema in the
+  // package rather than only its own document.
+  const inventory = await buildSourceInventory(repository);
+  const entries = inventory.entries.map(entry => ({ ...entry }));
+  assert.equal(entries.length, 38);
+  const policy = JSON.parse(await readFile(
+    join(repository, 'contracts/samples/walking-skeleton/governance/contract-package-policy.json'), 'utf8'));
+
+  const graphRoot = await realpath(await mkdtemp(join(tmpdir(), 'stocksense-verified-graph-')));
+  try {
+    const offlineReferences = [];
+    const references = await preflightCanonicalReferences(sourceRoot, entries, { offlineReferences });
+    assert.ok(references <= LIMITS.references, `${references} references exceeds ${LIMITS.references}`);
+
+    const snapshotDigests = new Map();
+    const jsonSchemaDocuments = new Set();
+    for (const entry of entries) {
+      const bytes = await readFile(join(sourceRoot, entry.document));
+      const target = join(graphRoot, entry.document);
+      await mkdir(dirname(target), { recursive: true });
+      const snapshot = materializeOfflineReferences(bytes, entry.document, offlineReferences);
+      await writeFile(target, snapshot);
+      snapshotDigests.set(entry.document, digest(snapshot));
+      if (entry.artifactKind === 'schema' && isJsonSchemaDialect(snapshot, entry.document)) {
+        jsonSchemaDocuments.add(entry.document);
+      }
+    }
+    await readOfflineSchemaRegistry(graphRoot, entries, snapshotDigests);
+    // The three closed dialects are schema-kind entries that are not JSON
+    // Schema, so the registry must be smaller than the declared schema set.
+    const declaredSchemas = entries.filter(entry => entry.artifactKind === 'schema').length;
+    assert.equal(declaredSchemas - jsonSchemaDocuments.size, 3);
+
+    const files = entries.map(entry => ({ document: entry.document,
+      digest: snapshotDigests.get(entry.document), artifactKind: entry.artifactKind,
+      ...(entry.artifactKind === 'schema' ? { jsonSchema: jsonSchemaDocuments.has(entry.document) } : {}) }));
+
+    const dialects = new Map();
+    let slowestMs = 0;
+    for (const entry of entries) {
+      const started = performance.now();
+      const result = await validateCanonical(entry, join(graphRoot, entry.document), { policy,
+        runTool: dialect => runContainerStandardsValidator(dialect, entry.document,
+          { graphRoot, files, image: process.env.STOCKSENSE_STANDARDS_IMAGE }) });
+      const elapsedMs = performance.now() - started;
+      slowestMs = Math.max(slowestMs, elapsedMs);
+      // Each document must stay inside the per-validator bound on its own.
+      assert.ok(elapsedMs <= LIMITS.validatorMs, `${entry.document} took ${elapsedMs.toFixed(0)} ms`);
+      dialects.set(result.dialect, (dialects.get(result.dialect) ?? 0) + 1);
+    }
+    const peakRssBytes = process.resourceUsage().maxRSS * 1024;
+    t.diagnostic(`catalogue: ${entries.length} sources, ${references} references, ` +
+      `slowest ${slowestMs.toFixed(0)} ms, peak RSS ${peakRssBytes} bytes`);
+    assert.ok(peakRssBytes > 0 && peakRssBytes <= LIMITS.processBytes);
+    // Every dialect the catalogue declares is actually exercised, so a silent
+    // drop to one validator cannot pass this test.
+    assert.deepEqual(Object.fromEntries([...dialects].sort()), {
+      'asyncapi:3.0.0': 6,
+      'governed-record:1': 1,
+      'https://json-schema.org/draft/2020-12/schema': 12,
+      'in-process-port:1': 1,
+      'openapi:3.1.2': 17,
+      'typed-port:1': 1
+    });
+  } finally {
+    await rm(graphRoot, { recursive: true, force: true });
+  }
 });

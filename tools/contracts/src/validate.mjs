@@ -45,7 +45,7 @@ export function materializeOfflineReferences(bytes, document, references) {
  * document. No sample package contains a typed port, so only a full C01-C27
  * catalogue reaches this.
  */
-function isJsonSchemaDialect(bytes, document) {
+export function isJsonSchemaDialect(bytes, document) {
   try {
     const source = document.endsWith('.json') ? JSON.parse(bytes.toString('utf8')) :
       YAML.parse(bytes.toString('utf8'), { strict: true, uniqueKeys: true });
