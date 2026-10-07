@@ -22,8 +22,11 @@ test('C01/C22/C23 messaging candidate validates with committed sources and exact
   assert.deepEqual(body.candidateScope, ['C01', 'C22', 'C23']);
   assert.equal(body.uncoveredBoundaries.length, 24);
   assert.equal(body.validatedCanonical.length, 6);
+  // Four C01 envelope examples, the C01 package-manifest pair, and the four
+  // C22/C23 profile examples: every bindable canonical document in this
+  // candidate carries its own positive and negative case.
   assert.deepEqual(body.fixtureResults.map(item => item.observed),
-    ['pass', 'pass', 'fail', 'fail', 'pass', 'fail', 'pass', 'fail']);
+    ['pass', 'pass', 'fail', 'fail', 'pass', 'fail', 'pass', 'fail', 'pass', 'fail']);
   assert.equal(body.releaseReady, false);
   assert.equal(body.validationLevel, 'candidate-canonical-and-fixture-validation');
 });

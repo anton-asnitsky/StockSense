@@ -182,7 +182,7 @@ export async function validateCandidate(root, { repoRoot, standardsImage } = {})
     validationLevel: 'candidate-canonical-and-fixture-validation',
     limitations: [
       'Compatibility, release scans, SBOM, attestation and provider conformance have not run. Consumer-local generation is verified separately against the generation profile, not by this command.',
-      'AsyncAPI documents carry no payload fixtures: the fixture oracle has no extractor for them, so a covered AsyncAPI document is validated as a document only and its message payloads are unexercised.',
+      'AsyncAPI documents and the closed non-payload schema dialects carry no payload fixtures: the fixture oracle has no extractor for them, so such a document is validated as a document only and its payloads are unexercised. A boundary whose canonical documents are all of those kinds therefore carries no fixture evidence at all, and this result does not name which boundaries those are.',
       'A generation-profile sidecar records the source revision in its own bytes, so it is stamped but not blob-bound to that revision.'
     ]
   };

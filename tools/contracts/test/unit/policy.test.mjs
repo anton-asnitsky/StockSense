@@ -378,13 +378,53 @@ test('BR2.7: an AsyncAPI document is exempt from the fixture pair but cannot car
   }, async (root, loaded) => {
     assert.deepEqual((await runFixtureOracle(root, loaded)).map(row => row.observed), ['pass', 'fail']);
   });
-  // With nothing bindable under the boundary the pair rule would hold
-  // vacuously, which is the claim-with-zero-fixtures hole itself.
+  // A boundary with nothing bindable under it is exempt, because the kinds
+  // decide that and the package cannot. C08, C25 and C27 require only such
+  // artifacts, so refusing here made them unpackageable.
+  await withOracleFiles({
+    'transport.asyncapi.yaml': { content: asyncapi, kind: 'asyncapi', boundaryIds: ['C25'] },
+    'other.schema.json': { content: profile, boundaryIds: ['C01'] },
+    'fixtures.json': { kind: 'example-fixture', boundaryIds: ['C25'], content: fixtureSidecar([
+      { ...validFixture('Profile'), boundaryIds: ['C01'] }
+    ]) }
+  }, async (root, loaded) => {
+    assert.deepEqual((await runFixtureOracle(root, loaded)).map(row => row.observed), ['pass']);
+  });
+  // The exemption must not leak to a boundary that does have a bindable
+  // document: one such document and the pair rule still applies to it.
   await withOracleFiles({
     'transport.asyncapi.yaml': { content: asyncapi, kind: 'asyncapi', boundaryIds: ['C23'] },
-    'other.schema.json': { content: profile, boundaryIds: ['C01'] },
+    'profile.schema.json': { content: profile, boundaryIds: ['C23'] },
     'fixtures.json': { kind: 'example-fixture', boundaryIds: ['C23'], content: fixtureSidecar([
-      { ...validFixture('Profile'), boundaryIds: ['C01'] }
+      { ...validFixture('Profile'), boundaryIds: ['C23'] }
+    ]) }
+  }, async (root, loaded) => {
+    await assert.rejects(runFixtureOracle(root, loaded),
+      error => error.code === 'FIXTURE_COVERAGE' && error.ruleId === 'BR2.7');
+  });
+});
+
+test('BR2.7: a boundary of closed non-payload dialects is exempt, but a bindable sibling is not', async () => {
+  // A typed-port schema never enters the element map, so it cannot carry a
+  // fixture; C08 requires only such a schema.
+  const port = await readFile(new URL('../../../../contracts/source/model-lifecycle/v1/finalize-heavy-work.shared-schema.yaml',
+    import.meta.url), 'utf8');
+  const payload = schemaDocument('PortPayload', { type: 'object', required: ['value'],
+    properties: { value: { type: 'string' } } });
+  await withOracleFiles({
+    'model-lifecycle/v1/finalize-heavy-work.shared-schema.yaml': { content: port, boundaryIds: ['C07'] },
+    'fixtures.json': { kind: 'example-fixture', boundaryIds: ['C07'], content: fixtureSidecar([
+      { ...validFixture('PortPayload'), boundaryIds: ['C01'] }
+    ]), },
+    'payload.schema.json': { content: payload, boundaryIds: ['C01'] }
+  }, async (root, loaded) => {
+    assert.deepEqual((await runFixtureOracle(root, loaded)).map(row => row.observed), ['pass']);
+  });
+  await withOracleFiles({
+    'model-lifecycle/v1/finalize-heavy-work.shared-schema.yaml': { content: port, boundaryIds: ['C07'] },
+    'payload.schema.json': { content: payload, boundaryIds: ['C07'] },
+    'fixtures.json': { kind: 'example-fixture', boundaryIds: ['C07'], content: fixtureSidecar([
+      { ...validFixture('PortPayload'), boundaryIds: ['C07'] }
     ]) }
   }, async (root, loaded) => {
     await assert.rejects(runFixtureOracle(root, loaded),
@@ -432,13 +472,50 @@ test('BR2.4: every property-scoped keyword reports its own exact location', () =
     ['SCHEMA_DEPENDENT_REQUIRED', 'SCHEMA_UNEVALUATED_PROPERTIES', 'SCHEMA_PROPERTY_NAMES', 'SCHEMA_REQUIRED']);
 });
 
+test('BR2.3: two dependency rules demanding the same property stay distinct findings', async () => {
+  // The location can only name the dependent, so without the trigger these two
+  // rules produce byte-identical findings and the oracle's finding set
+  // collapses them into one, letting an undeclared violation escape.
+  const schema = schemaDocument('Shipment', { type: 'object',
+    dependentRequired: { card: ['token'], shipping: ['token'] } });
+  const oracle = (trigger, payload) => ({ fixtureId: 'dependent-' + trigger, contractElementId: 'Shipment',
+    boundaryIds: ['C01'], scenarioType: 'invalid', expectedOutcome: 'fail',
+    expectedFailureCode: 'SCHEMA_DEPENDENT_REQUIRED', expectedFailureRuleId: 'BR2.4',
+    expectedFailurePath: '/token', expectedFailureTrigger: trigger, payload });
+  await withOracleFiles({
+    'shipment.schema.json': { content: schema },
+    'fixtures.json': { kind: 'example-fixture', content: fixtureSidecar([
+      { ...validFixture('Shipment'), payload: {} }, oracle('card', { card: '4111' })]) }
+  }, async (root, loaded) => {
+    assert.deepEqual((await runFixtureOracle(root, loaded)).map(row => row.observed), ['pass', 'fail']);
+  });
+  // Both rules fire, so one declared finding no longer covers the observed set.
+  await withOracleFiles({
+    'shipment.schema.json': { content: schema },
+    'fixtures.json': { kind: 'example-fixture', content: fixtureSidecar([
+      { ...validFixture('Shipment'), payload: {} }, oracle('card', { card: '4111', shipping: 'express' })]) }
+  }, async (root, loaded) => {
+    await assert.rejects(runFixtureOracle(root, loaded),
+      error => error.code === 'FIXTURE_ORACLE_MISMATCH' && error.ruleId === 'NFR8.13');
+  });
+  // Declaring the wrong trigger for the right location is still a mismatch.
+  await withOracleFiles({
+    'shipment.schema.json': { content: schema },
+    'fixtures.json': { kind: 'example-fixture', content: fixtureSidecar([
+      { ...validFixture('Shipment'), payload: {} }, oracle('shipping', { card: '4111' })]) }
+  }, async (root, loaded) => {
+    await assert.rejects(runFixtureOracle(root, loaded),
+      error => error.code === 'FIXTURE_ORACLE_MISMATCH' && error.ruleId === 'NFR8.13');
+  });
+});
+
 test('BR2.3: a dependentRequired negative fixture cannot pass for a different dependency rule', async () => {
   const schema = schemaDocument('Order', { type: 'object',
     dependentRequired: { card: ['cvv'], shipping: ['address'] } });
   const oracle = payload => ({ fixtureId: 'dependent-missing-cvv', contractElementId: 'Order',
     boundaryIds: ['C01'], scenarioType: 'invalid', expectedOutcome: 'fail',
     expectedFailureCode: 'SCHEMA_DEPENDENT_REQUIRED', expectedFailureRuleId: 'BR2.4',
-    expectedFailurePath: '/cvv', payload });
+    expectedFailurePath: '/cvv', expectedFailureTrigger: 'card', payload });
   const paired = payload => [{ ...validFixture('Order'), payload: {} }, oracle(payload)];
   await withOracleFiles({
     'order.schema.json': { content: schema },

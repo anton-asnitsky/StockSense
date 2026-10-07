@@ -308,21 +308,33 @@ const POINTER = /^\/(?:[^~]|~[01])*(?:\/(?:[^~]|~[01])*)*$/;
  * is set equality: every declared finding observed, and no undeclared finding
  * observed. The single-field form stays the one-element case of it.
  */
+const failureKey = (code, ruleId, path, trigger) =>
+  `${code}\u0000${ruleId}\u0000${path}\u0000${trigger ?? ''}`;
+
 function declaredFailures(fixture) {
-  const rows = Array.isArray(fixture.expectedFailures) ? fixture.expectedFailures :
-    [{ code: fixture.expectedFailureCode, ruleId: fixture.expectedFailureRuleId, path: fixture.expectedFailurePath }];
-  if (Array.isArray(fixture.expectedFailures) &&
-      (!rows.length || fixture.expectedFailureCode !== undefined ||
-       fixture.expectedFailureRuleId !== undefined || fixture.expectedFailurePath !== undefined)) {
+  const setForm = fixture.expectedFailures !== undefined;
+  // Gating the mixing guard on Array.isArray let a non-array expectedFailures
+  // fall through to the single-field branch and be silently discarded. Nothing
+  // else checks a fixture sidecar's shape, so the refusal has to be here.
+  if (setForm && !Array.isArray(fixture.expectedFailures)) {
+    fail('FIXTURE_ORACLE_MISSING', 'NFR8.13', 'expectedFailures must be an array of declared findings');
+  }
+  const rows = setForm ? fixture.expectedFailures :
+    [{ code: fixture.expectedFailureCode, ruleId: fixture.expectedFailureRuleId,
+      path: fixture.expectedFailurePath, trigger: fixture.expectedFailureTrigger }];
+  if (setForm && (!rows.length || fixture.expectedFailureCode !== undefined ||
+      fixture.expectedFailureRuleId !== undefined || fixture.expectedFailurePath !== undefined ||
+      fixture.expectedFailureTrigger !== undefined)) {
     fail('FIXTURE_ORACLE_MISSING', 'NFR8.13', 'Declare a negative oracle either as single fields or as expectedFailures, not both');
   }
   for (const row of rows) {
     if (!object(row) || !string(row.code) || !string(row.ruleId) || typeof row.path !== 'string' ||
-        (row.path !== '' && !POINTER.test(row.path))) {
+        (row.path !== '' && !POINTER.test(row.path)) ||
+        (row.trigger !== undefined && typeof row.trigger !== 'string')) {
       fail('FIXTURE_ORACLE_MISSING', 'NFR8.13', 'Negative fixture needs a code, rule and JSON-pointer failure path');
     }
   }
-  const keys = rows.map(row => `${row.code}\u0000${row.ruleId}\u0000${row.path}`);
+  const keys = rows.map(row => failureKey(row.code, row.ruleId, row.path, row.trigger));
   if (new Set(keys).size !== keys.length) {
     fail('FIXTURE_ORACLE_MISSING', 'NFR8.13', 'A negative fixture declares the same finding twice');
   }
@@ -351,7 +363,8 @@ export function assertFixtureOracle(fixture, findings, entries) {
   }
   if (fixture.expectedOutcome === 'pass') {
     if (fixture.expectedFailureCode !== undefined || fixture.expectedFailureRuleId !== undefined ||
-        fixture.expectedFailurePath !== undefined || fixture.expectedFailures !== undefined || findings.length) {
+        fixture.expectedFailurePath !== undefined || fixture.expectedFailureTrigger !== undefined ||
+        fixture.expectedFailures !== undefined || findings.length) {
       fail('FIXTURE_UNEXPECTED_FAILURE', 'BR2.3', 'Positive fixture has an oracle or observed finding');
     }
     return true;
@@ -364,7 +377,7 @@ export function assertFixtureOracle(fixture, findings, entries) {
     fail('FIXTURE_ORACLE_MISMATCH', 'NFR8.13', 'Findings must exactly match the declared code, rule, revision, element and location');
   }
   const observed = new Set(findings.map(finding =>
-    `${finding.findingCode}\u0000${finding.ruleId}\u0000${finding.instancePath}`));
+    failureKey(finding.findingCode, finding.ruleId, finding.instancePath, finding.dependencyTrigger)));
   if (observed.size !== declared.size || [...declared].some(key => !observed.has(key))) {
     fail('FIXTURE_ORACLE_MISMATCH', 'NFR8.13', 'Findings must exactly match the declared code, rule, revision, element and location');
   }

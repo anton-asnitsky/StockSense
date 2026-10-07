@@ -44,6 +44,20 @@ const findingPath = error => {
   return `${base}/${pointerPart(property)}`;
 };
 
+// A dependency violation is identified by two names, not one: the property
+// whose presence created the obligation and the dependent it requires. The
+// location can only carry the dependent, so two rules demanding the same
+// dependent - dependentRequired {a:['b'], x:['b']} - produced byte-identical
+// findings and the oracle's finding set collapsed them into one, letting an
+// undeclared violation escape. The trigger is therefore part of the identity.
+const TRIGGER_KEYWORDS = Object.freeze(['dependentRequired', 'dependencies']);
+const findingTrigger = error => {
+  if (!TRIGGER_KEYWORDS.includes(error?.keyword)) return undefined;
+  const trigger = error?.params?.property;
+  if (typeof trigger !== 'string') fail('FINDING_SHAPE', 'BR2.4', 'Validator dependency trigger is invalid');
+  return trigger;
+};
+
 const SIDECAR_MATRIX = Object.freeze({
   candidateEveryBoundary: ['example-fixture'],
   releaseEveryBoundary: ['example-fixture', 'compatibility-assessment', 'validation-run', 'evidence-record'],
@@ -60,13 +74,17 @@ function sameMembers(actual, expected) {
 /** Translate pinned-validator errors into revision-bound findings. */
 export function mapSchemaFindings(errors, { revisionId, contractElementId, ruleId = 'BR2.4' }) {
   if (!Array.isArray(errors)) fail('FINDING_SHAPE', 'BR2.4', 'Validator errors must be an array');
-  return errors.map(error => ({
-    findingCode: findingCode(error?.keyword),
-    ruleId,
-    revisionId,
-    contractElementId,
-    instancePath: findingPath(error)
-  }));
+  return errors.map(error => {
+    const trigger = findingTrigger(error);
+    return {
+      findingCode: findingCode(error?.keyword),
+      ruleId,
+      revisionId,
+      contractElementId,
+      instancePath: findingPath(error),
+      ...(trigger === undefined ? {} : { dependencyTrigger: trigger })
+    };
+  });
 }
 
 /**
@@ -264,13 +282,15 @@ export async function runFixtureOracle(root, loaded) {
       const canonical = loaded.entries.filter(item => ['schema', 'openapi', 'asyncapi'].includes(item.artifactKind) &&
         item.boundaryIds?.includes(boundaryId));
       if (!canonical.length) fail('FIXTURE_COVERAGE', 'BR2.7', 'A claimed fixture boundary has no canonical revision');
+      // A boundary all of whose canonical documents are of a kind this oracle
+      // provably cannot bind - an AsyncAPI document, or a schema in one of the
+      // closed non-payload dialects - carries no fixture evidence and is
+      // exempt from the pair rule. The exemption is derived from the artifact
+      // kinds, never declared by the package, so it cannot be used to dodge a
+      // document that *is* bindable: one bindable document under the boundary
+      // and the pair rule applies to it. C08, C25 and C27 require only such
+      // artifacts, so refusing here made them unpackageable.
       const bindable = canonical.filter(item => fixtureBindable(item, schemas));
-      // A boundary every one of whose canonical documents is unbindable would
-      // satisfy a pair rule vacuously, which is the claim-with-zero-fixtures
-      // hole this check exists to close. Refuse instead of passing silently.
-      if (!bindable.length) {
-        fail('FIXTURE_COVERAGE', 'BR2.7', 'A claimed fixture boundary has no canonical revision a fixture can target');
-      }
       for (const target of bindable) {
         const scenarios = fixtures.filter(fixture => fixture?.boundaryIds?.includes(boundaryId) &&
           resolveFixtureTarget(fixture, loaded, schemas) === target);

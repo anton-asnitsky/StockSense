@@ -207,6 +207,13 @@ test('a negative fixture may declare a composite failure as an exact finding set
   expectCode(() => assertFixtureOracle({ ...fixture, expectedFailureCode: 'SCHEMA_REQUIRED' }, observed, [contract]),
     'FIXTURE_ORACLE_MISSING');
   expectCode(() => assertFixtureOracle({ ...base, expectedFailures: [] }, [], [contract]), 'FIXTURE_ORACLE_MISSING');
+  // Gating the mixing guard on Array.isArray let a non-array form fall through
+  // to the single-field branch and be discarded without complaint.
+  for (const notAnArray of [{ code: 'SCHEMA_REQUIRED', ruleId: 'BR2.4', path: '/a' }, 'SCHEMA_REQUIRED', 0, null]) {
+    expectCode(() => assertFixtureOracle({ ...base, expectedFailures: notAnArray,
+      expectedFailureCode: 'SCHEMA_REQUIRED', expectedFailureRuleId: 'BR2.4', expectedFailurePath: '/a' },
+    [finding('SCHEMA_REQUIRED', '/a')], [contract]), 'FIXTURE_ORACLE_MISSING');
+  }
   expectCode(() => assertFixtureOracle({ ...base, expectedFailures: [
     { code: 'SCHEMA_REQUIRED', ruleId: 'BR2.4', path: '/a' },
     { code: 'SCHEMA_REQUIRED', ruleId: 'BR2.4', path: '/a' }

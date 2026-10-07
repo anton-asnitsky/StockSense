@@ -26,8 +26,10 @@ candidates with `node tools/contracts/scripts/build-messaging-fixtures.mjs`.
 The fixture oracle checks the exact schema revision, stable finding code, rule,
 and element; it does not assert that a messaging runtime has passed conformance.
 `fixtures/web-bff/v1/example-fixture.json` contains six C18 request-body
-examples bound to the OpenAPI document revision. The thin sample builder copies
-them into its governed fixture sidecar and refuses a stale revision.
+examples bound to the OpenAPI document revision. The thin sample builder does
+not write its governed fixture sidecar: it reconstructs the bytes that sidecar
+should hold and refuses when the committed file differs, so authoring the
+sidecar is a manual step and a stale revision is refused.
 `fixtures/common/v1/example-fixture.json` carries the C01 package-manifest
 examples. Every canonical document a fixture can be bound to needs its own
 positive and negative example, and the package meta-schema is one of them: a
@@ -82,7 +84,11 @@ overstated. Three provenance failures are reported apart, because they call for
 different actions: `SOURCE_REVISION_MISMATCH` means the shipped bytes drifted,
 `SOURCE_PATH_ABSENT` means the recorded commit does not contain a path the
 package ships, `SOURCE_REVISION_UNKNOWN` means the commit is not in this
-repository at all, and only `GIT_UNAVAILABLE` means the toolchain failed.
+repository, and `GIT_UNAVAILABLE` means Git could not be run at all. The split
+is not perfect: a `--repo-root` that is not a Git repository exits non-zero
+rather than failing to start, so it reports `SOURCE_REVISION_UNKNOWN` - the
+commit genuinely is not in that directory, but the cause is the wrong root
+rather than a false claim by the package.
 
 After editing a canonical C01 source, commit it, then run
 `node tools/contracts/scripts/create-sample.mjs` from the repository root to
