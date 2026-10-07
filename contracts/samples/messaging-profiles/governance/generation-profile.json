@@ -1,6 +1,6 @@
 {
   "generationProfileVersion": "1.1.0",
-  "sourceRevision": "6ad2c038b9ce665892a634865ac22069fef7dc29",
+  "sourceRevision": "10845bac6ddc78b175bac62614dfe53a73f1d2fd",
   "consumers": [],
   "limitation": "Candidate schema and messaging validation only; consumer generation remains unverified."
 }

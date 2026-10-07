@@ -1,7 +1,7 @@
 {
   "packageVersion": "1.0.0",
   "manifestStatus": "candidate",
-  "sourceRevision": "6ad2c038b9ce665892a634865ac22069fef7dc29",
+  "sourceRevision": "10845bac6ddc78b175bac62614dfe53a73f1d2fd",
   "openapi": [],
   "asyncapi": [
     {
@@ -71,7 +71,7 @@
       "document": "governance/contract-package-policy.json",
       "semanticVersion": "1.0.0",
       "contentDigest": "sha256:1ff9113a3b3bc353827b5a134b00aca580099c381a3480570111e02d36e0efb7",
-      "sourceRevision": "6ad2c038b9ce665892a634865ac22069fef7dc29"
+      "sourceRevision": "10845bac6ddc78b175bac62614dfe53a73f1d2fd"
     },
     {
       "kind": "example-fixture",
@@ -83,8 +83,8 @@
       ],
       "document": "governance/example-fixture.json",
       "semanticVersion": "1.0.0",
-      "contentDigest": "sha256:5d01fb49d11213bc8d8208bb7612fa62a957204712c32c8381fbc5343eb4a0fb",
-      "sourceRevision": "6ad2c038b9ce665892a634865ac22069fef7dc29"
+      "contentDigest": "sha256:c122712a3b6823752529be8bf6e47370ba19ae212eb92e95ceba6976bec6e4f4",
+      "sourceRevision": "10845bac6ddc78b175bac62614dfe53a73f1d2fd"
     },
     {
       "kind": "generation-profile",
@@ -96,8 +96,8 @@
       ],
       "document": "governance/generation-profile.json",
       "semanticVersion": "1.0.0",
-      "contentDigest": "sha256:51cad0a3b12fe49055f2edcb58588b794a251f30aef9c25637fcfa38a8ab5e3e",
-      "sourceRevision": "6ad2c038b9ce665892a634865ac22069fef7dc29"
+      "contentDigest": "sha256:bb7f1637613ff9836417324b6b694df544b6fdb1cd4d0ae463800e37135ebeb2",
+      "sourceRevision": "10845bac6ddc78b175bac62614dfe53a73f1d2fd"
     },
     {
       "kind": "protocol-compatibility-manifest",
@@ -108,7 +108,7 @@
       "document": "governance/protocol-compatibility.profile.yaml",
       "semanticVersion": "1.0.0",
       "contentDigest": "sha256:4f5c5005637563214735918462649f7a596632c41f099d805c6c2e5d2b75b22e",
-      "sourceRevision": "6ad2c038b9ce665892a634865ac22069fef7dc29"
+      "sourceRevision": "10845bac6ddc78b175bac62614dfe53a73f1d2fd"
     },
     {
       "kind": "messaging-conformance-profile",
@@ -119,7 +119,7 @@
       "document": "governance/platform.profile.yaml",
       "semanticVersion": "1.0.0",
       "contentDigest": "sha256:d3a6b808bd92f495ead2d9abcf49787723e84620e1c359159bb220b53227377b",
-      "sourceRevision": "6ad2c038b9ce665892a634865ac22069fef7dc29"
+      "sourceRevision": "10845bac6ddc78b175bac62614dfe53a73f1d2fd"
     }
   ],
   "boundaryCoverage": [
