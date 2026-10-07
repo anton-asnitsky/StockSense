@@ -25,6 +25,7 @@
     "test:coverage": "node --experimental-test-coverage --test --test-coverage-include=src/**/*.mjs test/unit/*.test.mjs test/integration/*.test.mjs",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
+    "build:standards-image": "node scripts/build-standards-image.mjs",
     "scan:secrets": "secretlint \"src/**/*\" \"test/**/*\" \"scripts/**/*\"",
     "scan:vuln": "pnpm audit --audit-level moderate",
     "setup:oasdiff": "node --use-system-ca scripts/setup-oasdiff.mjs",

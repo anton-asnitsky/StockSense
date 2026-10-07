@@ -26,6 +26,11 @@ COPY src/container-schema-validator.mjs ./container-schema-validator.mjs
 COPY src ./src
 RUN node --check /opt/contracts/container-schema-validator.mjs
 RUN node --check /opt/contracts/src/container-fixture-oracle.mjs
+# Record which tool sources this image carries. The runner compares this with
+# the tree it is being asked to speak for and refuses a mismatch, so a stale
+# image cannot silently report an old tool's verdict as the current one.
+RUN node /opt/contracts/src/source-digest.mjs > /opt/contracts/source-digest.txt \
+    && cat /opt/contracts/source-digest.txt
 RUN groupadd --gid 65532 stocksense \
     && useradd --uid 65532 --gid 65532 --home-dir /tmp --no-create-home --shell /usr/sbin/nologin stocksense \
     && mkdir -p /opt/contracts/node_modules/@asyncapi/cli/lib/utils/logs

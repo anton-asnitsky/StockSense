@@ -8,6 +8,9 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runContainerStandardsValidator } from '../../src/container-standards-runner.mjs';
 import { loadPackage } from '../../src/package-loader.mjs';
+import { sourceTreeDigest } from '../../src/source-digest.mjs';
+
+const hostSourceDigest = await sourceTreeDigest();
 
 const image = 'ghcr.io/stocksense/contracts-tools@sha256:' + 'a'.repeat(64);
 const docker = process.platform === 'win32'
@@ -47,9 +50,15 @@ async function withFixtureGraph(action) {
   });
 }
 
-function seam(run = () => ok('')) {
+// The runner reads the tool-source digest out of the image before it runs any
+// validator. That read is answered here and deliberately kept out of `calls`,
+// so the exact-Docker-profile assertions below stay about the validator
+// invocation they are describing. `the standards image must carry this tree's
+// tool sources` covers the check itself.
+function seam(run = () => ok(''), digest = hostSourceDigest) {
   const calls = [];
   const spawn = (command, argv, options) => {
+    if (argv.includes('--entrypoint=/bin/cat')) return ok(digest + '\n');
     calls.push({ command, argv, options });
     if (argv[0] === 'context') return ok(localContext + '\n');
     if (argv[0] === 'info') return ok('linux\n');
@@ -355,5 +364,57 @@ test('fixture mode rejects malformed results and maps worker failure statuses', 
         { ...options, spawn: fake.spawn }), code, rule);
       assert.equal(fake.calls.at(-1).argv[0], 'rm');
     }
+  });
+});
+
+test('the standards image must carry this tree\'s tool sources', async () => {
+  await withGraph(async options => {
+    // The image bakes in a copy of src, so a stale one answers with an older
+    // tool's verdict and nothing in a passing run says which tool spoke.
+    const digestRead = argv => argv.includes('--entrypoint=/bin/cat');
+    const reading = reply => {
+      const calls = [];
+      const spawn = (command, argv) => {
+        if (digestRead(argv)) { calls.push(argv); return reply(argv); }
+        if (argv[0] === 'context') return ok(localContext + '\n');
+        if (argv[0] === 'info') return ok('linux\n');
+        return ok('');
+      };
+      return { calls, spawn };
+    };
+    // Its own pinned image, because the verdict is cached per image for the
+    // process: under a pinned digest the image cannot change identity mid-run,
+    // so re-reading it on every validator call would be waste.
+    const subject = 'ghcr.io/stocksense/contracts-tools@sha256:' + 'c'.repeat(64);
+    const run = spawn => runContainerStandardsValidator('openapi:3.1.2', options.sourceDocument,
+      { ...options, image: subject, spawn });
+
+    // A digest from different sources, and an image built before the marker
+    // existed, are both the same instruction to the operator: rebuild.
+    for (const reply of [
+      () => ok('sha256:' + 'b'.repeat(64) + '\n'),
+      () => ({ status: 1, stdout: '', stderr: 'No such file or directory', error: undefined, signal: null }),
+      () => ok('not-a-digest\n')
+    ]) await expectCode(run(reading(reply).spawn), 'STANDARDS_IMAGE_STALE', 'NFR6.2');
+
+    // Docker failing to start the container is an environment fault, and must
+    // not be reported as a stale image: it sends the operator somewhere else.
+    for (const reply of [
+      () => ({ status: 125, stdout: '', stderr: '', error: undefined, signal: null }),
+      () => ({ status: null, stdout: '', stderr: '', error: new Error('spawn failed'), signal: null })
+    ]) await expectCode(run(reading(reply).spawn), 'STANDARDS_ENGINE', 'NFR6.2');
+
+    // The read is a minimal, network-less, read-only container.
+    const matching = reading(() => ok(hostSourceDigest + '\n'));
+    assert.deepEqual(await run(matching.spawn), { dialect: 'openapi:3.1.2', valid: true });
+    assert.equal(matching.calls.length, 1);
+    for (const flag of ['--rm', '--pull=never', '--network=none', '--read-only', '--cap-drop=ALL']) {
+      assert.ok(matching.calls[0].includes(flag), flag);
+    }
+    assert.deepEqual(matching.calls[0].slice(-2), [subject, '/opt/contracts/source-digest.txt']);
+    // Cached: a second validator call on the same pinned image does not re-read it.
+    const again = reading(() => ok(hostSourceDigest + '\n'));
+    assert.deepEqual(await run(again.spawn), { dialect: 'openapi:3.1.2', valid: true });
+    assert.equal(again.calls.length, 0);
   });
 });

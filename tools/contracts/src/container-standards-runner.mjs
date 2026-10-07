@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { ContractError, assertSafePath, deriveIdentity } from './package-loader.mjs';
 import { LIMITS } from './preflight.mjs';
+import { sourceTreeDigest } from './source-digest.mjs';
 
 // The digest-pinned image must install exactly these locked CLIs at this path.
 // A missing executable fails as an engine/toolchain error; it never falls back
@@ -41,6 +42,47 @@ function checkedResult(result, code, rule) {
     fail(code, rule, 'Pinned standards container could not be run safely');
   }
   return String(result.stdout ?? '').trim();
+}
+
+// One verdict per image per process. The check costs a container start, and
+// the image cannot change identity under a pinned digest mid-run.
+/** @type {Map<string, string>} */
+const imageSourceDigests = new Map();
+
+/**
+ * Refuse an image whose baked-in tool sources are not the ones being asked
+ * about.
+ *
+ * The image copies `src` at build time, so the oracle inside it is the oracle
+ * as of the build. Nothing in a passing run says which tool produced the
+ * verdict: a stale image rejected a valid package here for a feature it did
+ * not have, and an equally stale one would have passed a package the current
+ * rules reject. Only the image can be trusted to say what it contains, so the
+ * digest is read out of it rather than from a label or a build argument.
+ */
+function assertImageMatchesSources(spawn, image, hostDigest) {
+  if (imageSourceDigests.get(image) === hostDigest) return;
+  const result = dockerCall(spawn, ['run', '--rm', '--pull=never', '--network=none',
+    '--read-only', '--security-opt=no-new-privileges=true', '--cap-drop=ALL', '--entrypoint=/bin/cat',
+    image, '/opt/contracts/source-digest.txt'], 30_000);
+  // Docker failing to start a container is an environment fault; a container
+  // that ran and found no marker is an image built before this check existed.
+  // Reporting both as an engine failure would send the operator to the wrong
+  // place, which is the whole mistake this check exists to prevent.
+  if (!result || result.error || result.signal || typeof result.status !== 'number' ||
+      [125, 126, 127].includes(result.status)) {
+    fail('STANDARDS_ENGINE', 'NFR6.2', 'Pinned standards container could not be run safely');
+  }
+  const baked = String(result.stdout ?? '').trim();
+  if (result.status !== 0 || !SHA.test(baked)) {
+    fail('STANDARDS_IMAGE_STALE', 'NFR6.2',
+      'Standards image records no tool-source digest; rebuild it from this tree');
+  }
+  if (baked !== hostDigest) {
+    fail('STANDARDS_IMAGE_STALE', 'NFR6.2',
+      'Standards image was built from different tool sources; rebuild it from this tree');
+  }
+  imageSourceDigests.set(image, hostDigest);
 }
 
 function dockerCall(spawn, args, timeout) {
@@ -255,6 +297,7 @@ export async function runContainerStandardsValidator(dialect, sourceDocument, op
       'STANDARDS_ENGINE', 'NFR6.2') !== 'linux') {
       fail('STANDARDS_ENGINE', 'NFR6.2', 'Standards image requires Linux containers');
     }
+    assertImageMatchesSources(spawn, image, await sourceTreeDigest());
     configDir = await mkdtemp(join(tmpdir(), 'stocksense-validator-config-'))
       .catch(() => fail('STANDARDS_ENGINE', 'NFR6.2', 'Validator configuration directory is unavailable'));
     if (/[,\r\n\x00-\x1f]/.test(configDir)) fail('STANDARDS_GRAPH', 'NFR6.2', 'Host bind path cannot be represented safely');

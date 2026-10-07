@@ -107,17 +107,26 @@ engine and an exact, locally present validator image ID. Build the image from
 the CLI and integration suite:
 
 ```powershell
-docker build --file tools/contracts/Dockerfile.validator --tag stocksense-validator:local tools/contracts
-$env:STOCKSENSE_STANDARDS_IMAGE = docker image inspect stocksense-validator:local --format '{{.Id}}'
+$env:STOCKSENSE_STANDARDS_IMAGE = pnpm --dir tools/contracts --silent build:standards-image
 node tools/contracts/src/cli.mjs validate contracts/samples/walking-skeleton
 ```
 
+`build:standards-image` builds the image, reads the tool-source digest back out
+of it, and prints the exact image ID the runner requires. Use it rather than a
+bare `docker build`: one path for a person and for a hosted job means the image
+a run was judged by is always the image this tree describes. Note that the image
+ID changes on every rebuild even when nothing changed, because the build is not
+bit-reproducible - the stable identity is the tool-source digest, not the ID, so
+a pinned ID cannot be committed and every environment has to build its own.
+
 The image bakes in a copy of `tools/contracts/src`, so the fixture oracle that
-runs inside it is the oracle as of the build, not as of the working tree.
-**Rebuild it after any change under `tools/contracts/src`**, or the suite will
-report a stale tool's verdict - a passing run against an old image proves
-nothing about the current rules, and a failing one may be reporting a defect
-that no longer exists.
+runs inside it is the oracle as of the build, not as of the working tree. This
+is enforced, not merely documented: the runner reads the digest recorded in the
+image and refuses a mismatch with `STANDARDS_IMAGE_STALE`. **Rebuild after any
+change under `tools/contracts/src`.** Before the check existed, a two-day-old
+image rejected a valid package for a feature it did not have, and an equally
+old one would have passed a package the current rules reject - a passing run
+against a stale image proves nothing about the current rules.
 
 The runner rejects a missing digest and never invokes a host standards CLI.
 It mounts only a digest-checked copy of the declared package graph in a
