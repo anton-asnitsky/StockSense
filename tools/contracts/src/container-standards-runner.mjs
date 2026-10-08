@@ -382,8 +382,8 @@ export async function runContainerStandardsValidator(dialect, sourceDocument, op
     // anything the validator happened to read. Without the path a package of
     // 38 documents reports only that one of them was rejected.
     if (result.status !== 0) {
-      fail('STANDARDS_VALIDATION', tool.rule,
-        `Pinned standards validator rejected the canonical document ${sourceDocument}`);
+      throw new ContractError('STANDARDS_VALIDATION', tool.rule,
+        `Pinned standards validator rejected the canonical document ${sourceDocument}`, sourceDocument);
     }
     let fixtureResults;
     if (fixtureDialect) fixtureResults = parseFixtureResults(result.stdout, entries);

@@ -35,8 +35,8 @@ export function readBlob(repoRoot, revision, sourcePath) {
   const result = spawnSync('git', ['show', `${revision}:${sourcePath}`], { ...GIT_OPTIONS, cwd: repoRoot });
   if (result.error) fail('GIT_UNAVAILABLE', 'BR1.7', 'Git provenance could not be read for the contract sources');
   if (result.status !== 0) {
-    fail('SOURCE_PATH_ABSENT', 'BR1.7',
-      `The recorded revision does not contain ${sourcePath}, so it cannot describe the bytes being packaged`);
+    throw new ContractError('SOURCE_PATH_ABSENT', 'BR1.7',
+      `The recorded revision does not contain ${sourcePath}, so it cannot describe the bytes being packaged`, sourcePath);
   }
   return result.stdout;
 }
@@ -86,8 +86,8 @@ export function verifySourceBinding(repoRoot, revision, bindings) {
     const blob = readBlob(repoRoot, revision, sourcePath);
     const actual = digest(Buffer.from(blob));
     if (actual !== contentDigest) {
-      fail('SOURCE_REVISION_MISMATCH', 'BR1.7',
-        `The shipped bytes for ${sourcePath} do not match the blob at the recorded revision`);
+      throw new ContractError('SOURCE_REVISION_MISMATCH', 'BR1.7',
+        `The shipped bytes for ${sourcePath} do not match the blob at the recorded revision`, sourcePath);
     }
     verified.push({ sourcePath, contentDigest, revision });
   }

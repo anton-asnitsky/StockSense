@@ -3,11 +3,20 @@ import { lstat, readFile, realpath, readdir } from 'node:fs/promises';
 import { join, resolve, sep } from 'node:path';
 
 export class ContractError extends Error {
-  constructor(code, ruleId, message) {
+  /**
+   * @param {string} code
+   * @param {string} ruleId
+   * @param {string} message
+   * @param {string} [location] the package- or repository-relative path the
+   *   refusal is about. It is bounded and re-checked before publication, and it
+   *   must come from our own inputs - a manifest path, never a tool's output.
+   */
+  constructor(code, ruleId, message, location) {
     super(message);
     this.name = 'ContractError';
     this.code = code;
     this.ruleId = ruleId;
+    this.location = location;
   }
 }
 
