@@ -31,7 +31,7 @@ function gitText(repoRoot, args) {
  * @param {string} sourcePath
  * @returns {Buffer}
  */
-function readBlob(repoRoot, revision, sourcePath) {
+export function readBlob(repoRoot, revision, sourcePath) {
   const result = spawnSync('git', ['show', `${revision}:${sourcePath}`], { ...GIT_OPTIONS, cwd: repoRoot });
   if (result.error) fail('GIT_UNAVAILABLE', 'BR1.7', 'Git provenance could not be read for the contract sources');
   if (result.status !== 0) {
