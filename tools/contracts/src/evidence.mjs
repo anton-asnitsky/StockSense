@@ -220,6 +220,12 @@ export function assertEvidenceContentSafe(record) {
  * U1 owns the policy a public pull-request workflow must satisfy. U2 enforces
  * it from a protected base workflow; this check alone credits nothing.
  */
+/**
+ * @param {any} workflow a parsed workflow document
+ * @param {{ changedPaths?: string[] }} [options] the pull request's changed
+ *   paths, supplied by the caller rather than read from the workflow, so a
+ *   pull request cannot describe itself as touching nothing
+ */
 export function assertCiPolicy(workflow, { changedPaths = [] } = {}) {
   if (!object(workflow) || !object(workflow.jobs)) fail('CI_POLICY_SHAPE', 'BR6.7', 'Workflow needs a jobs map');
   const triggers = Array.isArray(workflow.on) ? workflow.on : Object.keys(workflow.on ?? {});
