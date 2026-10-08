@@ -21,6 +21,11 @@ export const GENERATORS = Object.freeze({
   'openapi-typescript': Object.freeze({
     version: '7.13.0',
     bin: openapiTypescriptBin,
+    // Where the pinned invocation writes. The output location is part of the
+    // configuration, not something to infer from a consumer's manifest: a
+    // generator that emits a tree lists files beneath this path, so inferring
+    // it from the first declared output produced the wrong target entirely.
+    outputPath: 'browser-api.d.ts',
     /** @param {string} sourcePath @param {string} outputPath */
     args: (sourcePath, outputPath) => [sourcePath, '--output', outputPath]
   }),
@@ -34,6 +39,7 @@ export const GENERATORS = Object.freeze({
     version: '1.35.0',
     command: DOTNET_HOST,
     cwd: 'repository',
+    outputPath: 'dotnet-client',
     /** @param {string} sourcePath @param {string} outputPath */
     // --log-level None suppresses the .kiota.log diagnostic file. It is not
     // part of the generated client, and a dot-prefixed, non-declarative file
@@ -76,7 +82,7 @@ export function createPinnedGeneratorRunner(repoRoot) {
       throw new ContractError('GENERATOR_VERSION', 'BR3.1',
         `Consumer ${consumer.consumerId} pins ${consumer.generator}@${consumer.generatorVersion} but ${generator.version} is vendored`);
     }
-    const outputPath = Object.keys(consumer.expectedOutputs)[0];
+    const outputPath = generator.outputPath;
     const expectedConfig = generatorConfigurationDigest(consumer.generator, outputPath);
     if (consumer.configurationDigest !== expectedConfig) {
       throw new ContractError('GENERATOR_CONFIGURATION', 'BR3.1',
