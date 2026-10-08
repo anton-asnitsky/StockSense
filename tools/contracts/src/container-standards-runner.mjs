@@ -377,7 +377,14 @@ export async function runContainerStandardsValidator(dialect, sourceDocument, op
     if ((schemaDialect || payloadDialect || fixtureDialect) && result.status !== 0 && result.status !== 2) {
       fail('STANDARDS_ENGINE', 'NFR6.2', 'Pinned schema compiler did not complete');
     }
-    if (result.status !== 0) fail('STANDARDS_VALIDATION', tool.rule, 'Pinned standards validator rejected the canonical document');
+    // Name the document, never the tool's own diagnostic: the path comes from
+    // the manifest we loaded, while stderr is untrusted output that may carry
+    // anything the validator happened to read. Without the path a package of
+    // 38 documents reports only that one of them was rejected.
+    if (result.status !== 0) {
+      fail('STANDARDS_VALIDATION', tool.rule,
+        `Pinned standards validator rejected the canonical document ${sourceDocument}`);
+    }
     let fixtureResults;
     if (fixtureDialect) fixtureResults = parseFixtureResults(result.stdout, entries);
     succeeded = true;

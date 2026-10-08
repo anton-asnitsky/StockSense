@@ -118,7 +118,13 @@ function fixtureBindable(entry, schemas) {
     [...schemas.values()].some(item => item.entry === entry);
 }
 
-function openApiFixtureSchema(document, element) {
+/**
+ * The exact schema an OpenAPI fixture is judged against. Exported so that
+ * anything deriving a fixture payload compiles the same document the oracle
+ * will: a looser rewrite accepts components the oracle refuses, and the
+ * mismatch only surfaces as a container rejection much later.
+ */
+export function openApiFixtureSchema(document, element) {
   if (document?.openapi !== '3.1.2' || !object(document.components?.schemas) ||
       !Object.hasOwn(document.components.schemas, element)) {
     fail('FIXTURE_TARGET', 'BR2.8', 'OpenAPI fixture element is absent from its declared document');
