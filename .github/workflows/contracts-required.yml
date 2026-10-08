@@ -33,6 +33,13 @@ jobs:
       - name: Check out the pull-request merge revision
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
+          # A package records the commit its canonical bytes come from, and
+          # provenance verification resolves that commit. A shallow clone has
+          # only the merge head, so the recorded revision is absent and the
+          # binding fails as SOURCE_REVISION_UNKNOWN - which is what the first
+          # hosted run reported. Full history is a requirement here, not a
+          # convenience.
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Pin pnpm
@@ -110,6 +117,13 @@ jobs:
       - name: Check out the pull-request merge revision
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
+          # A package records the commit its canonical bytes come from, and
+          # provenance verification resolves that commit. A shallow clone has
+          # only the merge head, so the recorded revision is absent and the
+          # binding fails as SOURCE_REVISION_UNKNOWN - which is what the first
+          # hosted run reported. Full history is a requirement here, not a
+          # convenience.
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Pin pnpm
