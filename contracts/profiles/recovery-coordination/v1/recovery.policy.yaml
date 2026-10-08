@@ -1,0 +1,65 @@
+# C24-C27 governed sidecar candidate. It states the coordination surfaces the
+# recovery boundaries expose and the objective targets recovery evidence is
+# assessed against. It is not a passing recovery result, and it does not make
+# a recovery acceptance claim: see objectiveAssessment below.
+kind: recovery-policy
+version: 1.0.0
+boundaries: [C24, C25, C26, C27]
+
+# Described from the canonical sources, not invented here. Each entry names the
+# surface its boundary already declares.
+coordination:
+  C24:
+    source: recovery-coordination/v1/bootstrap-participant.openapi.yaml
+    surface: internal participant command and restore-attestation routes, scoped
+      per participant, retailer and run
+    authority: the control plane issues commands; a participant answers for its
+      own restore only
+  C25:
+    source: recovery-coordination/v1/participant-protocol.asyncapi.yaml
+    channels:
+      command: stocksense.recovery.command.v1.{participant}
+      acknowledgement: stocksense.recovery.acknowledgement.v1
+      restoreAttestation: stocksense.recovery.restore-attestation.v1
+    envelope: the C01 tenant message envelope, so a recovery message carries the
+      same identity, correlation and idempotency fields as any other
+  C26:
+    source: recovery-coordination/v1/control-status.openapi.yaml
+    surface: participant registration, and retailer-scoped recovery-run preview,
+      creation, status, reconciliation and manifest
+    authority: a recovery run is addressed by retailer and run id; status is read
+      from the control plane rather than from a participant
+  C27:
+    source: recovery-coordination/v1/recovery-audit.asyncapi.yaml
+    channel: stocksense.recovery.event.v1
+    authority: audit events are append-only and are not a substitute for the
+      run manifest C26 publishes
+
+# OQ5 is unresolved. RPO, RTO, backup expiry and total disk capacity remain
+# unset pending a measured footprint profile and an owner decision, and the
+# record states they are prerequisites for recovery implementation and
+# acceptance rather than for local provisioning.
+#
+# They are null rather than provisional on purpose: a guessed target is
+# indistinguishable from an agreed one once it reaches evidence, and an
+# objective-based check assessed against a guess would read as a pass. Null
+# forces the assessment below, which is what keeps the gap visible.
+objectiveTargets:
+  rpoSeconds: null
+  rtoSeconds: null
+  backupExpiryDays: null
+  totalDiskGiB: null
+
+# The same vocabulary the C19 demo-evidence manifest uses for this case, so a
+# recovery drill assessed against these targets reports not-run rather than a
+# pass. This value must change only when OQ5 resolves.
+objectiveAssessment: not-run-missing-objectives
+
+limitations:
+  - Objective targets are unset, so no recovery objective is asserted and no
+    drill assessed against this policy may report passed.
+  - This sidecar satisfies the C24-C27 required-kind inventory for a candidate
+    package. It is not evidence that a restore drill ran, and it carries no
+    measured duration, data loss, backup age or disk footprint.
+  - Participant and control-plane implementations do not exist yet; the
+    surfaces above are declared contracts, not deployed behaviour.
