@@ -142,18 +142,18 @@
     },
     {
       "id": "AC8.7.1",
-      "status": "GAP",
-      "target": "A protected required public-PR check is drafted on feat/us8-7-trusted-hosted-ci and verified against assertCiPolicy, which accepts it on an ordinary pull request and refuses pull_request_target, a self-hosted runner on an untrusted trigger, a write permission and a pull request editing the workflow. It is neither merged nor run: branch protection and the required-check selection are repository settings, so no hosted run is recorded and this stays a GAP."
+      "status": "OK",
+      "target": ".github/workflows/contracts-required.yml"
     },
     {
       "id": "AC8.7.2",
       "status": "GAP",
-      "target": "The drafted required check runs the locked unit, integration, coverage, lint, type-check and secret gates with a read-only token and builds its own standards image, but it has not executed in a hosted run, so nothing is recorded."
+      "target": "Branch protection on main now requires the U1 contracts check, and a red required check did leave pull request 4 unmergeable through two failing runs. This stays a GAP on the rest of the criterion: merge readiness was never formally evaluated and recorded against a failed required check, and the branch safeguards are not verified under SS-01. The vulnerability gate is deliberately not a required context while its 12 advisories are undispositioned, so it does not demonstrate blocking either."
     },
     {
       "id": "AC8.7.3",
       "status": "GAP",
-      "target": "The drafted required check keeps every job read-only and pins every action to a 40-character commit, which assertCiPolicy verifies, but no hosted run or immutable run evidence exists yet."
+      "target": "The workflow keeps every job read-only with no secrets and the policy refuses a self-hosted runner on an untrusted trigger, which assertCiPolicy verifies. The criterion also requires that OQ8 resolve runner isolation, and OQ8 is open and scheduled for Bolt 2 under U2/U13: trusted-runner and state/backend controls are to be defined before CI deployment. A synthetic workflow-changing pull request has also not been exercised against the protected base."
     },
     {
       "id": "AC9.11.1",
@@ -523,7 +523,7 @@
     {
       "id": "NFR11.3",
       "status": "GAP",
-      "target": "No clean hosted run exists; NFR11.3 states that cached local success or fixture-only evidence cannot substitute for it."
+      "target": "A clean hosted run now exists and is green for the required check: a fresh runner, no owner credentials, exact locked versions through a frozen lockfile on the pinned Node 24.19.0, oasdiff verified against its published SHA-256, the standards image verified against this tree tool-source digest, the fixture oracle executed and both candidates validated. It stays a GAP because the criterion requires regenerating all required outputs and recording source, configuration and output digests as evidence: the pinned Kiota generation skipped on the runner because the .NET tool is absent, and no evidence record is produced since release evidence is unimplemented."
     },
     {
       "id": "NFR13.1",

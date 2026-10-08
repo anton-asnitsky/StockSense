@@ -193,3 +193,56 @@ checks for every OpenAPI document, and only C18 carries fixtures.
 release workflow. The SBOM generator and the AsyncAPI template stay unpinned
 and their gates stay `unavailable` with reasons, which is better evidence than
 a tool pinned on faith and never exercised.
+
+## The first hosted run, and what it settles
+
+`main` is at `1820225`, the squash of pull request 4. The run on that protected
+base reports **`U1 contracts` green**; `Vulnerability scan` fails, by design,
+and is deliberately not a required context.
+
+Hosted evidence on Linux: unit **194 of 194** with nothing skipped, integration
+**56 tests, 53 passing, 0 failing**, one skip for the absent .NET tool, and
+coverage over 250 tests with 247 passing. The whole C01-C27 catalogue validates
+through the pinned validators at 332 reference occurrences against the 1024
+cap, a slowest single document of 6.4 s against the 60 s bound and 192 MB peak
+RSS against the 2 GiB bound. oasdiff 1.28.0 was fetched and verified against
+its published SHA-256 for `linux-x64`, and both compatibility tests passed.
+
+Three rounds were needed, and each failure was a real defect that no run on the
+development host could have shown:
+
+1. The pull-request branch was two commits stale, so the required check audited
+   AsyncAPI CLI 6.0.2 and its 55 advisories instead of 6.2.0 and its 12, and the
+   source-digest tests did not exist to run.
+2. Provenance cannot resolve its recorded commit under a shallow clone, so the
+   source-revision binding failed outright until the checkout fetched full
+   history.
+3. The standards container could not traverse its own bind mounts on Linux:
+   `mkdtemp` creates 0700 owned by the invoking user while the container runs as
+   a fixed non-root uid. A Docker Desktop mount reports permissive modes and hid
+   this entirely, which is why 56 integration tests passed here and 12 failed on
+   a runner.
+
+**`AC8.7.1` moves to `OK`.** Its criterion is that hosted PR CI reports
+applicable build, test, contract and security results, and it now does. The
+target names `.github/workflows/contracts-required.yml`, which is tracked on
+the trunk rather than in this unit's worktree, because that is where the
+evidence legitimately lives.
+
+Three related identifiers stay `GAP`, each for a reason the hosted run does not
+touch:
+
+- **`AC8.7.2`** also requires branch safeguards verified under SS-01, and a
+  formally evaluated and recorded merge readiness against a failed required
+  check. A red check did leave pull request 4 unmergeable through two runs, but
+  that was never recorded as an evaluation.
+- **`AC8.7.3`** requires that OQ8 resolve runner isolation. OQ8 is open and
+  scheduled for Bolt 2 under U2/U13, to define trusted-runner and state/backend
+  controls before CI deployment. A synthetic workflow-changing pull request has
+  also not been exercised against the protected base.
+- **`NFR11.3`** requires regenerating *all* required outputs and recording
+  source, configuration and output digests as evidence. The pinned Kiota
+  generation skipped on the runner because the .NET tool is absent, and no
+  evidence record is produced while release evidence is unimplemented.
+
+Traceability is now **44 `OK` and 51 `GAP`** of 95. No U1 acceptance is claimed.
