@@ -82,14 +82,20 @@ test('a recovery candidate without the policy sidecar is refused', async () => {
   });
 });
 
-test('the recovery policy leaves every OQ5 objective unset and refuses to assess', async () => {
+test('the recovery policy carries the decided objectives and still refuses to assess', async () => {
   const policy = YAML.parse(await readFile(join(repoRoot, policyPath), 'utf8'), { strict: true, uniqueKeys: true });
   assert.equal(policy.kind, 'recovery-policy');
   assert.deepEqual(policy.boundaries, ['C24', 'C25', 'C26', 'C27']);
-  // Null rather than provisional: a guessed target is indistinguishable from an
-  // agreed one once it reaches evidence, and would read as a pass.
+  // Three decided on 2026-10-08; totalDiskGiB stays null because the recorded
+  // condition is a measured footprint from U13, which does not exist yet.
   assert.deepEqual(policy.objectiveTargets,
-    { rpoSeconds: null, rtoSeconds: null, backupExpiryDays: null, totalDiskGiB: null });
+    { rpoSeconds: 86400, rtoSeconds: 14400, backupExpiryDays: 30, totalDiskGiB: null });
+  // The four-hour RTO is the clean-cluster restore objective, not a global one:
+  // eleven units' approved NFR requirements state two hours for in-place
+  // recovery in 31 places, and this does not override them.
+  assert.equal(policy.rtoScope, 'documented-clean-cluster-restore');
+  assert.match(policy.objectiveDecision.openPrerequisite, /totalDiskGiB/);
+  // One null target, so the assessment must still refuse to pass.
   assert.equal(policy.objectiveAssessment, 'not-run-missing-objectives');
   assert.ok(policy.limitations.length >= 3);
   // Each declared surface must name a canonical source that actually exists.

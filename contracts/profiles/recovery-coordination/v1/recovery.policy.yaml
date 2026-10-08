@@ -35,29 +35,49 @@ coordination:
     authority: audit events are append-only and are not a substitute for the
       run manifest C26 publishes
 
-# OQ5 is unresolved. RPO, RTO, backup expiry and total disk capacity remain
-# unset pending a measured footprint profile and an owner decision, and the
-# record states they are prerequisites for recovery implementation and
-# acceptance rather than for local provisioning.
+# OQ5, partly resolved by owner decision on 2026-10-08.
 #
-# They are null rather than provisional on purpose: a guessed target is
-# indistinguishable from an agreed one once it reaches evidence, and an
-# objective-based check assessed against a guess would read as a pass. Null
-# forces the assessment below, which is what keeps the gap visible.
+# Three targets are now confirmed. They are not the constants the contract used
+# to carry: those were struck as invented, and these are a fresh decision that
+# happens to agree on two of the three figures.
+#
+# rtoSeconds is scoped. The owner chose four hours, and the four-hour figure in
+# the design belongs specifically to the documented clean-cluster restore, which
+# is the path C24-C27 coordinate. Eleven units' approved NFR requirements state
+# a two-hour RTO for their own in-place recovery, in 31 places; that remains
+# their figure and is not overridden here. A single global four-hour RTO would
+# require reconciling all of those, which has not been decided.
+#
+# totalDiskGiB stays null by the owner's choice to measure before deciding. The
+# recorded condition is that an objective-based pass is prevented until the
+# owner confirms targets *and* U13 measures the full local footprint, and U13
+# has no code yet. A number here would be a guess indistinguishable from a
+# measurement once it reached evidence.
 objectiveTargets:
-  rpoSeconds: null
-  rtoSeconds: null
-  backupExpiryDays: null
+  rpoSeconds: 86400
+  rtoSeconds: 14400
+  backupExpiryDays: 30
   totalDiskGiB: null
 
-# The same vocabulary the C19 demo-evidence manifest uses for this case, so a
-# recovery drill assessed against these targets reports not-run rather than a
-# pass. This value must change only when OQ5 resolves.
+rtoScope: documented-clean-cluster-restore
+objectiveDecision:
+  decidedOn: 2026-10-08
+  openPrerequisite: >-
+    totalDiskGiB awaits a measured full local footprint from U13; until it is
+    measured no objective-based recovery check may report a pass.
+
+# The same vocabulary the C19 demo-evidence manifest uses for this case. One
+# target is still null, so a drill assessed against these objectives reports
+# not-run rather than a pass. This value changes only when the footprint is
+# measured and totalDiskGiB is set.
 objectiveAssessment: not-run-missing-objectives
 
 limitations:
-  - Objective targets are unset, so no recovery objective is asserted and no
-    drill assessed against this policy may report passed.
+  - totalDiskGiB is unset, so no drill assessed against this policy may report
+    passed; the measured footprint is a prerequisite, not a formality.
+  - The four-hour RTO is the clean-cluster restore objective. It does not
+    relax the two-hour in-place RTO that eleven units' approved NFR
+    requirements state for themselves.
   - This sidecar satisfies the C24-C27 required-kind inventory for a candidate
     package. It is not evidence that a restore drill ran, and it carries no
     measured duration, data loss, backup age or disk footprint.
