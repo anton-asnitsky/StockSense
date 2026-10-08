@@ -27,9 +27,9 @@ Local Node 24.21.0 and pnpm 11.25.0:
 
 | Check | Current result |
 | --- | --- |
-| Exact `pnpm --dir tools/contracts test:unit` with system CA | 191 tests: 189 pass, 2 Windows symlink privilege skips, 0 fail. |
+| Exact `pnpm --dir tools/contracts test:unit` with system CA | 194 tests: 192 pass, 2 Windows symlink privilege skips, 0 fail. |
 | Exact `pnpm --dir tools/contracts test:integration` | 56 tests: 54 pass, 0 fail, 0 skip, 2 TODO. Every container-backed test now executes: the Docker engine is running and the standards image is built from this tree. No test is skipped for a missing image. |
-| Coverage (`test:coverage`, unit and integration) | 247 tests, 243 pass, 0 fail. 94.53% U1 lines, 85.23% branches, 92.06% functions; the 80% line floor remains enforced and was not lowered. |
+| Coverage (`test:coverage`, unit and integration) | 250 tests, 246 pass, 0 fail. 94.56% U1 lines, 85.31% branches, 92.06% functions; the 80% line floor remains enforced and was not lowered. |
 | ESLint and TypeScript check | Pass |
 | Targeted Secretlint scan | Pass |
 | Lockfile and frozen install | Current lockfile passed pnpm's supply-chain verification with NODE_OPTIONS=--use-system-ca; a clean frozen install then completed using pnpm's temporary trustLockfile setting for this already verified lockfile and an engine-strict override for local Node 24.21.0 |
@@ -133,3 +133,63 @@ recorded.
    quoting repair (R-17) and the demo-evidence strict-mode repair above.
 4. The SBOM generator, AsyncAPI template, runner/scanner versions and
    attestation action, which Step 14 assigns to the owning CI Design decision.
+
+## Owner decisions of 2026-10-08 and what they changed
+
+All four were recorded through the engine as `DECISION_RECORDED` against this
+stage; none of them is inferred.
+
+**The AsyncAPI validator pin was upgraded, not excused.** 6.0.2 to 6.2.0,
+inside the approved major line. 6.2.0 drops `@asyncapi/studio`, the only
+reason Next.js was in the tree. Advisories fall **55 to 12** and
+High-or-Critical **31 to 8**; both Next.js unauthenticated-RCE criticals are
+gone, with the `tar` decompression DoS and one `simple-git` critical. All 38
+canonical sources still validate under the upgraded validator, so the change
+is behaviour-preserving here. The 12 survivors all arrive through
+`@asyncapi/generator`, `@asyncapi/modelina-cli` or `@asyncapi/converter` -
+the generate and convert subcommands - while this project invokes only
+`validate`, in a container with no network, a read-only filesystem, no
+secrets and a dropped capability set. That is an exposure argument and not a
+disposition: the gate still fails, `scan:vuln` still exits 1, and BR6.2 still
+blocks.
+
+**The upgrade exposed a gap in the stale-image guard.** The digest covered the
+tool sources but not the dependency manifests, yet the pinned validators live
+in the image's `node_modules` - so changing the pin swapped the validator
+inside the image while the digest stayed identical. A stale image would have
+been accepted for precisely the change most in need of a rebuild.
+`package.json` and `pnpm-lock.yaml` now count, and
+`test/unit/source-digest.test.mjs` pins the whole behaviour.
+
+**U2's required check is drafted and policy-verified, not merged.**
+`.github/workflows/contracts-required.yml` on `feat/us8-7-trusted-hosted-ci`,
+checked against U1's own `assertCiPolicy`: accepted on an ordinary pull
+request, and the policy refuses `pull_request_target`, a self-hosted runner on
+an untrusted trigger, a write permission, and a pull request editing the
+workflow. Two read-only jobs, every action pinned to a 40-character commit,
+each building its own standards image, with the 80% line floor enforced rather
+than reported. Attestation is deliberately absent: it needs `id-token: write`,
+which the policy rejects while `pull_request` is a trigger, so build
+provenance belongs in a separate push-only release workflow. Branch protection
+and the required-check selection are repository settings and remain the
+owner's. AC8.7.1-AC8.7.3 stay `GAP` because no hosted run is recorded.
+
+**Both source repairs are dispositioned, and the upstream pass is done.** The
+C18 repair is quoting-only; the demo-evidence repair adds type declarations, of
+which `cpuLimit` and `memoryLimitGiB` are a genuine tightening the owner
+accepts as the intended meaning. The approved contract summary had **34**
+broken flow mappings, now corrected by
+`tools/contracts/scripts/repair-flow-descriptions.mjs` as a standalone commit.
+**Correction:** the figure reported earlier in this record as "roughly
+thirty-five", then revised upward to fifty-seven, is 34. The fifty-seven came
+from a text pattern that also matched block-style scalars, where a comma is
+legal and nothing is wrong; the original estimate was right. NFR8.17 stays
+`GAP` on a different clause - it also requires example and compatibility
+checks for every OpenAPI document, and only C18 carries fixtures.
+
+**Only what the required check needs is pinned.** secretlint 13.0.6 and
+`pnpm audit` stay as the secret-scan and vulnerability-scan gates.
+`actions/attest-build-provenance` is identified and SHA-pinned for the future
+release workflow. The SBOM generator and the AsyncAPI template stay unpinned
+and their gates stay `unavailable` with reasons, which is better evidence than
+a tool pinned on faith and never exercised.

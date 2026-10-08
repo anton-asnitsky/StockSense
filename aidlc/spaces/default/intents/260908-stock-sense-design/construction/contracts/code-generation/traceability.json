@@ -143,17 +143,17 @@
     {
       "id": "AC8.7.1",
       "status": "GAP",
-      "target": "The U1 worktree has no .github/workflows files; U2 CI design is design-only. No protected-base required public-PR check or clean hosted U1 run exists; AC8.7.1 remains blocked."
+      "target": "A protected required public-PR check is drafted on feat/us8-7-trusted-hosted-ci and verified against assertCiPolicy, which accepts it on an ordinary pull request and refuses pull_request_target, a self-hosted runner on an untrusted trigger, a write permission and a pull request editing the workflow. It is neither merged nor run: branch protection and the required-check selection are repository settings, so no hosted run is recorded and this stays a GAP."
     },
     {
       "id": "AC8.7.2",
       "status": "GAP",
-      "target": "The U1 worktree has no .github/workflows files; U2 CI design is design-only. No protected-base required public-PR check or clean hosted U1 run exists; AC8.7.1 remains blocked."
+      "target": "The drafted required check runs the locked unit, integration, coverage, lint, type-check and secret gates with a read-only token and builds its own standards image, but it has not executed in a hosted run, so nothing is recorded."
     },
     {
       "id": "AC8.7.3",
       "status": "GAP",
-      "target": "The U1 worktree has no .github/workflows files; U2 CI design is design-only. No protected-base required public-PR check or clean hosted U1 run exists; AC8.7.1 remains blocked."
+      "target": "The drafted required check keeps every job read-only and pins every action to a 40-character commit, which assertCiPolicy verifies, but no hosted run or immutable run evidence exists yet."
     },
     {
       "id": "AC9.11.1",
@@ -378,7 +378,7 @@
     {
       "id": "BR6.2",
       "status": "GAP",
-      "target": "The U1 worktree has no .github/workflows files; U2 CI design is design-only. No protected-base required public-PR check or clean hosted U1 run exists; AC8.7.1 remains blocked."
+      "target": "The vulnerability gate fails and scan:vuln exits 1 with 12 advisories after the owner-approved AsyncAPI CLI upgrade from 6.0.2 to 6.2.0, down from 55. The gate correctly blocks: the residue is undispositioned. Every remaining advisory arrives through the generate and convert subcommands of the CLI, while this project invokes only validate, inside a container with no network, a read-only filesystem, no secrets and a dropped capability set - an exposure argument, not a disposition. The drafted U2 check runs this gate as its own job so the finding is visible as itself."
     },
     {
       "id": "BR6.3",
@@ -508,7 +508,7 @@
     {
       "id": "NFR8.17",
       "status": "GAP",
-      "target": "All 38 draft canonical sources parse and validate through the pinned validators (tools/contracts/test/integration/catalogue-resource.test.mjs), including the C18 quoting repair and the demo-evidence strict-mode repair. The Contract Design disposition for both repairs is not recorded, so upstream source approval remains a GAP."
+      "target": "All 17 OpenAPI documents declare 3.1.2 and pass the pinned Redocly lint with no-unresolved-refs as an error, proven for the whole catalogue by tools/contracts/test/integration/catalogue-resource.test.mjs. The owner has now dispositioned both canonical-source repairs, so upstream approval is no longer the blocker. This stays a GAP because NFR8.17 also requires example and compatibility checks for every OpenAPI document: only C18 carries example fixtures, and oasdiff has not been run as a baseline comparison across the other sixteen."
     },
     {
       "id": "NFR10.1",
@@ -548,7 +548,7 @@
     {
       "id": "NFR13.5",
       "status": "GAP",
-      "target": "Release evidence, scans, SBOM and attestation are not produced by any run."
+      "target": "secretlint 13.0.6 and pnpm audit are pinned and run as the secret-scan and vulnerability-scan gates. Per the owner decision to pin only what the required check needs, the SBOM generator and AsyncAPI template stay unpinned and their gates stay unavailable with reasons; actions/attest-build-provenance is identified and SHA-pinned for a future push-only release workflow but excluded from the required check, because it needs id-token write and assertCiPolicy rejects a write permission on a pull_request trigger."
     },
     {
       "id": "NFR15.1",
