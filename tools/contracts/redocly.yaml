@@ -1,0 +1,16 @@
+# Pinned ruleset for every canonical OpenAPI document this tool validates.
+#
+# Structural correctness is an error: a document that is not a well-formed
+# OpenAPI 3.1 object cannot be packaged or generated from.
+#
+# Purely editorial rules are relaxed. The approved Contract Design authors these
+# documents without per-operation summaries, and inventing prose here would put
+# this package's copy out of step with the approved contract it transcribes.
+extends:
+  - recommended
+rules:
+  struct: error
+  operation-summary: off
+  operation-4xx-response: warn
+  operation-operationId: error
+  no-unresolved-refs: error

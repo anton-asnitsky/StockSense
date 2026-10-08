@@ -1,0 +1,362 @@
+openapi: 3.1.2
+info:
+  title: Forecasting Assistant Tools API
+  version: 1.0.0
+paths:
+  /api/v1/retailers/{retailerId}/assistant-tools/forecast-status:
+    post:
+      operationId: getForecastStatusForAssistant
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssistantForecastProductSet"
+      responses:
+        "200":
+          description: Exact product coverage, run state, freshness and provenance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssistantForecastStatusCoverage"
+        "403":
+          description: Product authority denied without foreign existence disclosure
+        "422":
+          description: Invalid product set
+        "503":
+          description: Authoritative store unavailable; assistant must disclose unavailability
+  /api/v1/retailers/{retailerId}/assistant-tools/forecast-evidence:
+    post:
+      operationId: getForecastEvidenceForAssistant
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssistantForecastProductSet"
+      responses:
+        "200":
+          description: Bounded series and model/data/configuration citations with exact coverage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssistantForecastEvidenceCoverage"
+        "403":
+          description: Product authority denied without foreign existence disclosure
+        "422":
+          description: Invalid product set
+        "503":
+          description: Authoritative store unavailable; assistant must disclose unavailability
+components:
+  schemas:
+    AssistantForecastProductSet:
+      type: object
+      required:
+        - productIds
+      properties:
+        productIds:
+          type: array
+          minItems: 1
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+      additionalProperties: false
+    AssistantForecastCoverage:
+      type: object
+      required:
+        - requestedProductIds
+        - coveredProductIds
+        - unavailableProductIds
+        - publicationStatus
+        - freshnessStatus
+        - freshnessBoundary
+        - freshnessReason
+        - currentPublicationId
+        - forecastRunId
+        - latestRunId
+        - generatedAt
+        - sourceRevision
+        - calendarVersion
+        - modelVersion
+        - configurationVersion
+        - inputSnapshotDigest
+        - modelManifestDigest
+        - configurationDigest
+        - placementGeneration
+        - products
+      if:
+        properties:
+          coveredProductIds:
+            minItems: 1
+        required:
+          - coveredProductIds
+      then:
+        properties:
+          freshnessStatus:
+            const: fresh
+          freshnessBoundary:
+            type: string
+            format: date-time
+          freshnessReason:
+            const: within-window
+          currentPublicationId:
+            type: string
+            format: uuid
+          forecastRunId:
+            type: string
+            format: uuid
+          generatedAt:
+            type: string
+            format: date-time
+          sourceRevision:
+            type: string
+          calendarVersion:
+            type: string
+          modelVersion:
+            type: string
+          configurationVersion:
+            type: string
+          inputSnapshotDigest:
+            type: string
+            pattern: ^sha256:[0-9a-f]{64}$
+          modelManifestDigest:
+            type: string
+            pattern: ^sha256:[0-9a-f]{64}$
+          configurationDigest:
+            type: string
+            pattern: ^sha256:[0-9a-f]{64}$
+          placementGeneration:
+            type: integer
+            minimum: 1
+      properties:
+        requestedProductIds:
+          type: array
+          minItems: 1
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        coveredProductIds:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        unavailableProductIds:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        publicationStatus:
+          enum:
+            - complete
+            - partial
+            - failed
+            - stale
+            - unpublished
+            - unavailable
+        freshnessStatus:
+          enum:
+            - fresh
+            - stale
+            - unavailable
+        freshnessBoundary:
+          type:
+            - string
+            - "null"
+          format: date-time
+        freshnessReason:
+          enum:
+            - within-window
+            - due-time-passed
+            - source-stale
+            - model-stale
+            - configuration-stale
+            - recovery-blocked
+            - no-publication
+        currentPublicationId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        forecastRunId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        latestRunId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        generatedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        sourceRevision:
+          type:
+            - string
+            - "null"
+        calendarVersion:
+          type:
+            - string
+            - "null"
+        modelVersion:
+          type:
+            - string
+            - "null"
+        configurationVersion:
+          type:
+            - string
+            - "null"
+        inputSnapshotDigest:
+          type:
+            - string
+            - "null"
+          pattern: ^sha256:[0-9a-f]{64}$
+        modelManifestDigest:
+          type:
+            - string
+            - "null"
+          pattern: ^sha256:[0-9a-f]{64}$
+        configurationDigest:
+          type:
+            - string
+            - "null"
+          pattern: ^sha256:[0-9a-f]{64}$
+        placementGeneration:
+          type:
+            - integer
+            - "null"
+          minimum: 1
+        products:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/AssistantForecastProductCoverage"
+      additionalProperties: false
+    AssistantForecastStatusCoverage:
+      allOf:
+        - $ref: "#/components/schemas/AssistantForecastCoverage"
+        - properties:
+            products:
+              items:
+                if:
+                  properties:
+                    coverageStatus:
+                      const: covered
+                  required:
+                    - coverageStatus
+                then:
+                  properties:
+                    reason:
+                      const: usable
+                  not:
+                    required:
+                      - series
+                else:
+                  properties:
+                    reason:
+                      not:
+                        const: usable
+                  not:
+                    required:
+                      - series
+    AssistantForecastEvidenceCoverage:
+      allOf:
+        - $ref: "#/components/schemas/AssistantForecastCoverage"
+        - properties:
+            products:
+              items:
+                if:
+                  properties:
+                    coverageStatus:
+                      const: covered
+                  required:
+                    - coverageStatus
+                then:
+                  properties:
+                    reason:
+                      const: usable
+                  required:
+                    - series
+                else:
+                  properties:
+                    reason:
+                      not:
+                        const: usable
+                  not:
+                    required:
+                      - series
+    AssistantForecastProductCoverage:
+      type: object
+      required:
+        - productId
+        - coverageStatus
+        - reason
+      properties:
+        productId:
+          type: string
+          format: uuid
+        coverageStatus:
+          enum:
+            - covered
+            - unavailable
+        reason:
+          enum:
+            - usable
+            - no-publication
+            - no-series
+            - partial-series
+            - failed-run
+            - stale
+            - model-unavailable
+            - source-incompatible
+            - recovery-blocked
+        series:
+          type: array
+          minItems: 28
+          maxItems: 28
+          items:
+            type: object
+            required:
+              - date
+              - demand
+            properties:
+              date:
+                type: string
+                format: date
+              demand:
+                type: number
+                minimum: 0
+            additionalProperties: false
+      additionalProperties: false
+  securitySchemes:
+    serviceToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+  - url: /
+security:
+  - serviceToken: []

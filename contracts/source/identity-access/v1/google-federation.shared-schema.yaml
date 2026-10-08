@@ -1,0 +1,40 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://contracts.stocksense.local/identity-access/v1/google-federation.schema.json
+title: GoogleFederationProfile
+description: U3's optional Google OIDC federation and explicit local-account linking profile (C20).
+type: object
+required: [kind, version, provider, availability, flow, pkce, requiredClaims, optionalClaims, verification, localIdentityKey, linking, failureBehavior]
+properties:
+  kind: { const: oidc-federation-profile }
+  version: { const: 1.0.0 }
+  provider: { const: google }
+  availability: { const: optional }
+  flow: { const: authorization_code }
+  pkce: { const: S256 }
+  requiredClaims:
+    const: [iss, sub, aud, exp, iat]
+  optionalClaims:
+    const: [email, email_verified, name]
+  verification:
+    const: [issuer, audience, signature, lifetime, state, nonce, code, pkce]
+    description: U3 verifies the external callback proof before resolving a local identity link.
+  localIdentityKey:
+    const: [issuer, subject]
+    description: Only the verified issuer and subject identify an external account; email text is never an identity key.
+  linking:
+    type: object
+    required: [automaticEmailLinking, explicitAuthorizedLink, retailerMembershipInheritance, audit]
+    properties:
+      automaticEmailLinking: { const: prohibited }
+      explicitAuthorizedLink: { const: required }
+      retailerMembershipInheritance: { const: prohibited }
+      audit: { const: required }
+    additionalProperties: false
+  failureBehavior:
+    type: object
+    required: [callbackValidationFailure, providerUnavailable]
+    properties:
+      callbackValidationFailure: { const: deny-and-audit }
+      providerUnavailable: { const: preserve-local-demo-login }
+    additionalProperties: false
+additionalProperties: false

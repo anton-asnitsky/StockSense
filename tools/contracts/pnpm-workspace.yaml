@@ -1,0 +1,13 @@
+packages:
+  - .
+allowBuilds:
+  '@asyncapi/cli': false
+  '@hyperjump/json-pointer': false
+  '@hyperjump/json-schema-core': false
+  '@hyperjump/json-schema': false
+  '@hyperjump/pact': false
+  '@scarf/scarf': false
+  yarn: false
+  # Optional native XML backend for CycloneDX. The SBOM script emits JSON, and
+  # this package installs with ignore-scripts, so its build stays declined.
+  libxmljs2: false

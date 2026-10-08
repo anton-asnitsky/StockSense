@@ -1,0 +1,153 @@
+# U1's required public-PR check, enforced from the protected base revision.
+#
+# Shaped by the policy U1 itself defines in tools/contracts/src/evidence.mjs
+# (assertCiPolicy, BR6.7): no pull_request_target, no self-hosted runner on an
+# untrusted trigger, read-only permissions on every job, and every action
+# pinned to a 40-character commit. A pull request that edits this file is
+# refused by that same policy, so the protected base revision decides.
+#
+# Attestation is deliberately absent. actions/attest-build-provenance needs
+# id-token: write, which assertCiPolicy rejects while pull_request is a
+# trigger. Build provenance therefore belongs in a separate push-only release
+# workflow, not in the required pull-request check.
+name: contracts-required
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Read-only for every job, which is what makes a fork pull request safe to run
+# here: no secret is available and no token can write.
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    name: U1 contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the pull-request merge revision
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          # A package records the commit its canonical bytes come from, and
+          # provenance verification resolves that commit. A shallow clone has
+          # only the merge head, so the recorded revision is absent and the
+          # binding fails as SOURCE_REVISION_UNKNOWN - which is what the first
+          # hosted run reported. Full history is a requirement here, not a
+          # convenience.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Pin pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.25.0
+
+      # The exact engine tools/contracts/package.json pins, so the hosted run
+      # satisfies the pin instead of overriding it as the local host must.
+      - name: Pin Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.19.0
+          cache: pnpm
+          cache-dependency-path: tools/contracts/pnpm-lock.yaml
+
+      - name: Install from the frozen lockfile
+        run: pnpm --dir tools/contracts install --frozen-lockfile
+
+      # oasdiff is an approved pinned tool fetched by digest, not a vendored
+      # dependency, so without this step the compatibility tests fail closed
+      # with DIFFER_UNAVAILABLE. Setting it up gives real compatibility
+      # evidence instead of a skip; the script verifies the published
+      # SHA-256 for this platform before trusting the binary.
+      - name: Set up the pinned differ
+        run: pnpm --dir tools/contracts setup:oasdiff
+
+      - name: Lint
+        run: pnpm --dir tools/contracts lint
+
+      - name: Type-check
+        run: pnpm --dir tools/contracts type-check
+
+      - name: Secret scan
+        run: pnpm --dir tools/contracts scan:secrets
+
+      # The image bakes in a copy of tools/contracts/src and its dependency
+      # manifests, and the build is not bit-reproducible, so no image ID can be
+      # committed: this job builds its own and the runner refuses any image
+      # whose recorded digest does not match this checkout.
+      - name: Build the pinned standards image
+        id: standards-image
+        run: |
+          id="$(pnpm --dir tools/contracts --silent build:standards-image | grep -oE '^sha256:[0-9a-f]{64}$')"
+          test -n "$id"
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
+      - name: Unit tests
+        run: pnpm --dir tools/contracts test:unit
+        env:
+          STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
+
+      # Container-backed, so this is the run that decides whether the pinned
+      # validators agree with this checkout on a clean machine.
+      - name: Integration tests
+        run: pnpm --dir tools/contracts test:integration
+        env:
+          STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
+
+      # The 80% U1 line floor is enforced here rather than merely reported;
+      # a lower figure fails the job.
+      - name: Coverage with the 80% line floor
+        run: >
+          node --experimental-test-coverage --test
+          --test-coverage-include='src/**/*.mjs'
+          --test-coverage-lines=80
+          test/unit/*.test.mjs test/integration/*.test.mjs
+        working-directory: tools/contracts
+        env:
+          STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
+
+  # Its own job so a supply-chain finding is visible as itself rather than
+  # hidden behind a test failure. BR6.2 requires a failed required check to
+  # block the integration decision, so this is expected to be red until the
+  # residual @asyncapi/generator advisories carry an owner disposition.
+  vulnerability-scan:
+    name: Vulnerability scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the pull-request merge revision
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          # A package records the commit its canonical bytes come from, and
+          # provenance verification resolves that commit. A shallow clone has
+          # only the merge head, so the recorded revision is absent and the
+          # binding fails as SOURCE_REVISION_UNKNOWN - which is what the first
+          # hosted run reported. Full history is a requirement here, not a
+          # convenience.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Pin pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.25.0
+
+      - name: Pin Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.19.0
+          cache: pnpm
+          cache-dependency-path: tools/contracts/pnpm-lock.yaml
+
+      - name: Install from the frozen lockfile
+        run: pnpm --dir tools/contracts install --frozen-lockfile
+
+      - name: Audit the locked dependency tree
+        run: pnpm --dir tools/contracts scan:vuln

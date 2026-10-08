@@ -1,0 +1,661 @@
+openapi: 3.1.2
+info:
+  title: Forecasting Planning-Purchasing API
+  version: 1.0.0
+paths:
+  /api/v1/retailers/{retailerId}/forecasts/{forecastRunId}:
+    get:
+      operationId: getForecastRun
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: forecastRunId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Inspectable historical run outcome and product evidence; stale, failed, partial and non-current runs remain readable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForecastRunHistoryResponse"
+              examples:
+                succeeded:
+                  value:
+                    retailerId: 00000000-0000-4000-8000-000000000001
+                    forecastRunId: 00000000-0000-4000-8000-000000000011
+                    retailerLocalDate: 2026-09-01
+                    revision: 1
+                    lifecycleStatus: succeeded
+                    publicationStatus: current
+                    isCurrent: true
+                    freshnessStatus: fresh
+                    freshnessBoundary: 2026-09-02T06:00:00Z
+                    generatedAt: 2026-09-01T02:05:00Z
+                    requestedProductIds:
+                      - 00000000-0000-4000-8000-000000000021
+                    coveredProductIds:
+                      - 00000000-0000-4000-8000-000000000021
+                    unavailableProductIds: []
+                    provenance:
+                      sourceRevision: source-1
+                      calendarVersion: calendar-1
+                      modelVersion: model-1
+                      configurationVersion: config-1
+                      inputSnapshotDigest: sha256:1111111111111111111111111111111111111111111111111111111111111111
+                      modelManifestDigest: sha256:2222222222222222222222222222222222222222222222222222222222222222
+                      configurationDigest: sha256:3333333333333333333333333333333333333333333333333333333333333333
+                      placementGeneration: 1
+                      recoveryGeneration: 1
+                      routePinId: 00000000-0000-4000-8000-000000000031
+                    products:
+                      - productId: 00000000-0000-4000-8000-000000000021
+                        coverageStatus: covered
+                        reason: produced
+                        series:
+                          - date: 2026-09-01
+                            demand: 2
+                          - date: 2026-09-02
+                            demand: 3
+                          - date: 2026-09-03
+                            demand: 4
+                          - date: 2026-09-04
+                            demand: 2
+                          - date: 2026-09-05
+                            demand: 3
+                          - date: 2026-09-06
+                            demand: 4
+                          - date: 2026-09-07
+                            demand: 2
+                          - date: 2026-09-08
+                            demand: 3
+                          - date: 2026-09-09
+                            demand: 4
+                          - date: 2026-09-10
+                            demand: 2
+                          - date: 2026-09-11
+                            demand: 3
+                          - date: 2026-09-12
+                            demand: 4
+                          - date: 2026-09-13
+                            demand: 2
+                          - date: 2026-09-14
+                            demand: 3
+                          - date: 2026-09-15
+                            demand: 4
+                          - date: 2026-09-16
+                            demand: 2
+                          - date: 2026-09-17
+                            demand: 3
+                          - date: 2026-09-18
+                            demand: 4
+                          - date: 2026-09-19
+                            demand: 2
+                          - date: 2026-09-20
+                            demand: 3
+                          - date: 2026-09-21
+                            demand: 4
+                          - date: 2026-09-22
+                            demand: 2
+                          - date: 2026-09-23
+                            demand: 3
+                          - date: 2026-09-24
+                            demand: 4
+                          - date: 2026-09-25
+                            demand: 2
+                          - date: 2026-09-26
+                            demand: 3
+                          - date: 2026-09-27
+                            demand: 4
+                          - date: 2026-09-28
+                            demand: 2
+                staleFailed:
+                  value:
+                    retailerId: 00000000-0000-4000-8000-000000000001
+                    forecastRunId: 00000000-0000-4000-8000-000000000012
+                    retailerLocalDate: 2026-08-31
+                    revision: 1
+                    lifecycleStatus: failed
+                    publicationStatus: unpublished
+                    isCurrent: false
+                    freshnessStatus: stale
+                    freshnessBoundary: 2026-09-01T06:00:00Z
+                    generatedAt: null
+                    requestedProductIds:
+                      - 00000000-0000-4000-8000-000000000022
+                    coveredProductIds: []
+                    unavailableProductIds:
+                      - 00000000-0000-4000-8000-000000000022
+                    provenance:
+                      sourceRevision: source-0
+                      calendarVersion: calendar-1
+                      modelVersion: model-1
+                      configurationVersion: config-1
+                      inputSnapshotDigest: sha256:4444444444444444444444444444444444444444444444444444444444444444
+                      modelManifestDigest: sha256:2222222222222222222222222222222222222222222222222222222222222222
+                      configurationDigest: sha256:3333333333333333333333333333333333333333333333333333333333333333
+                      placementGeneration: 1
+                      recoveryGeneration: 1
+                      routePinId: 00000000-0000-4000-8000-000000000032
+                    products:
+                      - productId: 00000000-0000-4000-8000-000000000022
+                        coverageStatus: unavailable
+                        reason: failed-run
+        "403":
+          description: Current retailer or product read authority denied
+        "404":
+          description: Forecast run is absent or outside the retailer context
+  /api/v1/retailers/{retailerId}/forecasts:latest:
+    post:
+      operationId: getLatestUsableForecast
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForecastProductSetRequest"
+      responses:
+        "200":
+          description: Current publication with exact per-product coverage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForecastCoverageResponse"
+        "403":
+          description: One or more products are outside current retailer authority; no foreign existence disclosure
+        "422":
+          description: Empty, duplicate, oversized or malformed product set
+        "503":
+          description: Authoritative publication store unavailable; no silent model substitution
+components:
+  schemas:
+    ForecastRunHistoryResponse:
+      type: object
+      required:
+        - retailerId
+        - forecastRunId
+        - retailerLocalDate
+        - revision
+        - lifecycleStatus
+        - publicationStatus
+        - isCurrent
+        - freshnessStatus
+        - freshnessBoundary
+        - generatedAt
+        - requestedProductIds
+        - coveredProductIds
+        - unavailableProductIds
+        - provenance
+        - products
+      properties:
+        retailerId:
+          type: string
+          format: uuid
+        forecastRunId:
+          type: string
+          format: uuid
+        retailerLocalDate:
+          type: string
+          format: date
+        revision:
+          type: integer
+          minimum: 1
+        lifecycleStatus:
+          enum:
+            - admitted
+            - queued
+            - running
+            - succeeded
+            - partiallySucceeded
+            - failed
+        publicationStatus:
+          enum:
+            - unpublished
+            - awaitingAcknowledgement
+            - current
+            - rejected
+            - superseded
+        isCurrent:
+          type: boolean
+        freshnessStatus:
+          enum:
+            - fresh
+            - stale
+            - unavailable
+        freshnessBoundary:
+          type:
+            - string
+            - "null"
+          format: date-time
+        generatedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        requestedProductIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        coveredProductIds:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        unavailableProductIds:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        provenance:
+          $ref: "#/components/schemas/ForecastRunProvenance"
+        products:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/ForecastRunHistoryProduct"
+      additionalProperties: false
+    ForecastRunProvenance:
+      type: object
+      required:
+        - sourceRevision
+        - calendarVersion
+        - modelVersion
+        - configurationVersion
+        - inputSnapshotDigest
+        - modelManifestDigest
+        - configurationDigest
+        - placementGeneration
+        - recoveryGeneration
+        - routePinId
+      properties:
+        sourceRevision:
+          type:
+            - string
+            - "null"
+        calendarVersion:
+          type:
+            - string
+            - "null"
+        modelVersion:
+          type:
+            - string
+            - "null"
+        configurationVersion:
+          type:
+            - string
+            - "null"
+        inputSnapshotDigest:
+          type:
+            - string
+            - "null"
+          pattern: ^sha256:[0-9a-f]{64}$
+        modelManifestDigest:
+          type:
+            - string
+            - "null"
+          pattern: ^sha256:[0-9a-f]{64}$
+        configurationDigest:
+          type:
+            - string
+            - "null"
+          pattern: ^sha256:[0-9a-f]{64}$
+        placementGeneration:
+          type:
+            - integer
+            - "null"
+          minimum: 1
+        recoveryGeneration:
+          type:
+            - integer
+            - "null"
+          minimum: 1
+        routePinId:
+          type:
+            - string
+            - "null"
+          format: uuid
+      additionalProperties: false
+    ForecastRunHistoryProduct:
+      type: object
+      required:
+        - productId
+        - coverageStatus
+        - reason
+      if:
+        properties:
+          coverageStatus:
+            const: covered
+        required:
+          - coverageStatus
+      then:
+        properties:
+          reason:
+            const: produced
+        required:
+          - series
+      else:
+        properties:
+          reason:
+            not:
+              const: produced
+        not:
+          required:
+            - series
+      properties:
+        productId:
+          type: string
+          format: uuid
+        coverageStatus:
+          enum:
+            - covered
+            - unavailable
+        reason:
+          enum:
+            - produced
+            - no-series
+            - partial-series
+            - failed-run
+            - model-unavailable
+            - source-incompatible
+            - recovery-blocked
+        series:
+          type: array
+          minItems: 28
+          maxItems: 28
+          items:
+            type: object
+            required:
+              - date
+              - demand
+            properties:
+              date:
+                type: string
+                format: date
+              demand:
+                type: number
+                minimum: 0
+            additionalProperties: false
+      additionalProperties: false
+    ForecastProductSetRequest:
+      type: object
+      required:
+        - productIds
+      properties:
+        productIds:
+          type: array
+          minItems: 1
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+      additionalProperties: false
+    ForecastCoverageResponse:
+      type: object
+      required:
+        - requestedProductIds
+        - coveredProductIds
+        - unavailableProductIds
+        - publicationStatus
+        - freshnessStatus
+        - freshnessBoundary
+        - freshnessReason
+        - currentPublicationId
+        - forecastRunId
+        - latestRunId
+        - generatedAt
+        - sourceRevision
+        - calendarVersion
+        - modelVersion
+        - configurationVersion
+        - inputSnapshotDigest
+        - modelManifestDigest
+        - configurationDigest
+        - placementGeneration
+        - products
+      if:
+        properties:
+          coveredProductIds:
+            minItems: 1
+        required:
+          - coveredProductIds
+      then:
+        properties:
+          freshnessStatus:
+            const: fresh
+          freshnessBoundary:
+            type: string
+            format: date-time
+          freshnessReason:
+            const: within-window
+          currentPublicationId:
+            type: string
+            format: uuid
+          forecastRunId:
+            type: string
+            format: uuid
+          generatedAt:
+            type: string
+            format: date-time
+          sourceRevision:
+            type: string
+          calendarVersion:
+            type: string
+          modelVersion:
+            type: string
+          configurationVersion:
+            type: string
+          inputSnapshotDigest:
+            type: string
+            pattern: ^sha256:[0-9a-f]{64}$
+          modelManifestDigest:
+            type: string
+            pattern: ^sha256:[0-9a-f]{64}$
+          configurationDigest:
+            type: string
+            pattern: ^sha256:[0-9a-f]{64}$
+          placementGeneration:
+            type: integer
+            minimum: 1
+      properties:
+        requestedProductIds:
+          type: array
+          minItems: 1
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        coveredProductIds:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        unavailableProductIds:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        publicationStatus:
+          enum:
+            - complete
+            - partial
+            - failed
+            - stale
+            - unpublished
+            - unavailable
+        freshnessStatus:
+          enum:
+            - fresh
+            - stale
+            - unavailable
+        freshnessBoundary:
+          type:
+            - string
+            - "null"
+          format: date-time
+        freshnessReason:
+          enum:
+            - within-window
+            - due-time-passed
+            - source-stale
+            - model-stale
+            - configuration-stale
+            - recovery-blocked
+            - no-publication
+        currentPublicationId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        forecastRunId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        latestRunId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        generatedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        sourceRevision:
+          type:
+            - string
+            - "null"
+        calendarVersion:
+          type:
+            - string
+            - "null"
+        modelVersion:
+          type:
+            - string
+            - "null"
+        configurationVersion:
+          type:
+            - string
+            - "null"
+        inputSnapshotDigest:
+          type:
+            - string
+            - "null"
+          pattern: ^sha256:[0-9a-f]{64}$
+        modelManifestDigest:
+          type:
+            - string
+            - "null"
+          pattern: ^sha256:[0-9a-f]{64}$
+        configurationDigest:
+          type:
+            - string
+            - "null"
+          pattern: ^sha256:[0-9a-f]{64}$
+        placementGeneration:
+          type:
+            - integer
+            - "null"
+          minimum: 1
+        products:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/ForecastProductCoverage"
+      additionalProperties: false
+    ForecastProductCoverage:
+      type: object
+      required:
+        - productId
+        - coverageStatus
+        - reason
+      if:
+        properties:
+          coverageStatus:
+            const: covered
+        required:
+          - coverageStatus
+      then:
+        properties:
+          reason:
+            const: usable
+        required:
+          - series
+      else:
+        properties:
+          reason:
+            not:
+              const: usable
+        not:
+          required:
+            - series
+      properties:
+        productId:
+          type: string
+          format: uuid
+        coverageStatus:
+          enum:
+            - covered
+            - unavailable
+        reason:
+          enum:
+            - usable
+            - no-publication
+            - no-series
+            - partial-series
+            - failed-run
+            - stale
+            - model-unavailable
+            - source-incompatible
+            - recovery-blocked
+        series:
+          type: array
+          minItems: 28
+          maxItems: 28
+          items:
+            type: object
+            required:
+              - date
+              - demand
+            properties:
+              date:
+                type: string
+                format: date
+              demand:
+                type: number
+                minimum: 0
+            additionalProperties: false
+      additionalProperties: false
+  securitySchemes:
+    serviceToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+  - url: /
+security:
+  - serviceToken: []

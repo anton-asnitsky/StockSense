@@ -1,0 +1,225 @@
+openapi: 3.1.2
+info:
+  title: Supplier Knowledge Planning-Purchasing API
+  version: 1.0.0
+paths:
+  /api/v1/retailers/{retailerId}/products/{productId}/accepted-terms:
+    get:
+      operationId: getAcceptedSupplierTerms
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: effectiveAt
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Current terms, source revision, page citations and currency
+        "404":
+          description: No accepted terms exist for this retailer product
+        "409":
+          description: Requested source revision is stale
+  /api/v1/retailers/{retailerId}/accepted-term-selections:
+    post:
+      operationId: sealAcceptedTermSelection
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcceptedTermSelectionRequest"
+      responses:
+        "201":
+          description: Immutable signed selection sealed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcceptedTermSelection"
+        "403":
+          description: U8 requester is not authorized for the retailer and product
+        "409":
+          description: Accepted-term or source version changed during sealing
+        "503":
+          description: Authoritative source, Vault head or signer unavailable
+  /api/v1/retailers/{retailerId}/accepted-term-selections/{selectionId}:
+    get:
+      operationId: getAcceptedTermSelection
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: selectionId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Immutable payload reference and attestation for authorized U8 forwarding to U6
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcceptedTermSelection"
+        "403":
+          description: Caller is not authorized to verify this retailer selection
+        "410":
+          description: Selection or signer was revoked or expired
+components:
+  schemas:
+    AcceptedTermSelectionRequest:
+      type: object
+      required:
+        - productId
+        - termIds
+        - effectiveAt
+        - requesterSubject
+        - placementGeneration
+        - recoveryGeneration
+      properties:
+        productId:
+          type: string
+          format: uuid
+        termIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        effectiveAt:
+          type: string
+          format: date-time
+        requesterSubject:
+          type: string
+          minLength: 1
+        placementGeneration:
+          type: integer
+          minimum: 1
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+      additionalProperties: false
+    AcceptedTermSelection:
+      type: object
+      required:
+        - selectionId
+        - retailerId
+        - productId
+        - requesterSubject
+        - payloadReference
+        - payloadDigest
+        - sourceVersion
+        - acceptedTermVersion
+        - authorityRevision
+        - authorityHeadDigest
+        - signerKeyId
+        - algorithm
+        - signature
+        - sealedAt
+        - expiresAt
+      properties:
+        selectionId:
+          type: string
+          format: uuid
+        retailerId:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        requesterSubject:
+          type: string
+          minLength: 1
+        payloadReference:
+          $ref: "#/components/schemas/SelectionPayloadReference"
+        payloadDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        sourceVersion:
+          type: string
+          minLength: 1
+        acceptedTermVersion:
+          type: string
+          minLength: 1
+        authorityRevision:
+          type: integer
+          minimum: 1
+        authorityHeadDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        signerKeyId:
+          type: string
+          minLength: 1
+        algorithm:
+          const: Ed25519
+        signature:
+          type: string
+          contentEncoding: base64
+        sealedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    SelectionPayloadReference:
+      type: object
+      required:
+        - storeId
+        - contentKey
+        - sha256
+        - lengthBytes
+      properties:
+        storeId:
+          const: supplier-selections-v1
+        contentKey:
+          type: string
+          pattern: ^sha256/[0-9a-f]{64}$
+        sha256:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        lengthBytes:
+          type: integer
+          minimum: 1
+          maximum: 65536
+      additionalProperties: false
+  securitySchemes:
+    serviceToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+servers:
+  - url: /
+security:
+  - serviceToken: []

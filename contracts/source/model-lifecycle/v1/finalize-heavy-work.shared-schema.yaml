@@ -1,0 +1,32 @@
+port: model_lifecycle.finalize_heavy_work_v1
+transaction: caller-owned retailer-local PostgreSQL transaction; no autonomous commit
+authorizedCallers: [forecasting-service]
+arguments:
+  required: [callerService, retailerId, workType, requestId, leaseId, workerId, fencingToken, placementGeneration, recoveryGeneration, resultDigest, operationId, idempotencyKey, expectedOwnerVersion]
+  conditionalRequiredForBatchForecast: [forecastRunId, forecastAttemptId, forecastRoutePinId]
+  forbiddenForOtherWorkTypes: [forecastRunId, forecastAttemptId, forecastRoutePinId]
+  postgresTypes:
+    callerService: text
+    retailerId: uuid
+    workType: text
+    requestId: uuid
+    leaseId: uuid
+    workerId: text
+    fencingToken: bigint
+    placementGeneration: bigint
+    recoveryGeneration: bigint
+    resultDigest: text
+    operationId: uuid
+    idempotencyKey: text
+    expectedOwnerVersion: bigint
+    forecastRunId: uuid nullable
+    forecastAttemptId: uuid nullable
+    forecastRoutePinId: uuid nullable
+result:
+  required: [disposition, terminalResultId, resultDigest, closedPinId, pinClosureDisposition]
+  postgresTypes: { disposition: text, terminalResultId: uuid, resultDigest: text, closedPinId: uuid nullable, pinClosureDisposition: text }
+  disposition: [finalized, idempotent-replay]
+  pinClosureDisposition: [closed, already-closed, not-applicable]
+conflicts: [wrong-caller, wrong-retailer, wrong-work-type, wrong-worker, wrong-run, wrong-attempt, stale-lease, stale-token, expired-lease, stale-generation, cancelled-request, changed-payload-replay, wrong-route-pin, pin-already-closed-by-other-result]
+locking: retailer request, lease/fence, route-pin and route-control rows when batch; serializes with expiry, revocation, recovery fencing and route drain
+ownerCommit: same transaction writes owner publication pointer, outcomes/series when U7, audit and outbox; only U6 finalizer mutates U6 pin

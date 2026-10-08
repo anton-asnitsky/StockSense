@@ -1,0 +1,649 @@
+openapi: 3.1.2
+info:
+  title: StockSense Recovery Bootstrap Participant API
+  version: 1.0.0
+paths:
+  /internal/v1/recovery/participants/{participant}/retailers/{retailerId}/runs/{runId}/{command}:
+    parameters:
+      - in: path
+        name: participant
+        required: true
+        schema:
+          enum:
+            - identity-access
+            - tenant-directory
+      - in: path
+        name: retailerId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: path
+        name: runId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: path
+        name: command
+        required: true
+        schema:
+          enum:
+            - prepare
+            - close
+            - abort
+            - resume
+      - in: header
+        name: X-Correlation-ID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: header
+        name: Idempotency-Key
+        required: true
+        schema:
+          type: string
+          minLength: 16
+          maxLength: 128
+    post:
+      operationId: applyRecoveryBootstrapCommand
+      security:
+        - recoveryCoordinatorToken:
+            - recovery.participant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - commandId
+                - registrationId
+                - rosterDigest
+                - recoveryGeneration
+                - placementGeneration
+                - policyVersion
+                - deadlineClass
+                - commandRoute
+                - acknowledgementRoute
+                - deadlineAt
+              properties:
+                commandId:
+                  type: string
+                  format: uuid
+                registrationId:
+                  type: string
+                  format: uuid
+                rosterDigest:
+                  type: string
+                  pattern: ^sha256:[0-9a-f]{64}$
+                recoveryGeneration:
+                  type: integer
+                  minimum: 1
+                placementGeneration:
+                  type: integer
+                  minimum: 1
+                policyVersion:
+                  const: recovery-policy-v1
+                deadlineClass:
+                  const: A
+                commandRoute:
+                  type: string
+                  pattern: ^/internal/v1/recovery/participants/
+                acknowledgementRoute:
+                  const: synchronous-response
+                deadlineAt:
+                  type: string
+                  format: date-time
+      responses:
+        "200":
+          description: Durable idempotent participant result, checkpoint evidence and fence disposition
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecoveryBootstrapResult"
+              examples:
+                prepared:
+                  value:
+                    runId: 00000000-0000-4000-8000-000000000001
+                    commandId: 00000000-0000-4000-8000-000000000002
+                    registrationId: 00000000-0000-4000-8000-000000000003
+                    rosterDigest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+                    participant: identity-access
+                    command: prepare
+                    recoveryGeneration: 7
+                    placementGeneration: 3
+                    outcome: prepared
+                    fenceDisposition: active
+                    checkpoint: null
+                    checkpointDigest: null
+                    durableStateVersion: 1
+                    acknowledgedAt: 2026-09-24T10:00:00Z
+                closed:
+                  value:
+                    runId: 00000000-0000-4000-8000-000000000001
+                    commandId: 00000000-0000-4000-8000-000000000006
+                    registrationId: 00000000-0000-4000-8000-000000000003
+                    rosterDigest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+                    participant: tenant-directory
+                    command: close
+                    recoveryGeneration: 7
+                    placementGeneration: 3
+                    outcome: closed
+                    fenceDisposition: active
+                    checkpoint:
+                      checkpointId: 00000000-0000-4000-8000-000000000007
+                      digest: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+                      recordedAt: 2026-09-24T10:00:01Z
+                    checkpointDigest: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+                    durableStateVersion: 2
+                    acknowledgedAt: 2026-09-24T10:00:01Z
+                abortBeforeLatePrepare:
+                  value:
+                    runId: 00000000-0000-4000-8000-000000000001
+                    commandId: 00000000-0000-4000-8000-000000000002
+                    registrationId: 00000000-0000-4000-8000-000000000003
+                    rosterDigest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+                    participant: identity-access
+                    command: prepare
+                    recoveryGeneration: 7
+                    placementGeneration: 3
+                    outcome: terminal
+                    fenceDisposition: terminally-suppressed
+                    checkpoint: null
+                    checkpointDigest: null
+                    durableStateVersion: 2
+                    acknowledgedAt: 2026-09-24T10:00:01Z
+        "401":
+          description: Missing, expired, invalid, or wrong-audience coordinator token
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/RecoveryProblem"
+              examples:
+                invalidToken:
+                  value:
+                    type: https://errors.stocksense.local/recovery/authentication-invalid
+                    title: Coordinator authentication invalid
+                    status: 401
+                    detail: Coordinator token is invalid for this participant.
+                    instance: /internal/v1/recovery/participants/identity-access/retailers/00000000-0000-4000-8000-000000000005/runs/00000000-0000-4000-8000-000000000001/prepare
+                    code: RECOVERY_AUTHENTICATION_INVALID
+                    correlationId: 00000000-0000-4000-8000-000000000004
+        "403":
+          description: Recovery coordinator workload identity or scope denied
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/RecoveryProblem"
+        "409":
+          description: Stale generation, conflicting command, or durable terminal phase
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/RecoveryProblem"
+              examples:
+                staleGeneration:
+                  value:
+                    type: https://errors.stocksense.local/recovery/stale-generation
+                    title: Recovery generation conflict
+                    status: 409
+                    detail: The command uses a stale recovery generation.
+                    instance: /internal/v1/recovery/participants/identity-access/retailers/00000000-0000-4000-8000-000000000005/runs/00000000-0000-4000-8000-000000000001/prepare
+                    code: RECOVERY_GENERATION_STALE
+                    correlationId: 00000000-0000-4000-8000-000000000004
+                    runId: 00000000-0000-4000-8000-000000000001
+                    commandId: 00000000-0000-4000-8000-000000000002
+                    fenceDisposition: unresolved
+        "422":
+          description: Unsupported policy or malformed checkpoint request
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/RecoveryProblem"
+        "503":
+          description: Participant cannot persist a safe result before its deadline
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/RecoveryProblem"
+              examples:
+                persistenceUnavailable:
+                  value:
+                    type: https://errors.stocksense.local/recovery/persistence-unavailable
+                    title: Participant persistence unavailable
+                    status: 503
+                    detail: A durable participant result could not be committed.
+                    instance: /internal/v1/recovery/participants/identity-access/retailers/00000000-0000-4000-8000-000000000005/runs/00000000-0000-4000-8000-000000000001/prepare
+                    code: RECOVERY_PERSISTENCE_UNAVAILABLE
+                    correlationId: 00000000-0000-4000-8000-000000000004
+                    runId: 00000000-0000-4000-8000-000000000001
+                    commandId: 00000000-0000-4000-8000-000000000002
+                    fenceDisposition: unresolved
+  /internal/v1/recovery/participants/{participant}/retailers/{retailerId}/runs/{runId}/restore-attestation:
+    parameters:
+      - in: path
+        name: participant
+        required: true
+        schema:
+          enum:
+            - identity-access
+            - tenant-directory
+      - in: path
+        name: retailerId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: path
+        name: runId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: header
+        name: Idempotency-Key
+        required: true
+        schema:
+          type: string
+          minLength: 16
+          maxLength: 128
+    post:
+      operationId: attestRestoredBootstrapState
+      security:
+        - recoveryCoordinatorToken:
+            - recovery.participant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecoveryBootstrapRestoreAttestationRequest"
+      responses:
+        "200":
+          description: Durable manifest-bound restored-state and fence attestation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecoveryBootstrapRestoreAttestation"
+              examples:
+                identityVerified:
+                  value:
+                    runId: 00000000-0000-4000-8000-000000000001
+                    restoreExecutionId: 00000000-0000-4000-8000-000000000008
+                    commandId: 00000000-0000-4000-8000-000000000009
+                    registrationId: 00000000-0000-4000-8000-000000000003
+                    rosterDigest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+                    participant: identity-access
+                    recoveryCutManifestDigest: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+                    recoveryGeneration: 7
+                    placementGeneration: 3
+                    physicalRestoreDigest: sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+                    restoredCheckpointDigest: sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+                    localFenceState: active
+                    localFenceDigest: sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+                    ownerStateDigest: sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+                    attestationEvidenceReference: urn:stocksense:recovery:identity-attestation:00000000-0000-4000-8000-000000000008
+                    attestationEvidenceDigest: sha256:1111111111111111111111111111111111111111111111111111111111111111
+                    durableStateVersion: 3
+                    attestedAt: 2026-09-28T12:00:00Z
+        "403":
+          description: Authenticated coordinator workload or participant route mismatch
+        "409":
+          description: Run, manifest, checkpoint, generation or local fence mismatch; participant remains fenced
+        "422":
+          description: Malformed or untrusted recovery-cut evidence; participant remains fenced
+        "503":
+          description: Authoritative restored records unavailable; participant remains fenced
+components:
+  securitySchemes:
+    recoveryCoordinatorToken:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: /connect/token
+          scopes:
+            recovery.participant: Apply bootstrap recovery commands as the coordinator workload
+  schemas:
+    RecoveryBootstrapRestoreAttestationRequest:
+      type: object
+      required:
+        - commandId
+        - restoreExecutionId
+        - registrationId
+        - rosterDigest
+        - recoveryCutManifestDigest
+        - recoveryGeneration
+        - placementGeneration
+        - expectedRestoredCheckpointDigest
+        - physicalRestoreDigest
+        - deadlineAt
+      properties:
+        commandId:
+          type: string
+          format: uuid
+        restoreExecutionId:
+          type: string
+          format: uuid
+        registrationId:
+          type: string
+          format: uuid
+        rosterDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        recoveryCutManifestDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+        placementGeneration:
+          type: integer
+          minimum: 1
+        expectedRestoredCheckpointDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        physicalRestoreDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        deadlineAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    RecoveryBootstrapRestoreAttestation:
+      type: object
+      required:
+        - runId
+        - restoreExecutionId
+        - commandId
+        - registrationId
+        - rosterDigest
+        - participant
+        - recoveryCutManifestDigest
+        - recoveryGeneration
+        - placementGeneration
+        - physicalRestoreDigest
+        - restoredCheckpointDigest
+        - localFenceState
+        - localFenceDigest
+        - ownerStateDigest
+        - attestationEvidenceReference
+        - attestationEvidenceDigest
+        - durableStateVersion
+        - attestedAt
+      properties:
+        runId:
+          type: string
+          format: uuid
+        restoreExecutionId:
+          type: string
+          format: uuid
+        commandId:
+          type: string
+          format: uuid
+        registrationId:
+          type: string
+          format: uuid
+        rosterDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        participant:
+          enum:
+            - identity-access
+            - tenant-directory
+        recoveryCutManifestDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+        placementGeneration:
+          type: integer
+          minimum: 1
+        physicalRestoreDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        restoredCheckpointDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        localFenceState:
+          const: active
+        localFenceDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        ownerStateDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        attestationEvidenceReference:
+          type: string
+          format: uri
+        attestationEvidenceDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        durableStateVersion:
+          type: integer
+          minimum: 1
+        attestedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    RecoveryBootstrapResult:
+      type: object
+      required:
+        - runId
+        - commandId
+        - registrationId
+        - rosterDigest
+        - participant
+        - command
+        - recoveryGeneration
+        - placementGeneration
+        - outcome
+        - fenceDisposition
+        - checkpoint
+        - checkpointDigest
+        - durableStateVersion
+        - acknowledgedAt
+      allOf:
+        - if:
+            properties:
+              outcome:
+                const: closed
+            required:
+              - outcome
+          then:
+            properties:
+              checkpoint:
+                type: object
+              checkpointDigest:
+                type: string
+      properties:
+        runId:
+          type: string
+          format: uuid
+        commandId:
+          type: string
+          format: uuid
+        registrationId:
+          type: string
+          format: uuid
+        rosterDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        participant:
+          enum:
+            - identity-access
+            - tenant-directory
+        command:
+          enum:
+            - prepare
+            - close
+            - abort
+            - resume
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+        placementGeneration:
+          type: integer
+          minimum: 1
+        outcome:
+          enum:
+            - prepared
+            - closed
+            - aborted
+            - resumed
+            - terminal
+        fenceDisposition:
+          enum:
+            - active
+            - cleared
+            - terminally-suppressed
+        checkpoint:
+          oneOf:
+            - type: "null"
+            - type: object
+              required:
+                - checkpointId
+                - digest
+                - recordedAt
+              properties:
+                checkpointId:
+                  type: string
+                  format: uuid
+                digest:
+                  type: string
+                  pattern: ^sha256:[0-9a-f]{64}$
+                recordedAt:
+                  type: string
+                  format: date-time
+              additionalProperties: false
+        checkpointDigest:
+          type:
+            - string
+            - "null"
+          pattern: ^sha256:[0-9a-f]{64}$
+        durableStateVersion:
+          type: integer
+          minimum: 1
+        acknowledgedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    RecoveryProblem:
+      type: object
+      required:
+        - type
+        - title
+        - status
+        - detail
+        - instance
+        - code
+        - correlationId
+      allOf:
+        - if:
+            properties:
+              status:
+                const: 401
+            required:
+              - status
+          then:
+            properties:
+              code:
+                const: RECOVERY_AUTHENTICATION_INVALID
+        - if:
+            properties:
+              status:
+                const: 403
+            required:
+              - status
+          then:
+            properties:
+              code:
+                const: RECOVERY_AUTHORITY_DENIED
+        - if:
+            properties:
+              status:
+                const: 409
+            required:
+              - status
+          then:
+            properties:
+              code:
+                enum:
+                  - RECOVERY_GENERATION_STALE
+                  - RECOVERY_IDEMPOTENCY_CONFLICT
+                  - RECOVERY_FENCE_UNRESOLVED
+                  - RECOVERY_RECONCILIATION_REQUIRED
+        - if:
+            properties:
+              status:
+                const: 422
+            required:
+              - status
+          then:
+            properties:
+              code:
+                enum:
+                  - RECOVERY_POLICY_UNSUPPORTED
+                  - RECOVERY_PROTOCOL_UNSUPPORTED
+                  - RECOVERY_ROUTE_MISMATCH
+        - if:
+            properties:
+              status:
+                const: 503
+            required:
+              - status
+          then:
+            properties:
+              code:
+                const: RECOVERY_PERSISTENCE_UNAVAILABLE
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+          minLength: 1
+        status:
+          enum:
+            - 401
+            - 403
+            - 409
+            - 422
+            - 503
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri-reference
+        code:
+          enum:
+            - RECOVERY_AUTHENTICATION_INVALID
+            - RECOVERY_AUTHORITY_DENIED
+            - RECOVERY_GENERATION_STALE
+            - RECOVERY_IDEMPOTENCY_CONFLICT
+            - RECOVERY_POLICY_UNSUPPORTED
+            - RECOVERY_PROTOCOL_UNSUPPORTED
+            - RECOVERY_ROUTE_MISMATCH
+            - RECOVERY_FENCE_UNRESOLVED
+            - RECOVERY_RECONCILIATION_REQUIRED
+            - RECOVERY_PERSISTENCE_UNAVAILABLE
+        correlationId:
+          type: string
+          format: uuid
+        runId:
+          type: string
+          format: uuid
+        commandId:
+          type: string
+          format: uuid
+        fenceDisposition:
+          enum:
+            - active
+            - cleared
+            - terminally-suppressed
+            - unresolved
+      additionalProperties: false
+servers:
+  - url: /

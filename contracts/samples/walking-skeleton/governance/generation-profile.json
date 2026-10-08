@@ -1,0 +1,16 @@
+{
+  "generationProfileVersion": "1.1.0",
+  "sourceRevision": "ff3e51ec34b26c633dea8cde42c305b856ad7323",
+  "consumers": [
+    {
+      "consumerId": "web-application",
+      "generator": "openapi-typescript",
+      "generatorVersion": "7.13.0",
+      "sourceDocument": "web-bff/v1/browser-api.openapi.yaml",
+      "configurationDigest": "sha256:1d430a591c40aa00247e32275fdb5bb29b1b1c6ce394789222f91c58009c47f3",
+      "expectedOutputs": {
+        "browser-api.d.ts": "sha256:a02074e83cbec224ffad770720b986371a65b4db2e9d6028a714d02e87b8bcda"
+      }
+    }
+  ]
+}

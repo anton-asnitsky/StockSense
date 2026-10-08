@@ -1,0 +1,122 @@
+openapi: 3.1.2
+info:
+  title: StockSense Global Identity Audit Read API
+  version: 1.0.0
+paths:
+  /internal/v1/platform/identity-audit:
+    get:
+      operationId: queryGlobalIdentityAudit
+      security:
+        - delegatedGlobalAuditToken:
+            - audit.identity.global.read
+      parameters:
+        - in: query
+          name: cursor
+          required: false
+          schema:
+            type: string
+            maxLength: 512
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - in: query
+          name: from
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: to
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: correlationId
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Redacted global identity-security audit page after current platform-grant check
+          headers:
+            Cache-Control:
+              schema:
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                  - hasMore
+                  - projectionLagSeconds
+                properties:
+                  items:
+                    type: array
+                    maxItems: 100
+                    items:
+                      type: object
+                      required:
+                        - messageId
+                        - occurredAt
+                        - action
+                        - outcome
+                        - reasonCode
+                        - correlationId
+                      properties:
+                        messageId:
+                          type: string
+                          format: uuid
+                        occurredAt:
+                          type: string
+                          format: date-time
+                        action:
+                          type: string
+                        outcome:
+                          enum:
+                            - accepted
+                            - denied
+                            - failed
+                        reasonCode:
+                          type: string
+                        correlationId:
+                          type: string
+                          format: uuid
+                      additionalProperties: false
+                  nextCursor:
+                    type:
+                      - string
+                      - "null"
+                  hasMore:
+                    type: boolean
+                  projectionLagSeconds:
+                    type: integer
+                    minimum: 0
+                additionalProperties: false
+        "401":
+          description: Missing, invalid, expired, wrong-client, wrong-audience, or non-human delegated token; RFC 9457 problem
+        "403":
+          description: Current platform Operator grant absent or revoked; retailer role alone is insufficient; RFC 9457 problem
+        "422":
+          description: Invalid range or window exceeding 31 days; RFC 9457 problem
+        "503":
+          description: Grant check or projection unavailable; fail closed with RFC 9457 problem
+components:
+  securitySchemes:
+    delegatedGlobalAuditToken:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: /connect/authorize
+          tokenUrl: /connect/token
+          scopes:
+            audit.identity.global.read: Read redacted identity security outcomes with a current platform Operator grant
+servers:
+  - url: /

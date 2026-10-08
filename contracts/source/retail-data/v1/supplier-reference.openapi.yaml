@@ -1,0 +1,37 @@
+openapi: 3.1.2
+info:
+  title: Retail Data Supplier-Knowledge API
+  version: 1.0.0
+servers:
+  - url: /
+security:
+  - serviceToken: []
+paths:
+  /api/v1/retailers/{retailerId}/supplier-reference:
+    get:
+      operationId: getSupplierReferenceData
+      description: The Retail Data provider validates current retailer membership and placement generation.
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: productIds
+          schema:
+            type: array
+            items: { type: string, format: uuid }
+            maxItems: 200
+      responses:
+        '200':
+          description: Authorized retailer currency, products and source versions
+        '403':
+          description: Current membership or placement validation failed
+        '409':
+          description: Requested source version is stale
+components:
+  securitySchemes:
+    serviceToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -1,0 +1,45 @@
+openapi: 3.1.2
+info:
+  title: Supplier Knowledge Assistant Tools API
+  version: 1.0.0
+paths:
+  /api/v1/retailers/{retailerId}/assistant-tools/supplier-search:
+    parameters:
+      - in: path
+        name: retailerId
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: searchSupplierEvidence
+      responses:
+        "200":
+          description: Authorized chunks with document, source revision, page and score citations
+        "409":
+          description: Retrieval index is stale, rebuilding or incompatible
+  /api/v1/retailers/{retailerId}/assistant-tools/compare-suppliers:
+    parameters:
+      - in: path
+        name: retailerId
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: compareAcceptedSupplierTerms
+      responses:
+        "200":
+          description: Deterministic comparison of accepted terms with citations
+        "422":
+          description: Comparable accepted terms are incomplete
+servers:
+  - url: /
+security:
+  - serviceToken: []
+components:
+  securitySchemes:
+    serviceToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

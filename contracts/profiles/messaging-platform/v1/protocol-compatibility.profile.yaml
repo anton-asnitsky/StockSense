@@ -1,0 +1,45 @@
+# C22 governed sidecar candidate; validate against the canonical C22 JSON Schema.
+# Package registration, digest, source revision, and conformance results are still required for publication.
+kind: messaging-protocol-compatibility-manifest
+version: 1.0.0
+protocol:
+  owner: contracts
+  name: stocksense-messaging
+  semanticVersion: 1.0.0
+  asyncapiBaseline: 3.0.0
+  envelopeSchemas:
+    tenant: common/v1/message-envelope.schema.json
+    globalIdentity: common/v1/global-identity-audit-envelope.schema.json
+packages:
+  - language: dotnet
+    owner: messaging-platform
+    package: StockSense.Messaging
+    semanticVersion: 1.0.0
+    supportedProtocolRange: '>=1.0.0 <2.0.0'
+  - language: python
+    owner: messaging-platform
+    package: stocksense-messaging
+    semanticVersion: 1.0.0
+    supportedProtocolRange: '>=1.0.0 <2.0.0'
+bootstrapPublishers:
+  - { owner: identity-access, implementation: service-local, protocolRange: '>=1.0.0 <2.0.0', fixtures: [tenant-envelope, global-identity-envelope, cross-profile-rejection, authenticated-producer, publisher-confirm, exact-replay, changed-payload-conflict, poison-message, retry-expiry, dead-letter, authorized-replay, authoritative-reconciliation, ordering, payload-limit, telemetry] }
+  - { owner: retail-data, implementation: service-local, protocolRange: '>=1.0.0 <2.0.0', fixtures: [tenant-envelope, authenticated-producer, publisher-confirm, exact-replay, changed-payload-conflict, poison-message, retry-expiry, dead-letter, authorized-replay, authoritative-reconciliation, ordering, payload-limit, telemetry] }
+conformance:
+  fixtureVersion: 1.0.0
+  requiredSuites: [tenant-envelope, global-identity-envelope, cross-profile-rejection, authenticated-producer, publisher-confirm, exact-replay, changed-payload-conflict, poison-message, retry-expiry, dead-letter, authorized-replay, authoritative-reconciliation, ordering, payload-limit, telemetry]
+  crossLanguageResult: required
+  bootstrapPublisherResult: required-per-service-for-applicable-suites
+wireRules:
+  canonicalization: RFC-8785
+  digest: sha256-of-canonical-data
+  authenticatedProducerBinding: token-subject-client-audience-must-match-envelope-and-registration
+  envelopeMaximumBytes: 65536
+  maxTotalDeliveries: 5
+  initialDeliveryAttempt: 1
+  deterministicBackoffSecondsForAttempts2Through5: [1, 2, 4, 8]
+  backoffFormula: min-2-power-attempt-minus-2-and-30-seconds-no-jitter
+  deadLetterRetentionDays: 7
+  authorizedReplayBatchMaximum: 100
+breakingChange:
+  protocol: new-major-and-routing-identity
+  package: independent-major-with-declared-protocol-range

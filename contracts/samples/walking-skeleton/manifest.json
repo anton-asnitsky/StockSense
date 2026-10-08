@@ -1,0 +1,100 @@
+{
+  "packageVersion": "1.0.0",
+  "manifestStatus": "candidate",
+  "sourceRevision": "ff3e51ec34b26c633dea8cde42c305b856ad7323",
+  "openapi": [
+    {
+      "provider": "U11 Web BFF",
+      "boundaryIds": [
+        "C18"
+      ],
+      "document": "web-bff/v1/browser-api.openapi.yaml",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:97825e225fcc1af01800dd101a57c9d828ddf1dfa4f3d6e65b2bbeb9a612be33"
+    }
+  ],
+  "asyncapi": [],
+  "schemas": [
+    {
+      "owner": "U1 Contracts",
+      "boundaryIds": [
+        "C01"
+      ],
+      "document": "common/v1/message-envelope.schema.json",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:817cadf7573bf718e6ff9d42f67162ce940c4a9a4272d139765a940b88eca9d0"
+    },
+    {
+      "owner": "U1 Contracts",
+      "boundaryIds": [
+        "C01"
+      ],
+      "document": "common/v1/global-identity-audit-envelope.schema.json",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:422b7cf345d91f1ce2a438e4bc0f5b8160cf2796a8d0cd121d09be9c581e17d8"
+    }
+  ],
+  "governedArtifacts": [
+    {
+      "kind": "contract-package-policy",
+      "owner": "U1 Contracts",
+      "boundaryIds": [
+        "C01",
+        "C18"
+      ],
+      "document": "governance/contract-package-policy.json",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:7bd05065b012b25af6d38218a7212deab51095b980d5f7a947cc2894f1adb8b8",
+      "sourceRevision": "ff3e51ec34b26c633dea8cde42c305b856ad7323"
+    },
+    {
+      "kind": "example-fixture",
+      "owner": "U1 Contracts",
+      "boundaryIds": [
+        "C01",
+        "C18"
+      ],
+      "document": "governance/example-fixture.json",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:dee3d592f160b8a7e459ebb99c390c39438acaaa40187616dc8c3794e7567a9f",
+      "sourceRevision": "ff3e51ec34b26c633dea8cde42c305b856ad7323"
+    },
+    {
+      "kind": "generation-profile",
+      "owner": "U1 Contracts",
+      "boundaryIds": [
+        "C01",
+        "C18"
+      ],
+      "document": "governance/generation-profile.json",
+      "semanticVersion": "1.0.0",
+      "contentDigest": "sha256:c23228f2636736bd027604ff051fcc5dd0852ff38278ea36080f42257a384492",
+      "sourceRevision": "ff3e51ec34b26c633dea8cde42c305b856ad7323"
+    }
+  ],
+  "boundaryCoverage": [
+    {
+      "boundaryId": "C01",
+      "canonicalDocuments": [
+        "common/v1/message-envelope.schema.json",
+        "common/v1/global-identity-audit-envelope.schema.json"
+      ],
+      "sidecars": [
+        "governance/contract-package-policy.json",
+        "governance/example-fixture.json",
+        "governance/generation-profile.json"
+      ]
+    },
+    {
+      "boundaryId": "C18",
+      "canonicalDocuments": [
+        "web-bff/v1/browser-api.openapi.yaml"
+      ],
+      "sidecars": [
+        "governance/contract-package-policy.json",
+        "governance/example-fixture.json",
+        "governance/generation-profile.json"
+      ]
+    }
+  ]
+}
