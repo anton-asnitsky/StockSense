@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { randomUUID, createHash } from 'node:crypto';
-import { lstat, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
+import { chmod, lstat, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { ContractError, assertSafePath, deriveIdentity } from './package-loader.mjs';
@@ -192,6 +192,15 @@ async function snapshotGraph(graphRoot, files, sourceDocument) {
   let total = 0;
   const snapshot = await mkdtemp(join(tmpdir(), 'stocksense-validator-snapshot-'))
     .catch(() => fail('STANDARDS_GRAPH', 'NFR6.2', 'Snapshot directory is unavailable'));
+  // mkdtemp creates 0700 owned by the invoking user, and the container runs as
+  // a fixed non-root uid, so on Linux it cannot traverse the mount at all. A
+  // Docker Desktop bind mount reports permissive modes and hides this, which is
+  // why it only appeared on a hosted Linux run. The directory holds nothing but
+  // digest-checked copies of documents the package already declares, the files
+  // in it stay 0444, and the mount is read-only, so widening the directory bit
+  // costs nothing a reader of the repository does not already have.
+  await chmod(snapshot, 0o755)
+    .catch(() => fail('STANDARDS_GRAPH', 'NFR6.2', 'Snapshot directory could not be made readable'));
   try {
     for (const file of files) {
       if (!file || typeof file.document !== 'string' || typeof file.digest !== 'string' || !SHA.test(file.digest)) {
@@ -301,6 +310,10 @@ export async function runContainerStandardsValidator(dialect, sourceDocument, op
     configDir = await mkdtemp(join(tmpdir(), 'stocksense-validator-config-'))
       .catch(() => fail('STANDARDS_ENGINE', 'NFR6.2', 'Validator configuration directory is unavailable'));
     if (/[,\r\n\x00-\x1f]/.test(configDir)) fail('STANDARDS_GRAPH', 'NFR6.2', 'Host bind path cannot be represented safely');
+    // Same reason as the snapshot directory: the fixed non-root container user
+    // has to be able to traverse this read-only mount on Linux.
+    await chmod(configDir, 0o755)
+      .catch(() => fail('STANDARDS_ENGINE', 'NFR6.2', 'Validator configuration directory could not be made readable'));
     const config = join(configDir, 'redocly.yaml');
     if (dialect === 'openapi:3.1.2') {
       await writeFile(config, 'extends:\n  - recommended\nrules:\n  struct: error\n  operation-summary: off\n  operation-4xx-response: warn\n  operation-operationId: error\n  no-unresolved-refs: error\n', { flag: 'wx' })
