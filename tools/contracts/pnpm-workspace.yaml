@@ -28,3 +28,8 @@ overrides:
   ajv@^5: '>=6.14.0'
   ajv@^6: '>=6.14.0'
   '@babel/core': '>=7.29.6'
+  # sprintf-js has no patched version, but it is reachable only through
+  # argparse 1.x. argparse 2.x has no dependencies at all, so this removes the
+  # package from the tree instead of excusing it. js-yaml 3 uses argparse only
+  # in its own command-line binary, which nothing here invokes.
+  argparse: '>=2.0.1'
