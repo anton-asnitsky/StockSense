@@ -59,6 +59,14 @@ jobs:
       - name: Install from the frozen lockfile
         run: pnpm --dir tools/contracts install --frozen-lockfile
 
+      # oasdiff is an approved pinned tool fetched by digest, not a vendored
+      # dependency, so without this step the compatibility tests fail closed
+      # with DIFFER_UNAVAILABLE. Setting it up gives real compatibility
+      # evidence instead of a skip; the script verifies the published
+      # SHA-256 for this platform before trusting the binary.
+      - name: Set up the pinned differ
+        run: pnpm --dir tools/contracts setup:oasdiff
+
       - name: Lint
         run: pnpm --dir tools/contracts lint
 
