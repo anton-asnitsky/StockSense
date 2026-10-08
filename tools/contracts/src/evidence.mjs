@@ -27,6 +27,11 @@ function exactFields(value, fields) {
 /** C19 declares these six outcomes exhaustive. */
 export const C19_OUTCOMES = Object.freeze(['passed', 'failed', 'limited', 'rejected', 'unavailable', 'not-run']);
 /** Every gate must be represented; an absent scan is reported, never assumed clean. */
+// Scopes a trusted-only workflow may hold a write on, each with a purpose:
+// id-token and attestations for build provenance, contents to publish a
+// release. Extending this list is a deliberate act, which is the point.
+const TRUSTED_WRITE_SCOPES = Object.freeze(['id-token', 'attestations', 'contents']);
+
 export const REQUIRED_GATES = Object.freeze(['secret-scan', 'sbom', 'vulnerability-scan']);
 
 /**
@@ -229,6 +234,15 @@ export function assertEvidenceContentSafe(record) {
 export function assertCiPolicy(workflow, { changedPaths = [] } = {}) {
   if (!object(workflow) || !object(workflow.jobs)) fail('CI_POLICY_SHAPE', 'BR6.7', 'Workflow needs a jobs map');
   const triggers = Array.isArray(workflow.on) ? workflow.on : Object.keys(workflow.on ?? {});
+  // `permissions: write-all` and `read-all` are strings, not maps, so they
+  // would slip past a per-scope walk entirely. write-all is the broadest grant
+  // GitHub offers and is never a declaration of need.
+  for (const [name, scope] of [['workflow', workflow.permissions],
+    ...Object.entries(workflow.jobs).map(([job, body]) => [job, object(body) ? body.permissions : undefined])]) {
+    if (typeof scope === 'string') {
+      fail('CI_EXCESSIVE_PERMISSIONS', 'BR6.7', `${name} grants permissions: ${scope} rather than naming scopes`);
+    }
+  }
   const untrusted = triggers.includes('pull_request_target') || triggers.includes('pull_request');
   if (triggers.includes('pull_request_target')) {
     fail('CI_UNTRUSTED_TRIGGER', 'BR6.7', 'pull_request_target runs untrusted code with repository secrets');
@@ -240,10 +254,33 @@ export function assertCiPolicy(workflow, { changedPaths = [] } = {}) {
       fail('CI_UNTRUSTED_RUNNER', 'BR6.7', `Job ${name} runs untrusted changes on a self-hosted runner`);
     }
     const permissions = job.permissions ?? workflow.permissions;
-    if (untrusted) {
-      if (!object(permissions)) fail('CI_PERMISSIONS_UNSET', 'BR6.7', `Job ${name} does not pin read-only permissions`);
-      for (const [scope, level] of Object.entries(permissions)) {
-        if (level !== 'read' && level !== 'none') fail('CI_EXCESSIVE_PERMISSIONS', 'BR6.7', `Job ${name} grants ${scope}: ${level}`);
+    // Every job pins its permissions, on any trigger. An absent block takes
+    // the repository default, which is configurable and often broad, so
+    // "unset" is a grant of unknown size rather than a safe omission. This
+    // used to be checked only for untrusted triggers, which left a release
+    // workflow free to declare write-all and pass.
+    if (!object(permissions)) {
+      fail('CI_PERMISSIONS_UNSET', 'BR6.7',
+        `Job ${name} does not pin permissions; the repository default is not a declaration`);
+    }
+    for (const [scope, level] of Object.entries(permissions)) {
+      if (level === 'read' || level === 'none') continue;
+      if (level !== 'write') {
+        fail('CI_EXCESSIVE_PERMISSIONS', 'BR6.7', `Job ${name} grants ${scope}: ${level}`);
+      }
+      // A write on an untrusted trigger is the thing this policy exists to
+      // stop: pull-request code would run holding it.
+      if (untrusted) {
+        fail('CI_EXCESSIVE_PERMISSIONS', 'BR6.7', `Job ${name} grants ${scope}: ${level}`);
+      }
+      // On a trusted-only trigger a write is permitted, but only for a scope
+      // with a stated reason. Build provenance needs id-token and
+      // attestations; publishing a release needs contents. Anything else is a
+      // grant nobody has justified, and silence is how a release workflow
+      // ends up holding packages: write it never uses.
+      if (!TRUSTED_WRITE_SCOPES.includes(scope)) {
+        fail('CI_UNJUSTIFIED_PERMISSION', 'BR6.7',
+          `Job ${name} grants ${scope}: write, which no declared purpose requires`);
       }
     }
     for (const step of job.steps ?? []) {
