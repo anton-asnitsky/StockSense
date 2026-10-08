@@ -11,8 +11,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN corepack enable \
     && corepack prepare pnpm@11.25.0 --activate \
     && pnpm install --prod --frozen-lockfile --ignore-scripts \
-    && node node_modules/@redocly/cli/bin/cli.js --version \
-    && node node_modules/@asyncapi/cli/bin/run_bin --version
+    && node node_modules/@redocly/cli/bin/cli.js --version
 
 FROM docker.io/library/node@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df
 ENV NODE_ENV=production \
@@ -26,14 +25,14 @@ COPY src/container-schema-validator.mjs ./container-schema-validator.mjs
 COPY src ./src
 RUN node --check /opt/contracts/container-schema-validator.mjs
 RUN node --check /opt/contracts/src/container-fixture-oracle.mjs
+RUN node --check /opt/contracts/src/container-asyncapi-validator.mjs
 # Record which tool sources this image carries. The runner compares this with
 # the tree it is being asked to speak for and refuses a mismatch, so a stale
 # image cannot silently report an old tool's verdict as the current one.
 RUN node /opt/contracts/src/source-digest.mjs > /opt/contracts/source-digest.txt \
     && cat /opt/contracts/source-digest.txt
 RUN groupadd --gid 65532 stocksense \
-    && useradd --uid 65532 --gid 65532 --home-dir /tmp --no-create-home --shell /usr/sbin/nologin stocksense \
-    && mkdir -p /opt/contracts/node_modules/@asyncapi/cli/lib/utils/logs
+    && useradd --uid 65532 --gid 65532 --home-dir /tmp --no-create-home --shell /usr/sbin/nologin stocksense
 USER 65532:65532
 ENTRYPOINT ["/usr/local/bin/node"]
 CMD ["--version"]

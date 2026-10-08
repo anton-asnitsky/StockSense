@@ -1,7 +1,6 @@
 packages:
   - .
 allowBuilds:
-  '@asyncapi/cli': false
   '@hyperjump/json-pointer': false
   '@hyperjump/json-schema-core': false
   '@hyperjump/json-schema': false
