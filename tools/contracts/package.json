@@ -9,7 +9,6 @@
   },
   "pnpm": {
     "ignoredBuiltDependencies": [
-      "@asyncapi/cli",
       "@hyperjump/json-pointer",
       "@hyperjump/json-schema",
       "@hyperjump/json-schema-core",
@@ -21,11 +20,12 @@
   },
   "scripts": {
     "test:unit": "node --test test/unit/package-loader.test.mjs test/unit/source-digest.test.mjs test/unit/provenance.test.mjs test/unit/preflight.test.mjs test/unit/validators.test.mjs test/unit/policy.test.mjs test/unit/compatibility.test.mjs test/unit/generation.test.mjs test/unit/evidence.test.mjs test/unit/c18-syntax.test.mjs test/unit/container-standards-runner.test.mjs test/unit/container-schema-validator.test.mjs test/unit/container-fixture-oracle.test.mjs test/unit/catalogue-source.test.mjs test/unit/catalogue.test.mjs test/unit/c08-port.test.mjs test/unit/identity-profile-source.test.mjs test/unit/messaging-profile-source.test.mjs",
-    "test:integration": "node --test test/integration/cli.package.test.mjs test/integration/cli.messaging-sample.test.mjs test/integration/cli.release.test.mjs test/integration/envelopes.test.mjs test/integration/generation.test.mjs test/integration/compatibility.tool.test.mjs test/integration/offline-references.test.mjs test/integration/catalogue-resource.test.mjs test/integration/c23-offline.test.mjs",
+    "test:integration": "node --test test/integration/cli.package.test.mjs test/integration/ci-policy.test.mjs test/integration/recovery-policy.test.mjs test/integration/cli.messaging-sample.test.mjs test/integration/cli.release.test.mjs test/integration/envelopes.test.mjs test/integration/generation.test.mjs test/integration/compatibility.tool.test.mjs test/integration/offline-references.test.mjs test/integration/catalogue-resource.test.mjs test/integration/c23-offline.test.mjs",
     "test:coverage": "node --experimental-test-coverage --test --test-coverage-include=src/**/*.mjs test/unit/*.test.mjs test/integration/*.test.mjs",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "build:standards-image": "node scripts/build-standards-image.mjs",
+    "check:ci-policy": "node scripts/check-ci-policy.mjs",
     "scan:secrets": "secretlint \"src/**/*\" \"test/**/*\" \"scripts/**/*\"",
     "scan:vuln": "pnpm audit --audit-level moderate",
     "setup:oasdiff": "node --use-system-ca scripts/setup-oasdiff.mjs",
@@ -34,7 +34,7 @@
     "sample:messaging": "node scripts/create-messaging-sample.mjs"
   },
   "dependencies": {
-    "@asyncapi/cli": "6.2.0",
+    "@asyncapi/parser": "3.6.3",
     "@redocly/cli": "2.51.2",
     "ajv": "8.20.0",
     "ajv-formats": "3.0.1",

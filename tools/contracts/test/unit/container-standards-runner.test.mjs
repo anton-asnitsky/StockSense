@@ -112,7 +112,10 @@ test('AsyncAPI has a separate fixed binary and no untrusted config mount', async
     await runContainerStandardsValidator('asyncapi:3.0.0', options.sourceDocument, { ...options, spawn: fake.spawn });
     const argv = fake.calls[2].argv;
     assert.equal(argv.filter(item => item === '--mount').length, 1);
-    assert.deepEqual(argv.slice(-4), [image, '/opt/contracts/node_modules/@asyncapi/cli/bin/run_bin',
+    // The pinned AsyncAPI validator is now the in-image parser worker rather
+    // than the CLI, which shipped a generator, a Spectral CLI and release
+    // tooling as runtime dependencies. The argument shape is unchanged.
+    assert.deepEqual(argv.slice(-4), [image, '/opt/contracts/src/container-asyncapi-validator.mjs',
       'validate', '/workspace/' + options.sourceDocument]);
   });
 });

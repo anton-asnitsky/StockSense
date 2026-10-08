@@ -11,9 +11,10 @@ import { materializeOfflineReferences, readOfflineSchemaRegistry } from '../../s
 import { validateCanonical } from '../../src/validators.mjs';
 import { runContainerStandardsValidator } from '../../src/container-standards-runner.mjs';
 
+// The parser is a direct dependency now that it is the pinned validator, so
+// it is imported rather than reached through another package's tree.
 const require = createRequire(import.meta.url);
-const cliRequire = createRequire(require.resolve('@asyncapi/cli/package.json'));
-const { Parser } = cliRequire('@asyncapi/parser');
+const { Parser } = require('@asyncapi/parser');
 
 for (const event of [
   'retail-data/v1/retail-reference-changed.asyncapi.yaml',

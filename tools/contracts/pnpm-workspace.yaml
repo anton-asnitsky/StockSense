@@ -1,7 +1,6 @@
 packages:
   - .
 allowBuilds:
-  '@asyncapi/cli': false
   '@hyperjump/json-pointer': false
   '@hyperjump/json-schema-core': false
   '@hyperjump/json-schema': false
@@ -11,3 +10,25 @@ allowBuilds:
   # Optional native XML backend for CycloneDX. The SBOM script emits JSON, and
   # this package installs with ignore-scripts, so its build stays declined.
   libxmljs2: false
+
+# Every advisory in the locked tree that has an upstream fix, pinned to the
+# lowest patched version. All of them reach us through @asyncapi/generator,
+# @asyncapi/modelina-cli or @asyncapi/converter - the generate and convert
+# subcommands - while this package invokes only `asyncapi validate`.
+#
+# braces and sprintf-js are deliberately absent: no patched version of either
+# exists, so an override cannot resolve them and pretending otherwise would
+# hide a real finding.
+overrides:
+  jsonpath-plus: '>=10.3.0'
+  simple-git: '>=4.0.1'
+  '@simple-git/argv-parser': '>=2.0.1'
+  http-cache-semantics: '>=4.3.0'
+  ajv@^5: '>=6.14.0'
+  ajv@^6: '>=6.14.0'
+  '@babel/core': '>=7.29.6'
+  # sprintf-js has no patched version, but it is reachable only through
+  # argparse 1.x. argparse 2.x has no dependencies at all, so this removes the
+  # package from the tree instead of excusing it. js-yaml 3 uses argparse only
+  # in its own command-line binary, which nothing here invokes.
+  argparse: '>=2.0.1'
