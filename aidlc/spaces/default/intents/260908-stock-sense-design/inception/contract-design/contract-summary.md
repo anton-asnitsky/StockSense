@@ -339,7 +339,7 @@ paths:
                   grantVersion: { type: integer, minimum: 1 }
                   checkedAt: { type: string, format: date-time }
                 additionalProperties: false
-        '403': { description: Grant missing, revoked, inactive, or subject ineligible; RFC 9457 problem }
+        '403': { description: 'Grant missing, revoked, inactive, or subject ineligible; RFC 9457 problem' }
         '503': { description: Authoritative grant state unavailable; caller must deny access }
 components:
   securitySchemes:
@@ -374,7 +374,7 @@ paths:
       operationId: completeLogin
       responses:
         '302': { description: Establish rotated BFF session and redirect locally }
-        '400': { description: Invalid state, nonce, code or callback }
+        '400': { description: 'Invalid state, nonce, code or callback' }
   /auth/logout:
     post:
       operationId: logout
@@ -385,7 +385,7 @@ paths:
       operationId: getCurrentSession
       responses:
         '200': { description: Browser-safe identity and available retailer contexts }
-        '401': { description: Session missing, expired, revoked or replayed }
+        '401': { description: 'Session missing, expired, revoked or replayed' }
 ```
 
 ### C20 — Google federation adapter
@@ -425,7 +425,7 @@ paths:
         - { in: path, name: retailerId, required: true, schema: { type: string, format: uuid } }
         - { in: query, name: productIds, schema: { type: array, items: { type: string, format: uuid }, maxItems: 200 } }
       responses:
-        '200': { description: Authorized retailer currency, products and source versions }
+        '200': { description: 'Authorized retailer currency, products and source versions' }
         '403': { description: Current membership or placement validation failed }
         '409': { description: Requested source version is stale }
 ```
@@ -509,7 +509,7 @@ paths:
     get:
       operationId: getAcceptedTermExport
       responses:
-        '200': { description: Status, source revisions, currency and artifact checksum }
+        '200': { description: 'Status, source revisions, currency and artifact checksum' }
 ```
 
 ### C06 — Demand and calendar data for Forecasting
@@ -526,7 +526,7 @@ paths:
         - { in: query, name: asOf, required: true, schema: { type: string, format: date-time } }
         - { in: query, name: sourceVersion, required: true, schema: { type: string } }
       responses:
-        '200': { description: Demand observations, promotions and retailer-local calendar through asOf }
+        '200': { description: 'Demand observations, promotions and retailer-local calendar through asOf' }
         '403': { description: Current membership or machine authority validation failed }
         '409': { description: Source version or placement generation is stale }
 ```
@@ -561,7 +561,7 @@ paths:
         - { in: path, name: retailerId, required: true, schema: { type: string, format: uuid } }
         - { in: path, name: requestId, required: true, schema: { type: string, format: uuid } }
       responses:
-        '200': { description: Queued, leased, completed, failed, cancelled, or deadline-expired request with immutable forecast binding, content: { application/json: { schema: { $ref: '#/components/schemas/HeavyWorkRequestStatus' } } } }
+        '200': { description: 'Queued, leased, completed, failed, cancelled, or deadline-expired request with immutable forecast binding', content: { application/json: { schema: { $ref: '#/components/schemas/HeavyWorkRequestStatus' } } } }
         '404': { description: Request absent or outside the authorized retailer context }
   /api/v1/retailers/{retailerId}/heavy-work-requests/{requestId}:cancel:
     post:
@@ -610,7 +610,7 @@ paths:
           description: Lease acquired or the same idempotent acquisition returned
           content: { application/json: { schema: { $ref: '#/components/schemas/HeavyWorkLease' } } }
         '202': { description: Request remains queued; Retry-After gives the earliest allowed reacquisition time }
-        '409': { description: Lease already held, stale generation, or acquisition payload conflict }
+        '409': { description: 'Lease already held, stale generation, or acquisition payload conflict' }
         '410': { description: Request deadline elapsed or request was cancelled }
   /api/v1/retailers/{retailerId}/heavy-work-leases/{leaseId}:renew:
     post:
@@ -622,7 +622,7 @@ paths:
         - { in: header, name: X-Fencing-Token, required: true, schema: { type: integer, minimum: 1 } }
       responses:
         '200': { description: Lease expiry and heartbeat advanced for the current fencing token }
-        '409': { description: Lease expired, superseded, fenced by recovery, or token does not match }
+        '409': { description: 'Lease expired, superseded, fenced by recovery, or token does not match' }
   /api/v1/retailers/{retailerId}/heavy-work-leases/{leaseId}:complete:
     post:
       operationId: completeHeavyWorkLease
@@ -644,7 +644,7 @@ paths:
                 resultReference: { type: string, format: uri }
       responses:
         '200': { description: Terminal result accepted once and lease released }
-        '409': { description: Terminal result conflicts, lease expired/superseded, or fencing token is stale }
+        '409': { description: 'Terminal result conflicts, lease expired/superseded, or fencing token is stale' }
   /api/v1/retailers/{retailerId}/heavy-work-leases/{leaseId}:release:
     post:
       operationId: releaseHeavyWorkLease
@@ -668,7 +668,7 @@ paths:
           application/json:
             schema: { type: object, required: [recoveryRunId, placementGeneration, recoveryGeneration, checkpointDigest], properties: { recoveryRunId: { type: string, format: uuid }, placementGeneration: { type: integer, minimum: 1 }, recoveryGeneration: { type: integer, minimum: 1 }, checkpointDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' } }, additionalProperties: false }
       responses:
-        '200': { description: Older-generation leases fenced, queue reconstructed, affected tokens advanced, and acquisition reopened atomically }
+        '200': { description: 'Older-generation leases fenced, queue reconstructed, affected tokens advanced, and acquisition reopened atomically' }
         '403': { description: Recovery-authorized workload identity required }
         '409': { description: Recovery generation or checkpoint conflicts with durable state }
   /api/v1/retailers/{retailerId}/promoted-models/forecasting:
@@ -682,7 +682,7 @@ paths:
           description: Read-only package inspection; this response never admits or pins a Forecast Run
           content: { application/json: { schema: { $ref: '#/components/schemas/PromotedModelPackageManifest' } } }
         '404': { description: No compatible promoted model is available }
-        '409': { description: Promotion metadata, signature, allowlist, or overlap state is inconsistent }
+        '409': { description: 'Promotion metadata, signature, allowlist, or overlap state is inconsistent' }
         '410': { description: Selected release or signer has been revoked }
         '422': { description: Runtime does not support the package type or feature contract }
   /api/v1/retailers/{retailerId}/promoted-models/forecasting/pins:admit:
@@ -697,7 +697,7 @@ paths:
       responses:
         '201': { description: Durable pin and signed package admitted together, content: { application/json: { schema: { $ref: '#/components/schemas/ForecastRoutePin' } } } }
         '200': { description: Exact idempotent replay returns the original pin and package }
-        '409': { description: Route draining, generation changed, or key reused with different payload }
+        '409': { description: 'Route draining, generation changed, or key reused with different payload' }
         '410': { description: Release or signer revoked or no longer valid }
         '503': { description: Route state cannot be checked authoritatively; no pin admitted }
   /api/v1/retailers/{retailerId}/promoted-models/forecasting/pins/{pinId}:release:
@@ -712,7 +712,7 @@ paths:
         content: { application/json: { schema: { $ref: '#/components/schemas/ForecastRoutePinRelease' } } }
       responses:
         '200': { description: Current pin terminally released or exact replay returned }
-        '409': { description: Pin owner, generation or payload conflicts; unresolved pin remains blocking }
+        '409': { description: 'Pin owner, generation or payload conflicts; unresolved pin remains blocking' }
   /api/v1/retailers/{retailerId}/promoted-models/forecasting/drains:start:
     post:
       operationId: startForecastRouteDrain
@@ -733,7 +733,7 @@ paths:
         - { in: path, name: retailerId, required: true, schema: { type: string, format: uuid } }
         - { in: path, name: drainId, required: true, schema: { type: string, format: uuid } }
       responses:
-        '200': { description: Durable route generation, state, deadline and exact outstanding pin count, content: { application/json: { schema: { $ref: '#/components/schemas/ForecastRouteDrain' } } } }
+        '200': { description: 'Durable route generation, state, deadline and exact outstanding pin count', content: { application/json: { schema: { $ref: '#/components/schemas/ForecastRouteDrain' } } } }
         '404': { description: Drain absent or outside retailer authority }
   /api/v1/retailers/{retailerId}/promoted-models/forecasting/drains/{drainId}:abort:
     post:
@@ -747,7 +747,7 @@ paths:
         content: { application/json: { schema: { $ref: '#/components/schemas/ForecastRouteDrainAbort' } } }
       responses:
         '200': { description: Old route reopened only after current generation and release validity are rechecked; otherwise remains unavailable }
-        '409': { description: Drain already committed, recovery fenced, or route cannot safely reopen }
+        '409': { description: 'Drain already committed, recovery fenced, or route cannot safely reopen' }
   /api/v1/retailers/{retailerId}/promoted-models/forecasting:promote:
     post:
       operationId: promoteForecastModel
@@ -764,8 +764,8 @@ paths:
       responses:
         '200': { description: Route activation and evaluation lease completion committed atomically; exact replay returns the same decision, content: { application/json: { schema: { $ref: '#/components/schemas/ForecastRouteChangeResult' } } } }
         '403': { description: Operator authority or model-promoter machine scope denied }
-        '409': { description: Stale lease/fence, promotion generation, recovery generation or idempotency payload }
-        '410': { description: Lease, signer, allowlist or retained package is expired or revoked }
+        '409': { description: 'Stale lease/fence, promotion generation, recovery generation or idempotency payload' }
+        '410': { description: 'Lease, signer, allowlist or retained package is expired or revoked' }
         '422': { description: Evaluation evidence or package verification failed }
   /api/v1/retailers/{retailerId}/promoted-models/forecasting:rollback:
     post:
@@ -784,8 +784,8 @@ paths:
         '200': { description: Retained release activation and evaluation lease completion committed atomically; exact replay returns the same decision, content: { application/json: { schema: { $ref: '#/components/schemas/ForecastRouteChangeResult' } } } }
         '403': { description: Operator authority denied }
         '409': { description: Expected promotion generation is stale }
-        '410': { description: Retained package, signer or overlap eligibility was revoked or expired }
-        '422': { description: Retained package no longer passes signature, trust or runtime compatibility checks }
+        '410': { description: 'Retained package, signer or overlap eligibility was revoked or expired' }
+        '422': { description: 'Retained package no longer passes signature, trust or runtime compatibility checks' }
 components:
   securitySchemes:
     modelLifecycleMachineToken: { type: oauth2, flows: { clientCredentials: { tokenUrl: /connect/token, scopes: { 'model-lifecycle.work': Acquire and finalize fenced work, 'model-lifecycle.read': Resolve promoted packages, 'model-lifecycle.recover': Reconcile leases, 'model-lifecycle.promote': Promote or roll back packages } } } }
@@ -1155,7 +1155,7 @@ paths:
         - { in: path, name: productId, required: true, schema: { type: string, format: uuid } }
         - { in: query, name: effectiveAt, required: true, schema: { type: string, format: date-time } }
       responses:
-        '200': { description: Current terms, source revision, page citations and currency }
+        '200': { description: 'Current terms, source revision, page citations and currency' }
         '404': { description: No accepted terms exist for this retailer product }
         '409': { description: Requested source revision is stale }
 ```
@@ -1230,7 +1230,7 @@ paths:
       responses:
         '200': { description: Current publication with exact per-product coverage, content: { application/json: { schema: { $ref: '#/components/schemas/ForecastCoverageResponse' } } } }
         '403': { description: One or more products are outside current retailer authority; no foreign existence disclosure }
-        '422': { description: Empty, duplicate, oversized or malformed product set }
+        '422': { description: 'Empty, duplicate, oversized or malformed product set' }
         '503': { description: Authoritative publication store unavailable; no silent model substitution }
 components:
   schemas:
@@ -1390,7 +1390,7 @@ paths:
       operationId: queryDemandForAssistant
       responses:
         '200': { description: Bounded demand facts and provenance through an allowed cutoff }
-        '422': { description: Requested scope, time range or aggregation is unsupported }
+        '422': { description: 'Requested scope, time range or aggregation is unsupported' }
 ```
 
 ### C12 — Supplier retrieval and comparison tools
@@ -1405,8 +1405,8 @@ paths:
     post:
       operationId: searchSupplierEvidence
       responses:
-        '200': { description: Authorized chunks with document, source revision, page and score citations }
-        '409': { description: Retrieval index is stale, rebuilding or incompatible }
+        '200': { description: 'Authorized chunks with document, source revision, page and score citations' }
+        '409': { description: 'Retrieval index is stale, rebuilding or incompatible' }
   /api/v1/retailers/{retailerId}/assistant-tools/compare-suppliers:
     parameters:
       - { in: path, name: retailerId, required: true, schema: { type: string, format: uuid } }
@@ -1432,7 +1432,7 @@ paths:
         required: true
         content: { application/json: { schema: { $ref: '#/components/schemas/AssistantForecastProductSet' } } }
       responses:
-        '200': { description: Exact product coverage, run state, freshness and provenance, content: { application/json: { schema: { $ref: '#/components/schemas/AssistantForecastStatusCoverage' } } } }
+        '200': { description: 'Exact product coverage, run state, freshness and provenance', content: { application/json: { schema: { $ref: '#/components/schemas/AssistantForecastStatusCoverage' } } } }
         '403': { description: Product authority denied without foreign existence disclosure }
         '422': { description: Invalid product set }
         '503': { description: Authoritative store unavailable; assistant must disclose unavailability }
@@ -1558,7 +1558,7 @@ paths:
       parameters:
         - { in: header, name: Idempotency-Key, required: true, schema: { type: string } }
       responses:
-        '202': { description: Review accepted with job ID, remaining allowance and reset time }
+        '202': { description: 'Review accepted with job ID, remaining allowance and reset time' }
         '409': { description: A review is already active or idempotency payload differs }
         '429': { description: Three accepted manual requests used for the retailer-local day }
   /api/v1/retailers/{retailerId}/assistant-tools/purchase-drafts:
@@ -2618,7 +2618,7 @@ components:
         backupCreatedAt: { type: string, format: date-time }
         backupExpiresAt: { type: string, format: date-time, description: Exactly 30 days after backupCreatedAt for recovery-policy-v1. }
         recoveryStartedAt: { type: string, format: date-time }
-        recoveryCompletedAt: { type: string, format: date-time, description: Must be within the 7,200-second RTO for accepted local-profile evidence. }
+        recoveryCompletedAt: { type: string, format: date-time, description: 'Must be within the 7,200-second RTO for accepted local-profile evidence.' }
         postgresql:
           type: object
           required: [lsn, transactionEvidenceReference, transactionEvidenceDigest, databaseSnapshotReference, databaseSnapshotDigest]
@@ -2857,7 +2857,7 @@ paths:
                   hasMore: { type: boolean }
                   projectionLagSeconds: { type: integer, minimum: 0 }
                 additionalProperties: false
-        '401': { description: Missing, invalid, expired, wrong-client, wrong-audience, or non-human delegated token; RFC 9457 problem }
+        '401': { description: 'Missing, invalid, expired, wrong-client, wrong-audience, or non-human delegated token; RFC 9457 problem' }
         '403': { description: Current platform Operator grant absent or revoked; retailer role alone is insufficient; RFC 9457 problem }
         '422': { description: Invalid range or window exceeding 31 days; RFC 9457 problem }
         '503': { description: Grant check or projection unavailable; fail closed with RFC 9457 problem }
@@ -2892,7 +2892,7 @@ paths:
     get:
       operationId: getSession
       responses:
-        '200': { description: Session, roles, authorized retailer choices and contract metadata, content: { application/json: { schema: { $ref: '#/components/schemas/SessionResponse' } } } }
+        '200': { description: 'Session, roles, authorized retailer choices and contract metadata', content: { application/json: { schema: { $ref: '#/components/schemas/SessionResponse' } } } }
         default: { $ref: '#/components/responses/Problem' }
   /api/v1/session/csrf:
     get:
@@ -2909,7 +2909,7 @@ paths:
       operationId: getDashboard
       parameters: [{ $ref: '#/components/parameters/IfNoneMatch' }]
       responses:
-        '200': { description: Typed inventory, forecast and review aggregate including empty, stale, unavailable and denied sections, content: { application/json: { schema: { $ref: '#/components/schemas/AggregateResponse' } } } }
+        '200': { description: 'Typed inventory, forecast and review aggregate including empty, stale, unavailable and denied sections', content: { application/json: { schema: { $ref: '#/components/schemas/AggregateResponse' } } } }
         '304': { description: Aggregate unchanged }
         default: { $ref: '#/components/responses/Problem' }
   /api/v1/retailers/{retailerId}/imports:
@@ -3029,7 +3029,7 @@ paths:
     get:
       operationId: getOperation
       responses:
-        '200': { description: Durable status, progress, result/error reference and reconciliation state, content: { application/json: { schema: { $ref: '#/components/schemas/OperationStatusResponse' } } } }
+        '200': { description: 'Durable status, progress, result/error reference and reconciliation state', content: { application/json: { schema: { $ref: '#/components/schemas/OperationStatusResponse' } } } }
         default: { $ref: '#/components/responses/Problem' }
   /api/v1/retailers/{retailerId}/operations/{operationId}:reconcile:
     parameters: [{ $ref: '#/components/parameters/RetailerId' }, { in: path, name: operationId, required: true, schema: { type: string, format: uuid } }]
@@ -3047,7 +3047,7 @@ paths:
       parameters: [{ $ref: '#/components/parameters/Csrf' }, { $ref: '#/components/parameters/Idempotency' }]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/RecoveryPreviewRequest' } } } }
       responses:
-        '200': { description: Scope, roster, manifest summary and bound confirmation token, headers: { X-CSRF-Token: { $ref: '#/components/headers/RotatedCsrf' } }, content: { application/json: { schema: { $ref: '#/components/schemas/RecoveryPreviewResponse' } } } }
+        '200': { description: 'Scope, roster, manifest summary and bound confirmation token', headers: { X-CSRF-Token: { $ref: '#/components/headers/RotatedCsrf' } }, content: { application/json: { schema: { $ref: '#/components/schemas/RecoveryPreviewResponse' } } } }
         default: { $ref: '#/components/responses/Problem' }
   /api/v1/retailers/{retailerId}/recovery-runs:
     parameters: [{ $ref: '#/components/parameters/RetailerId' }]
@@ -3063,7 +3063,7 @@ paths:
     get:
       operationId: getRecoveryStatus
       responses:
-        '200': { description: Current phase, deadlines, roster, fences, reconciliation and terminal outcome, content: { application/json: { schema: { $ref: '#/components/schemas/RecoveryStatusResponse' } } } }
+        '200': { description: 'Current phase, deadlines, roster, fences, reconciliation and terminal outcome', content: { application/json: { schema: { $ref: '#/components/schemas/RecoveryStatusResponse' } } } }
         default: { $ref: '#/components/responses/Problem' }
   /api/v1/retailers/{retailerId}/recovery-runs/{runId}/manifest:
     parameters: [{ $ref: '#/components/parameters/RetailerId' }, { in: path, name: runId, required: true, schema: { type: string, format: uuid } }]
