@@ -6,10 +6,12 @@
 # pinned to a 40-character commit. A pull request that edits this file is
 # refused by that same policy, so the protected base revision decides.
 #
-# Attestation is deliberately absent. actions/attest-build-provenance needs
-# id-token: write, which assertCiPolicy rejects while pull_request is a
-# trigger. Build provenance therefore belongs in a separate push-only release
-# workflow, not in the required pull-request check.
+# Attestation is deliberately absent, though not for the reason recorded
+# earlier. assertCiPolicy does not reject id-token: write as such - it refuses
+# any write scope on an untrusted trigger, and allows id-token, attestations
+# and contents on a trusted one. Since pull_request is a trigger here, this
+# workflow stays read-only throughout; build provenance belongs in a separate
+# push-only release workflow, which is the same conclusion on accurate grounds.
 name: contracts-required
 
 on:
@@ -58,6 +60,43 @@ jobs:
 
       - name: Install from the frozen lockfile
         run: pnpm --dir tools/contracts install --frozen-lockfile
+
+      # U1 defines assertCiPolicy but, until now, nothing ran it against this
+      # repository's own workflows: the policy described a rule the repository
+      # never applied. The changed paths come from git rather than from the
+      # workflow being judged, so a pull request cannot describe itself as
+      # touching nothing.
+      #
+      # Known limit, recorded rather than overstated: for pull_request the
+      # workflow is taken from the pull request's own merge commit, so this step
+      # cannot stop a pull request that deletes it. The push run below is the
+      # backstop. pull_request_target would close that gap and is refused by
+      # this very policy as CI_UNTRUSTED_TRIGGER, so the control is a guard
+      # against accident rather than against a determined author.
+      #
+      # The event name and base revision arrive through the environment, never
+      # interpolated into the script body, so no workflow expression can be
+      # executed as shell.
+      - name: Enforce the CI policy
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          policy() { node tools/contracts/scripts/check-ci-policy.mjs .github/workflows "$@"; }
+          if [ "$EVENT_NAME" != pull_request ]; then
+            policy
+            exit 0
+          fi
+          changed=()
+          while IFS= read -r path; do
+            [ -n "$path" ] && changed+=("$path")
+          done < <(git diff --name-only "$BASE_SHA" HEAD)
+          if [ ${#changed[@]} -eq 0 ]; then
+            policy
+          else
+            policy --changed "${changed[@]}"
+          fi
 
       # oasdiff is an approved pinned tool fetched by digest, not a vendored
       # dependency, so without this step the compatibility tests fail closed
