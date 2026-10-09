@@ -138,7 +138,7 @@ Every protected action revalidates retailer context, current role or machine sco
 
 ### WF12. Restore and reconcile Model Lifecycle
 
-1. The Operator selects a checksummed Restore Manifest linking a checkpoint-aligned PostgreSQL lifecycle snapshot, MLflow metadata snapshot, and immutable object inventory/snapshot under recovery-policy-v1. Complete sets are retained 30 days; target RPO is 24 hours and target RTO is two hours.
+1. The Operator selects a checksummed Restore Manifest linking a checkpoint-aligned PostgreSQL lifecycle snapshot, MLflow metadata snapshot, and immutable object inventory/snapshot under recovery-policy-v1. Complete sets are retained 30 days; target RPO is 24 hours and target RTO is four hours.
 2. Restore loads the complete cut into an isolated environment, verifies each snapshot digest and cut marker, and then opens the lifecycle ledger in maintenance mode. PostgreSQL alone is authoritative for release state and route; MLflow is experiment evidence; object storage is byte authority. Restored routes remain Reconciling or Unavailable.
 3. Per retailer, reconciliation compares the three inventories and verifies ownership, placement, dataset manifests, MLflow experiment references, object bytes/checksums, signed packages, runtime and schemas, evaluation evidence, release transitions, route history, tombstones, and retention state. Disagreement cannot be repaired by inferring missing metadata or bytes from another store.
 4. Jobs captured as Running become explicitly Interrupted and Failed or retryable; no partial output becomes promoted.
