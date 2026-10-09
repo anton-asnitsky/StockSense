@@ -161,10 +161,30 @@ function buildObject(flat, synth, registry, depth) {
     if (!conditionMet(condition, instance, root, registry)) continue;
     const applied = flattenObject([{ schema: consequent, root }], registry, depth + 1);
     if (!applied) continue;
-    for (const [name, target] of applied.properties) {
-      // A consequent narrows what the base already carries; it does not add
-      // properties the base never required.
-      if (Object.hasOwn(instance, name)) instance[name] = synth(target);
+
+    // A branch that requires a name usually declares it with an always-true
+    // subschema, purely so the required name is defined where it is demanded.
+    // Such an entry imposes nothing, so the property's real shape is the one
+    // the enclosing object declares; taking the branch's entry instead would
+    // replace a conforming value with an empty object.
+    const imposes = target => target !== undefined && target.schema !== true &&
+      !(object(target.schema) && Object.keys(target.schema).length === 0);
+    const targetFor = name => {
+      const narrowed = applied.properties.get(name);
+      return imposes(narrowed) ? narrowed : flat.properties.get(name);
+    };
+
+    // A met consequent narrows what the base carries, and may also require a
+    // property the base left optional - which is the whole point of a
+    // conditional that pins extra fields for one discriminator value.
+    for (const name of applied.required) {
+      const target = targetFor(name);
+      if (target) instance[name] = synth(target);
+    }
+    for (const [name] of applied.properties) {
+      if (!Object.hasOwn(instance, name)) continue;
+      const target = targetFor(name);
+      if (target) instance[name] = synth(target);
     }
   }
   return instance;
@@ -218,6 +238,14 @@ export function synthesize(schema, context = {}) {
   const type = declared[0] ?? (schema.properties || schema.required ? 'object' : 'string');
 
   if (type === 'object') {
+    // A conditional declared directly on the object, rather than inside an
+    // allOf, is still a conditional and has to narrow the result the same way.
+    // Routing it through the same flattening is what makes a discriminator pin
+    // its dependent properties whichever shape the author chose.
+    if (object(schema.if) && object(schema.then)) {
+      const flat = flattenObject([{ schema, root }], registry, depth);
+      if (flat) return buildObject(flat, next, registry, depth);
+    }
     const instance = {};
     const properties = object(schema.properties) ? schema.properties : {};
     for (const name of schema.required ?? []) {

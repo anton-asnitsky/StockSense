@@ -112,8 +112,20 @@ function resolveFixtureTarget(fixture, loaded, schemas) {
  * through its components. An AsyncAPI document has no payload oracle here, so
  * it cannot carry fixtures and must not be credited as though it could.
  */
-function fixtureBindable(entry, schemas) {
-  if (DOCUMENT_FIXTURE_KINDS.includes(entry.artifactKind)) return true;
+function fixtureBindable(entry, schemas, documents = new Map()) {
+  if (DOCUMENT_FIXTURE_KINDS.includes(entry.artifactKind)) {
+    // An OpenAPI document is addressed through its components, so one that
+    // declares none carries no payload the oracle could bind - nine of the
+    // seventeen canonical documents are parameter-only or non-JSON endpoints
+    // and declare no component schemas at all. Crediting them as bindable
+    // demanded a fixture pair that can never exist. Like the AsyncAPI and
+    // closed-dialect exemptions, this is derived from the document and never
+    // declared by the package, so a document that *does* declare components
+    // still cannot dodge the pair rule.
+    const document = documents.get(entry.document);
+    if (document === undefined) return true;
+    return object(document?.components?.schemas) && Object.keys(document.components.schemas).length > 0;
+  }
   return entry.artifactKind === 'schema' &&
     [...schemas.values()].some(item => item.entry === entry);
 }
@@ -271,6 +283,19 @@ export async function runFixtureOracle(root, loaded) {
       references.set(source.$id, source);
     }
   }
+  // Parse every OpenAPI document before the coverage check, because whether a
+  // document can carry a fixture at all is decided by the components it
+  // declares, and that has to be known before the pair rule is applied.
+  const documents = new Map();
+  for (const entry of loaded.entries.filter(item => item.artifactKind === 'openapi')) {
+    const bytes = await read(entry);
+    try {
+      const parsed = YAML.parseDocument(bytes, { uniqueKeys: true, strict: true });
+      if (parsed.errors.length) throw parsed.errors[0];
+      documents.set(entry.document, parsed.toJS());
+    } catch { fail('SOURCE_PARSE', 'BR2.7', 'A canonical OpenAPI document is malformed'); }
+  }
+
   const fixtureEntries = loaded.entries.filter(item => item.kind === 'example-fixture');
   if (!fixtureEntries.length) fail('FIXTURES_MISSING', 'BR2.7', 'A candidate package requires example fixtures');
   const sidecars = [];
@@ -296,7 +321,7 @@ export async function runFixtureOracle(root, loaded) {
       // document that *is* bindable: one bindable document under the boundary
       // and the pair rule applies to it. C08, C25 and C27 require only such
       // artifacts, so refusing here made them unpackageable.
-      const bindable = canonical.filter(item => fixtureBindable(item, schemas));
+      const bindable = canonical.filter(item => fixtureBindable(item, schemas, documents));
       for (const target of bindable) {
         const scenarios = fixtures.filter(fixture => fixture?.boundaryIds?.includes(boundaryId) &&
           resolveFixtureTarget(fixture, loaded, schemas) === target);
@@ -329,7 +354,8 @@ export async function runFixtureOracle(root, loaded) {
         } catch { fail('FIXTURE_TARGET', 'BR2.8', 'Fixture OpenAPI document is malformed'); }
         validationSchema = openApiFixtureSchema(document, fixture.contractElementId);
       } else validationSchema = schemas.get(fixture.contractElementId).source;
-      const validate = createSchemaValidator(validationSchema, references);
+      const validate = createSchemaValidator(validationSchema, references,
+        { openApiComponents: Boolean(fixture.documentRevisionId) });
       const valid = validate(fixture.payload);
       const findings = valid ? [] : mapSchemaFindings(validate.errors, {
         revisionId: target.revisionId,

@@ -8,64 +8,56 @@ import { ALL_BOUNDARIES, loadPackage } from '../../src/package-loader.mjs';
 import { runFixtureOracle } from '../../src/policy.mjs';
 import { buildFullPackage } from '../../src/full-package.mjs';
 
-// Only the thin C01/C18 walking skeleton has ever been packaged, so every rule
-// that is whole-catalogue rather than per-document - required kinds, fixed
-// paths, per-boundary sidecars and the fixture pair rule - had never met the
-// real catalogue at once. These tests assemble the complete C01-C27 candidate
-// and record exactly how far it gets.
+// Only the thin C01/C18 walking skeleton had ever been packaged, so every rule
+// that is whole-catalogue rather than per-document - the boundary inventory,
+// required kinds, fixed paths, per-boundary sidecars, cross-document references
+// and the fixture pair rule - had never met the real catalogue at once. These
+// tests assemble the complete C01-C27 candidate and judge it.
 const repoRoot = fileURLToPath(new URL('../../../../', import.meta.url));
 
-// The canonical documents that cannot carry a fixture pair today. This list is
-// a ratchet, not a tolerance: it is asserted exactly, so adding component
-// schemas to one of these documents, or removing them from another, fails here
-// and forces the AI-DLC record to be updated with it.
-const UNBINDABLE = Object.freeze({
-  'forecasting/v1/planning-forecasts.openapi.yaml': 'SCHEMA_INVALID',
-  'model-lifecycle/v1/heavy-work.openapi.yaml': 'SCHEMA_INVALID',
-  'identity-access/v1/global-audit-read.openapi.yaml': 'declares no component schemas',
-  'identity-access/v1/identity-metadata.openapi.yaml': 'declares no component schemas',
-  'planning-purchasing/v1/assistant-purchasing.openapi.yaml': 'declares no component schemas',
-  'retail-data/v1/assistant-inventory.openapi.yaml': 'declares no component schemas',
-  'retail-data/v1/dataset-exports.openapi.yaml': 'declares no component schemas',
-  'retail-data/v1/forecast-inputs.openapi.yaml': 'declares no component schemas',
-  'retail-data/v1/supplier-reference.openapi.yaml': 'declares no component schemas',
-  'supplier-knowledge/v1/assistant-retrieval.openapi.yaml': 'declares no component schemas',
-  'web-bff/v1/identity-session.openapi.yaml': 'declares no component schemas'
-});
+// The nine canonical documents that carry no payload an oracle could bind:
+// parameter-only or non-JSON endpoints that declare no component schemas.
+// Asserted exactly, as a ratchet rather than a tolerance - adding components to
+// one of these, or removing them from another, fails here and forces the
+// AI-DLC record to be updated with it.
+const WITHOUT_COMPONENTS = Object.freeze([
+  'identity-access/v1/global-audit-read.openapi.yaml',
+  'identity-access/v1/identity-metadata.openapi.yaml',
+  'planning-purchasing/v1/assistant-purchasing.openapi.yaml',
+  'retail-data/v1/assistant-inventory.openapi.yaml',
+  'retail-data/v1/dataset-exports.openapi.yaml',
+  'retail-data/v1/forecast-inputs.openapi.yaml',
+  'retail-data/v1/supplier-reference.openapi.yaml',
+  'supplier-knowledge/v1/assistant-retrieval.openapi.yaml',
+  'web-bff/v1/identity-session.openapi.yaml'
+]);
 
-async function assembled(options) {
+async function assembled() {
   const out = await mkdtemp(join(tmpdir(), 'stocksense-full-package-test-'));
-  try { return { out, built: await buildFullPackage(repoRoot, out, options), clean: () => rm(out, { recursive: true, force: true }) }; }
+  try { return { out, built: await buildFullPackage(repoRoot, out), clean: () => rm(out, { recursive: true, force: true }) }; }
   catch (error) { await rm(out, { recursive: true, force: true }); throw error; }
 }
 
-test('the assembler refuses to write a package it cannot complete', async () => {
-  // A half-written package root is worse than none: a later run would validate
-  // a stale tree and the result would read as proof.
+test('every canonical document either binds a verified fixture pair or is exempt by kind', async () => {
   const { built, clean } = await assembled();
   try {
-    assert.equal(built.manifest, null);
-    assert.deepEqual(built.problems.map(problem => problem.document).sort(), Object.keys(UNBINDABLE).sort());
-    for (const { document, reason } of built.problems) {
-      assert.ok(reason.startsWith(UNBINDABLE[document]), `${document}: ${reason}`);
-    }
+    // Nothing is refused and nothing is unaccounted for. The exempt documents
+    // are the AsyncAPI sources, the closed-dialect schemas and the OpenAPI
+    // documents that declare no components - all derived from the document, so
+    // none of them is credited as carrying fixture evidence.
+    assert.deepEqual(built.problems, []);
+    assert.equal(built.bound, 20);
+    assert.equal(built.exempt, 18);
+    assert.equal(built.bound + built.exempt, 38);
+    assert.ok(built.manifest, 'a complete package is written');
+    assert.equal(built.manifest.manifestStatus, 'candidate');
+    assert.equal(built.manifest.boundaryCoverage.length, ALL_BOUNDARIES.length);
   } finally { await clean(); }
 });
 
-test('every document that can bind a fixture pair does, verified by the pinned oracle', async () => {
-  const { out, built, clean } = await assembled({ allowIncomplete: true });
+test('each bound document contributes one positive and one negative fixture', async () => {
+  const { out, built, clean } = await assembled();
   try {
-    // 18 bound, 9 exempt by kind, 11 refused. The exempt documents are the
-    // AsyncAPI and closed-dialect sources the oracle provably cannot bind, so
-    // they carry no fixture evidence and are not credited as though they did.
-    assert.equal(built.bound, 18);
-    assert.equal(built.exempt, 9);
-    assert.equal(built.bound + built.exempt + built.problems.length, 38);
-    assert.equal(built.manifest.boundaryCoverage.length, ALL_BOUNDARIES.length);
-    assert.equal(built.manifest.manifestStatus, 'candidate');
-
-    // Each bound document contributes exactly one verified pair, and every
-    // negative declares the required-property finding its pointer names.
     const sidecar = JSON.parse(await readFile(join(out, 'governance/example-fixture.json'), 'utf8'));
     assert.equal(sidecar.syntheticOnly, true);
     assert.equal(sidecar.fixtures.length, built.bound * 2);
@@ -77,26 +69,42 @@ test('every document that can bind a fixture pair does, verified by the pinned o
       assert.equal(fixture.expectedFailureRuleId, 'BR2.4');
       assert.match(fixture.expectedFailurePath, /^\/[^/]/);
     }
+    // Every payload is derived from a schema and verified by the oracle, never
+    // hand-written, so a fixture cannot be authored against a schema it does
+    // not satisfy.
+    assert.ok(sidecar.fixtures.every(fixture => fixture.payload !== undefined));
   } finally { await clean(); }
 });
 
-test('the full candidate package is refused for exactly the fixture-coverage rule', async () => {
-  // This is the live blocker on the whole-catalogue package, recorded as an
-  // executable fact rather than a note: eleven OpenAPI documents cannot carry
-  // the pair the candidate rule requires, so C01-C27 cannot be packaged until
-  // that is resolved upstream. When it is, this test fails and says so.
-  const { out, built, clean } = await assembled({ allowIncomplete: true });
+test('the complete C01-C27 candidate package passes the governance rules', async () => {
+  // This is the whole point. Until the OpenAPI components compiled and the
+  // bindability exemption was derived rather than assumed, this package was
+  // refused with FIXTURE_COVERAGE/BR2.7 and the catalogue could not be packaged
+  // at all.
+  const { out, built, clean } = await assembled();
   try {
-    assert.ok(built.manifest, 'the package is written so the governance rules can judge it');
+    assert.ok(built.manifest);
     const loaded = await loadPackage(out);
-    // Everything structural passes: the manifest loads, which means required
-    // kinds, fixed paths, per-boundary sidecars and the boundary inventory all
-    // hold across the complete catalogue for the first time.
     assert.deepEqual([...loaded.boundaryIds].sort(), [...ALL_BOUNDARIES].sort());
-    await assert.rejects(runFixtureOracle(out, loaded), error => {
-      assert.equal(error.code, 'FIXTURE_COVERAGE');
-      assert.equal(error.ruleId, 'BR2.7');
-      return true;
-    });
+    const results = await runFixtureOracle(out, loaded);
+    assert.equal(results.length, built.bound * 2);
+    // Every fixture's observed outcome must equal the one it declared.
+    for (const row of results) {
+      assert.ok(['valid', 'invalid'].includes(row.scenarioType));
+      assert.equal(row.observed, row.scenarioType === 'valid' ? 'pass' : 'fail');
+    }
   } finally { await clean(); }
+});
+
+test('the documents that declare no components are exactly the nine expected', async () => {
+  const YAML = (await import('yaml')).default;
+  const { buildSourceInventory } = await import('../../src/catalogue.mjs');
+  const inventory = await buildSourceInventory(repoRoot);
+  const bare = [];
+  for (const entry of inventory.entries.filter(item => item.artifactKind === 'openapi')) {
+    const source = YAML.parse(await readFile(join(repoRoot, 'contracts/source', entry.document), 'utf8'),
+      { strict: true, uniqueKeys: true });
+    if (!Object.keys(source?.components?.schemas ?? {}).length) bare.push(entry.document);
+  }
+  assert.deepEqual(bare.sort(), [...WITHOUT_COMPONENTS].sort());
 });

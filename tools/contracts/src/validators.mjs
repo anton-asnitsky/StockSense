@@ -254,11 +254,55 @@ function validateInProcessPort(source) {
   }
 }
 
-export function createSchemaValidator(schema, references = new Map()) {
+/**
+ * The `x-` specification extensions a schema actually uses. OpenAPI reserves
+ * them for implementations and requires that they never make a document
+ * invalid, so they are declared to the validator by name rather than by
+ * disabling strictness wholesale: an unknown keyword that is not an extension
+ * is still refused.
+ */
+function extensionKeywords(schema, found = new Set()) {
+  if (Array.isArray(schema)) {
+    for (const item of schema) extensionKeywords(item, found);
+    return found;
+  }
+  if (!object(schema)) return found;
+  for (const [key, value] of Object.entries(schema)) {
+    if (key.startsWith('x-')) found.add(key);
+    else extensionKeywords(value, found);
+  }
+  return found;
+}
+
+/**
+ * @param {any} schema
+ * @param {Map<string, any>} [references]
+ * @param {{ openApiComponents?: boolean }} [options] compile an OpenAPI
+ *   component rather than a standalone schema document.
+ */
+export function createSchemaValidator(schema, references = new Map(), { openApiComponents = false } = {}) {
   if (!object(schema) || schema.$schema !== DIALECTS.schema) fail('DIALECT_CONFLICT', 'BR1.3', 'Expected JSON Schema 2020-12');
-  const ajv = new Ajv2020({ strict: true, allErrors: true, validateFormats: true });
+  // An OpenAPI component is not a standalone schema document and must not be
+  // compiled as though it were. Its components legitimately carry `x-`
+  // extensions; they routinely use `minItems` or `items` with no sibling
+  // `type`; and they require a name inside a conditional branch without
+  // redeclaring it there, which is the idiom this whole catalogue uses for a
+  // discriminator that pins dependent fields.
+  //
+  // All three are lint rules rather than validation rules, so relaxing them
+  // changes no instance outcome: the conditional `required` is enforced exactly
+  // as before. Declaring those names in the source instead was tried and
+  // reverted - it let the pinned differ enumerate required properties its model
+  // had never seen and report them as breaking, so a cosmetic edit became a
+  // compatibility event. Schema documents keep strict mode in full.
+  const ajv = new Ajv2020({ strict: true, allErrors: true, validateFormats: true,
+    ...(openApiComponents ? { strictTypes: false, strictRequired: false } : {}) });
   addFormats(ajv);
   try {
+    if (openApiComponents) {
+      const extensions = [...extensionKeywords(schema)];
+      if (extensions.length) ajv.addVocabulary(extensions);
+    }
     for (const [identity, reference] of references) {
       if (identity !== schema.$id) ajv.addSchema(reference);
     }

@@ -50,9 +50,9 @@ function bindTarget(entry, source) {
   }
   if (entry.artifactKind !== 'openapi') return null;
   const components = source?.components?.schemas;
-  if (!object(components) || !Object.keys(components).length) {
-    return { element: null, reason: 'declares no component schemas' };
-  }
+  // Exempt by kind, exactly as the oracle derives it: a document that declares
+  // no components carries no payload to bind, so it is not a problem to report.
+  if (!object(components) || !Object.keys(components).length) return null;
   // Try each candidate element in declaration order, since a component may be
   // bindable while an earlier one refuses to compile or reaches outside the
   // component graph. The oracle's own builder decides, not a local rewrite.
@@ -77,7 +77,8 @@ function bindTarget(entry, source) {
  */
 function fixturePair(entry, target, registry) {
   const refused = problem => ({ problem, fixtures: [] });
-  const validate = createSchemaValidator(target.schema, registry);
+  const validate = createSchemaValidator(target.schema, registry,
+    { openApiComponents: entry.artifactKind === 'openapi' });
   const positive = synthesize(target.schema, { root: target.root, registry });
   if (!validate(positive)) {
     return refused(`synthesized payload rejected at ${validate.errors?.[0]?.instancePath || '/'}`);
