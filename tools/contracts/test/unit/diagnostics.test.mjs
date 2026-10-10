@@ -131,3 +131,52 @@ test('a refusal whose message sanitises away still names its rule', () => {
   assert.equal(diagnostic.message, 'The package was refused; see the named rule.');
   assert.match(diagnostic.remediation, /pinned validator/);
 });
+
+test('a diagnostic keeps the identifiers it exists to report', () => {
+  // The independent architecture review caught this: the entropy-based
+  // credential rule redacted every digest and commit, and the absolute-path
+  // rule replaced every JSON pointer with <path>. So a digest mismatch, a
+  // provenance mismatch and a fixture-oracle pointer all published a message
+  // with the one useful identifier removed. NFR10.1 asks for bounded and
+  // sanitized diagnostics, not uninformative ones.
+  const digest = 'sha256:4b177bfd0e1a2c3d4e5f60718293a4b5c6d7e8f901234567890abcdef1234567';
+  const commit = '77d429379c7b3a97c16338febcec1e2ae7c4ff93';
+  assert.match(sanitizeText(`Declared digest ${digest} does not match`, REPO), new RegExp(digest));
+  assert.match(sanitizeText(`Recorded commit ${commit} is not an ancestor`, REPO), new RegExp(commit));
+  assert.match(sanitizeText('expected failure at /items/0/projectionLagSeconds', REPO),
+    /\/items\/0\/projectionLagSeconds/);
+  assert.match(sanitizeText('rejected contracts/source/web-bff/v1/browser-api.openapi.yaml', REPO),
+    /contracts\/source\/web-bff\/v1\/browser-api\.openapi\.yaml/);
+});
+
+test('narrowing the path rule did not stop runner paths being replaced', () => {
+  // The reason the generic rule existed. Each of these is an absolute path
+  // under a filesystem root and must still never be published.
+  for (const path of ['/home/runner/work/StockSense/.docker/config.json', '/Users/someone/.ssh/id_rsa',
+    '/root/.aws/credentials', '/tmp/build/secret.env', '/var/run/docker.sock', '/etc/shadow']) {
+    const text = sanitizeText(`cannot read ${path}`, REPO);
+    assert.match(text, /<path>/, path);
+    assert.ok(!text.includes(path), `${path} survived in: ${text}`);
+  }
+});
+
+test('preserving revisions did not weaken credential redaction', () => {
+  // A 40- or 64-character hex string is exempt because it is a git revision or
+  // a content digest. Nothing else is, and a token that merely looks long is
+  // still redacted.
+  for (const value of ['leaked ' + 'ghp_' + 'abcdefghijklmnopqrstuvwxyz0123456789', 'leaked AKIAIOSFODNN7EXAMPLE',
+    'password: hunter2-hunter2-hunter2', 'blob AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJKKKKLLLL']) {
+    assert.match(sanitizeText(value, REPO), /<redacted>/, value);
+  }
+  // Hex of the wrong length is not a revision and stays redacted.
+  assert.match(sanitizeText('value ' + 'a'.repeat(50), REPO), /<redacted>/);
+});
+
+test('a digest mismatch gets a remediation that describes it', () => {
+  // It previously inherited BR1.1's summary about manifest boundary rows,
+  // which does not describe a digest mismatch at all.
+  const diagnostic = toDiagnostic(new ContractError('DIGEST_MISMATCH', 'BR1.1',
+    'A declared content digest does not match'), { repoRoot: REPO });
+  assert.match(diagnostic.remediation, /Re-stamp the manifest entry|ship the bytes/);
+  assert.ok(!/boundary rows/.test(diagnostic.remediation), diagnostic.remediation);
+});

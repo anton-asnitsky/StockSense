@@ -47,6 +47,7 @@ const REMEDIATION_BY_RULE = Object.freeze({
 });
 
 const REMEDIATION_BY_CODE = Object.freeze({
+  DIGEST_MISMATCH: 'Re-stamp the manifest entry for the named document, or ship the bytes its digest records.',
   SOURCE_NOT_COMMITTED: 'Commit the canonical sources, then stamp the package with that commit.',
   SOURCE_REVISION_MISMATCH: 'Re-stamp the package, or ship the bytes the recorded commit contains.',
   SOURCE_REVISION_UNKNOWN: 'Fetch the full history so the recorded commit is present, then retry.',
@@ -67,7 +68,20 @@ const CONTROL = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/g;
 const ESCAPE = /\u001b\[[0-9;?]*[ -/]*[@-~]/g;
 const ANNOTATION = /(?:^|\n)\s*(?:::|##\[)[^\n]*/g;
 const WINDOWS_PATH = /[A-Za-z]:[\\/][^\s"'`]*/g;
-const POSIX_PATH = /(?:^|(?<=[\s"'`(]))\/(?:[^\s"'`/]+\/)+[^\s"'`/]*/g;
+// Only an absolute path under a filesystem root, never any slash-separated
+// string. A JSON pointer - /items/0/projectionLagSeconds - is textually an
+// absolute path, and a generic rule replaced every one of them with <path>,
+// destroying the single most useful part of a fixture-oracle or schema
+// diagnostic. Runner paths are what NFR10.1 is about, and they live under
+// these roots.
+const POSIX_PATH = /(?:^|(?<=[\s"'`(]))\/(?:home|Users|root|tmp|var|etc|opt|mnt|private|workspace|github|runner)\/[^\s"'`]*/g;
+
+/**
+ * A git revision or content digest, which must survive redaction: it is the
+ * identifier a digest-mismatch or provenance diagnostic exists to report, and
+ * it is not a secret. The entropy rule below cannot tell one from a token.
+ */
+const REVISION_LIKE = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
 const CREDENTIAL = [
   /\b(?:ghp|gho|ghu|ghs|ghr|github_pat)_[A-Za-z0-9_]{10,}/g,
   /\bAKIA[0-9A-Z]{16}\b/g,
@@ -110,7 +124,9 @@ export function sanitizeText(value, repoRoot) {
     return '<path>';
   };
   text = text.replace(WINDOWS_PATH, relative).replace(POSIX_PATH, relative);
-  for (const pattern of CREDENTIAL) text = text.replace(pattern, '<redacted>');
+  for (const pattern of CREDENTIAL) {
+    text = text.replace(pattern, match => (REVISION_LIKE.test(match) ? match : '<redacted>'));
+  }
   text = text.replace(/\s+/g, ' ').trim();
   return text.length > MESSAGE_LIMIT ? text.slice(0, MESSAGE_LIMIT - 1) + '…' : text;
 }
