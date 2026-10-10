@@ -1661,7 +1661,15 @@ function candidateEvidence(
         0 &&
       (auditBlockField(approvalEvent.block, "Run floor") ?? "").length > 0 &&
       (auditBlockField(approvalEvent.block, "Session") ?? "").length > 0 &&
-      /^\[Answer\]:\s*A\.\s*Approve Plan\s*$/m.test(questions)
+      // The option letter is optional, matching APPROVE_PLAN_RE in
+      // aidlc-testing-posture.ts, which is what actually records the approval.
+      // The two disagreed: the recorder accepted a bare "Approve Plan" and
+      // hashed those bytes into the receipt, while this required "A. Approve
+      // Plan" - so a validly approved plan left planFingerprint null and
+      // candidateEvidence() then refused the merge for incomplete evidence.
+      // The answer line cannot be corrected instead, because its bytes are
+      // hashed into questionsSha256 and into the audit.
+      /^\[Answer\]:\s*(?:[A-Z][.)][ \t]*)?["']?Approve Plan["']?\s*$/m.test(questions)
     ) {
       planFingerprint = fingerprint[1];
     }
