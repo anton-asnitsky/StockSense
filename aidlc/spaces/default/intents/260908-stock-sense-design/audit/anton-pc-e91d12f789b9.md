@@ -60444,3 +60444,14 @@
 **Unit**: contracts
 
 ---
+
+## Decision Recorded
+**Timestamp**: 2026-10-09T20:51:55Z
+**Event**: DECISION_RECORDED
+**Stage**: code-generation
+**Decision**: Owner sequencing decision for the two workflow changes, 2026-10-09. Measured constraint: main carries check:ci-policy, scan:secrets and scan:vuln, but not build:sbom, which lives with sbom.mjs on the unmerged U1 branch, so a release workflow on main would call a script that is not there. Owner chose to wire check:ci-policy into main now, because it works today and begins guarding immediately, and to author the release-evidence workflow on the U1 branch so it arrives with the code it depends on. Accepted cost: a second enforce_admins toggle when U1 merges, because that merge adds a workflow file and the policy refuses a pull request that edits workflow configuration.
+**Options**: policy to main now and release with U1 (chosen); both with U1 and policy last; both to main now with a reduced release job; policy now and release deferred
+**Rationale**: Logged after the question was presented in-session; the recorded decision is the owner's verbatim selection from four options.
+**Unit**: contracts
+
+---
