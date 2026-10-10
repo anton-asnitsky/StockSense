@@ -1,11 +1,18 @@
 #!/usr/bin/env node
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { ContractError } from './package-loader.mjs';
 import { validateCandidate } from './validate.mjs';
+import { toDiagnostic } from './diagnostics.mjs';
 
 export async function main(args) {
-  const usage = { exitCode: 2, result: { code: 'USAGE', ruleId: 'BR2.1', message: 'Usage: validate <package-root> [--repo-root <path>]' } };
+  const usage = {
+    exitCode: 2,
+    result: {
+      severity: 'error', code: 'USAGE', ruleId: 'BR2.1', location: null,
+      remediation: 'Pass a readable package root; see the command usage.',
+      message: 'Usage: validate <package-root> [--repo-root <path>]'
+    }
+  };
   if (args[0] !== 'validate' || (args.length !== 2 && args.length !== 4)) return usage;
   if (args.length === 4 && args[2] !== '--repo-root') return usage;
   const repoRoot = args.length === 4 ? resolve(args[3]) : undefined;
@@ -13,10 +20,11 @@ export async function main(args) {
     return { exitCode: 0, result: await validateCandidate(resolve(args[1]),
       { repoRoot, standardsImage: process.env.STOCKSENSE_STANDARDS_IMAGE }) };
   } catch (error) {
-    if (error instanceof ContractError) {
-      return { exitCode: 1, result: { code: error.code, ruleId: error.ruleId, message: error.message } };
-    }
-    return { exitCode: 1, result: { code: 'INPUT_IO', ruleId: 'BR2.1', message: 'Package input could not be read safely.' } };
+    // Every refusal leaves here as a publishable diagnostic: a stable code and
+    // rule, a severity, a repository-relative bounded location, a remediation
+    // summary, and a message with runner paths, terminal controls, annotation
+    // syntax and credential shapes stripped.
+    return { exitCode: 1, result: toDiagnostic(error, { repoRoot: repoRoot ?? resolve(args[1]) }) };
   }
 }
 

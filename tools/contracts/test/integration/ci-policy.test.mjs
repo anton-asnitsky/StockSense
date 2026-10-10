@@ -88,3 +88,85 @@ test('the policy check refuses a workflow that is not well-formed, and an empty 
     assert.match(result.stderr, /No workflow files/);
   } finally { await rm(empty, { recursive: true, force: true }); }
 });
+
+test('a trusted-only workflow may hold the writes build provenance needs', async () => {
+  // Attestation was never blocked by this policy; it was blocked in the
+  // pull-request-triggered check, correctly, and nobody had written the
+  // release workflow. A push-only workflow may hold id-token and attestations.
+  const release = `name: release
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+jobs:
+  attest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/attest-build-provenance@${sha}
+`;
+  await withWorkflow(release, ['tools/contracts/src/sbom.mjs'], result => {
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.match(result.stdout, /accepted/);
+  });
+});
+
+test('a trusted trigger no longer exempts a workflow from declaring permissions', async () => {
+  // These three all passed before: the permission rules applied only to
+  // untrusted triggers, so a release workflow could grant anything.
+  const base = `name: release
+on:
+  push:
+    branches: [main]
+PERMISSIONS
+jobs:
+  attest:
+    runs-on: ubuntu-latest
+JOBPERMS
+    steps:
+      - uses: actions/attest-build-provenance@${sha}
+`;
+  const cases = [
+    ['no permissions anywhere', base.replace('PERMISSIONS\n', '').replace('JOBPERMS\n', ''), /CI_PERMISSIONS_UNSET/],
+    ['write-all at workflow level', base.replace('PERMISSIONS', 'permissions: write-all').replace('JOBPERMS\n', ''), /CI_EXCESSIVE_PERMISSIONS/],
+    ['read-all at workflow level', base.replace('PERMISSIONS', 'permissions: read-all').replace('JOBPERMS\n', ''), /CI_EXCESSIVE_PERMISSIONS/],
+    ['unjustified packages write', base.replace('PERMISSIONS', 'permissions:\n  packages: write').replace('JOBPERMS\n', ''), /CI_UNJUSTIFIED_PERMISSION/],
+    ['unjustified actions write', base.replace('PERMISSIONS', 'permissions:\n  actions: write').replace('JOBPERMS\n', ''), /CI_UNJUSTIFIED_PERMISSION/]
+  ];
+  for (const [label, content, expected] of cases) {
+    await withWorkflow(content, [], result => {
+      assert.equal(result.status, 1, `${label} should be refused`);
+      assert.match(result.stdout, expected, label);
+    });
+  }
+});
+
+test('a write on an untrusted trigger stays refused whatever the scope', async () => {
+  const pr = scope => `name: required
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    permissions:
+      ${scope}: write
+    steps:
+      - uses: actions/checkout@${sha}
+`;
+  // id-token and attestations are allowlisted for trusted triggers only; a
+  // pull request must never hold them, which is the whole threat model.
+  for (const scope of ['id-token', 'attestations', 'contents', 'packages']) {
+    await withWorkflow(pr(scope), [], result => {
+      assert.equal(result.status, 1, `${scope} should be refused on a pull request`);
+      assert.match(result.stdout, /CI_EXCESSIVE_PERMISSIONS/, scope);
+    });
+  }
+});

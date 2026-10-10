@@ -13,8 +13,8 @@ import { sourceTreeDigest } from './source-digest.mjs';
 const TOOL = Object.freeze({
   'openapi:3.1.2': { binary: '/opt/contracts/node_modules/@redocly/cli/bin/cli.js', rule: 'NFR8.5' },
   'asyncapi:3.0.0': { binary: '/opt/contracts/src/container-asyncapi-validator.mjs', rule: 'NFR8.6' },
-  'https://json-schema.org/draft/2020-12/schema': { binary: '/opt/contracts/container-schema-validator.mjs', rule: 'NFR8.4' },
-  'asyncapi-payloads:2020-12': { binary: '/opt/contracts/container-schema-validator.mjs', rule: 'NFR8.6' },
+  'https://json-schema.org/draft/2020-12/schema': { binary: '/opt/contracts/src/container-schema-validator.mjs', rule: 'NFR8.4' },
+  'asyncapi-payloads:2020-12': { binary: '/opt/contracts/src/container-schema-validator.mjs', rule: 'NFR8.6' },
   'fixture-oracle:2020-12': { binary: '/opt/contracts/src/container-fixture-oracle.mjs', rule: 'BR2.7' }
 });
 // A local build is addressed by its Docker image ID (config digest). A
@@ -377,7 +377,14 @@ export async function runContainerStandardsValidator(dialect, sourceDocument, op
     if ((schemaDialect || payloadDialect || fixtureDialect) && result.status !== 0 && result.status !== 2) {
       fail('STANDARDS_ENGINE', 'NFR6.2', 'Pinned schema compiler did not complete');
     }
-    if (result.status !== 0) fail('STANDARDS_VALIDATION', tool.rule, 'Pinned standards validator rejected the canonical document');
+    // Name the document, never the tool's own diagnostic: the path comes from
+    // the manifest we loaded, while stderr is untrusted output that may carry
+    // anything the validator happened to read. Without the path a package of
+    // 38 documents reports only that one of them was rejected.
+    if (result.status !== 0) {
+      throw new ContractError('STANDARDS_VALIDATION', tool.rule,
+        `Pinned standards validator rejected the canonical document ${sourceDocument}`, sourceDocument);
+    }
     let fixtureResults;
     if (fixtureDialect) fixtureResults = parseFixtureResults(result.stdout, entries);
     succeeded = true;
