@@ -114,14 +114,25 @@ function resolveFixtureTarget(fixture, loaded, schemas) {
  */
 function fixtureBindable(entry, schemas, documents = new Map()) {
   if (DOCUMENT_FIXTURE_KINDS.includes(entry.artifactKind)) {
-    // An OpenAPI document is addressed through its components, so one that
-    // declares none carries no payload the oracle could bind - nine of the
-    // seventeen canonical documents are parameter-only or non-JSON endpoints
-    // and declare no component schemas at all. Crediting them as bindable
-    // demanded a fixture pair that can never exist. Like the AsyncAPI and
-    // closed-dialect exemptions, this is derived from the document and never
-    // declared by the package, so a document that *does* declare components
-    // still cannot dodge the pair rule.
+    // An OpenAPI fixture is addressed by element through `components.schemas`,
+    // so a document declaring none carries nothing this oracle can extract.
+    // Nine of the seventeen canonical documents declare no components.
+    //
+    // Be precise about what that means, because an earlier version of this
+    // comment overstated it and the independent architecture review caught it:
+    // seven of the nine declare no JSON body anywhere and genuinely have no
+    // payload. The other two - identity-access/v1/identity-metadata and
+    // identity-access/v1/global-audit-read - do carry inline response schemas
+    // with required properties, which the oracle could bind if it extracted
+    // `content.*.schema` as well as components. It does not, by owner decision
+    // of 2026-10-09, so those two are exempt because of how their schemas are
+    // factored rather than because they lack a payload. That is a known
+    // limitation of the predicate, disclosed in `limitations`, not a claim that
+    // the documents have nothing to test.
+    //
+    // Like the AsyncAPI and closed-dialect exemptions this is derived from the
+    // document and never declared by the package, so a document that *does*
+    // declare components still cannot dodge the pair rule.
     const document = documents.get(entry.document);
     if (document === undefined) return true;
     return object(document?.components?.schemas) && Object.keys(document.components.schemas).length > 0;

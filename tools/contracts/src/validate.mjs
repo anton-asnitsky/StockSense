@@ -218,6 +218,7 @@ export async function validateCandidate(root, { repoRoot, standardsImage } = {})
     limitations: [
       'Compatibility, release scans, SBOM, attestation and provider conformance have not run. Consumer-local generation is verified separately against the generation profile, not by this command.',
       'AsyncAPI documents and the closed non-payload schema dialects carry no payload fixtures: the fixture oracle has no extractor for them, so such a document is validated as a document only and its payloads are unexercised. A boundary whose canonical documents are all of those kinds therefore carries no fixture evidence at all, and this result does not name which boundaries those are.',
+      'An OpenAPI fixture is addressed through components.schemas, so a document declaring none is exempt from the fixture pair rule. Nine of the seventeen canonical documents are exempt on that basis: seven declare no JSON body at all, but identity-access/v1/identity-metadata and identity-access/v1/global-audit-read do carry inline response schemas with required properties that this oracle could bind if it extracted content media-type schemas as well as components. It does not, so those two are exempt because of how their schemas are factored rather than because they have no payload to exercise.',
       'A generation-profile sidecar records the source revision in its own bytes, so it is stamped but not blob-bound to that revision.'
     ]
   };
