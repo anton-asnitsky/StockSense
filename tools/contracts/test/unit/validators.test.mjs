@@ -223,3 +223,56 @@ test('a negative fixture may declare a composite failure as an exact finding set
     expectedFailures: [{ code: 'SCHEMA_REQUIRED', ruleId: 'BR2.4', path: '/a' }] }, [], [contract]),
   'FIXTURE_UNEXPECTED_FAILURE');
 });
+
+test('only approved x- extensions are permitted in an OpenAPI component', () => {
+  // The collector previously registered every key beginning x-, so the gate was
+  // "starts with x-" rather than "is approved": a mistyped or newly invented
+  // extension was accepted silently, and Ajv's unknown-keyword refusal - the
+  // only signal that a governance-bearing key existed - was removed. The
+  // independent architecture review raised that as a weakening of NFR8.4.
+  const component = extra => ({
+    $schema: DIALECTS.schema, $id: 'https://contracts.stocksense.local/x.json',
+    type: 'object', required: ['ids'],
+    properties: { ids: { minItems: 1, items: { type: 'string' } } },
+    ...extra
+  });
+  const compile = extra => createSchemaValidator(component(extra), new Map(), { openApiComponents: true });
+
+  // Every extension the canonical catalogue declares must still compile.
+  for (const approved of ['x-contract-fixtures', 'x-contract-owner', 'x-contract-package',
+    'x-contract-protocol-version', 'x-stocksense-claims', 'x-stocksense-conformance',
+    'x-stocksense-delivery', 'x-stocksense-kind-limits', 'x-stocksense-max-bytes',
+    'x-stocksense-recovery']) {
+    assert.ok(compile({ [approved]: { any: 'value' } }), approved);
+  }
+
+  // An unlisted or mistyped one is refused, and the reason names it - which it
+  // did not before, because the compiler's message was discarded.
+  for (const unapproved of ['x-not-approved', 'x-stocksense-kindlimits', 'x-contract-fixture']) {
+    assert.throws(() => compile({ [unapproved]: { any: 'value' } }), error => {
+      assert.equal(error.code, 'SCHEMA_INVALID');
+      assert.equal(error.ruleId, 'NFR8.4');
+      assert.match(error.message, /unknown keyword/, error.message);
+      return true;
+    }, unapproved);
+  }
+
+  // A schema document keeps full strict mode, so no extension is permitted there.
+  assert.throws(() => createSchemaValidator(component({ 'x-stocksense-recovery': {} })),
+    error => error.code === 'SCHEMA_INVALID');
+});
+
+test('a strict-mode refusal carries the compiler reason, bounded', () => {
+  // Discarding it meant a strict refusal was invisible without a hand-written
+  // probe. It comes from a tool, so it is collapsed and length-capped here and
+  // sanitized again before any diagnostic is published.
+  assert.throws(() => createSchemaValidator({
+    $schema: DIALECTS.schema, $id: 'https://contracts.stocksense.local/y.json',
+    type: 'object', properties: { a: { minItems: 1 } }
+  }), error => {
+    assert.equal(error.code, 'SCHEMA_INVALID');
+    assert.match(error.message, /strict mode/);
+    assert.ok(error.message.length <= 260, `message was ${error.message.length} characters`);
+    return true;
+  });
+});

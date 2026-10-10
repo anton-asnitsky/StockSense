@@ -255,24 +255,36 @@ function validateInProcessPort(source) {
 }
 
 /**
- * The `x-` specification extensions a schema actually uses. OpenAPI reserves
- * them for implementations and requires that they never make a document
- * invalid, so they are declared to the validator by name rather than by
- * disabling strictness wholesale: an unknown keyword that is not an extension
- * is still refused.
+ * The approved `x-` specification extensions. OpenAPI reserves these for
+ * implementations and requires that they never make a document invalid, so
+ * they are permitted by name.
+ *
+ * This was previously a walk that registered every key beginning `x-`, which
+ * made the gate "starts with x-" rather than "is approved": a newly invented or
+ * mistyped extension was accepted silently, and the only signal that a
+ * governance-bearing key existed at all - Ajv's unknown-keyword refusal - was
+ * removed. The independent architecture review raised that as a weakening of
+ * NFR8.4, correctly.
+ *
+ * Permitting a name here means the validator ignores it, nothing more. None of
+ * these is enforced by U1 today: several carry real constraints, and
+ * `x-stocksense-kind-limits` in particular declares per-kind import byte and
+ * row limits that no code reads. Whether each should be enforced, or recorded
+ * as an explicit traceability gap, is an open owner decision - not something
+ * this allowlist settles.
  */
-function extensionKeywords(schema, found = new Set()) {
-  if (Array.isArray(schema)) {
-    for (const item of schema) extensionKeywords(item, found);
-    return found;
-  }
-  if (!object(schema)) return found;
-  for (const [key, value] of Object.entries(schema)) {
-    if (key.startsWith('x-')) found.add(key);
-    else extensionKeywords(value, found);
-  }
-  return found;
-}
+const APPROVED_EXTENSIONS = Object.freeze([
+  'x-contract-fixtures',
+  'x-contract-owner',
+  'x-contract-package',
+  'x-contract-protocol-version',
+  'x-stocksense-claims',
+  'x-stocksense-conformance',
+  'x-stocksense-delivery',
+  'x-stocksense-kind-limits',
+  'x-stocksense-max-bytes',
+  'x-stocksense-recovery'
+]);
 
 /**
  * @param {any} schema
@@ -299,16 +311,24 @@ export function createSchemaValidator(schema, references = new Map(), { openApiC
     ...(openApiComponents ? { strictTypes: false, strictRequired: false } : {}) });
   addFormats(ajv);
   try {
-    if (openApiComponents) {
-      const extensions = [...extensionKeywords(schema)];
-      if (extensions.length) ajv.addVocabulary(extensions);
-    }
+    // Only the approved names. An unlisted `x-` key is left unknown, so Ajv
+    // refuses it and the operator sees which key it was.
+    if (openApiComponents) ajv.addVocabulary([...APPROVED_EXTENSIONS]);
     for (const [identity, reference] of references) {
       if (identity !== schema.$id) ajv.addSchema(reference);
     }
     return ajv.compile(schema);
   }
-  catch { fail('SCHEMA_INVALID', 'NFR8.4', 'JSON Schema does not compile with the pinned 2020-12 validator'); }
+  catch (error) {
+    // Carry the compiler's reason, not just the code. Discarding it meant a
+    // strict-mode refusal - an unapproved `x-` keyword, a `required` name the
+    // branch does not declare - was invisible without a hand-written probe.
+    // The message is bounded and collapsed because it comes from a tool, and
+    // the diagnostics sanitiser cleans it again before anything is published.
+    const reason = String(error?.message ?? '').replace(/\s+/g, ' ').trim().slice(0, 200);
+    fail('SCHEMA_INVALID', 'NFR8.4',
+      `JSON Schema does not compile with the pinned 2020-12 validator${reason ? `: ${reason}` : ''}`);
+  }
 }
 
 /**
