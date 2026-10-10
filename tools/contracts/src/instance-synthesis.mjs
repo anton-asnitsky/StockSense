@@ -333,3 +333,133 @@ export function omitRequired(schema, instance) {
   delete reduced[name];
   return { payload: reduced, pointer: '/' + String(name).replace(/~/g, '~0').replace(/\//g, '~1') };
 }
+
+const pointer = name => '/' + String(name).replace(/~/g, '~0').replace(/\//g, '~1');
+
+/**
+ * The property values a condition demands, when every property it constrains is
+ * pinned to a single value. Returns null otherwise, so a branch guarded by
+ * anything subtler than a discriminator is left alone rather than guessed at.
+ */
+function pinnedBy(condition, root, registry) {
+  const { schema } = deref(condition, root, registry);
+  if (!object(schema) || !object(schema.properties)) return null;
+  const pinned = {};
+  for (const [name, sub] of Object.entries(schema.properties)) {
+    if (!object(sub)) return null;
+    if (Object.hasOwn(sub, 'const')) { pinned[name] = sub.const; continue; }
+    if (Array.isArray(sub.enum) && sub.enum.length === 1) { pinned[name] = sub.enum[0]; continue; }
+    return null;
+  }
+  return Object.keys(pinned).length ? pinned : null;
+}
+
+/**
+ * Candidate negatives that violate something other than `required`.
+ *
+ * Until these existed, every negative in the catalogue was "the positive minus
+ * one required property", so all 40 oracle rows asserted SCHEMA_REQUIRED and
+ * nothing exercised an enum, a closed object, or the conditional discriminators
+ * the catalogue leans on everywhere. The independent architecture review called
+ * that a satisfiability-plus-required smoke test rather than boundary evidence,
+ * which it was.
+ *
+ * Each candidate is only a proposal: the caller runs it through the real oracle
+ * and declares whatever findings that produces, so a mutation that fails to
+ * violate anything is discarded rather than credited.
+ *
+ * @param {any} schema the bound element's subschema
+ * @param {any} instance a verified positive instance
+ * @param {{ root?: any, registry?: Map<string, any> }} [context]
+ * @returns {Array<{ kind: string, payload: any, note: string }>}
+ */
+export function negativeCandidates(schema, instance, context = {}) {
+  const { root = schema, registry = new Map() } = context;
+  if (!object(instance)) return [];
+  const flat = flattenObject([{ schema, root }], registry, 0);
+  if (!flat) return [];
+  const candidates = [];
+
+  // 1. An out-of-enum discriminator. The enumerated properties are usually the
+  // discriminators the conditionals key on, so breaking one is the single most
+  // contract-meaningful mutation available.
+  for (const name of flat.required) {
+    const target = flat.properties.get(name);
+    if (!target || !Object.hasOwn(instance, name)) continue;
+    const resolved = deref(target.schema, target.root ?? root, registry).schema;
+    if (!object(resolved)) continue;
+    const choices = Array.isArray(resolved.enum) ? resolved.enum
+      : Object.hasOwn(resolved, 'const') ? [resolved.const] : null;
+    if (!choices || !choices.length || typeof choices[0] !== 'string') continue;
+    const invalid = 'not-' + String(choices[0]).slice(0, 24);
+    if (choices.includes(invalid)) continue;
+    candidates.push({
+      kind: 'enum',
+      payload: { ...instance, [name]: invalid },
+      note: `${name} set outside its enumerated values`
+    });
+    break;
+  }
+
+  // 2. A closed object given an undeclared property. Only when the schema
+  // actually closes itself, so this is never a guess about intent.
+  const closed = [{ schema, root }].some(branch => {
+    const resolved = deref(branch.schema, branch.root, registry).schema;
+    return object(resolved) && resolved.additionalProperties === false;
+  });
+  if (closed && !Object.hasOwn(instance, 'stocksenseUndeclared')) {
+    candidates.push({
+      kind: 'additionalProperties',
+      payload: { ...instance, stocksenseUndeclared: 'synthetic' },
+      note: 'an undeclared property added to a closed object'
+    });
+  }
+
+  // 3. A violated conditional. The positive cannot be mutated directly: the
+  // synthesiser picks the first enumerated value for a discriminator, and the
+  // catalogue's conditionals key on the *other* values - HeavyWorkRequest
+  // synthesises workType "training" while its branches want "batch-forecast"
+  // and "embedding-index" - so no branch is ever active on the positive and
+  // there is nothing to break.
+  //
+  // So activate a branch first: pin the discriminator to the value the `if`
+  // demands, fill in the properties that branch additionally requires, then
+  // remove one of them. That exercises the discriminator path the contract
+  // actually cares about, which the base required set never reaches.
+  for (const { condition, consequent, root: branchRoot } of flat.conditionals) {
+    const pinned = pinnedBy(condition, branchRoot, registry);
+    if (!pinned) continue;
+    const applied = flattenObject([{ schema: consequent, root: branchRoot }], registry, 1);
+    if (!applied) continue;
+    const extra = applied.required.filter(name => !flat.required.includes(name));
+    if (!extra.length) continue;
+
+    const variant = { ...instance, ...pinned };
+    let buildable = true;
+    for (const name of applied.required) {
+      if (Object.hasOwn(variant, name)) continue;
+      const narrowed = applied.properties.get(name);
+      const imposes = narrowed !== undefined && narrowed.schema !== true &&
+        !(object(narrowed.schema) && Object.keys(narrowed.schema).length === 0);
+      const target = imposes ? narrowed : flat.properties.get(name);
+      if (!target) { buildable = false; break; }
+      try { variant[name] = synthesize(target.schema, { root: target.root ?? root, registry, depth: 1 }); }
+      catch { buildable = false; break; }
+    }
+    if (!buildable) continue;
+
+    const payload = { ...variant };
+    delete payload[extra[0]];
+    candidates.push({
+      kind: 'conditional',
+      payload,
+      note: `${Object.keys(pinned).join(', ')} pinned to activate the branch, then ${extra[0]} removed`
+    });
+    break;
+  }
+
+  return candidates;
+}
+
+/** The pointer the oracle reports for a removed or altered property. */
+export { pointer as propertyPointer };

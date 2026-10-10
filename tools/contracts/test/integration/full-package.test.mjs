@@ -55,19 +55,50 @@ test('every canonical document either binds a verified fixture pair or is exempt
   } finally { await clean(); }
 });
 
-test('each bound document contributes one positive and one negative fixture', async () => {
+test('each bound document contributes a positive, a required negative, and the mutations it admits', async () => {
   const { out, built, clean } = await assembled();
   try {
     const sidecar = JSON.parse(await readFile(join(out, 'governance/example-fixture.json'), 'utf8'));
     assert.equal(sidecar.syntheticOnly, true);
-    assert.equal(sidecar.fixtures.length, built.bound * 2);
+    const positives = sidecar.fixtures.filter(fixture => fixture.scenarioType === 'valid');
     const negatives = sidecar.fixtures.filter(fixture => fixture.scenarioType === 'invalid');
-    assert.equal(negatives.length, built.bound);
-    for (const fixture of negatives) {
+    assert.equal(positives.length, built.bound);
+    // One required-omission negative per bound document, plus the non-required
+    // mutations each document admits.
+    assert.ok(negatives.length > built.bound, `expected more than ${built.bound} negatives, got ${negatives.length}`);
+
+    const requiredOnly = negatives.filter(fixture => fixture.expectedFailureCode !== undefined);
+    assert.equal(requiredOnly.length, built.bound);
+    for (const fixture of requiredOnly) {
       assert.equal(fixture.expectedOutcome, 'fail');
       assert.equal(fixture.expectedFailureCode, 'SCHEMA_REQUIRED');
       assert.equal(fixture.expectedFailureRuleId, 'BR2.4');
       assert.match(fixture.expectedFailurePath, /^\/[^/]/);
+    }
+
+    // Every negative that is not the required omission declares its findings as
+    // a set, and at least one of them is not SCHEMA_REQUIRED. Before these
+    // existed, all forty oracle rows asserted the same keyword, so nothing
+    // exercised an enum, a closed object or a conditional discriminator - the
+    // architecture review's A-05.
+    const mutations = negatives.filter(fixture => Array.isArray(fixture.expectedFailures));
+    assert.equal(requiredOnly.length + mutations.length, negatives.length);
+    assert.ok(mutations.length > 0, 'no non-required negatives were produced');
+    for (const fixture of mutations) {
+      assert.equal(fixture.expectedOutcome, 'fail');
+      assert.ok(fixture.expectedFailures.length > 0, fixture.fixtureId);
+      assert.ok(fixture.expectedFailures.some(row => row.code !== 'SCHEMA_REQUIRED'),
+        `${fixture.fixtureId} asserts only SCHEMA_REQUIRED`);
+      for (const row of fixture.expectedFailures) {
+        assert.match(row.code, /^SCHEMA_[A-Z_]+$/);
+        assert.equal(row.ruleId, 'BR2.4');
+        assert.equal(typeof row.path, 'string');
+      }
+    }
+    // The constraints the catalogue actually leans on are represented.
+    const codes = new Set(mutations.flatMap(fixture => fixture.expectedFailures.map(row => row.code)));
+    for (const code of ['SCHEMA_ADDITIONAL_PROPERTY', 'SCHEMA_ENUM', 'SCHEMA_CONST', 'SCHEMA_IF']) {
+      assert.ok(codes.has(code), `no negative asserts ${code}`);
     }
     // Every payload is derived from a schema and verified by the oracle, never
     // hand-written, so a fixture cannot be authored against a schema it does
@@ -87,8 +118,15 @@ test('the complete C01-C27 candidate package passes the governance rules', async
     const loaded = await loadPackage(out);
     assert.deepEqual([...loaded.boundaryIds].sort(), [...ALL_BOUNDARIES].sort());
     const results = await runFixtureOracle(out, loaded);
-    assert.equal(results.length, built.bound * 2);
-    // Every fixture's observed outcome must equal the one it declared.
+    // Every declared fixture is judged, and none is silently skipped.
+    const sidecar = JSON.parse(await readFile(join(out, 'governance/example-fixture.json'), 'utf8'));
+    assert.equal(results.length, sidecar.fixtures.length);
+    assert.ok(results.length > built.bound * 2,
+      `expected more than the required-only pairs, got ${results.length}`);
+    // Every fixture's observed outcome must equal the one it declared. For the
+    // non-required negatives that means the oracle reproduced an exact finding
+    // set - enum, const, additionalProperties or a conditional - not merely
+    // that the payload failed somehow.
     for (const row of results) {
       assert.ok(['valid', 'invalid'].includes(row.scenarioType));
       assert.equal(row.observed, row.scenarioType === 'valid' ? 'pass' : 'fail');

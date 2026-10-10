@@ -5,8 +5,8 @@ import { ALL_BOUNDARIES, BOUNDARY_SIDECARS, CANONICAL_KINDS, FIXED_PATHS,
   ContractError, deriveIdentity, digest } from './package-loader.mjs';
 import { buildSourceInventory } from './catalogue.mjs';
 import { DIALECTS, createSchemaValidator } from './validators.mjs';
-import { openApiFixtureSchema } from './policy.mjs';
-import { omitRequired, synthesize } from './instance-synthesis.mjs';
+import { mapSchemaFindings, openApiFixtureSchema } from './policy.mjs';
+import { negativeCandidates, omitRequired, synthesize } from './instance-synthesis.mjs';
 
 // Assemble the complete C01-C27 candidate package from the committed canonical
 // sources. Until now only the thin C01/C18 walking skeleton was ever packaged,
@@ -94,17 +94,46 @@ function fixturePair(entry, target, registry) {
 
   const slug = entry.document.replace(/[^a-z0-9]+/gi, '-').toLowerCase().replace(/^-|-$/g, '');
   const binding = entry.artifactKind === 'openapi' ? { documentRevisionId: entry.revisionId } : {};
-  return {
-    problem: null,
-    fixtures: [
-      { fixtureId: `${slug}-positive`, boundaryIds: [...entry.boundaryIds], contractElementId: target.element,
-        ...binding, scenarioType: 'valid', expectedOutcome: 'pass', payload: positive },
-      { fixtureId: `${slug}-negative`, boundaryIds: [...entry.boundaryIds], contractElementId: target.element,
-        ...binding, scenarioType: 'invalid', expectedOutcome: 'fail',
-        expectedFailureCode: 'SCHEMA_REQUIRED', expectedFailureRuleId: 'BR2.4',
-        expectedFailurePath: negative.pointer, payload: negative.payload }
-    ]
-  };
+  // A negative declares its oracle either as single fields or as an
+  // expectedFailures set, so the array holds both shapes.
+  /** @type {Record<string, any>[]} */
+  const fixtures = [
+    { fixtureId: `${slug}-positive`, boundaryIds: [...entry.boundaryIds], contractElementId: target.element,
+      ...binding, scenarioType: 'valid', expectedOutcome: 'pass', payload: positive },
+    { fixtureId: `${slug}-negative`, boundaryIds: [...entry.boundaryIds], contractElementId: target.element,
+      ...binding, scenarioType: 'invalid', expectedOutcome: 'fail',
+      expectedFailureCode: 'SCHEMA_REQUIRED', expectedFailureRuleId: 'BR2.4',
+      expectedFailurePath: negative.pointer, payload: negative.payload }
+  ];
+
+  // Negatives that violate something other than `required`. Every one is put
+  // through the same oracle and declared from the findings that oracle actually
+  // produced, mapped by mapSchemaFindings - the same mapper that will judge it -
+  // so a mutation which violates nothing, or which only trips `required` again,
+  // is discarded rather than counted as boundary coverage.
+  for (const candidate of negativeCandidates(subject, positive, { root: target.root, registry })) {
+    if (validate(candidate.payload)) continue;
+    const findings = mapSchemaFindings(validate.errors ?? [], {
+      revisionId: entry.revisionId, contractElementId: target.element
+    });
+    if (!findings.length || findings.every(finding => finding.findingCode === 'SCHEMA_REQUIRED')) continue;
+    fixtures.push({
+      fixtureId: `${slug}-negative-${candidate.kind}`,
+      boundaryIds: [...entry.boundaryIds],
+      contractElementId: target.element,
+      ...binding,
+      scenarioType: 'invalid',
+      expectedOutcome: 'fail',
+      expectedFailures: findings.map(finding => ({
+        code: finding.findingCode,
+        ruleId: finding.ruleId,
+        path: finding.instancePath,
+        ...(finding.dependencyTrigger === undefined ? {} : { trigger: finding.dependencyTrigger })
+      })),
+      payload: candidate.payload
+    });
+  }
+  return { problem: null, fixtures };
 }
 
 /**
