@@ -167,7 +167,7 @@ test('schema and AsyncAPI payload modes use the fixed in-image Ajv worker and de
         '--tmpfs=/tmp:rw,noexec,nosuid,size=67108864', '--env=HOME=/tmp', '--env=NO_UPDATE_NOTIFIER=1',
         '--mount', `type=bind,source=${snapshot},target=/workspace,readonly`,
         '--mount', `type=bind,source=${configDir},target=/config,readonly`,
-        '--entrypoint=/usr/local/bin/node', image, '/opt/contracts/container-schema-validator.mjs', mode, sourceDocument]);
+        '--entrypoint=/usr/local/bin/node', image, '/opt/contracts/src/container-schema-validator.mjs', mode, sourceDocument]);
       assert.equal(fake.calls[2].options.timeout, 60_000);
     }
   });
