@@ -254,17 +254,81 @@ function validateInProcessPort(source) {
   }
 }
 
-export function createSchemaValidator(schema, references = new Map()) {
+/**
+ * The approved `x-` specification extensions. OpenAPI reserves these for
+ * implementations and requires that they never make a document invalid, so
+ * they are permitted by name.
+ *
+ * This was previously a walk that registered every key beginning `x-`, which
+ * made the gate "starts with x-" rather than "is approved": a newly invented or
+ * mistyped extension was accepted silently, and the only signal that a
+ * governance-bearing key existed at all - Ajv's unknown-keyword refusal - was
+ * removed. The independent architecture review raised that as a weakening of
+ * NFR8.4, correctly.
+ *
+ * Permitting a name here means the validator ignores it, nothing more. None of
+ * these is enforced by U1 today: several carry real constraints, and
+ * `x-stocksense-kind-limits` in particular declares per-kind import byte and
+ * row limits that no code reads. Whether each should be enforced, or recorded
+ * as an explicit traceability gap, is an open owner decision - not something
+ * this allowlist settles.
+ */
+const APPROVED_EXTENSIONS = Object.freeze([
+  'x-contract-fixtures',
+  'x-contract-owner',
+  'x-contract-package',
+  'x-contract-protocol-version',
+  'x-stocksense-claims',
+  'x-stocksense-conformance',
+  'x-stocksense-delivery',
+  'x-stocksense-kind-limits',
+  'x-stocksense-max-bytes',
+  'x-stocksense-recovery'
+]);
+
+/**
+ * @param {any} schema
+ * @param {Map<string, any>} [references]
+ * @param {{ openApiComponents?: boolean }} [options] compile an OpenAPI
+ *   component rather than a standalone schema document.
+ */
+export function createSchemaValidator(schema, references = new Map(), { openApiComponents = false } = {}) {
   if (!object(schema) || schema.$schema !== DIALECTS.schema) fail('DIALECT_CONFLICT', 'BR1.3', 'Expected JSON Schema 2020-12');
-  const ajv = new Ajv2020({ strict: true, allErrors: true, validateFormats: true });
+  // An OpenAPI component is not a standalone schema document and must not be
+  // compiled as though it were. Its components legitimately carry `x-`
+  // extensions; they routinely use `minItems` or `items` with no sibling
+  // `type`; and they require a name inside a conditional branch without
+  // redeclaring it there, which is the idiom this whole catalogue uses for a
+  // discriminator that pins dependent fields.
+  //
+  // All three are lint rules rather than validation rules, so relaxing them
+  // changes no instance outcome: the conditional `required` is enforced exactly
+  // as before. Declaring those names in the source instead was tried and
+  // reverted - it let the pinned differ enumerate required properties its model
+  // had never seen and report them as breaking, so a cosmetic edit became a
+  // compatibility event. Schema documents keep strict mode in full.
+  const ajv = new Ajv2020({ strict: true, allErrors: true, validateFormats: true,
+    ...(openApiComponents ? { strictTypes: false, strictRequired: false } : {}) });
   addFormats(ajv);
   try {
+    // Only the approved names. An unlisted `x-` key is left unknown, so Ajv
+    // refuses it and the operator sees which key it was.
+    if (openApiComponents) ajv.addVocabulary([...APPROVED_EXTENSIONS]);
     for (const [identity, reference] of references) {
       if (identity !== schema.$id) ajv.addSchema(reference);
     }
     return ajv.compile(schema);
   }
-  catch { fail('SCHEMA_INVALID', 'NFR8.4', 'JSON Schema does not compile with the pinned 2020-12 validator'); }
+  catch (error) {
+    // Carry the compiler's reason, not just the code. Discarding it meant a
+    // strict-mode refusal - an unapproved `x-` keyword, a `required` name the
+    // branch does not declare - was invisible without a hand-written probe.
+    // The message is bounded and collapsed because it comes from a tool, and
+    // the diagnostics sanitiser cleans it again before anything is published.
+    const reason = String(error?.message ?? '').replace(/\s+/g, ' ').trim().slice(0, 200);
+    fail('SCHEMA_INVALID', 'NFR8.4',
+      `JSON Schema does not compile with the pinned 2020-12 validator${reason ? `: ${reason}` : ''}`);
+  }
 }
 
 /**

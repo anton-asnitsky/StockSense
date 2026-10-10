@@ -21,9 +21,8 @@ ENV NODE_ENV=production \
 WORKDIR /opt/contracts
 COPY --from=dependencies /opt/contracts/package.json /opt/contracts/pnpm-lock.yaml ./
 COPY --from=dependencies /opt/contracts/node_modules ./node_modules
-COPY src/container-schema-validator.mjs ./container-schema-validator.mjs
 COPY src ./src
-RUN node --check /opt/contracts/container-schema-validator.mjs
+RUN node --check /opt/contracts/src/container-schema-validator.mjs
 RUN node --check /opt/contracts/src/container-fixture-oracle.mjs
 RUN node --check /opt/contracts/src/container-asyncapi-validator.mjs
 # Record which tool sources this image carries. The runner compares this with

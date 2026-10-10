@@ -1,0 +1,98 @@
+# Release evidence for U1's contract tooling, produced by a run rather than
+# described in a document.
+#
+# Until this existed, AC10.2.1 to AC10.2.3, BR6.5, BR6.6 and NFR13.2 to NFR13.4
+# all read "release evidence, scans, SBOM and attestation are not produced by
+# any run" - correctly, because nothing produced them.
+#
+# Push-only on purpose. assertCiPolicy (BR6.7) refuses any write scope on an
+# untrusted trigger and allows id-token, attestations and contents on a trusted
+# one, so build provenance can live here and must not live in the required
+# pull-request check. A fork pull request can never reach this workflow.
+#
+# This claims no release. The contract package stays a candidate: a release
+# additionally needs C01-C27 complete with compatibility-assessment,
+# validation-run and evidence-record sidecars, which do not exist yet. What runs
+# here is the evidence a release will need, generated and attested now so the
+# gates are exercised rather than asserted.
+name: release-evidence
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  evidence:
+    name: Release evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      # The three scopes assertCiPolicy allows on a trusted trigger, and no
+      # others: contents to read the tree, id-token to mint the OIDC token the
+      # attestation is signed against, attestations to record it.
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - name: Check out the pushed revision
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          # Provenance verification resolves the commit a package records its
+          # canonical bytes from, and a shallow clone does not contain it.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Pin pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.25.0
+
+      - name: Pin Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.19.0
+          cache: pnpm
+          cache-dependency-path: tools/contracts/pnpm-lock.yaml
+
+      - name: Install from the frozen lockfile
+        run: pnpm --dir tools/contracts install --frozen-lockfile
+
+      # The sbom gate. Deterministic by construction: the same lockfile always
+      # produces the same bytes and the same digest, which is what lets the
+      # digest be recorded as the gate's report rather than a timestamped blob.
+      - name: Build the CycloneDX SBOM
+        id: sbom
+        run: |
+          set -euo pipefail
+          digest="$(pnpm --silent --dir tools/contracts build:sbom)"
+          echo "digest=${digest}" >> "$GITHUB_OUTPUT"
+          echo "SBOM digest ${digest}"
+
+      # The secret-scan gate.
+      - name: Secret scan
+        run: pnpm --dir tools/contracts scan:secrets
+
+      # The vulnerability-scan gate. It is a required context on the protected
+      # base as well, so a regression blocks pull requests too.
+      - name: Vulnerability scan
+        run: pnpm --dir tools/contracts scan:vuln
+
+      # Build provenance over the SBOM, which is the artifact a consumer needs
+      # to trust: it binds the dependency set to this workflow, this commit and
+      # this runner, signed through the OIDC token the job's id-token scope
+      # mints. Nothing is published anywhere.
+      - name: Attest the SBOM's build provenance
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v2
+        with:
+          subject-path: tools/contracts/sbom.cdx.json
+
+      - name: Upload the SBOM and its digest
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: sbom-${{ github.sha }}
+          path: tools/contracts/sbom.cdx.json
+          if-no-files-found: error
+          retention-days: 30
