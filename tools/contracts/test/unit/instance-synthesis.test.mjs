@@ -143,3 +143,23 @@ test('a unique array of an enumerated type takes distinct members', () => {
   expectCode(() => synthesize(schema({ type: 'array', minItems: 2, uniqueItems: true,
     items: { type: 'string' } })), 'SYNTH_SHAPE');
 });
+
+test('a required set composed through allOf is still omittable', () => {
+  // omitRequired read only the top-level `required`, so a root schema composing
+  // its required names via allOf yielded null and the document was reported as
+  // a problem rather than bound. Latent - nothing in the catalogue composes
+  // that way today - but it would have bitten the first one that did.
+  const subject = schema({
+    $defs: { base: { type: 'object', required: ['alpha'], properties: { alpha: { type: 'string' } } } },
+    allOf: [{ $ref: '#/$defs/base' }, { type: 'object', required: ['beta'], properties: { beta: { type: 'string' } } }]
+  });
+  const positive = synthesize(subject);
+  assert.deepEqual(positive, { alpha: 'synthetic', beta: 'synthetic' });
+  const negative = omitRequired(subject, positive, { root: subject });
+  assert.ok(negative, 'a composed required set must still yield a negative');
+  assert.equal(negative.pointer, '/alpha');
+  assert.deepEqual(negative.payload, { beta: 'synthetic' });
+  // The top-level form keeps working unchanged.
+  const plain = { type: 'object', required: ['only'], properties: { only: { type: 'string' } } };
+  assert.equal(omitRequired(plain, { only: 'x' }).pointer, '/only');
+});

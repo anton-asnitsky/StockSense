@@ -13,8 +13,8 @@ import { sourceTreeDigest } from './source-digest.mjs';
 const TOOL = Object.freeze({
   'openapi:3.1.2': { binary: '/opt/contracts/node_modules/@redocly/cli/bin/cli.js', rule: 'NFR8.5' },
   'asyncapi:3.0.0': { binary: '/opt/contracts/src/container-asyncapi-validator.mjs', rule: 'NFR8.6' },
-  'https://json-schema.org/draft/2020-12/schema': { binary: '/opt/contracts/container-schema-validator.mjs', rule: 'NFR8.4' },
-  'asyncapi-payloads:2020-12': { binary: '/opt/contracts/container-schema-validator.mjs', rule: 'NFR8.6' },
+  'https://json-schema.org/draft/2020-12/schema': { binary: '/opt/contracts/src/container-schema-validator.mjs', rule: 'NFR8.4' },
+  'asyncapi-payloads:2020-12': { binary: '/opt/contracts/src/container-schema-validator.mjs', rule: 'NFR8.6' },
   'fixture-oracle:2020-12': { binary: '/opt/contracts/src/container-fixture-oracle.mjs', rule: 'BR2.7' }
 });
 // A local build is addressed by its Docker image ID (config digest). A

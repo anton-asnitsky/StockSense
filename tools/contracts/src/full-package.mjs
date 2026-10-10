@@ -84,7 +84,7 @@ function fixturePair(entry, target, registry) {
     return refused(`synthesized payload rejected at ${validate.errors?.[0]?.instancePath || '/'}`);
   }
   const subject = entry.artifactKind === 'openapi' ? target.schema.$defs[target.element] : target.schema;
-  const negative = omitRequired(subject, positive);
+  const negative = omitRequired(subject, positive, { root: target.root, registry });
   if (!negative) return refused('the bound element declares no required property to omit');
   if (validate(negative.payload)) return refused('the negative payload still satisfies the schema');
   const required = (validate.errors ?? []).filter(error => error.keyword === 'required');

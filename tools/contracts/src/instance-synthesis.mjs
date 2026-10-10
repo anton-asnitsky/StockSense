@@ -324,9 +324,27 @@ export function synthesize(schema, context = {}) {
 /**
  * The first required property whose removal leaves the rest of the instance
  * intact, with the JSON Pointer the oracle will report.
+ *
+ * The required set is read through the same flattening the synthesiser uses, so
+ * a schema that composes its required names via `allOf` is handled. Reading
+ * only the top-level `required` returned null for such a schema and the
+ * document was reported as a problem rather than bound - latent today, since
+ * no root schema in the catalogue composes that way, but it would have bitten
+ * the first one that did.
+ *
+ * @param {any} schema
+ * @param {any} instance
+ * @param {{ root?: any, registry?: Map<string, any> }} [context]
  */
-export function omitRequired(schema, instance) {
-  const required = (schema.required ?? []).filter(name => Object.hasOwn(instance, name));
+export function omitRequired(schema, instance, context = {}) {
+  const { root = schema, registry = new Map() } = context;
+  let declared = Array.isArray(schema?.required) ? schema.required : [];
+  if (!declared.length && object(schema)) {
+    let flat = null;
+    try { flat = flattenObject([{ schema, root }], registry, 0); } catch { flat = null; }
+    if (flat) declared = flat.required;
+  }
+  const required = declared.filter(name => Object.hasOwn(instance, name));
   if (!required.length) return null;
   const name = required[0];
   const reduced = { ...instance };
