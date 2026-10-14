@@ -462,12 +462,42 @@ function gitSubcommand(args: string[]): string | null {
   return null;
 }
 
-function isFrameworkToolInvocation(
+export function isFrameworkToolInvocation(
   projectDir: string,
   cwd: string,
   name: string,
   args: string[],
+  rawCommand = "",
 ): boolean {
+  // Plan Approval must be able to record the human's decision while the
+  // generation guard is closed. StockSense invokes the installed runtime via
+  // this checked-in wrapper rather than through a Bun tool source.
+  const wrapper = resolve(projectDir, "scripts", "aidlc.ps1");
+  // shellCommandInvocations reduces a path to its basename, so verify the
+  // original command text as well as the parser's command and arguments.
+  const usesProjectWrapper =
+    normalizedCommandName(name) === "aidlc.ps1" &&
+    /^\.\/scripts\/aidlc\.ps1(?:\s|$)/i.test(rawCommand.trimStart());
+  const invoked = usesProjectWrapper
+    ? resolve(cwd, "scripts", "aidlc.ps1")
+    : isAbsolute(name) ? resolve(name) : resolve(cwd, name);
+  if (
+    usesProjectWrapper &&
+    invoked === wrapper &&
+    args[0] === "engine" &&
+    args[1] === "log" &&
+    (args[2] === "decision" || args[2] === "answer") &&
+    args[args.indexOf("--stage") + 1] === GUARDED_STAGE &&
+    args[args.indexOf("--checkpoint") + 1] === "plan-approval"
+  ) {
+    try {
+      const projectReal = realpathSync(resolve(projectDir));
+      assertNoSymlinkInChainOrThrow(projectReal, relative(projectReal, wrapper));
+      return lstatSync(wrapper).isFile() && !lstatSync(wrapper).isSymbolicLink();
+    } catch {
+      return false;
+    }
+  }
   if (normalizedCommandName(name) !== "bun") return false;
   if (
     args.some((arg) =>
@@ -510,6 +540,7 @@ function shellInvocationNeedsApproval(
   cwd: string,
   invocation: { name: string; args: string[] },
   hasConcreteTargets: boolean,
+  rawCommand: string,
 ): boolean {
   const name = normalizedCommandName(invocation.name);
   if (name === "sort") {
@@ -536,7 +567,7 @@ function shellInvocationNeedsApproval(
     }
     return subcommand === null || !READ_ONLY_GIT_SUBCOMMANDS.has(subcommand);
   }
-  if (isFrameworkToolInvocation(projectDir, cwd, name, invocation.args)) return false;
+  if (isFrameworkToolInvocation(projectDir, cwd, name, invocation.args, rawCommand)) return false;
   if (
     TRACKED_SHELL_MUTATORS.has(name) &&
     hasConcreteTargets &&
@@ -602,7 +633,7 @@ async function mutationIntent(
     opaqueShell =
       shellUsesDynamicEvaluation(command) ||
       shellCommandInvocations(command).some((invocation) =>
-        shellInvocationNeedsApproval(projectDir, cwd, invocation, targets.length > 0)
+        shellInvocationNeedsApproval(projectDir, cwd, invocation, targets.length > 0, command)
       );
   } else if (WRITE_TOOLS.has(toolName)) {
     const input = toolInput ?? {};
