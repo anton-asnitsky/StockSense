@@ -4,6 +4,9 @@
   "version": 1,
   "writes": [
     {
+      "path": ".github/workflows/contracts-required.yml"
+    },
+    {
       "path": ".config/dotnet-tools.json"
     },
     {
@@ -26,6 +29,9 @@
     },
     {
       "path": "contracts/profiles/messaging-platform/v1/protocol-compatibility.profile.yaml"
+    },
+    {
+      "path": "contracts/profiles/recovery-coordination/v1/recovery.policy.yaml"
     },
     {
       "path": "contracts/samples/messaging-profiles/common/v1/contract-package.shared-schema.yaml"
@@ -202,7 +208,13 @@
       "path": "tools/contracts/.npmrc"
     },
     {
+      "path": "tools/contracts/.gitignore"
+    },
+    {
       "path": "tools/contracts/.secretlintrc.json"
+    },
+    {
+      "path": "tools/contracts/Dockerfile.generator-kiota"
     },
     {
       "path": "tools/contracts/Dockerfile.validator"
@@ -229,13 +241,31 @@
       "path": "tools/contracts/redocly.yaml"
     },
     {
+      "path": "tools/contracts/scripts/assess-baseline.mjs"
+    },
+    {
+      "path": "tools/contracts/scripts/build-candidate-bundle.mjs"
+    },
+    {
+      "path": "tools/contracts/scripts/build-full-package.mjs"
+    },
+    {
+      "path": "tools/contracts/scripts/build-kiota-image.mjs"
+    },
+    {
       "path": "tools/contracts/scripts/build-messaging-fixtures.mjs"
+    },
+    {
+      "path": "tools/contracts/scripts/build-sbom.mjs"
     },
     {
       "path": "tools/contracts/scripts/build-source-inventory.mjs"
     },
     {
       "path": "tools/contracts/scripts/build-standards-image.mjs"
+    },
+    {
+      "path": "tools/contracts/scripts/check-ci-policy.mjs"
     },
     {
       "path": "tools/contracts/scripts/create-messaging-sample.mjs"
@@ -247,7 +277,22 @@
       "path": "tools/contracts/scripts/pin-generation.mjs"
     },
     {
+      "path": "tools/contracts/scripts/repair-flow-descriptions.mjs"
+    },
+    {
       "path": "tools/contracts/scripts/setup-oasdiff.mjs"
+    },
+    {
+      "path": "tools/contracts/scripts/verify-candidate-bundle.mjs"
+    },
+    {
+      "path": "tools/contracts/src/baseline-compatibility.mjs"
+    },
+    {
+      "path": "tools/contracts/src/bounded-generators.mjs"
+    },
+    {
+      "path": "tools/contracts/src/bundle-snapshot.mjs"
     },
     {
       "path": "tools/contracts/src/catalogue.mjs"
@@ -259,6 +304,9 @@
       "path": "tools/contracts/src/compatibility.mjs"
     },
     {
+      "path": "tools/contracts/src/container-asyncapi-validator.mjs"
+    },
+    {
       "path": "tools/contracts/src/container-fixture-oracle.mjs"
     },
     {
@@ -268,13 +316,28 @@
       "path": "tools/contracts/src/container-standards-runner.mjs"
     },
     {
+      "path": "tools/contracts/src/diagnostics.mjs"
+    },
+    {
       "path": "tools/contracts/src/evidence.mjs"
+    },
+    {
+      "path": "tools/contracts/src/full-package.mjs"
     },
     {
       "path": "tools/contracts/src/generation.mjs"
     },
     {
       "path": "tools/contracts/src/generators.mjs"
+    },
+    {
+      "path": "tools/contracts/src/instance-synthesis.mjs"
+    },
+    {
+      "path": "tools/contracts/src/modelina-message-generator.mjs"
+    },
+    {
+      "path": "tools/contracts/src/package-bundle.mjs"
     },
     {
       "path": "tools/contracts/src/package-loader.mjs"
@@ -290,6 +353,9 @@
     },
     {
       "path": "tools/contracts/src/reference-preflight.mjs"
+    },
+    {
+      "path": "tools/contracts/src/sbom.mjs"
     },
     {
       "path": "tools/contracts/src/source-digest.mjs"
@@ -310,13 +376,31 @@
       "path": "tools/contracts/test/fixtures/compatibility/removed.openapi.yaml"
     },
     {
+      "path": "tools/contracts/test/integration/baseline-compatibility.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/integration/bounded-generation.test.mjs"
+    },
+    {
       "path": "tools/contracts/test/integration/c23-offline.test.mjs"
     },
     {
       "path": "tools/contracts/test/integration/catalogue-resource.test.mjs"
     },
     {
+      "path": "tools/contracts/test/integration/catalogue-openapi-exempt.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/integration/ci-policy.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/integration/cli.bundle.test.mjs"
+    },
+    {
       "path": "tools/contracts/test/integration/cli.messaging-sample.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/integration/cli.catalogue.test.mjs"
     },
     {
       "path": "tools/contracts/test/integration/cli.package.test.mjs"
@@ -331,13 +415,25 @@
       "path": "tools/contracts/test/integration/envelopes.test.mjs"
     },
     {
+      "path": "tools/contracts/test/integration/full-package.test.mjs"
+    },
+    {
       "path": "tools/contracts/test/integration/generation.test.mjs"
     },
     {
       "path": "tools/contracts/test/integration/offline-references.test.mjs"
     },
     {
+      "path": "tools/contracts/test/integration/recovery-policy.test.mjs"
+    },
+    {
       "path": "tools/contracts/test/support/package-fixture.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/bounded-generators.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/bundle-snapshot.test.mjs"
     },
     {
       "path": "tools/contracts/test/unit/c08-port.test.mjs"
@@ -355,6 +451,9 @@
       "path": "tools/contracts/test/unit/compatibility.test.mjs"
     },
     {
+      "path": "tools/contracts/test/unit/asyncapi-fixture-oracle.test.mjs"
+    },
+    {
       "path": "tools/contracts/test/unit/container-fixture-oracle.test.mjs"
     },
     {
@@ -362,6 +461,9 @@
     },
     {
       "path": "tools/contracts/test/unit/container-standards-runner.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/diagnostics.test.mjs"
     },
     {
       "path": "tools/contracts/test/unit/evidence.test.mjs"
@@ -373,7 +475,16 @@
       "path": "tools/contracts/test/unit/identity-profile-source.test.mjs"
     },
     {
+      "path": "tools/contracts/test/unit/instance-synthesis.test.mjs"
+    },
+    {
       "path": "tools/contracts/test/unit/messaging-profile-source.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/modelina-message-generator.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/package-bundle.test.mjs"
     },
     {
       "path": "tools/contracts/test/unit/package-loader.test.mjs"
@@ -386,6 +497,12 @@
     },
     {
       "path": "tools/contracts/test/unit/provenance.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/sbom.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/source-digest.test.mjs"
     },
     {
       "path": "tools/contracts/test/unit/validators.test.mjs"
