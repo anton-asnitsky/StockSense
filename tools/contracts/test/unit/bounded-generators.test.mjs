@@ -54,3 +54,12 @@ test('generator memory and time limits cannot exceed their approved maxima', () 
       kiotaImage: image, ...options }), { code: 'GENERATOR_LIMIT' });
   }
 });
+
+test('Modelina uses the fixed offline entry point and constrained source mount', () => {
+  const { calls, run } = fixture({ status: 0, stderr: '\nSTOCKSENSE_GENERATOR_PEAK=123\n' });
+  run(profile.consumers.find(consumer => consumer.consumerId === 'messaging-typescript'), repoRoot);
+  const args = calls.find(call => call.args.includes('--entrypoint=/bin/sh')).args;
+  assert.ok(args.includes('/opt/contracts/src/modelina-message-generator.mjs'));
+  assert.ok(args.includes('--network=none'));
+  assert.ok(args.includes('--memory=2147483648'));
+});
