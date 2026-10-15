@@ -8,6 +8,7 @@ import { ALL_BOUNDARIES, loadPackage } from '../../src/package-loader.mjs';
 import { DIALECTS } from '../../src/validators.mjs';
 import { asyncApiMessageElements, runFixtureOracle } from '../../src/policy.mjs';
 import { buildFullPackage } from '../../src/full-package.mjs';
+import { buildPackageBundle, verifyPackageBundle } from '../../src/package-bundle.mjs';
 
 // Only the thin C01/C18 walking skeleton had ever been packaged, so every rule
 // that is whole-catalogue rather than per-document - the boundary inventory,
@@ -73,6 +74,11 @@ test('every canonical schema, OpenAPI target, and AsyncAPI message binds or has 
     assert.equal(built.exempt, 10);
     assert.equal(built.bound + built.exempt, 44);
     const loaded = await loadPackage(out);
+    const bundleBytes = await buildPackageBundle(out);
+    const bundled = verifyPackageBundle(bundleBytes);
+    assert.equal(bundled.manifestDigest, loaded.manifestDigest);
+    assert.equal(bundled.fileCount, loaded.entries.length + 1);
+    assert.deepEqual(bundleBytes, await buildPackageBundle(out), 'full-catalogue package bundle is deterministic');
     const fixtures = JSON.parse(await readFile(join(out, 'governance/example-fixture.json'), 'utf8')).fixtures;
     const openApiExempt = loaded.entries.filter(entry => entry.artifactKind === 'openapi' &&
       !fixtures.some(fixture => fixture.documentRevisionId === entry.revisionId));
