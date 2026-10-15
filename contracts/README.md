@@ -20,6 +20,19 @@ root. It inventories every canonical file, checks each required artifact kind,
 and verifies all 38 source digests against the Git `sourceRevision` it reports.
 This is an input to package assembly, not a validated package or release claim.
 
+Compatibility against an immutable Git baseline uses the pinned OpenAPI differ.
+An unchanged AsyncAPI or JSON Schema source passes by identical digest; a new
+document needs an explicit first-release reason. A changed existing AsyncAPI
+or JSON Schema source requires an owner approval for its exact predecessor
+revision and an overlap end date. Run
+`node tools/contracts/scripts/assess-baseline.mjs <baseline-commit>
+--require-assessment --approvals-file <trusted-approvals.json>` from the
+repository root. The JSON file is keyed by logical ID; each entry has
+`predecessorRevisionId`, `approvedBy`, and `overlapUntil`. The command
+rejects absent or mismatched approvals. Recording an approval string in an
+untrusted pull request is not itself owner approval; release evidence must
+identify and verify the trusted approval record.
+
 `fixtures/messaging-platform/v1/example-fixture.json` contains candidate C22/C23
 positive and negative examples. It is regenerated from the governed profile
 candidates with `node tools/contracts/scripts/build-messaging-fixtures.mjs`.

@@ -35,7 +35,7 @@ const REMEDIATION_BY_RULE = Object.freeze({
   'BR3.3': 'Regenerate the consumer and re-pin its output manifest.',
   'BR4.1': 'Name the baseline as an exact 40-character commit, not a branch or tag.',
   'BR4.2': 'Bind each candidate to its same-kind predecessor, or give an explicit first-release reason.',
-  'BR4.3': 'Make the pinned differ available for this canonical kind before assessing it.',
+  'BR4.3': 'Run the pinned OpenAPI differ or apply the approved non-OpenAPI compatibility policy.',
   'BR4.4': 'Record an approval naming the exact predecessor revision and its overlap.',
   'BR6.7': 'Bring the workflow back within the CI policy: trusted triggers, pinned actions and least privilege.',
   'NFR6.1': 'Remove protected content from the generated output.',
@@ -56,7 +56,8 @@ const REMEDIATION_BY_CODE = Object.freeze({
   STANDARDS_IMAGE_STALE: 'Rebuild the pinned standards image from this tree.',
   STANDARDS_ENGINE: 'Start a local Linux Docker engine and retry.',
   GENERATOR_UNAVAILABLE: 'Restore the pinned generator toolchain before verifying outputs.',
-  DIFFER_UNAVAILABLE: 'Install the pinned differ, or exclude kinds it cannot read from the assessment.',
+  DIFFER_UNAVAILABLE: 'Install the pinned OpenAPI differ before assessing a changed OpenAPI document.',
+  NON_OPENAPI_CHANGE_UNAPPROVED: 'Record an explicit approval bound to the exact predecessor revision and overlap period.',
   FIXTURE_COVERAGE: 'Add the missing positive or negative fixture for the named boundary.',
   FIXTURES_MISSING: 'Include an example-fixture sidecar that declares at least one fixture.'
 });

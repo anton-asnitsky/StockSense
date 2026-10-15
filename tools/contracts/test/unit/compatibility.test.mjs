@@ -62,6 +62,30 @@ test('BR4.3: the pinned differ is unavailable here and fails closed', async () =
   await expectAsyncCode(assessCompatibility({ bindings }), 'DIFFER_UNAVAILABLE');
 });
 
+test('BR4.4: changed AsyncAPI and schema require exact predecessor approval without OpenAPI differ', async () => {
+  for (const kind of ['asyncapi', 'schema']) {
+    const bindings = bindPredecessors([entry('L1', rev('1'), kind)],
+      [entry('L1', rev('9'), kind)]);
+    const noDiffer = () => assert.fail('non-OpenAPI changes must not reach oasdiff');
+    await expectAsyncCode(assessCompatibility({ bindings, runDiff: noDiffer }),
+      'NON_OPENAPI_CHANGE_UNAPPROVED');
+    await expectAsyncCode(assessCompatibility({
+      bindings, runDiff: noDiffer,
+      approvals: { L1: { predecessorRevisionId: rev('8'), approvedBy: 'owner', overlapUntil: '2099-12-31' } }
+    }), 'NON_OPENAPI_CHANGE_UNAPPROVED');
+    await expectAsyncCode(assessCompatibility({
+      bindings, runDiff: noDiffer,
+      approvals: { L1: { predecessorRevisionId: rev('9'), approvedBy: 'owner', overlapUntil: 'unknown' } }
+    }), 'NON_OPENAPI_CHANGE_UNAPPROVED');
+    const result = await assessCompatibility({
+      bindings, runDiff: noDiffer,
+      approvals: { L1: { predecessorRevisionId: rev('9'), approvedBy: 'owner', overlapUntil: '2099-12-31' } }
+    });
+    assert.equal(result[0].outcome, 'change-approved');
+    assert.equal(result[0].predecessorRevisionId, rev('9'));
+  }
+});
+
 test('BR4.3-BR4.4: a breaking identity needs an approval naming its exact predecessor', async () => {
   const bindings = bindPredecessors([entry('L1', rev('1'))], [entry('L1', rev('9'))]);
   const runDiff = async () => ({ breakingChanges: [{ id: 'response-removed' }] });
