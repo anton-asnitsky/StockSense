@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -56,6 +56,25 @@ test('the policy check refuses a pull request that edits workflow configuration'
     assert.equal(result.status, 1);
     assert.match(result.stdout, /CI_WORKFLOW_CHANGE\/BR6\.7/);
   });
+});
+
+test('only the exact reviewed protected-base metadata guard is excepted', async () => {
+  const guard = await readFile(fileURLToPath(new URL('../../../../.github/workflows/public-pr-policy.yml',
+    import.meta.url)), 'utf8');
+  const directory = await mkdtemp(join(tmpdir(), 'stocksense-ci-guard-'));
+  try {
+    await writeFile(join(directory, 'public-pr-policy.yml'), guard);
+    const run = (...extra) => spawnSync(process.execPath, [script, directory, ...extra],
+      { encoding: 'utf8', timeout: 60_000 });
+    assert.equal(run().status, 0, 'the pinned guard must be accepted');
+    const changed = run('--changed', '.github/workflows/public-pr-policy.yml');
+    assert.equal(changed.status, 1);
+    assert.match(changed.stdout, /CI_WORKFLOW_CHANGE\/BR6\.7/);
+    await writeFile(join(directory, 'public-pr-policy.yml'), guard.replace('contents: read', 'contents: write'));
+    const drift = run();
+    assert.equal(drift.status, 1);
+    assert.match(drift.stdout, /CI_GUARD_DRIFT\/BR6\.7/);
+  } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
 test('the policy check refuses each shape the policy exists to stop', async () => {
