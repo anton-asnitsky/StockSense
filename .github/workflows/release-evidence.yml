@@ -80,10 +80,39 @@ jobs:
       - name: Vulnerability scan
         run: pnpm --dir tools/contracts scan:vuln
 
-      # Build provenance over the SBOM, which is the artifact a consumer needs
-      # to trust: it binds the dependency set to this workflow, this commit and
-      # this runner, signed through the OIDC token the job's id-token scope
-      # mints. Nothing is published anywhere.
+      # Build the same pinned standards image used by the U1 required check.
+      # The candidate assembler validates all C01-C27 canonical documents and
+      # fixtures before writing a portable, digest-bound bundle.
+      - name: Build the pinned standards image
+        id: standards-image
+        run: |
+          id="$(pnpm --dir tools/contracts --silent build:standards-image | grep -oE '^sha256:[0-9a-f]{64}$')"
+          test -n "$id"
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
+      - name: Build and validate the C01-C27 candidate bundle
+        run: pnpm --dir tools/contracts bundle:candidate dist/candidate.bundle.json
+        env:
+          STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
+
+      # This is the exact subject the clean consumer verifies. It remains a
+      # candidate, not a C01 release or a provider-conformance assertion.
+      - name: Attest the candidate bundle
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v2
+        with:
+          subject-path: tools/contracts/dist/candidate.bundle.json
+
+      - name: Upload the candidate bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: candidate-bundle-${{ github.sha }}
+          path: tools/contracts/dist/candidate.bundle.json
+          if-no-files-found: error
+          retention-days: 30
+
+      # Attest the SBOM separately from the package subject. It binds the
+      # dependency set to this workflow, commit and runner through the OIDC
+      # token. Neither attestation is a release claim.
       - name: Attest the SBOM's build provenance
         uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v2
         with:
