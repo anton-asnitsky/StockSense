@@ -5,7 +5,7 @@ import { ALL_BOUNDARIES, BOUNDARY_SIDECARS, CANONICAL_KINDS, FIXED_PATHS,
   ContractError, deriveIdentity, digest } from './package-loader.mjs';
 import { buildSourceInventory } from './catalogue.mjs';
 import { DIALECTS, createSchemaValidator } from './validators.mjs';
-import { mapSchemaFindings, openApiFixtureSchema } from './policy.mjs';
+import { mapSchemaFindings, openApiFixtureSchema, openApiInlineResponseElements } from './policy.mjs';
 import { negativeCandidates, omitRequired, synthesize } from './instance-synthesis.mjs';
 
 // Assemble the complete C01-C27 candidate package from the committed canonical
@@ -40,8 +40,9 @@ const parseSource = (document, text) => (document.endsWith('.json')
 
 /**
  * The element each canonical document binds fixtures through: a titled 2020-12
- * schema by its title, an OpenAPI document by a component that declares
- * required properties, since a negative fixture needs something to omit.
+ * schema by its title, an OpenAPI document by a component or inline JSON
+ * response with a JSON schema. The fixture-pair check then requires a
+ * demonstrable positive and negative; an optional-only response fails closed.
  */
 function bindTarget(entry, source) {
   if (entry.artifactKind === 'schema') {
@@ -50,19 +51,27 @@ function bindTarget(entry, source) {
   }
   if (entry.artifactKind !== 'openapi') return null;
   const components = source?.components?.schemas;
-  // Exempt by kind, exactly as the oracle derives it: a document that declares
-  // no components carries no payload to bind, so it is not a problem to report.
-  if (!object(components) || !Object.keys(components).length) return null;
   // Try each candidate element in declaration order, since a component may be
   // bindable while an earlier one refuses to compile or reaches outside the
   // component graph. The oracle's own builder decides, not a local rewrite.
   const reasons = [];
-  for (const name of Object.keys(components)) {
+  for (const name of Object.keys(object(components) ? components : {})) {
     if (!Array.isArray(components[name]?.required) || !components[name].required.length) continue;
     try {
       const schema = openApiFixtureSchema(source, name);
       return { element: name, schema, root: schema };
     } catch (error) { reasons.push(`${name}: ${error.code ?? error.name}`); }
+  }
+  // Fall back to inline JSON responses for documents without a bindable
+  // component. The operation/status/media-type identity is revision-bound.
+  for (const element of openApiInlineResponseElements(source)) {
+    try {
+      const schema = openApiFixtureSchema(source, element);
+      return { element, schema, root: schema };
+    } catch (error) { reasons.push(`${element}: ${error.code ?? error.name}`); }
+  }
+  if (!object(components) || !Object.keys(components).length) {
+    return reasons.length ? { element: null, reason: `no response binds (${reasons.slice(0, 3).join('; ')})` } : null;
   }
   if (!reasons.length) return { element: null, reason: 'declares no component with required properties' };
   return { element: null, reason: `no component binds (${reasons.slice(0, 3).join('; ')})` };
