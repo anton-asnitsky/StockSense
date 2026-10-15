@@ -7,8 +7,10 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadPackage } from '../../src/package-loader.mjs';
 import { runFixtureWorker } from '../../src/container-fixture-oracle.mjs';
+import { buildFullPackage } from '../../src/full-package.mjs';
 
 const sampleRoot = fileURLToPath(new URL('../../../../contracts/samples/walking-skeleton/', import.meta.url));
+const repository = fileURLToPath(new URL('../../../../', import.meta.url));
 
 async function withSample(action) {
   const loaded = await loadPackage(sampleRoot);
@@ -78,4 +80,24 @@ test('image worker rejects missing entries, changed mounted bytes and a changed 
     await writeIndex();
     await assert.rejects(runFixtureWorker(root, indexPath, sourceDocument), /Verified fixture graph is invalid/);
   });
+});
+
+test('image worker accepts revision-bound inline response elements from the complete package', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'stocksense-fixture-worker-full-'));
+  try {
+    const built = await buildFullPackage(repository, root);
+    assert.deepEqual(built.problems, []);
+    const loaded = await loadPackage(root);
+    const entries = loaded.entries;
+    const sourceDocument = entries.find(entry => entry.kind === 'example-fixture').document;
+    const indexPath = join(root, 'fixture-index.json');
+    await writeFile(indexPath, JSON.stringify({ version: 1, sourceDocument, entries,
+      files: entries.map(entry => ({ document: entry.document, digest: entry.contentDigest,
+        artifactKind: entry.artifactKind })) }));
+    const result = JSON.parse(await runFixtureWorker(root, indexPath, sourceDocument));
+    const inline = result.fixtureResults.filter(row => row.contractElementId.startsWith('response:'));
+    assert.ok(inline.length >= 4);
+    assert.ok(inline.some(row => row.observed === 'pass'));
+    assert.ok(inline.some(row => row.observed === 'fail'));
+  } finally { await rm(root, { recursive: true, force: true }); }
 });

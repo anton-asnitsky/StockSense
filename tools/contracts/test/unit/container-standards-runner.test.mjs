@@ -370,6 +370,24 @@ test('fixture mode rejects malformed results and maps worker failure statuses', 
   });
 });
 
+test('fixture mode accepts only the governed inline response result identity', async () => {
+  await withFixtureGraph(async options => {
+    const entry = options.entries.find(item => item.artifactKind === 'openapi');
+    const row = { fixtureId: 'inline-response', contractElementId: 'response:getIdentity:200:application-json',
+      revisionId: entry.revisionId, scenarioType: 'valid', observed: 'pass' };
+    const accepted = seam(() => ok(JSON.stringify({ version: 1, fixtureResults: [row] })));
+    assert.deepEqual((await runContainerStandardsValidator('fixture-oracle:2020-12', options.sourceDocument,
+      { ...options, spawn: accepted.spawn })).fixtureResults, [row]);
+    for (const contractElementId of ['response:getIdentity:200:application-json:extra',
+      'response:getIdentity:200:application-xml']) {
+      const rejected = seam(() => ok(JSON.stringify({ version: 1,
+        fixtureResults: [{ ...row, contractElementId }] })));
+      await expectCode(runContainerStandardsValidator('fixture-oracle:2020-12', options.sourceDocument,
+        { ...options, spawn: rejected.spawn }), 'STANDARDS_OUTPUT', 'NFR6.2');
+    }
+  });
+});
+
 test('the standards image must carry this tree\'s tool sources', async () => {
   await withGraph(async options => {
     // The image bakes in a copy of src, so a stale one answers with an older
