@@ -84,8 +84,11 @@ export function createBoundedGeneratorRunner(repoRoot, { standardsImage, kiotaIm
     const image = consumer.generator === 'kiota' ? kiotaId : standardId;
     const command = consumer.generator === 'kiota'
       ? ['/opt/kiota/kiota', ...generator.args(source, target).slice(4)]
-      : ['/usr/local/bin/node', '/opt/contracts/node_modules/openapi-typescript/bin/cli.js',
-          ...generator.args(source, target)];
+      : consumer.generator === 'modelina'
+        ? ['/usr/local/bin/node', '/opt/contracts/src/modelina-message-generator.mjs',
+            ...generator.args(source, target)]
+        : ['/usr/local/bin/node', '/opt/contracts/node_modules/openapi-typescript/bin/cli.js',
+            ...generator.args(source, target)];
     // Kiota's host invocation starts with `tool run kiota --`; the image
     // installs that same pinned binary directly.
     const name = 'stocksense-generator-' + randomUUID();

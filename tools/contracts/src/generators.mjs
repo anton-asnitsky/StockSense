@@ -49,6 +49,13 @@ export const GENERATORS = Object.freeze({
       '--openapi', sourcePath, '--language', 'CSharp', '--output', outputPath,
       '--class-name', 'BrowserApiClient', '--namespace-name', 'StockSense.WebBff',
       '--clean-output', '--log-level', 'None']
+  }),
+  modelina: Object.freeze({
+    version: '5.10.1',
+    bin: resolve(packageRoot, 'src/modelina-message-generator.mjs'),
+    outputPath: 'message-models',
+    /** @param {string} sourcePath @param {string} outputPath */
+    args: (sourcePath, outputPath) => [sourcePath, outputPath]
   })
 });
 
@@ -63,6 +70,7 @@ export function generatorConfigurationDigest(name, outputPath) {
     version: generator.version,
     outputPath,
     ...(name === 'kiota' ? { normalization: 'portable-kiota-v1' } : {}),
+    ...(name === 'modelina' ? { profile: 'c23-c15-envelopes-v1' } : {}),
     args: generator.args('<source>', outputPath)
   })));
 }

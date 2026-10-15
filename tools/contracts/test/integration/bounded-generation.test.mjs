@@ -9,7 +9,7 @@ const repoRoot = fileURLToPath(new URL('../../../../', import.meta.url));
 const profile = JSON.parse(await readFile(new URL('../../../../contracts/samples/walking-skeleton/governance/generation-profile.json',
   import.meta.url), 'utf8'));
 
-test('both declared consumers regenerate under 120 seconds and a 2 GiB cgroup', async () => {
+test('all declared consumers regenerate under 120 seconds and a 2 GiB cgroup', async () => {
   const measurements = [];
   const runGenerator = createBoundedGeneratorRunner(repoRoot, {
     standardsImage: process.env.STOCKSENSE_STANDARDS_IMAGE,
