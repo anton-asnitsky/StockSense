@@ -124,6 +124,17 @@
         "dotnet-client/Models/SessionResponse_retailers_roles.cs": "sha256:b22bba2105509443a56e65988dbbd3a998ba3393ffae524e191041a5746ada3a",
         "dotnet-client/kiota-lock.json": "sha256:77fc54997c17aaad31355451614502946593807edfe22f0e514b436c8385bdde"
       }
+    },
+    {
+      "consumerId": "messaging-typescript",
+      "generator": "modelina",
+      "generatorVersion": "5.10.1",
+      "sourceDocument": "messaging-platform/v1/transport-conformance.asyncapi.yaml",
+      "configurationDigest": "sha256:56b482f9a4aa680c4e3f2dc62d0ef05ede059246141b74c8607975f8900f0250",
+      "expectedOutputs": {
+        "message-models/global-identity-audit-envelope.ts": "sha256:7bf0ebfd99c0b6c32fc120f4ba387a790f38b74e37a35b670036a66dd1456fe6",
+        "message-models/tenant-envelope.ts": "sha256:c838097cc408d568f8c3e17a04d29600d2e01cc9e8a1bd5a5813f6839eff2625"
+      }
     }
   ]
 }
