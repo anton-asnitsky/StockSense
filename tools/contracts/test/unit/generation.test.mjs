@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ContractError, digest } from '../../src/package-loader.mjs';
 import {
-  assertGenerationProfile, assertNoDrift, digestDirectory, regenerateConsumer
+  assertGenerationProfile, assertNoDrift, digestDirectory, normalizeGeneratedConsumer, regenerateConsumer
 } from '../../src/generation.mjs';
 
 const expectCode = (fn, code) => assert.throws(fn, error => error.code === code);
@@ -19,6 +20,42 @@ const consumer = (overrides = {}) => ({
   configurationDigest: sha('c'),
   expectedOutputs: { 'bff.d.ts': digest(Buffer.from('export type Api = never;\n')) },
   ...overrides
+});
+
+test('Kiota outputs have portable newlines and a logical source location', async () => {
+  const workspace = await mkdtemp(join(tmpdir(), 'stocksense-portable-'));
+  const sourceDocument = 'web-bff/v1/browser-api.openapi.yaml';
+  const generated = {
+    generator: 'kiota', sourceDocument,
+    expectedOutputs: {
+      'dotnet-client/Client.cs': sha('a'),
+      'dotnet-client/kiota-lock.json': sha('b')
+    }
+  };
+  try {
+    await mkdir(join(workspace, 'dotnet-client'));
+    await writeFile(join(workspace, 'dotnet-client/Client.cs'), 'class Client {}\r\n');
+    await writeFile(join(workspace, 'dotnet-client/kiota-lock.json'), JSON.stringify({
+      descriptionLocation: 'C:/checkout/contracts/source/' + sourceDocument,
+      kiotaVersion: '1.35.0'
+    }).replaceAll(',', ',\r\n'));
+    await normalizeGeneratedConsumer(generated, workspace);
+    assert.equal(await readFile(join(workspace, 'dotnet-client/Client.cs'), 'utf8'), 'class Client {}\n');
+    const lock = JSON.parse(await readFile(join(workspace, 'dotnet-client/kiota-lock.json'), 'utf8'));
+    assert.equal(lock.descriptionLocation, 'contracts/source/' + sourceDocument);
+    await writeFile(join(workspace, 'dotnet-client/kiota-lock.json'), JSON.stringify({ descriptionLocation: '/wrong/source.yaml' }));
+    await assert.rejects(normalizeGeneratedConsumer(generated, workspace),
+      error => error.code === 'GENERATION_FAILED' && error.ruleId === 'BR3.1');
+  } finally { await rm(workspace, { recursive: true, force: true }); }
+});
+
+test('NFR10.1: oversized generated output is refused before it is loaded for hashing', async () => {
+  const workspace = await mkdtemp(join(tmpdir(), 'stocksense-output-limit-'));
+  try {
+    await writeFile(join(workspace, 'oversized.d.ts'), Buffer.alloc(16 * 1024 * 1024 + 1));
+    await assert.rejects(digestDirectory(workspace),
+      error => error.code === 'GENERATION_OUTPUT_LIMIT' && error.ruleId === 'NFR10.1');
+  } finally { await rm(workspace, { recursive: true, force: true }); }
 });
 
 test('BR3.1: an empty consumer list is allowed only with a stated limitation', () => {
