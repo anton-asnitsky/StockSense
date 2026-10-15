@@ -9,6 +9,7 @@ const SHA = /^sha256:[0-9a-f]{64}$/;
 const VERSION = /^[1-9][0-9]*\.[0-9]+\.[0-9]+$/;
 const KINDS = new Set(['schema', 'openapi', 'asyncapi', 'sidecar']);
 const CANONICAL = new Set(['schema', 'openapi', 'asyncapi']);
+const FIXTURE_ELEMENT = /^(?:[A-Za-z][A-Za-z0-9_.-]{0,127}|response:[A-Za-z][A-Za-z0-9]{0,96}:[1-5][0-9]{2}:application-json)$/;
 const digest = bytes => 'sha256:' + createHash('sha256').update(bytes).digest('hex');
 class GraphError extends Error {}
 /** @returns {never} */
@@ -73,7 +74,7 @@ function checkedResults(rows, entries) {
     if (!object(row) || Object.keys(row).sort().join(',') !== 'contractElementId,fixtureId,observed,revisionId,scenarioType' ||
         typeof row.fixtureId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(row.fixtureId) ||
         seen.has(row.fixtureId) || typeof row.contractElementId !== 'string' ||
-        !/^[A-Za-z][A-Za-z0-9_.-]{0,127}$/.test(row.contractElementId) ||
+        !FIXTURE_ELEMENT.test(row.contractElementId) ||
         !revisions.has(row.revisionId) || !['valid', 'invalid', 'compatibility'].includes(row.scenarioType) ||
         !['pass', 'fail'].includes(row.observed)) rejectGraph();
     seen.add(row.fixtureId);

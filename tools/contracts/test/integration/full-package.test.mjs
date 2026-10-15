@@ -15,8 +15,8 @@ import { buildFullPackage } from '../../src/full-package.mjs';
 // tests assemble the complete C01-C27 candidate and judge it.
 const repoRoot = fileURLToPath(new URL('../../../../', import.meta.url));
 
-// The nine canonical documents that carry no payload an oracle could bind:
-// parameter-only or non-JSON endpoints that declare no component schemas.
+// Nine documents have no components; two of them have inline JSON response
+// schemas that the oracle now binds. The other seven remain payload-exempt.
 // Asserted exactly, as a ratchet rather than a tolerance - adding components to
 // one of these, or removing them from another, fails here and forces the
 // AI-DLC record to be updated with it.
@@ -46,8 +46,8 @@ test('every canonical document either binds a verified fixture pair or is exempt
     // documents that declare no components - all derived from the document, so
     // none of them is credited as carrying fixture evidence.
     assert.deepEqual(built.problems, []);
-    assert.equal(built.bound, 20);
-    assert.equal(built.exempt, 18);
+    assert.equal(built.bound, 22);
+    assert.equal(built.exempt, 16);
     assert.equal(built.bound + built.exempt, 38);
     assert.ok(built.manifest, 'a complete package is written');
     assert.equal(built.manifest.manifestStatus, 'candidate');
@@ -145,4 +145,25 @@ test('the documents that declare no components are exactly the nine expected', a
     if (!Object.keys(source?.components?.schemas ?? {}).length) bare.push(entry.document);
   }
   assert.deepEqual(bare.sort(), [...WITHOUT_COMPONENTS].sort());
+});
+
+test('inline identity responses bind exact positive and negative fixtures to their revisions', async () => {
+  const { out, clean } = await assembled();
+  try {
+    const loaded = await loadPackage(out);
+    const fixtures = JSON.parse(await readFile(join(out, 'governance/example-fixture.json'), 'utf8')).fixtures;
+    const results = await runFixtureOracle(out, loaded);
+    for (const document of ['identity-access/v1/identity-metadata.openapi.yaml',
+      'identity-access/v1/global-audit-read.openapi.yaml']) {
+      const entry = loaded.entries.find(item => item.document === document);
+      const pair = fixtures.filter(item => item.documentRevisionId === entry.revisionId);
+      assert.ok(pair.length >= 2, document);
+      assert.ok(pair.every(item => item.contractElementId.startsWith('response:')));
+      assert.ok(pair.some(item => item.scenarioType === 'valid'));
+      assert.ok(pair.some(item => item.scenarioType === 'invalid' &&
+        item.expectedFailureCode === 'SCHEMA_REQUIRED' && item.expectedFailureRuleId === 'BR2.4'));
+      assert.deepEqual(results.filter(item => item.revisionId === entry.revisionId).slice(0, 2)
+        .map(item => item.observed), ['pass', 'fail']);
+    }
+  } finally { await clean(); }
 });

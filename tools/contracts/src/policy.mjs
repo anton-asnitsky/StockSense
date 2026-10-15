@@ -112,30 +112,35 @@ function resolveFixtureTarget(fixture, loaded, schemas) {
  * through its components. An AsyncAPI document has no payload oracle here, so
  * it cannot carry fixtures and must not be credited as though it could.
  */
+export function openApiInlineResponseElements(document) {
+  const elements = [];
+  for (const pathItem of Object.values(document?.paths ?? {})) {
+    if (!object(pathItem)) continue;
+    for (const operation of Object.values(pathItem)) {
+      if (!object(operation) || !/^[A-Za-z][A-Za-z0-9]{0,96}$/.test(operation.operationId ?? '')) continue;
+      for (const [status, response] of Object.entries(operation.responses ?? {})) {
+        const schema = response?.content?.['application/json']?.schema;
+        // Include every inline JSON schema. Required fields can be composed
+        // through allOf or a component reference; an optional-only schema must
+        // fail fixture construction explicitly rather than gain an exemption.
+        if (/^[1-5][0-9]{2}$/.test(status) && object(schema)) {
+          elements.push(`response:${operation.operationId}:${status}:application-json`);
+        }
+      }
+    }
+  }
+  if (new Set(elements).size !== elements.length) {
+    fail('FIXTURE_TARGET_AMBIGUOUS', 'BR2.8', 'Two inline responses share one fixture element');
+  }
+  return elements;
+}
+
 function fixtureBindable(entry, schemas, documents = new Map()) {
   if (DOCUMENT_FIXTURE_KINDS.includes(entry.artifactKind)) {
-    // An OpenAPI fixture is addressed by element through `components.schemas`,
-    // so a document declaring none carries nothing this oracle can extract.
-    // Nine of the seventeen canonical documents declare no components.
-    //
-    // Be precise about what that means, because an earlier version of this
-    // comment overstated it and the independent architecture review caught it:
-    // seven of the nine declare no JSON body anywhere and genuinely have no
-    // payload. The other two - identity-access/v1/identity-metadata and
-    // identity-access/v1/global-audit-read - do carry inline response schemas
-    // with required properties, which the oracle could bind if it extracted
-    // `content.*.schema` as well as components. It does not, by owner decision
-    // of 2026-10-09, so those two are exempt because of how their schemas are
-    // factored rather than because they lack a payload. That is a known
-    // limitation of the predicate, disclosed in `limitations`, not a claim that
-    // the documents have nothing to test.
-    //
-    // Like the AsyncAPI and closed-dialect exemptions this is derived from the
-    // document and never declared by the package, so a document that *does*
-    // declare components still cannot dodge the pair rule.
     const document = documents.get(entry.document);
     if (document === undefined) return true;
-    return object(document?.components?.schemas) && Object.keys(document.components.schemas).length > 0;
+    return (object(document?.components?.schemas) && Object.keys(document.components.schemas).length > 0) ||
+      openApiInlineResponseElements(document).length > 0;
   }
   return entry.artifactKind === 'schema' &&
     [...schemas.values()].some(item => item.entry === entry);
@@ -148,9 +153,26 @@ function fixtureBindable(entry, schemas, documents = new Map()) {
  * mismatch only surfaces as a container rejection much later.
  */
 export function openApiFixtureSchema(document, element) {
-  if (document?.openapi !== '3.1.2' || !object(document.components?.schemas) ||
-      !Object.hasOwn(document.components.schemas, element)) {
+  if (document?.openapi !== '3.1.2' || typeof element !== 'string') {
     fail('FIXTURE_TARGET', 'BR2.8', 'OpenAPI fixture element is absent from its declared document');
+  }
+  const components = document.components?.schemas ?? {};
+  let inlineResponse;
+  if (!Object.hasOwn(components, element)) {
+    const match = /^response:([A-Za-z][A-Za-z0-9]*):([1-5][0-9]{2}):application-json$/.exec(element);
+    if (match && openApiInlineResponseElements(document).includes(element)) {
+      for (const pathItem of Object.values(document.paths ?? {})) {
+        if (!object(pathItem)) continue;
+        for (const operation of Object.values(pathItem)) {
+          if (object(operation) && operation.operationId === match[1]) {
+            inlineResponse = operation.responses?.[match[2]]?.content?.['application/json']?.schema;
+          }
+        }
+      }
+    }
+    if (!object(inlineResponse)) {
+      fail('FIXTURE_TARGET', 'BR2.8', 'OpenAPI fixture element is absent from its declared document');
+    }
   }
   const definitions = {};
   const pending = [element];
@@ -172,7 +194,7 @@ export function openApiFixtureSchema(document, element) {
       for (const [key, child] of Object.entries(value)) {
         if (key === '$ref') {
           const match = typeof child === 'string' && /^#\/components\/schemas\/([A-Za-z][A-Za-z0-9_.-]*)$/.exec(child);
-          if (!match || !Object.hasOwn(document.components.schemas, match[1])) {
+          if (!match || !Object.hasOwn(components, match[1])) {
             throw new ContractError('FIXTURE_REFERENCE', 'BR2.8', 'OpenAPI fixture reference is outside the declared component graph');
           }
           pending.push(match[1]);
@@ -185,7 +207,7 @@ export function openApiFixtureSchema(document, element) {
   while (pending.length) {
     const name = pending.pop();
     if (Object.hasOwn(definitions, name)) continue;
-    definitions[name] = rewrite(document.components.schemas[name], new Set());
+    definitions[name] = rewrite(name === element && inlineResponse ? inlineResponse : components[name], new Set());
   }
   return { $schema: DIALECTS.schema, $ref: `#/$defs/${element}`, $defs: definitions };
 }
