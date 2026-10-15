@@ -408,12 +408,12 @@ test('BR2.7: coverage resolves a fixture target the way validation does, not fro
   });
 });
 
-test('BR2.7: an AsyncAPI document is exempt from the fixture pair but cannot carry a boundary alone', async () => {
+test('BR2.7: a partial AsyncAPI document without message fixtures remains document-only', async () => {
   const asyncapi = ['asyncapi: 3.0.0', 'info:', '  title: Transport', '  version: 1.0.0'].join('\n');
   const profile = schemaDocument('Profile', { type: 'object', required: ['value'],
     properties: { value: { type: 'string' } } });
-  // The oracle has no payload extractor for AsyncAPI, so such a document is
-  // validated as a document elsewhere and carries no fixtures here.
+  // This legacy partial package opts into no AsyncAPI message fixture, so its
+  // document is validated elsewhere but carries no payload evidence here.
   await withOracleFiles({
     'transport.asyncapi.yaml': { content: asyncapi, kind: 'asyncapi', boundaryIds: ['C23'] },
     'profile.schema.json': { content: profile, boundaryIds: ['C23'] },

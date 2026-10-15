@@ -354,12 +354,10 @@ export async function validateCanonical(entry, sourcePath, { policy, runTool } =
 
 /**
  * The canonical kinds a fixture may name through documentRevisionId. This is
- * exactly the set the fixture oracle has a payload extractor for: advertising
- * a kind it cannot load let a package declare coverage the oracle could never
- * check. AsyncAPI documents are validated as documents by the pinned standards
- * runner, not by payload fixtures.
+ * exactly the document kinds the fixture oracle can bind to a payload.
+ * Document validation remains the pinned standards runner's responsibility.
  */
-export const DOCUMENT_FIXTURE_KINDS = Object.freeze(['openapi']);
+export const DOCUMENT_FIXTURE_KINDS = Object.freeze(['openapi', 'asyncapi']);
 
 const POINTER = /^\/(?:[^~]|~[01])*(?:\/(?:[^~]|~[01])*)*$/;
 

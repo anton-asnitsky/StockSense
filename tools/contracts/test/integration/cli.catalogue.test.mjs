@@ -58,7 +58,8 @@ test('source-bound C01-C27 catalogue validates through the CLI', async t => {
 test('CLI rejects a re-digested full-catalogue canonical source edit', async () => {
   await withFullPackage(async (packageRoot, manifest) => {
     // A matching package digest alone cannot authorize changed canonical bytes.
-    // AsyncAPI has no payload fixture, so provenance is the guard under test.
+    // The added comment leaves payload fixtures unchanged; source provenance
+    // must still reject the re-digested canonical document.
     const document = 'messaging-platform/v1/transport-conformance.asyncapi.yaml';
     const sourcePath = join(packageRoot, document);
     const changed = await readFile(sourcePath, 'utf8') + '\n# synthetic source drift\n';
