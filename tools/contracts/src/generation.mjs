@@ -1,6 +1,8 @@
-import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readdir, rm, writeFile, lstat } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative, sep } from 'node:path';
+import { TextDecoder } from 'node:util';
 import { ContractError, digest } from './package-loader.mjs';
 import { inspectContent } from './preflight.mjs';
 
@@ -14,6 +16,57 @@ const CONSUMER_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const protectedLabel = /(?:^|[^A-Za-z0-9])(?:rawSupplierDocument|supplierSourceContent|supplierDocumentBase64|supplierPdfBytes|raw_catalog_text|fullPrompt|systemPromptText|promptTranscript|completePrompt|hiddenReasoning|chainOfThought|privateReasoning|reasoningTrace|client_secret|access_token|api_key)(?:$|[^A-Za-z0-9])/i;
 const protectedStem = /(?:rawsupplierdocument|suppliersourcecontent|supplierdocumentbase64|supplierpdfbytes|rawcatalogtext|fullprompt|systemprompttext|prompttranscript|completeprompt|hiddenreasoning|chainofthought|privatereasoning|reasoningtrace|clientsecret|accesstoken|apikey)/i;
 const safeGeneratorCodes = new Set(['GENERATOR_UNAVAILABLE', 'GENERATOR_UNKNOWN', 'GENERATOR_VERSION', 'GENERATOR_CONFIGURATION']);
+const MAX_GENERATED_FILES = 4_096;
+const MAX_GENERATED_FILE_BYTES = 16 * 1024 * 1024;
+const MAX_GENERATED_TOTAL_BYTES = 256 * 1024 * 1024;
+
+async function readGeneratedBytes(path, remaining = MAX_GENERATED_FILE_BYTES) {
+  const cap = Math.min(MAX_GENERATED_FILE_BYTES, remaining);
+  const stat = await lstat(path);
+  if (!stat.isFile() || stat.size > cap) {
+    fail('GENERATION_OUTPUT_LIMIT', 'NFR10.1', 'Generated output exceeds the safe byte limit');
+  }
+  const chunks = [];
+  let length = 0;
+  for await (const chunk of createReadStream(path, { highWaterMark: 64 * 1024 })) {
+    length += chunk.length;
+    if (length > cap) fail('GENERATION_OUTPUT_LIMIT', 'NFR10.1', 'Generated output exceeds the safe byte limit');
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks, length);
+}
+
+/** Kiota's newline and lock-path bytes vary by host; make the declared client portable. */
+export async function normalizeGeneratedConsumer(consumer, workspace) {
+  if (consumer.generator !== 'kiota') return;
+  const decoder = new TextDecoder('utf-8', { fatal: true });
+  // Use observed files, not declared ones: missing/extra manifest entries must
+  // reach the drift check as such rather than failing during normalization.
+  for (const path of Object.keys(await digestDirectory(workspace))) {
+    if (!path.startsWith('dotnet-client/') || !/\.(?:cs|json)$/.test(path)) continue;
+    let text;
+    try { text = decoder.decode(await readGeneratedBytes(join(workspace, path))); }
+    catch (error) {
+      if (error instanceof ContractError) throw error;
+      fail('GENERATION_FAILED', 'BR3.1', 'Kiota omitted a declared UTF-8 output');
+    }
+    if (path === 'dotnet-client/kiota-lock.json') {
+      let lock;
+      try { lock = JSON.parse(text); }
+      catch { fail('GENERATION_FAILED', 'BR3.1', 'Kiota lock is malformed'); }
+      const source = 'contracts/source/' + consumer.sourceDocument;
+      if (!object(lock) || typeof lock.descriptionLocation !== 'string' ||
+          !lock.descriptionLocation.replaceAll('\\', '/').endsWith(source)) {
+        fail('GENERATION_FAILED', 'BR3.1', 'Kiota lock does not reference its declared source');
+      }
+      lock.descriptionLocation = source;
+      text = JSON.stringify(lock, null, 2) + '\n';
+    } else {
+      text = text.replace(/\r\n/g, '\n');
+    }
+    await writeFile(join(workspace, path), text);
+  }
+}
 
 function hasProtectedLabel(value) {
   return protectedLabel.test(value) || protectedStem.test(value.replace(/[^a-z0-9]/gi, ''));
@@ -87,14 +140,20 @@ export function assertGenerationProfile(profile) {
 /** Digest every generated file relative to its clean output directory. */
 export async function digestDirectory(root) {
   const observed = {};
-  const walk = async current => {
+  let files = 0;
+  let totalBytes = 0;
+  const walk = async (current, depth = 0) => {
+    if (depth > 32) fail('GENERATION_OUTPUT_LIMIT', 'NFR10.1', 'Generated output nesting exceeds the safe limit');
     for (const item of await readdir(current, { withFileTypes: true })) {
       const full = join(current, item.name);
-      if (item.isDirectory()) await walk(full);
+      if (item.isDirectory()) await walk(full, depth + 1);
       else if (item.isFile()) {
         const path = relative(root, full).split(sep).join('/');
         assertGeneratedFilePath(path);
-        const bytes = await readFile(full);
+        files++;
+        if (files > MAX_GENERATED_FILES) fail('GENERATION_OUTPUT_LIMIT', 'NFR10.1', 'Generated output has too many files');
+        const bytes = await readGeneratedBytes(full, MAX_GENERATED_TOTAL_BYTES - totalBytes);
+        totalBytes += bytes.length;
         inspectContent(path, bytes);
         if (hasProtectedLabel(bytes.toString('utf8'))) {
           fail('PROTECTED_CONTENT', 'NFR6.1', 'Protected content is prohibited in generated files');
@@ -149,8 +208,13 @@ export async function regenerateConsumer(consumer, { runGenerator = runPinnedGen
   try {
     try {
       await runGenerator(consumer, workspace);
+      await normalizeGeneratedConsumer(consumer, workspace);
     } catch (error) {
       // Tool diagnostics are untrusted; retain only a stable code and rule.
+      if (error instanceof ContractError &&
+          ['GENERATOR_LIMIT', 'GENERATION_OUTPUT_LIMIT'].includes(error.code) && error.ruleId === 'NFR10.1') {
+        fail(error.code, 'NFR10.1', 'Generation exceeded a resource limit');
+      }
       if (error instanceof ContractError && safeGeneratorCodes.has(error.code) && error.ruleId === 'BR3.1') {
         fail(error.code, 'BR3.1', 'Generation failed; inspect the named rule');
       }

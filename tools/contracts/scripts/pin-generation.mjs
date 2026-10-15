@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createPinnedGeneratorRunner, generatorConfigurationDigest } from '../src/generators.mjs';
-import { digestDirectory } from '../src/generation.mjs';
+import { digestDirectory, normalizeGeneratedConsumer } from '../src/generation.mjs';
 import { resolveSourceRevision } from '../src/provenance.mjs';
 
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
@@ -36,6 +36,7 @@ async function pin(consumer) {
     const workspace = await mkdtemp(join(tmpdir(), 'stocksense-pin-'));
     try {
       await runGenerator(consumer, workspace);
+      await normalizeGeneratedConsumer(consumer, workspace);
       passes.push(await digestDirectory(workspace));
     } finally {
       await rm(workspace, { recursive: true, force: true });

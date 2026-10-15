@@ -1,0 +1,14 @@
+# Resource-bounded Kiota proof image. Pin the SDK by immutable image digest;
+# the approved generator version is restored during the build.
+FROM mcr.microsoft.com/dotnet/sdk@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa
+
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+    DOTNET_NOLOGO=1 \
+    DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1 \
+    HOME=/tmp
+WORKDIR /repo
+RUN dotnet tool install Microsoft.OpenApi.Kiota --tool-path /opt/kiota --version 1.35.0 \
+    && /opt/kiota/kiota --version \
+    && echo '5e75f6adf161717be8d9f39eb596f93d52535e7b8cbcc00cffdcef3d0d3c3486  /opt/kiota/.store/microsoft.openapi.kiota/1.35.0/microsoft.openapi.kiota/1.35.0/microsoft.openapi.kiota.1.35.0.nupkg' | sha256sum -c -
+USER 65532:65532
+ENTRYPOINT ["/opt/kiota/kiota"]
