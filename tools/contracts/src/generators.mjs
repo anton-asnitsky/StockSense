@@ -62,6 +62,7 @@ export function generatorConfigurationDigest(name, outputPath) {
     generator: name,
     version: generator.version,
     outputPath,
+    ...(name === 'kiota' ? { normalization: 'portable-kiota-v1' } : {}),
     args: generator.args('<source>', outputPath)
   })));
 }
