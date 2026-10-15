@@ -9,7 +9,7 @@ const SHA = /^sha256:[0-9a-f]{64}$/;
 const VERSION = /^[1-9][0-9]*\.[0-9]+\.[0-9]+$/;
 const KINDS = new Set(['schema', 'openapi', 'asyncapi', 'sidecar']);
 const CANONICAL = new Set(['schema', 'openapi', 'asyncapi']);
-const FIXTURE_ELEMENT = /^(?:[A-Za-z][A-Za-z0-9_.-]{0,127}|response:[A-Za-z][A-Za-z0-9]{0,96}:[1-5][0-9]{2}:application-json)$/;
+const FIXTURE_ELEMENT = /^(?:[A-Za-z][A-Za-z0-9_.-]{0,127}|response:[A-Za-z][A-Za-z0-9]{0,96}:[1-5][0-9]{2}:application-json|message:[A-Za-z][A-Za-z0-9_.-]*(?::[A-Za-z][A-Za-z0-9_.-]*)?)$/;
 const digest = bytes => 'sha256:' + createHash('sha256').update(bytes).digest('hex');
 class GraphError extends Error {}
 /** @returns {never} */
@@ -94,7 +94,13 @@ export async function runFixtureWorker(root, indexPath, sourceDocument) {
   catch { rejectGraph(); }
   if (!object(index) || index.sourceDocument !== sourceDocument) rejectGraph();
   await verifyGraph(graphRoot, index);
-  const results = await runFixtureOracle(graphRoot, { entries: index.entries });
+  // The worker receives a verified graph rather than the package manifest.
+  // Reconstruct its canonical boundary set so the full C01-C27 fixture rule
+  // cannot disappear merely because the host sent entries without the loader's
+  // boundaryIds projection.
+  const boundaryIds = [...new Set(index.entries.filter(entry => CANONICAL.has(entry.artifactKind))
+    .flatMap(entry => entry.boundaryIds))];
+  const results = await runFixtureOracle(graphRoot, { entries: index.entries, boundaryIds });
   return checkedResults(results, index.entries);
 }
 
