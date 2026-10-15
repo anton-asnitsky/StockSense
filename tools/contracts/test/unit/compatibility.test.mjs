@@ -101,6 +101,11 @@ test('BR4.3-BR4.4: a breaking identity needs an approval naming its exact predec
   });
   assert.equal(approved[0].outcome, 'breaking-approved');
   assert.equal(approved[0].breakingChanges.length, 1);
+  const timestampApproved = await assessCompatibility({
+    bindings, runDiff,
+    approvals: { L1: { predecessorRevisionId: rev('9'), approvedBy: 'owner', overlapUntil: '2027-01-01T00:00:00Z' } }
+  });
+  assert.equal(timestampApproved[0].outcome, 'breaking-approved');
 });
 
 test('BR4.3: a differ that does not report a breaking-change list is rejected', async () => {

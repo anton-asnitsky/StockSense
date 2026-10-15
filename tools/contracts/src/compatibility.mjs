@@ -11,7 +11,7 @@ const string = value => typeof value === 'string' && value.length > 0;
 
 const COMMIT = /^[0-9a-f]{40}([0-9a-f]{24})?$/;
 const PACKAGE_VERSION = /^([0-9]+)\.[0-9]+\.[0-9]+$/;
-const OVERLAP_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const OVERLAP_DATE = /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}Z)?$/;
 const DIFFABLE = new Set(['openapi', 'asyncapi', 'schema']);
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const oasdiff = resolve(repoRoot, '.tools', 'oasdiff', '1.28.0', `${process.platform}-${process.arch}`,
@@ -19,7 +19,7 @@ const oasdiff = resolve(repoRoot, '.tools', 'oasdiff', '1.28.0', `${process.plat
 const oasdiffConfig = resolve(repoRoot, 'tools', 'contracts', 'oasdiff.yaml');
 
 const approvedOverlap = value => string(value) && OVERLAP_DATE.test(value) &&
-  !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
+  !Number.isNaN(Date.parse(value.length === 10 ? `${value}T00:00:00Z` : value));
 
 /**
  * The integration baseline must be an exact immutable commit. A branch or tag
