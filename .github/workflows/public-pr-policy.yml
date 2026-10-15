@@ -1,0 +1,39 @@
+# Base-owned metadata check. It executes only this protected-base script and
+# reads changed-file names through the GitHub API; no PR checkout or PR code.
+# Bootstrap: merge this workflow with owner approval before making its unique
+# job name a required, GitHub-Actions-bound context on protected main.
+name: public-pr-policy
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  policy:
+    name: U2 protected-base PR policy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Check out only the protected base revision
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Pin Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.19.0
+      - name: Test the protected-base policy
+        run: node --test .github/scripts/public-pr-policy.test.mjs
+      - name: Check complete PR metadata without executing PR code
+        run: node .github/scripts/public-pr-policy.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

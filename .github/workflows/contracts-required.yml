@@ -1,10 +1,11 @@
-# U1's required public-PR check, enforced from the protected base revision.
+# U1's required public-PR code check. The protected-base metadata guard below
+# governs workflow configuration independently of this PR-code execution.
 #
-# Shaped by the policy U1 itself defines in tools/contracts/src/evidence.mjs
-# (assertCiPolicy, BR6.7): no pull_request_target, no self-hosted runner on an
-# untrusted trigger, read-only permissions on every job, and every action
-# pinned to a 40-character commit. A pull request that edits this file is
-# refused by that same policy, so the protected base revision decides.
+# Shaped by the policy U1 defines in tools/contracts/src/evidence.mjs
+# (assertCiPolicy, BR6.7): no privileged checkout, no self-hosted runner on an
+# untrusted trigger, read-only permissions on every job, and pinned actions.
+# The separate protected-base PR policy workflow refuses proposed edits to
+# .github after that workflow is merged and made a required check.
 #
 # Attestation is deliberately absent, though not for the reason recorded
 # earlier. assertCiPolicy does not reject id-token: write as such - it refuses
