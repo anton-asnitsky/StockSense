@@ -1,6 +1,7 @@
 import { lstat, readFile, readdir, realpath } from 'node:fs/promises';
 import { join, resolve, sep } from 'node:path';
-import { ContractError, assertSafePath, canonicalJson, digest, loadPackage } from './package-loader.mjs';
+import { ContractError, assertSafePath, canonicalJson, digest, loadPackage,
+  validatePackageManifest } from './package-loader.mjs';
 import { inspectContent, LIMITS } from './preflight.mjs';
 
 // This is a transport format for a validated candidate, not a release receipt.
@@ -8,7 +9,7 @@ import { inspectContent, LIMITS } from './preflight.mjs';
 const FORMAT = 'stocksense-candidate-bundle-v1';
 const MAX_FILES = 4096;
 const MAX_PATH_BYTES = 512;
-const MAX_ARTIFACT_BYTES = 48 * 1024 * 1024; // base64 and bounded JSON overhead for 32 MiB of inputs
+export const MAX_ARTIFACT_BYTES = 48 * 1024 * 1024; // base64 and bounded JSON overhead for 32 MiB of inputs
 const SHA256 = /^sha256:[0-9a-f]{64}$/;
 const fail = (code, rule, message) => { throw new ContractError(code, rule, message); };
 const own = (value, keys) => value && typeof value === 'object' && !Array.isArray(value) &&
@@ -53,23 +54,11 @@ async function snapshotPaths(root, current = '', files = []) {
 }
 
 function manifestPaths(bytes) {
-  let manifest;
-  try { manifest = JSON.parse(bytes.toString('utf8')); }
-  catch { fail('MANIFEST_PARSE', 'BR1.1', 'Bundled manifest JSON is invalid'); }
-  if (!manifest || manifest.manifestStatus !== 'candidate' ||
-      !['openapi', 'asyncapi', 'schemas', 'governedArtifacts'].every(key => Array.isArray(manifest[key]))) {
+  const { manifest, paths: entries } = validatePackageManifest(bytes);
+  if (manifest.manifestStatus !== 'candidate') {
     fail('BUNDLE_CANDIDATE', 'BR6.6', 'Bundle requires a candidate C01 manifest');
   }
-  const paths = ['manifest.json'];
-  for (const key of ['openapi', 'asyncapi', 'schemas', 'governedArtifacts']) {
-    for (const entry of manifest[key]) {
-      if (!entry || typeof entry.document !== 'string' || !SHA256.test(entry.contentDigest)) {
-        fail('MANIFEST_SHAPE', 'BR1.1', 'Bundled manifest entry lacks a path or digest');
-      }
-      paths.push(entry.document);
-    }
-  }
-  paths.sort();
+  const paths = ['manifest.json', ...entries].sort();
   checkedPaths(paths);
   return { manifest, paths };
 }

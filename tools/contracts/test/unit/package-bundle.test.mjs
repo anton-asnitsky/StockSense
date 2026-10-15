@@ -72,6 +72,15 @@ test('verifier refuses noncanonical encoding, traversal, missing files and porta
   });
 });
 
+test('clean consumer applies the full C01 manifest policy before accepting a signed bundle', () => {
+  const manifestBytes = Buffer.from(JSON.stringify({ manifestStatus: 'candidate', openapi: [],
+    asyncapi: [], schemas: [], governedArtifacts: [] }));
+  const bytes = Buffer.from(canonicalJson({ format: 'stocksense-candidate-bundle-v1',
+    manifestDigest: digest(manifestBytes), files: [{ path: 'manifest.json', size: manifestBytes.length,
+      sha256: digest(manifestBytes), base64: manifestBytes.toString('base64') }] }));
+  throwsCode(() => verifyPackageBundle(bytes), 'MANIFEST_SHAPE');
+});
+
 test('builder refuses source traversal and symlinks', async t => {
   await withPackage(({ manifest }) => { manifest.schemas[0].document = '../escape.json'; },
     ({ root }) => rejectsCode(buildPackageBundle(root), 'UNSAFE_PATH'));
