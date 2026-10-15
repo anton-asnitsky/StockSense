@@ -5,7 +5,8 @@ import { ALL_BOUNDARIES, BOUNDARY_SIDECARS, CANONICAL_KINDS, FIXED_PATHS,
   ContractError, deriveIdentity, digest } from './package-loader.mjs';
 import { buildSourceInventory } from './catalogue.mjs';
 import { DIALECTS, createSchemaValidator } from './validators.mjs';
-import { mapSchemaFindings, openApiFixtureSchema, openApiInlineResponseElements } from './policy.mjs';
+import { asyncApiFixtureSchema, asyncApiMessageElements, mapSchemaFindings,
+  openApiFixtureSchema, openApiInlineResponseElements } from './policy.mjs';
 import { negativeCandidates, omitRequired, synthesize } from './instance-synthesis.mjs';
 
 // Assemble the complete C01-C27 candidate package from the committed canonical
@@ -39,10 +40,9 @@ const parseSource = (document, text) => (document.endsWith('.json')
   : YAML.parse(text, { strict: true, uniqueKeys: true }));
 
 /**
- * The element each canonical document binds fixtures through: a titled 2020-12
- * schema by its title, an OpenAPI document by a component or inline JSON
- * response with a JSON schema. The fixture-pair check then requires a
- * demonstrable positive and negative; an optional-only response fails closed.
+ * The single element a schema or OpenAPI document binds fixtures through: a
+ * titled 2020-12 schema, or a component or inline JSON response. AsyncAPI
+ * documents are expanded into every channel message by bindTargets below.
  */
 function bindTarget(entry, source) {
   if (entry.artifactKind === 'schema') {
@@ -77,8 +77,20 @@ function bindTarget(entry, source) {
   return { element: null, reason: `no component binds (${reasons.slice(0, 3).join('; ')})` };
 }
 
+/** Return every fixture target in a document; AsyncAPI has one per channel message. */
+function bindTargets(entry, source) {
+  if (entry.artifactKind === 'asyncapi') {
+    return asyncApiMessageElements(source).map(element => {
+      const schema = asyncApiFixtureSchema(source, element);
+      return { element, schema, root: schema };
+    });
+  }
+  const target = bindTarget(entry, source);
+  return target ? [target] : null;
+}
+
 /**
- * Derive a verified positive and negative fixture for one canonical document.
+ * Derive a verified positive and negative fixture for one canonical element.
  * The positive is synthesized from the schema and validated by the pinned
  * oracle; the negative removes one required property, which the same oracle
  * must then reject for exactly that pointer. A document that cannot produce
@@ -87,7 +99,7 @@ function bindTarget(entry, source) {
 function fixturePair(entry, target, registry) {
   const refused = problem => ({ problem, fixtures: [] });
   const validate = createSchemaValidator(target.schema, registry,
-    { openApiComponents: entry.artifactKind === 'openapi' });
+    { openApiComponents: entry.artifactKind !== 'schema' });
   const positive = synthesize(target.schema, { root: target.root, registry });
   if (!validate(positive)) {
     return refused(`synthesized payload rejected at ${validate.errors?.[0]?.instancePath || '/'}`);
@@ -96,13 +108,22 @@ function fixturePair(entry, target, registry) {
   const negative = omitRequired(subject, positive, { root: target.root, registry });
   if (!negative) return refused('the bound element declares no required property to omit');
   if (validate(negative.payload)) return refused('the negative payload still satisfies the schema');
-  const required = (validate.errors ?? []).filter(error => error.keyword === 'required');
-  if (required.length !== 1) {
-    return refused(`the negative payload produced ${required.length} required findings, not one`);
+  const findings = mapSchemaFindings(validate.errors ?? [], {
+    revisionId: entry.revisionId, contractElementId: target.element
+  });
+  if (findings.length !== 1 || findings[0].findingCode !== 'SCHEMA_REQUIRED' ||
+      findings[0].ruleId !== 'BR2.4' || findings[0].instancePath !== negative.pointer) {
+    return refused('the negative payload did not produce exactly its declared required finding');
   }
 
-  const slug = entry.document.replace(/[^a-z0-9]+/gi, '-').toLowerCase().replace(/^-|-$/g, '');
-  const binding = entry.artifactKind === 'openapi' ? { documentRevisionId: entry.revisionId } : {};
+  // The image worker caps fixture IDs at 128 characters. Keep the full message
+  // element readable while replacing the long document path with its owning
+  // domain and a digest, so two documents under one owner cannot collide.
+  const idParts = entry.artifactKind === 'asyncapi'
+    ? [entry.document.split('/')[0], target.element, digest(Buffer.from(entry.document)).slice(7, 19)]
+    : [entry.document];
+  const slug = idParts.join('-').replace(/[^a-z0-9]+/gi, '-').toLowerCase().replace(/^-|-$/g, '');
+  const binding = entry.artifactKind === 'schema' ? {} : { documentRevisionId: entry.revisionId };
   // A negative declares its oracle either as single fields or as an
   // expectedFailures set, so the array holds both shapes.
   /** @type {Record<string, any>[]} */
@@ -155,7 +176,7 @@ export async function buildFullPackage(repoRoot, outRoot, { allowIncomplete = fa
   const inventory = await buildSourceInventory(repoRoot);
   const sourceRoot = join(repoRoot, 'contracts/source');
 
-  // Identity first: a fixture binds an OpenAPI document by revision, so the
+  // Identity first: a fixture binds an API document by revision, so the
   // revision has to be derived before any fixture can name it.
   const entries = inventory.entries.map(entry => ({
     ...entry,
@@ -184,18 +205,29 @@ export async function buildFullPackage(repoRoot, outRoot, { allowIncomplete = fa
   let bound = 0;
   let exempt = 0;
   for (const entry of entries) {
-    const target = bindTarget(entry, sources.get(entry.document));
-    if (!target) { exempt += 1; continue; }
-    if (!target.element) {
-      problems.push({ document: entry.document, reason: target.reason ?? 'the document cannot bind a fixture' });
+    let targets;
+    try { targets = bindTargets(entry, sources.get(entry.document)); }
+    catch (error) {
+      problems.push({ document: entry.document, reason: `${error.code ?? error.name}: ${error.message}` });
       continue;
     }
-    let pair;
-    try { pair = fixturePair(entry, target, registry); }
-    catch (error) { pair = { problem: `${error.code ?? error.name}: ${error.message}`, fixtures: [] }; }
-    if (pair.problem) { problems.push({ document: entry.document, reason: pair.problem }); continue; }
-    fixtures.push(...pair.fixtures);
-    bound += 1;
+    if (!targets) { exempt += 1; continue; }
+    for (const target of targets) {
+      if (!target.element) {
+        problems.push({ document: entry.document,
+          reason: ('reason' in target ? target.reason : undefined) ?? 'the document cannot bind a fixture' });
+        continue;
+      }
+      let pair;
+      try { pair = fixturePair(entry, target, registry); }
+      catch (error) { pair = { problem: `${error.code ?? error.name}: ${error.message}`, fixtures: [] }; }
+      if (pair.problem) {
+        problems.push({ document: entry.document, reason: `${target.element}: ${pair.problem}` });
+        continue;
+      }
+      fixtures.push(...pair.fixtures);
+      bound += 1;
+    }
   }
 
   // Write nothing if the package could not be complete: a partially assembled
