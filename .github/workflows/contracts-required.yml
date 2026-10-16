@@ -201,3 +201,4 @@ jobs:
 
       - name: Audit the locked dependency tree
         run: pnpm --dir tools/contracts scan:vuln
+# Disposable protected-path rejection probe.
