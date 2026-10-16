@@ -1,4 +1,5 @@
 # U1's required public-PR code check. The protected-base metadata guard below
+# Disposable merge-blocking probe; this branch must never be merged.
 # governs workflow configuration independently of this PR-code execution.
 #
 # Shaped by the policy U1 defines in tools/contracts/src/evidence.mjs
