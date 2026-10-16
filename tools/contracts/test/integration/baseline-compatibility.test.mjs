@@ -16,7 +16,7 @@ const repoRoot = fileURLToPath(new URL('../../../../', import.meta.url));
 const CATALOGUE_DRAFT = '20dc9345cf702848167ba6bb4ab5c4aabf756876';
 // An earlier commit, before most canonical sources existed.
 const BEFORE_CATALOGUE = '3de357c7502f7ffffb653c7ff353a4930a7f96cd';
-const OUTCOMES = ['unchanged', 'first-release', 'compatible', 'breaking-approved'];
+const OUTCOMES = ['unchanged', 'first-release', 'compatible', 'breaking-approved', 'change-approved'];
 
 test('the whole catalogue is assessed against an immutable baseline commit', async () => {
   const { baseline, candidateRevision, assessments, tally, undiffable } =
@@ -53,14 +53,12 @@ test('a changed document of a kind the pinned differ cannot read is reported, ne
   }
 });
 
-test('requiring the pinned differ refuses, which is the honest state of BR4.3', async () => {
-  // This is what a release assessment does. It refuses because the catalogue
-  // holds changed documents of kinds no pinned differ covers.
+test('required compatibility refuses a changed non-OpenAPI document without approval', async () => {
   await assert.rejects(
     assessCatalogueAgainstBaseline(repoRoot, CATALOGUE_DRAFT, { requirePinnedDiffer: true }),
     error => {
-      assert.equal(error.code, 'DIFFER_UNAVAILABLE');
-      assert.equal(error.ruleId, 'BR4.3');
+      assert.equal(error.code, 'NON_OPENAPI_CHANGE_UNAPPROVED');
+      assert.equal(error.ruleId, 'BR4.4');
       return true;
     });
 });

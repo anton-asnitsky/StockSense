@@ -56,7 +56,8 @@ function entriesAt(repoRoot, revision, documents) {
  * @returns {Promise<{baseline: {commit: string, ref: string|null}, candidateRevision: string,
  *   assessments: any[], tally: Record<string, number>, undiffable: any[]}>}
  */
-export async function assessCatalogueAgainstBaseline(repoRoot, baselineCommit, { requirePinnedDiffer = false } = {}) {
+export async function assessCatalogueAgainstBaseline(repoRoot, baselineCommit,
+  { requirePinnedDiffer = false, approvals = {} } = {}) {
   const baseline = assertIntegrationBaseline({ commit: baselineCommit });
   const inventory = await buildSourceInventory(repoRoot);
   if (inventory.sourceRevision === baseline.commit) {
@@ -93,19 +94,15 @@ export async function assessCatalogueAgainstBaseline(repoRoot, baselineCommit, {
       return { predecessorPath, candidatePath: join(repoRoot, 'contracts/source', binding.document) };
     };
 
-    // oasdiff judges OpenAPI only. A changed AsyncAPI or schema document has no
-    // pinned differ, so it is reported as undiffable rather than run through a
-    // tool that cannot read it or quietly credited as compatible.
-    //
-    // `requirePinnedDiffer` passes them through anyway, which is what a release
-    // assessment does: it refuses with DIFFER_UNAVAILABLE. That refusal is the
-    // honest state of BR4.3 for the non-OpenAPI kinds and is reproducible here
-    // rather than only describable.
+    // oasdiff judges OpenAPI only. Changed AsyncAPI and schema documents are
+    // assessed only under explicit predecessor-bound approval. An exploratory
+    // run reports missing approvals; a required run refuses them.
     const diffable = requirePinnedDiffer ? bindings : bindings.filter(binding => binding.unchanged ||
-      binding.predecessorRevisionId === null || binding.artifactKind === 'openapi');
+      binding.predecessorRevisionId === null || binding.artifactKind === 'openapi' ||
+      Object.hasOwn(approvals, binding.logicalId));
     const undiffable = bindings.filter(binding => !diffable.includes(binding));
 
-    const assessments = await assessCompatibility({ bindings: diffable, resolveSource });
+    const assessments = await assessCompatibility({ bindings: diffable, approvals, resolveSource });
     /** @type {Record<string, number>} */
     const tally = {};
     for (const assessment of assessments) tally[assessment.outcome] = (tally[assessment.outcome] ?? 0) + 1;

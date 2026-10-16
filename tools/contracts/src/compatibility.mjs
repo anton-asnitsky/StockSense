@@ -11,11 +11,15 @@ const string = value => typeof value === 'string' && value.length > 0;
 
 const COMMIT = /^[0-9a-f]{40}([0-9a-f]{24})?$/;
 const PACKAGE_VERSION = /^([0-9]+)\.[0-9]+\.[0-9]+$/;
+const OVERLAP_DATE = /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}Z)?$/;
 const DIFFABLE = new Set(['openapi', 'asyncapi', 'schema']);
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const oasdiff = resolve(repoRoot, '.tools', 'oasdiff', '1.28.0', `${process.platform}-${process.arch}`,
   process.platform === 'win32' ? 'oasdiff.exe' : 'oasdiff');
 const oasdiffConfig = resolve(repoRoot, 'tools', 'contracts', 'oasdiff.yaml');
+
+const approvedOverlap = value => string(value) && OVERLAP_DATE.test(value) &&
+  !Number.isNaN(Date.parse(value.length === 10 ? `${value}T00:00:00Z` : value));
 
 /**
  * The integration baseline must be an exact immutable commit. A branch or tag
@@ -88,7 +92,8 @@ export function bindPredecessors(candidateEntries, baselineEntries, { firstRelea
 
 /**
  * The pinned OpenAPI differ consumes only immutable local source files.
- * Other canonical kinds stay unavailable until an approved pinned policy exists.
+ * Changed AsyncAPI and JSON Schema documents use explicit, predecessor-bound
+ * approval instead of being passed through an OpenAPI-only differ.
  * @param {string} artifactKind
  * @param {object} binding
  * @param {Function} resolveSource
@@ -151,6 +156,22 @@ export async function assessCompatibility({ bindings, approvals = {}, runDiff = 
       assessments.push({ ...binding, outcome: 'first-release', breakingChanges: [] });
       continue;
     }
+    if (binding.artifactKind === 'asyncapi' || binding.artifactKind === 'schema') {
+      const approval = approvals[binding.logicalId];
+      if (!object(approval) || approval.predecessorRevisionId !== binding.predecessorRevisionId ||
+          !string(approval.approvedBy) || !approvedOverlap(approval.overlapUntil)) {
+        fail('NON_OPENAPI_CHANGE_UNAPPROVED', 'BR4.4',
+          'A changed AsyncAPI or schema document needs explicit predecessor-bound approval and overlap');
+      }
+      assessments.push({
+        ...binding,
+        outcome: 'change-approved',
+        breakingChanges: [],
+        approvedBy: approval.approvedBy,
+        overlapUntil: approval.overlapUntil
+      });
+      continue;
+    }
     const diff = await runDiff(binding.artifactKind, binding, resolveSource);
     if (!object(diff) || !Array.isArray(diff.breakingChanges)) {
       fail('DIFF_RESULT_SHAPE', 'BR4.3', 'The differ must report a breaking-change list');
@@ -161,7 +182,7 @@ export async function assessCompatibility({ bindings, approvals = {}, runDiff = 
     }
     const approval = approvals[binding.logicalId];
     if (!object(approval) || approval.predecessorRevisionId !== binding.predecessorRevisionId ||
-        !string(approval.approvedBy) || !string(approval.overlapUntil)) {
+        !string(approval.approvedBy) || !approvedOverlap(approval.overlapUntil)) {
       fail('BREAKING_CHANGE_UNAPPROVED', 'BR4.4',
         'A breaking identity needs an approval naming its exact predecessor and overlap');
     }

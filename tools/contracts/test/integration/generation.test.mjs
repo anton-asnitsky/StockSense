@@ -21,11 +21,11 @@ const consumerNamed = async consumerId => {
   return found;
 };
 
-test('the sample generation profile declares both verified consumers', async () => {
+test('the sample generation profile declares all three verified consumers', async () => {
   const profile = await loadProfile();
   assert.equal(profile.verified, true);
   assert.deepEqual(profile.consumers.map(item => item.consumerId).sort(),
-    ['dotnet-operations-client', 'web-application']);
+    ['dotnet-operations-client', 'messaging-typescript', 'web-application']);
   const consumer = await consumerNamed('web-application');
   assert.equal(consumer.generator, 'openapi-typescript');
   assert.equal(consumer.sourceDocument, 'web-bff/v1/browser-api.openapi.yaml');
@@ -34,6 +34,14 @@ test('the sample generation profile declares both verified consumers', async () 
     consumer.configurationDigest,
     generatorConfigurationDigest('openapi-typescript', Object.keys(consumer.expectedOutputs)[0])
   );
+});
+
+test('pinned Modelina regenerates both C23/C15 TypeScript envelopes without drift', async () => {
+  const consumer = await consumerNamed('messaging-typescript');
+  assert.equal(consumer.generatorVersion, '5.10.1');
+  assert.equal(consumer.configurationDigest, generatorConfigurationDigest('modelina', 'message-models'));
+  const result = await regenerateConsumer(consumer, { runGenerator });
+  assert.deepEqual(result.outputs, consumer.expectedOutputs);
 });
 
 test('the pinned generator reproduces the declared output with no drift', async () => {

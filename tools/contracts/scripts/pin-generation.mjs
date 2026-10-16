@@ -6,21 +6,22 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createPinnedGeneratorRunner, generatorConfigurationDigest } from '../src/generators.mjs';
-import { digestDirectory } from '../src/generation.mjs';
+import { digestDirectory, normalizeGeneratedConsumer } from '../src/generation.mjs';
 import { resolveSourceRevision } from '../src/provenance.mjs';
 
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const profilePath = join(repoRoot, 'contracts/samples/walking-skeleton/governance/generation-profile.json');
 
-// Both pinned consumers. The .NET client emits a directory tree rather than one
-// file, which is why it had never been pinned: nothing was wrong with the
-// manifest machinery - digestDirectory already walks a tree - but no profile
-// recorded the tree, so drift over the .NET client was never actually compared.
+// Every declared consumer is repinned together. Both the .NET client and
+// Modelina emit directory trees; dropping either here would erase its drift
+// evidence from the profile on the next documented repin.
 const CONSUMERS = [
   { consumerId: 'web-application', generator: 'openapi-typescript', generatorVersion: '7.13.0',
     sourceDocument: 'web-bff/v1/browser-api.openapi.yaml', output: 'browser-api.d.ts' },
   { consumerId: 'dotnet-operations-client', generator: 'kiota', generatorVersion: '1.35.0',
-    sourceDocument: 'web-bff/v1/browser-api.openapi.yaml', output: 'dotnet-client' }
+    sourceDocument: 'web-bff/v1/browser-api.openapi.yaml', output: 'dotnet-client' },
+  { consumerId: 'messaging-typescript', generator: 'modelina', generatorVersion: '5.10.1',
+    sourceDocument: 'messaging-platform/v1/transport-conformance.asyncapi.yaml', output: 'message-models' }
 ];
 
 const runGenerator = createPinnedGeneratorRunner(repoRoot);
@@ -36,6 +37,7 @@ async function pin(consumer) {
     const workspace = await mkdtemp(join(tmpdir(), 'stocksense-pin-'));
     try {
       await runGenerator(consumer, workspace);
+      await normalizeGeneratedConsumer(consumer, workspace);
       passes.push(await digestDirectory(workspace));
     } finally {
       await rm(workspace, { recursive: true, force: true });

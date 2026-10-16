@@ -150,15 +150,8 @@ function validateCoverage(manifest, entries) {
   }
 }
 
-export async function loadPackage(root, options = {}) {
-  const absolute = resolve(root);
-  if (!(await lstat(absolute)).isDirectory()) fail('PACKAGE_ROOT', 'BR1.1', 'Package root is not a directory');
-  const manifestPath = join(absolute, 'manifest.json');
-  const manifestStat = await lstat(manifestPath);
-  if (!manifestStat.isFile()) fail('UNSAFE_FILE', 'BR1.1', 'Manifest must be a regular file');
-  if (options.sourceByteLimit && manifestStat.size > options.sourceByteLimit) fail('SOURCE_SIZE_LIMIT', 'NFR10.1', 'Manifest exceeds source limit');
-  if (options.packageByteLimit && manifestStat.size > options.packageByteLimit) fail('PACKAGE_SIZE_LIMIT', 'NFR10.1', 'Package exceeds 32 MiB');
-  const manifestBytes = await readFile(manifestPath);
+/** C01 validation shared by directory loading and an attested in-memory bundle. */
+export function validatePackageManifest(manifestBytes) {
   let manifest;
   try { manifest = JSON.parse(manifestBytes.toString('utf8')); } catch { fail('MANIFEST_PARSE', 'BR1.1', 'Manifest JSON is invalid'); }
   const topKeys = ['packageVersion', 'manifestStatus', 'sourceRevision', 'openapi', 'asyncapi', 'schemas', 'governedArtifacts', 'boundaryCoverage'];
@@ -175,6 +168,19 @@ export async function loadPackage(root, options = {}) {
   if (new Set(paths).size !== paths.length) fail('DUPLICATE_PATH', 'BR1.1', 'Manifest paths must be unique');
   if (new Set(entries.map(entry => entry.logicalId)).size !== entries.length) fail('DUPLICATE_LOGICAL_ID', 'BR1.6', 'One package cannot bind two revisions of a logical contract');
   validateCoverage(manifest, entries);
+  return { manifest, entries, paths, manifestDigest: digest(manifestBytes) };
+}
+
+export async function loadPackage(root, options = {}) {
+  const absolute = resolve(root);
+  if (!(await lstat(absolute)).isDirectory()) fail('PACKAGE_ROOT', 'BR1.1', 'Package root is not a directory');
+  const manifestPath = join(absolute, 'manifest.json');
+  const manifestStat = await lstat(manifestPath);
+  if (!manifestStat.isFile()) fail('UNSAFE_FILE', 'BR1.1', 'Manifest must be a regular file');
+  if (options.sourceByteLimit && manifestStat.size > options.sourceByteLimit) fail('SOURCE_SIZE_LIMIT', 'NFR10.1', 'Manifest exceeds source limit');
+  if (options.packageByteLimit && manifestStat.size > options.packageByteLimit) fail('PACKAGE_SIZE_LIMIT', 'NFR10.1', 'Package exceeds 32 MiB');
+  const manifestBytes = await readFile(manifestPath);
+  const { manifest, entries, paths, manifestDigest } = validatePackageManifest(manifestBytes);
   const actualFiles = await enumerate(absolute);
   if (canonicalJson(actualFiles.sort()) !== canonicalJson(['manifest.json', ...paths].sort())) fail('UNLISTED_FILE', 'BR1.1', 'Package file inventory does not match manifest');
   let totalBytes = manifestBytes.length;
@@ -192,7 +198,7 @@ export async function loadPackage(root, options = {}) {
     if (digest(bytes) !== entry.contentDigest) fail('DIGEST_MISMATCH', 'BR1.1', 'A declared content digest does not match');
     if (options.inspectBytes) options.inspectBytes(entry, bytes);
   }
-  return Object.freeze({ manifest: Object.freeze(manifest), entries: Object.freeze(entries), manifestDigest: digest(manifestBytes),
+  return Object.freeze({ manifest: Object.freeze(manifest), entries: Object.freeze(entries), manifestDigest,
     totalBytes, boundaryIds: Object.freeze(manifest.boundaryCoverage.map(row => row.boundaryId)),
     releaseReady: manifest.manifestStatus === 'release' && manifest.boundaryCoverage.length === 27 });
 }

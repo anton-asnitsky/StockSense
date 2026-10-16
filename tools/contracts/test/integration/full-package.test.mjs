@@ -5,8 +5,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ALL_BOUNDARIES, loadPackage } from '../../src/package-loader.mjs';
-import { runFixtureOracle } from '../../src/policy.mjs';
+import { DIALECTS } from '../../src/validators.mjs';
+import { asyncApiMessageElements, runFixtureOracle } from '../../src/policy.mjs';
 import { buildFullPackage } from '../../src/full-package.mjs';
+import { buildPackageBundle, verifyPackageBundle } from '../../src/package-bundle.mjs';
 
 // Only the thin C01/C18 walking skeleton had ever been packaged, so every rule
 // that is whole-catalogue rather than per-document - the boundary inventory,
@@ -15,8 +17,8 @@ import { buildFullPackage } from '../../src/full-package.mjs';
 // tests assemble the complete C01-C27 candidate and judge it.
 const repoRoot = fileURLToPath(new URL('../../../../', import.meta.url));
 
-// The nine canonical documents that carry no payload an oracle could bind:
-// parameter-only or non-JSON endpoints that declare no component schemas.
+// Nine documents have no components; two of them have inline JSON response
+// schemas that the oracle now binds. The other seven remain payload-exempt.
 // Asserted exactly, as a ratchet rather than a tolerance - adding components to
 // one of these, or removing them from another, fails here and forces the
 // AI-DLC record to be updated with it.
@@ -32,30 +34,69 @@ const WITHOUT_COMPONENTS = Object.freeze([
   'web-bff/v1/identity-session.openapi.yaml'
 ]);
 
+const ASYNCAPI_MESSAGES = Object.freeze({
+  'audit-evidence/v1/authoritative-audit.asyncapi.yaml': [
+    'message:auditEvents:auditEvent', 'message:globalIdentityAuditEvents:globalIdentityAuditEvent'
+  ],
+  'messaging-platform/v1/transport-conformance.asyncapi.yaml': [
+    'message:tenantMessages:tenantEnvelope', 'message:tenantDeadLetters:tenantEnvelope',
+    'message:globalIdentityMessages:globalIdentityEnvelope',
+    'message:globalIdentityDeadLetters:globalIdentityEnvelope'
+  ],
+  'recovery-coordination/v1/participant-protocol.asyncapi.yaml': [
+    'message:recoveryCommands:recoveryCommand',
+    'message:recoveryAcknowledgements:recoveryAcknowledgement',
+    'message:recoveryRestoreAttestations:recoveryRestoreAttestation'
+  ],
+  'recovery-coordination/v1/recovery-audit.asyncapi.yaml': ['message:recoveryEvents:recoveryEvent'],
+  'retail-data/v1/retail-reference-changed.asyncapi.yaml': [
+    'message:retailReferenceChanged:retailReferenceChanged'
+  ],
+  'supplier-knowledge/v1/embedding-build-quiesced.asyncapi.yaml': [
+    'message:embeddingBuildQuiesced:embeddingBuildQuiesced'
+  ]
+});
+
 async function assembled() {
   const out = await mkdtemp(join(tmpdir(), 'stocksense-full-package-test-'));
   try { return { out, built: await buildFullPackage(repoRoot, out), clean: () => rm(out, { recursive: true, force: true }) }; }
   catch (error) { await rm(out, { recursive: true, force: true }); throw error; }
 }
 
-test('every canonical document either binds a verified fixture pair or is exempt by kind', async () => {
-  const { built, clean } = await assembled();
+test('every canonical schema, OpenAPI target, and AsyncAPI message binds or has an allowed exemption', async () => {
+  const { out, built, clean } = await assembled();
   try {
     // Nothing is refused and nothing is unaccounted for. The exempt documents
-    // are the AsyncAPI sources, the closed-dialect schemas and the OpenAPI
-    // documents that declare no components - all derived from the document, so
-    // none of them is credited as carrying fixture evidence.
+    // are seven OpenAPI documents and three closed-dialect schemas. The six
+    // AsyncAPI documents contribute twelve channel-message targets.
     assert.deepEqual(built.problems, []);
-    assert.equal(built.bound, 20);
-    assert.equal(built.exempt, 18);
-    assert.equal(built.bound + built.exempt, 38);
+    assert.equal(built.bound, 34);
+    assert.equal(built.exempt, 10);
+    assert.equal(built.bound + built.exempt, 44);
+    const loaded = await loadPackage(out);
+    const bundleBytes = await buildPackageBundle(out);
+    const bundled = verifyPackageBundle(bundleBytes);
+    assert.equal(bundled.manifestDigest, loaded.manifestDigest);
+    assert.equal(bundled.fileCount, loaded.entries.length + 1);
+    assert.deepEqual(bundleBytes, await buildPackageBundle(out), 'full-catalogue package bundle is deterministic');
+    const fixtures = JSON.parse(await readFile(join(out, 'governance/example-fixture.json'), 'utf8')).fixtures;
+    const openApiExempt = loaded.entries.filter(entry => entry.artifactKind === 'openapi' &&
+      !fixtures.some(fixture => fixture.documentRevisionId === entry.revisionId));
+    assert.equal(openApiExempt.length, 7);
+    const YAML = (await import('yaml')).default;
+    const closedSchemas = [];
+    for (const entry of loaded.entries.filter(item => item.artifactKind === 'schema')) {
+      const source = YAML.parse(await readFile(join(out, entry.document), 'utf8'));
+      if (source.$schema !== DIALECTS.schema) closedSchemas.push(entry.document);
+    }
+    assert.equal(closedSchemas.length, 3);
     assert.ok(built.manifest, 'a complete package is written');
     assert.equal(built.manifest.manifestStatus, 'candidate');
     assert.equal(built.manifest.boundaryCoverage.length, ALL_BOUNDARIES.length);
   } finally { await clean(); }
 });
 
-test('each bound document contributes a positive, a required negative, and the mutations it admits', async () => {
+test('each bound element contributes a positive, a required negative, and the mutations it admits', async () => {
   const { out, built, clean } = await assembled();
   try {
     const sidecar = JSON.parse(await readFile(join(out, 'governance/example-fixture.json'), 'utf8'));
@@ -63,8 +104,8 @@ test('each bound document contributes a positive, a required negative, and the m
     const positives = sidecar.fixtures.filter(fixture => fixture.scenarioType === 'valid');
     const negatives = sidecar.fixtures.filter(fixture => fixture.scenarioType === 'invalid');
     assert.equal(positives.length, built.bound);
-    // One required-omission negative per bound document, plus the non-required
-    // mutations each document admits.
+    // One required-omission negative per bound element, plus the non-required
+    // mutations each element admits.
     assert.ok(negatives.length > built.bound, `expected more than ${built.bound} negatives, got ${negatives.length}`);
 
     const requiredOnly = negatives.filter(fixture => fixture.expectedFailureCode !== undefined);
@@ -107,6 +148,43 @@ test('each bound document contributes a positive, a required negative, and the m
   } finally { await clean(); }
 });
 
+test('all twelve AsyncAPI channel messages bind distinct revision-scoped exact oracle pairs', async () => {
+  const YAML = (await import('yaml')).default;
+  const { out, built, clean } = await assembled();
+  try {
+    const loaded = await loadPackage(out);
+    const fixtures = JSON.parse(await readFile(join(out, 'governance/example-fixture.json'), 'utf8')).fixtures;
+    const results = await runFixtureOracle(out, loaded);
+    const asyncEntries = loaded.entries.filter(entry => entry.artifactKind === 'asyncapi');
+    assert.deepEqual(asyncEntries.map(entry => entry.document).sort(), Object.keys(ASYNCAPI_MESSAGES).sort());
+    assert.equal(Object.values(ASYNCAPI_MESSAGES).flat().length, 12);
+    assert.equal(new Set(fixtures.map(fixture => fixture.fixtureId)).size, fixtures.length,
+      'fixture IDs must remain unique when C23 reuses a message on two channels');
+
+    for (const entry of asyncEntries) {
+      const document = YAML.parse(await readFile(join(out, entry.document), 'utf8'),
+        { strict: true, uniqueKeys: true });
+      assert.deepEqual(asyncApiMessageElements(document).sort(), [...ASYNCAPI_MESSAGES[entry.document]].sort());
+      for (const element of ASYNCAPI_MESSAGES[entry.document]) {
+        const slug = element.replace(/[^a-z0-9]+/gi, '-').toLowerCase().replace(/^-|-$/g, '');
+        const pair = fixtures.filter(fixture => fixture.documentRevisionId === entry.revisionId &&
+          fixture.contractElementId === element);
+        assert.equal(pair.filter(fixture => fixture.scenarioType === 'valid').length, 1, element);
+        const requiredNegative = pair.filter(fixture => fixture.expectedFailureCode === 'SCHEMA_REQUIRED');
+        assert.equal(requiredNegative.length, 1, element);
+        assert.equal(requiredNegative[0].expectedFailureRuleId, 'BR2.4');
+        assert.match(requiredNegative[0].expectedFailurePath, /^\/[^/]/);
+        assert.ok(pair.every(fixture => fixture.fixtureId.includes(slug)), element);
+        assert.ok(pair.every(fixture => fixture.boundaryIds.every(id => entry.boundaryIds.includes(id))), element);
+        assert.deepEqual(results.filter(row => pair.some(fixture => fixture.fixtureId === row.fixtureId))
+          .filter(row => row.fixtureId.endsWith('-positive') || row.fixtureId.endsWith('-negative'))
+          .map(row => row.observed), ['pass', 'fail'], element);
+      }
+    }
+    assert.equal(built.bound, 22 + 12);
+  } finally { await clean(); }
+});
+
 test('the complete C01-C27 candidate package passes the governance rules', async () => {
   // This is the whole point. Until the OpenAPI components compiled and the
   // bindability exemption was derived rather than assumed, this package was
@@ -145,4 +223,25 @@ test('the documents that declare no components are exactly the nine expected', a
     if (!Object.keys(source?.components?.schemas ?? {}).length) bare.push(entry.document);
   }
   assert.deepEqual(bare.sort(), [...WITHOUT_COMPONENTS].sort());
+});
+
+test('inline identity responses bind exact positive and negative fixtures to their revisions', async () => {
+  const { out, clean } = await assembled();
+  try {
+    const loaded = await loadPackage(out);
+    const fixtures = JSON.parse(await readFile(join(out, 'governance/example-fixture.json'), 'utf8')).fixtures;
+    const results = await runFixtureOracle(out, loaded);
+    for (const document of ['identity-access/v1/identity-metadata.openapi.yaml',
+      'identity-access/v1/global-audit-read.openapi.yaml']) {
+      const entry = loaded.entries.find(item => item.document === document);
+      const pair = fixtures.filter(item => item.documentRevisionId === entry.revisionId);
+      assert.ok(pair.length >= 2, document);
+      assert.ok(pair.every(item => item.contractElementId.startsWith('response:')));
+      assert.ok(pair.some(item => item.scenarioType === 'valid'));
+      assert.ok(pair.some(item => item.scenarioType === 'invalid' &&
+        item.expectedFailureCode === 'SCHEMA_REQUIRED' && item.expectedFailureRuleId === 'BR2.4'));
+      assert.deepEqual(results.filter(item => item.revisionId === entry.revisionId).slice(0, 2)
+        .map(item => item.observed), ['pass', 'fail']);
+    }
+  } finally { await clean(); }
 });

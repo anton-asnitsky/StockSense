@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runContainerStandardsValidator } from '../../src/container-standards-runner.mjs';
-import { loadPackage } from '../../src/package-loader.mjs';
+import { deriveIdentity, loadPackage } from '../../src/package-loader.mjs';
 import { sourceTreeDigest } from '../../src/source-digest.mjs';
 
 const hostSourceDigest = await sourceTreeDigest();
@@ -366,6 +366,51 @@ test('fixture mode rejects malformed results and maps worker failure statuses', 
       await expectCode(runContainerStandardsValidator('fixture-oracle:2020-12', options.sourceDocument,
         { ...options, spawn: fake.spawn }), code, rule);
       assert.equal(fake.calls.at(-1).argv[0], 'rm');
+    }
+  });
+});
+
+test('fixture mode accepts only the governed inline response result identity', async () => {
+  await withFixtureGraph(async options => {
+    const entry = options.entries.find(item => item.artifactKind === 'openapi');
+    const row = { fixtureId: 'inline-response', contractElementId: 'response:getIdentity:200:application-json',
+      revisionId: entry.revisionId, scenarioType: 'valid', observed: 'pass' };
+    const accepted = seam(() => ok(JSON.stringify({ version: 1, fixtureResults: [row] })));
+    assert.deepEqual((await runContainerStandardsValidator('fixture-oracle:2020-12', options.sourceDocument,
+      { ...options, spawn: accepted.spawn })).fixtureResults, [row]);
+    for (const contractElementId of ['response:getIdentity:200:application-json:extra',
+      'response:getIdentity:200:application-xml']) {
+      const rejected = seam(() => ok(JSON.stringify({ version: 1,
+        fixtureResults: [{ ...row, contractElementId }] })));
+      await expectCode(runContainerStandardsValidator('fixture-oracle:2020-12', options.sourceDocument,
+        { ...options, spawn: rejected.spawn }), 'STANDARDS_OUTPUT', 'NFR6.2');
+    }
+  });
+});
+
+test('fixture mode accepts channel-qualified AsyncAPI results and rejects malformed message elements', async () => {
+  await withFixtureGraph(async options => {
+    const document = 'events/v1/changed.asyncapi.yaml';
+    const bytes = Buffer.from('asyncapi: 3.0.0\ninfo: {title: Synthetic, version: 1.0.0}\n');
+    const contentDigest = hash(bytes);
+    const entry = { artifactKind: 'asyncapi', semanticOwner: 'Synthetic', boundaryIds: ['C23'],
+      document, semanticVersion: '1.0.0', contentDigest,
+      ...deriveIdentity('asyncapi', 'Synthetic', document, '1.0.0', contentDigest) };
+    await mkdir(dirname(join(options.graphRoot, document)), { recursive: true });
+    await writeFile(join(options.graphRoot, document), bytes);
+    options.entries.push(entry);
+    options.files.push({ document, digest: contentDigest, artifactKind: 'asyncapi' });
+    const row = { fixtureId: 'asyncapi-message', contractElementId: 'message:tenantMessages:tenantEnvelope',
+      revisionId: entry.revisionId, scenarioType: 'valid', observed: 'pass' };
+    const accepted = seam(() => ok(JSON.stringify({ version: 1, fixtureResults: [row] })));
+    assert.deepEqual((await runContainerStandardsValidator('fixture-oracle:2020-12', options.sourceDocument,
+      { ...options, spawn: accepted.spawn })).fixtureResults, [row]);
+    for (const contractElementId of ['message:tenantMessages:tenantEnvelope:extra',
+      'message:tenant messages:tenantEnvelope']) {
+      const rejected = seam(() => ok(JSON.stringify({ version: 1,
+        fixtureResults: [{ ...row, contractElementId }] })));
+      await expectCode(runContainerStandardsValidator('fixture-oracle:2020-12', options.sourceDocument,
+        { ...options, spawn: rejected.spawn }), 'STANDARDS_OUTPUT', 'NFR6.2');
     }
   });
 });

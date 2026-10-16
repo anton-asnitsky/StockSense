@@ -109,36 +109,114 @@ function resolveFixtureTarget(fixture, loaded, schemas) {
 /**
  * Whether a fixture can be bound to this canonical document at all: a titled
  * JSON Schema is addressed by element title, an OpenAPI document by revision
- * through its components. An AsyncAPI document has no payload oracle here, so
- * it cannot carry fixtures and must not be credited as though it could.
+ * through its components. AsyncAPI channel messages are listed separately
+ * below; complete catalogues must bind every declared channel message.
  */
+export function openApiInlineResponseElements(document) {
+  const elements = [];
+  for (const pathItem of Object.values(document?.paths ?? {})) {
+    if (!object(pathItem)) continue;
+    for (const operation of Object.values(pathItem)) {
+      if (!object(operation) || !/^[A-Za-z][A-Za-z0-9]{0,96}$/.test(operation.operationId ?? '')) continue;
+      for (const [status, response] of Object.entries(operation.responses ?? {})) {
+        const schema = response?.content?.['application/json']?.schema;
+        // Include every inline JSON schema. Required fields can be composed
+        // through allOf or a component reference; an optional-only schema must
+        // fail fixture construction explicitly rather than gain an exemption.
+        if (/^[1-5][0-9]{2}$/.test(status) && object(schema)) {
+          elements.push(`response:${operation.operationId}:${status}:application-json`);
+        }
+      }
+    }
+  }
+  if (new Set(elements).size !== elements.length) {
+    fail('FIXTURE_TARGET_AMBIGUOUS', 'BR2.8', 'Two inline responses share one fixture element');
+  }
+  return elements;
+}
+
 function fixtureBindable(entry, schemas, documents = new Map()) {
-  if (DOCUMENT_FIXTURE_KINDS.includes(entry.artifactKind)) {
-    // An OpenAPI fixture is addressed by element through `components.schemas`,
-    // so a document declaring none carries nothing this oracle can extract.
-    // Nine of the seventeen canonical documents declare no components.
-    //
-    // Be precise about what that means, because an earlier version of this
-    // comment overstated it and the independent architecture review caught it:
-    // seven of the nine declare no JSON body anywhere and genuinely have no
-    // payload. The other two - identity-access/v1/identity-metadata and
-    // identity-access/v1/global-audit-read - do carry inline response schemas
-    // with required properties, which the oracle could bind if it extracted
-    // `content.*.schema` as well as components. It does not, by owner decision
-    // of 2026-10-09, so those two are exempt because of how their schemas are
-    // factored rather than because they lack a payload. That is a known
-    // limitation of the predicate, disclosed in `limitations`, not a claim that
-    // the documents have nothing to test.
-    //
-    // Like the AsyncAPI and closed-dialect exemptions this is derived from the
-    // document and never declared by the package, so a document that *does*
-    // declare components still cannot dodge the pair rule.
+  if (entry.artifactKind === 'openapi') {
     const document = documents.get(entry.document);
     if (document === undefined) return true;
-    return object(document?.components?.schemas) && Object.keys(document.components.schemas).length > 0;
+    return (object(document?.components?.schemas) && Object.keys(document.components.schemas).length > 0) ||
+      openApiInlineResponseElements(document).length > 0;
   }
   return entry.artifactKind === 'schema' &&
     [...schemas.values()].some(item => item.entry === entry);
+}
+
+const ASYNCAPI_PAYLOAD_FORMAT = 'application/schema+json;version=draft-2020-12';
+const MESSAGE_NAME = '[A-Za-z][A-Za-z0-9_.-]*';
+const MESSAGE_ELEMENT = new RegExp(`^message:(${MESSAGE_NAME})(?::(${MESSAGE_NAME}))?$`);
+
+/** Every channel/message identity in an AsyncAPI document, including repeated components on distinct routes. */
+export function asyncApiMessageElements(document) {
+  if (document?.asyncapi !== '3.0.0' || !object(document.channels)) {
+    fail('FIXTURE_TARGET', 'BR2.8', 'AsyncAPI document has no channel inventory');
+  }
+  const elements = [];
+  for (const [channelName, channel] of Object.entries(document.channels)) {
+    if (!object(channel?.messages)) continue;
+    for (const messageName of Object.keys(channel.messages)) {
+      const element = `message:${channelName}:${messageName}`;
+      if (!MESSAGE_ELEMENT.test(element)) {
+        fail('FIXTURE_TARGET', 'BR2.8', 'AsyncAPI channel message name is unsupported');
+      }
+      elements.push(element);
+    }
+  }
+  if (!elements.length) fail('FIXTURE_COVERAGE', 'BR2.7', 'AsyncAPI document has no payload messages to bind');
+  return elements;
+}
+
+/** Bind one AsyncAPI channel message, with a channel-qualified name when reused. */
+export function asyncApiFixtureSchema(document, element) {
+  if (document?.asyncapi !== '3.0.0' || typeof element !== 'string') {
+    fail('FIXTURE_TARGET', 'BR2.8', 'AsyncAPI fixture element is absent from its declared document');
+  }
+  const match = MESSAGE_ELEMENT.exec(element);
+  if (!match) throw new ContractError('FIXTURE_TARGET', 'BR2.8', 'AsyncAPI fixture element must name a channel message');
+  const matches = [];
+  for (const [channelName, channel] of Object.entries(document.channels ?? {})) {
+    if (!object(channel?.messages)) continue;
+    for (const [messageName, message] of Object.entries(channel.messages)) {
+      if ((match[2] ? channelName === match[1] && messageName === match[2] : messageName === match[1])) {
+        matches.push(message);
+      }
+    }
+  }
+  if (matches.length > 1) fail('FIXTURE_TARGET_AMBIGUOUS', 'BR2.8', 'AsyncAPI message name needs its channel');
+  if (matches.length !== 1) fail('FIXTURE_TARGET', 'BR2.8', 'AsyncAPI channel message is absent');
+  let message = matches[0];
+  if (object(message) && Object.hasOwn(message, '$ref')) {
+    const reference = message.$ref;
+    const component = typeof reference === 'string' &&
+      /^#\/components\/messages\/([A-Za-z][A-Za-z0-9_.-]*)$/.exec(reference);
+    if (Object.keys(message).length !== 1 || !component || !Object.hasOwn(document.components?.messages ?? {}, component[1])) {
+      throw new ContractError('FIXTURE_REFERENCE', 'BR2.8', 'AsyncAPI message reference is outside local components');
+    }
+    message = document.components.messages[component[1]];
+  }
+  if (!object(message) || Object.hasOwn(message, '$ref') || !object(message.payload) ||
+      message.payload.schemaFormat !== ASYNCAPI_PAYLOAD_FORMAT ||
+      !object(message.payload.schema) ||
+      Object.keys(message.payload).some(key => !['schemaFormat', 'schema'].includes(key))) {
+    fail('FIXTURE_TARGET', 'BR2.8', 'AsyncAPI message payload has an unsupported schema shape');
+  }
+  const seen = new Set();
+  const walk = value => {
+    if (!value || typeof value !== 'object') return;
+    if (seen.has(value)) fail('FIXTURE_CYCLE', 'BR2.8', 'AsyncAPI payload contains a cyclic alias');
+    seen.add(value);
+    for (const child of Object.values(value)) walk(child);
+    seen.delete(value);
+  };
+  walk(message.payload.schema);
+  if (message.payload.schema.$schema !== undefined && message.payload.schema.$schema !== DIALECTS.schema) {
+    fail('DIALECT_CONFLICT', 'BR1.3', 'AsyncAPI payload must use JSON Schema 2020-12');
+  }
+  return { ...message.payload.schema, $schema: DIALECTS.schema };
 }
 
 /**
@@ -148,9 +226,26 @@ function fixtureBindable(entry, schemas, documents = new Map()) {
  * mismatch only surfaces as a container rejection much later.
  */
 export function openApiFixtureSchema(document, element) {
-  if (document?.openapi !== '3.1.2' || !object(document.components?.schemas) ||
-      !Object.hasOwn(document.components.schemas, element)) {
+  if (document?.openapi !== '3.1.2' || typeof element !== 'string') {
     fail('FIXTURE_TARGET', 'BR2.8', 'OpenAPI fixture element is absent from its declared document');
+  }
+  const components = document.components?.schemas ?? {};
+  let inlineResponse;
+  if (!Object.hasOwn(components, element)) {
+    const match = /^response:([A-Za-z][A-Za-z0-9]*):([1-5][0-9]{2}):application-json$/.exec(element);
+    if (match && openApiInlineResponseElements(document).includes(element)) {
+      for (const pathItem of Object.values(document.paths ?? {})) {
+        if (!object(pathItem)) continue;
+        for (const operation of Object.values(pathItem)) {
+          if (object(operation) && operation.operationId === match[1]) {
+            inlineResponse = operation.responses?.[match[2]]?.content?.['application/json']?.schema;
+          }
+        }
+      }
+    }
+    if (!object(inlineResponse)) {
+      fail('FIXTURE_TARGET', 'BR2.8', 'OpenAPI fixture element is absent from its declared document');
+    }
   }
   const definitions = {};
   const pending = [element];
@@ -172,7 +267,7 @@ export function openApiFixtureSchema(document, element) {
       for (const [key, child] of Object.entries(value)) {
         if (key === '$ref') {
           const match = typeof child === 'string' && /^#\/components\/schemas\/([A-Za-z][A-Za-z0-9_.-]*)$/.exec(child);
-          if (!match || !Object.hasOwn(document.components.schemas, match[1])) {
+          if (!match || !Object.hasOwn(components, match[1])) {
             throw new ContractError('FIXTURE_REFERENCE', 'BR2.8', 'OpenAPI fixture reference is outside the declared component graph');
           }
           pending.push(match[1]);
@@ -185,7 +280,7 @@ export function openApiFixtureSchema(document, element) {
   while (pending.length) {
     const name = pending.pop();
     if (Object.hasOwn(definitions, name)) continue;
-    definitions[name] = rewrite(document.components.schemas[name], new Set());
+    definitions[name] = rewrite(name === element && inlineResponse ? inlineResponse : components[name], new Set());
   }
   return { $schema: DIALECTS.schema, $ref: `#/$defs/${element}`, $defs: definitions };
 }
@@ -294,17 +389,17 @@ export async function runFixtureOracle(root, loaded) {
       references.set(source.$id, source);
     }
   }
-  // Parse every OpenAPI document before the coverage check, because whether a
+  // Parse every document before the coverage check, because whether an OpenAPI
   // document can carry a fixture at all is decided by the components it
   // declares, and that has to be known before the pair rule is applied.
   const documents = new Map();
-  for (const entry of loaded.entries.filter(item => item.artifactKind === 'openapi')) {
+  for (const entry of loaded.entries.filter(item => DOCUMENT_FIXTURE_KINDS.includes(item.artifactKind))) {
     const bytes = await read(entry);
     try {
       const parsed = YAML.parseDocument(bytes, { uniqueKeys: true, strict: true });
       if (parsed.errors.length) throw parsed.errors[0];
       documents.set(entry.document, parsed.toJS());
-    } catch { fail('SOURCE_PARSE', 'BR2.7', 'A canonical OpenAPI document is malformed'); }
+    } catch { fail('SOURCE_PARSE', 'BR2.7', 'A canonical API document is malformed'); }
   }
 
   const fixtureEntries = loaded.entries.filter(item => item.kind === 'example-fixture');
@@ -324,21 +419,26 @@ export async function runFixtureOracle(root, loaded) {
       const canonical = loaded.entries.filter(item => ['schema', 'openapi', 'asyncapi'].includes(item.artifactKind) &&
         item.boundaryIds?.includes(boundaryId));
       if (!canonical.length) fail('FIXTURE_COVERAGE', 'BR2.7', 'A claimed fixture boundary has no canonical revision');
-      // A boundary all of whose canonical documents are of a kind this oracle
-      // provably cannot bind - an AsyncAPI document, or a schema in one of the
-      // closed non-payload dialects - carries no fixture evidence and is
-      // exempt from the pair rule. The exemption is derived from the artifact
-      // kinds, never declared by the package, so it cannot be used to dodge a
-      // document that *is* bindable: one bindable document under the boundary
-      // and the pair rule applies to it. C08, C25 and C27 require only such
-      // artifacts, so refusing here made them unpackageable.
-      const bindable = canonical.filter(item => fixtureBindable(item, schemas, documents));
+      // Preserve legacy partial samples with document-only AsyncAPI validation.
+      // A full C01-C27 catalogue cannot use that exemption, and once a partial
+      // package opts into one AsyncAPI revision it must cover every message in
+      // that document, including repeated components on distinct channels.
+      const completeCatalogue = Array.isArray(loaded.boundaryIds) &&
+        ALL_BOUNDARIES.every(id => loaded.boundaryIds.includes(id));
+      const bindable = canonical.filter(item => fixtureBindable(item, schemas, documents) ||
+        (item.artifactKind === 'asyncapi' && (completeCatalogue || fixtures.some(fixture =>
+          resolveFixtureTarget(fixture, loaded, schemas) === item))));
       for (const target of bindable) {
-        const scenarios = fixtures.filter(fixture => fixture?.boundaryIds?.includes(boundaryId) &&
-          resolveFixtureTarget(fixture, loaded, schemas) === target);
-        if (!scenarios.some(fixture => fixture.scenarioType === 'valid' && fixture.expectedOutcome === 'pass') ||
-            !scenarios.some(fixture => fixture.scenarioType === 'invalid' && fixture.expectedOutcome === 'fail')) {
-          fail('FIXTURE_COVERAGE', 'BR2.7', 'A claimed canonical revision lacks positive and negative fixtures');
+        const elements = target.artifactKind === 'asyncapi'
+          ? asyncApiMessageElements(documents.get(target.document)) : [null];
+        for (const element of elements) {
+          const scenarios = fixtures.filter(fixture => fixture?.boundaryIds?.includes(boundaryId) &&
+            resolveFixtureTarget(fixture, loaded, schemas) === target &&
+            (element === null || fixture.contractElementId === element));
+          if (!scenarios.some(fixture => fixture.scenarioType === 'valid' && fixture.expectedOutcome === 'pass') ||
+              !scenarios.some(fixture => fixture.scenarioType === 'invalid' && fixture.expectedOutcome === 'fail')) {
+            fail('FIXTURE_COVERAGE', 'BR2.7', 'A claimed canonical message lacks positive and negative fixtures');
+          }
         }
       }
     }
@@ -362,8 +462,16 @@ export async function runFixtureOracle(root, loaded) {
           const parsed = YAML.parseDocument(bytes, { uniqueKeys: true, strict: true });
           if (parsed.errors.length) throw parsed.errors[0];
           document = parsed.toJS();
-        } catch { fail('FIXTURE_TARGET', 'BR2.8', 'Fixture OpenAPI document is malformed'); }
-        validationSchema = openApiFixtureSchema(document, fixture.contractElementId);
+        } catch { fail('FIXTURE_TARGET', 'BR2.8', 'Fixture API document is malformed'); }
+        if (target.artifactKind === 'asyncapi') {
+          const payload = asyncApiFixtureSchema(document, fixture.contractElementId);
+          // The verified snapshot rewrites external references to relative
+          // package paths. Give the extracted schema the canonical document's
+          // base URI so Ajv resolves those paths to the same digest-checked
+          // registry identities as the pinned standards validator.
+          validationSchema = payload.$id ? payload :
+            { ...payload, $id: `https://contracts.stocksense.local/${target.document}` };
+        } else validationSchema = openApiFixtureSchema(document, fixture.contractElementId);
       } else validationSchema = schemas.get(fixture.contractElementId).source;
       const validate = createSchemaValidator(validationSchema, references,
         { openApiComponents: Boolean(fixture.documentRevisionId) });

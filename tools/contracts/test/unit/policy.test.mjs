@@ -5,7 +5,55 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ALL_BOUNDARIES, BOUNDARY_SIDECARS, CANONICAL_KINDS, FIXED_PATHS, digest, loadPackage } from '../../src/package-loader.mjs';
-import { assertDeclaredPolicy, mapSchemaFindings, runFixtureOracle } from '../../src/policy.mjs';
+import { omitRequired, synthesize } from '../../src/instance-synthesis.mjs';
+import { assertDeclaredPolicy, mapSchemaFindings, openApiFixtureSchema,
+  openApiInlineResponseElements, runFixtureOracle } from '../../src/policy.mjs';
+import { createSchemaValidator } from '../../src/validators.mjs';
+
+test('inline JSON response with required fields has an exact oracle element', () => {
+  const document = { openapi: '3.1.2', paths: { '/identity': { get: {
+    operationId: 'getIdentity', responses: { '200': { content: { 'application/json': {
+      schema: { type: 'object', required: ['issuer'], properties: { issuer: { type: 'string' } } }
+    } } } } } } } };
+  assert.deepEqual(openApiInlineResponseElements(document), ['response:getIdentity:200:application-json']);
+  const schema = openApiFixtureSchema(document, 'response:getIdentity:200:application-json');
+  assert.deepEqual(schema.$defs['response:getIdentity:200:application-json'].required, ['issuer']);
+  expectCode(() => openApiFixtureSchema(document, 'response:getIdentity:201:application-json'), 'FIXTURE_TARGET');
+});
+
+test('inline oracle refuses duplicate operation identities and undeclared component references', () => {
+  const response = { content: { 'application/json': { schema: { type: 'object', required: ['value'],
+    properties: { value: { $ref: 'https://untrusted.invalid/value' } } } } } };
+  const document = { openapi: '3.1.2', paths: { '/one': { get: { operationId: 'getValue',
+    responses: { '200': response } } } } };
+  expectCode(() => openApiFixtureSchema(document, 'response:getValue:200:application-json'), 'FIXTURE_REFERENCE');
+  document.paths['/two'] = { get: { operationId: 'getValue', responses: { '200': response } } };
+  expectCode(() => openApiInlineResponseElements(document), 'FIXTURE_TARGET_AMBIGUOUS');
+});
+
+test('composed and optional inline JSON responses cannot gain a fixture exemption', () => {
+  const document = { openapi: '3.1.2', paths: { '/composed': { get: {
+    operationId: 'getComposed', responses: { '200': { content: { 'application/json': {
+      schema: { allOf: [{ type: 'object', required: ['id'], properties: { id: { type: 'string' } } }] }
+    } } } } } }, '/optional': { get: { operationId: 'getOptional', responses: {
+    '200': { content: { 'application/json': { schema: { type: 'object', properties: { label: { type: 'string' } } } } } }
+  } } } } };
+  assert.deepEqual(openApiInlineResponseElements(document), [
+    'response:getComposed:200:application-json', 'response:getOptional:200:application-json'
+  ]);
+  const schema = openApiFixtureSchema(document, 'response:getComposed:200:application-json');
+  assert.deepEqual(schema.$defs['response:getComposed:200:application-json'].allOf[0].required, ['id']);
+  const validate = createSchemaValidator(schema, new Map(), { openApiComponents: true });
+  const positive = synthesize(schema);
+  assert.equal(validate(positive), true);
+  const negative = omitRequired(schema.$defs['response:getComposed:200:application-json'], positive,
+    { root: schema });
+  assert.equal(negative.pointer, '/id');
+  assert.equal(validate(negative.payload), false);
+  assert.equal(validate.errors[0].keyword, 'required');
+  assert.deepEqual(openApiFixtureSchema(document, 'response:getOptional:200:application-json')
+    .$defs['response:getOptional:200:application-json'].properties.label, { type: 'string' });
+});
 
 const sampleRoot = fileURLToPath(new URL('../../../../contracts/samples/walking-skeleton/', import.meta.url));
 const expectCode = (fn, code) => assert.throws(fn, error => error.code === code);
@@ -360,12 +408,12 @@ test('BR2.7: coverage resolves a fixture target the way validation does, not fro
   });
 });
 
-test('BR2.7: an AsyncAPI document is exempt from the fixture pair but cannot carry a boundary alone', async () => {
+test('BR2.7: a partial AsyncAPI document without message fixtures remains document-only', async () => {
   const asyncapi = ['asyncapi: 3.0.0', 'info:', '  title: Transport', '  version: 1.0.0'].join('\n');
   const profile = schemaDocument('Profile', { type: 'object', required: ['value'],
     properties: { value: { type: 'string' } } });
-  // The oracle has no payload extractor for AsyncAPI, so such a document is
-  // validated as a document elsewhere and carries no fixtures here.
+  // This legacy partial package opts into no AsyncAPI message fixture, so its
+  // document is validated elsewhere but carries no payload evidence here.
   await withOracleFiles({
     'transport.asyncapi.yaml': { content: asyncapi, kind: 'asyncapi', boundaryIds: ['C23'] },
     'profile.schema.json': { content: profile, boundaryIds: ['C23'] },

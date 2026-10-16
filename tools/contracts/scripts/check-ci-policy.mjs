@@ -2,15 +2,22 @@ import { readFile, readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import YAML from 'yaml';
 import { assertCiPolicy } from '../src/evidence.mjs';
-import { ContractError } from '../src/package-loader.mjs';
+import { ContractError, digest } from '../src/package-loader.mjs';
 
-// Enforce U1's public-PR policy against the workflows actually present.
+// One reviewed, base-owned exception to the generic pull_request_target ban.
+// The byte pin prevents this command from crediting a changed metadata guard;
+// the separate protected-base job decides proposed .github changes.
+const METADATA_GUARD = 'public-pr-policy.yml';
+const METADATA_GUARD_DIGEST = 'sha256:b9efbc5e088958aa918c5865db711df6664cfe16d5c699931b4633aba0c56bff';
+
+// Check U1's public-PR policy against the workflows actually present.
 //
 // U1 defines assertCiPolicy (BR6.7) but nothing invoked it, so the policy
 // described a rule the repository never applied: a pull request could have
 // introduced pull_request_target, a self-hosted runner on an untrusted
 // trigger, a write permission or an unpinned action, and no check would have
-// objected. This closes that loop from the protected base revision.
+// objected. The U2 protected-base guard independently checks PR changes;
+// this script running from PR code cannot certify its own integrity.
 //
 // Changed paths come from the caller, not from the workflow being judged, so a
 // pull request cannot describe itself as touching nothing.
@@ -38,13 +45,29 @@ if (!names.length) {
 let failed = false;
 for (const name of names) {
   let workflow;
-  try { workflow = YAML.parse(await readFile(join(directory, name), 'utf8'), { strict: true, uniqueKeys: true }); }
+  let content;
+  try {
+    content = await readFile(join(directory, name), 'utf8');
+    workflow = YAML.parse(content, { strict: true, uniqueKeys: true });
+  }
   catch {
     process.stdout.write(`${name}: WORKFLOW_PARSE/BR6.7 workflow is not well-formed YAML\n`);
     failed = true;
     continue;
   }
   try {
+    if (name === METADATA_GUARD) {
+      if (changedPaths.some(path => path.toLowerCase().startsWith('.github/'))) {
+        throw new ContractError('CI_WORKFLOW_CHANGE', 'BR6.7',
+          'The protected base must decide a metadata-guard change');
+      }
+      if (digest(Buffer.from(content.replace(/\r\n/g, '\n'))) !== METADATA_GUARD_DIGEST) {
+        throw new ContractError('CI_GUARD_DRIFT', 'BR6.7',
+          'The protected-base metadata guard differs from its reviewed pin');
+      }
+      process.stdout.write(`${name}: accepted pinned protected-base metadata guard\n`);
+      continue;
+    }
     assertCiPolicy(workflow, { changedPaths });
     process.stdout.write(`${name}: accepted\n`);
   } catch (error) {

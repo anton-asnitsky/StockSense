@@ -22,6 +22,7 @@ const TOOL = Object.freeze({
 // resolves a mutable tag, and --pull=never requires the exact image locally.
 const IMAGE = /^(?:sha256:[0-9a-f]{64}|[a-z0-9]+(?:[.-][a-z0-9]+)+(?:\/[a-z0-9]+(?:[._-][a-z0-9]+)*)+@sha256:[0-9a-f]{64})$/;
 const SHA = /^sha256:[0-9a-f]{64}$/;
+const FIXTURE_ELEMENT = /^(?:[A-Za-z][A-Za-z0-9_.-]{0,127}|response:[A-Za-z][A-Za-z0-9]{0,96}:[1-5][0-9]{2}:application-json|message:[A-Za-z][A-Za-z0-9_.-]*(?::[A-Za-z][A-Za-z0-9_.-]*)?)$/;
 const VERSION = /^[1-9][0-9]*\.[0-9]+\.[0-9]+$/;
 const CANONICAL = new Set(['schema', 'openapi', 'asyncapi']);
 // Avoid PATH and current-directory executable search for untrusted checkouts.
@@ -163,7 +164,7 @@ function parseFixtureResults(stdout, entries) {
         Object.keys(row).sort().join(',') !== 'contractElementId,fixtureId,observed,revisionId,scenarioType' ||
         typeof row.fixtureId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(row.fixtureId) ||
         ids.has(row.fixtureId) || typeof row.contractElementId !== 'string' ||
-        !/^[A-Za-z][A-Za-z0-9_.-]{0,127}$/.test(row.contractElementId) ||
+        !FIXTURE_ELEMENT.test(row.contractElementId) ||
         !revisions.has(row.revisionId) || !['valid', 'invalid', 'compatibility'].includes(row.scenarioType) ||
         !['pass', 'fail'].includes(row.observed)) {
       fail('STANDARDS_OUTPUT', 'NFR6.2', 'Fixture worker returned an unsafe result');
