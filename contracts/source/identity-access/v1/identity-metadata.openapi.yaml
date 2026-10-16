@@ -1,0 +1,67 @@
+openapi: 3.1.2
+info:
+  title: StockSense Identity Metadata API
+  version: 1.0.0
+servers:
+  - url: /
+security:
+  - platformGrantReaderToken: [identity.platform-grant.read]
+paths:
+  /.well-known/openid-configuration:
+    get:
+      operationId: getOpenIdConfiguration
+      security: []
+      responses:
+        '200':
+          description: Issuer metadata with authorization, token, end-session and JWKS endpoints
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [issuer, authorization_endpoint, token_endpoint, jwks_uri]
+                properties:
+                  issuer: { type: string, format: uri }
+                  authorization_endpoint: { type: string, format: uri }
+                  token_endpoint: { type: string, format: uri }
+                  jwks_uri: { type: string, format: uri }
+                  end_session_endpoint: { type: string, format: uri }
+  /.well-known/openid-configuration/jwks:
+    get:
+      operationId: getJsonWebKeySet
+      security: []
+      responses:
+        '200':
+          description: Active and overlap-period public signing keys
+  /internal/v1/subjects/{subjectId}/platform-operator-grant:
+    parameters:
+      - in: path
+        name: subjectId
+        required: true
+        schema: { type: string, minLength: 1, maxLength: 200 }
+    get:
+      operationId: checkCurrentPlatformOperatorGrant
+      security:
+        - platformGrantReaderToken: [identity.platform-grant.read]
+      responses:
+        '200':
+          description: Current active platform-wide human grant for the requested subject
+          headers:
+            Cache-Control:
+              schema: { const: 'no-store' }
+          content:
+            application/json:
+              schema:
+                $ref: ./platform-operator-grant.schema.json
+        '403':
+          description: Grant missing, revoked, inactive, or subject ineligible; RFC 9457 problem
+        '503':
+          description: Authoritative grant state unavailable; caller must deny access
+components:
+  securitySchemes:
+    platformGrantReaderToken:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: /connect/token
+          scopes:
+            identity.platform-grant.read: Read current platform Operator grant for an authenticated human subject

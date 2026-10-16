@@ -1,0 +1,23 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://contracts.stocksense.local/bff/v1/provider-registry.schema.json
+title: BffProviderRegistry
+type: object
+required: [providers]
+properties:
+  providers:
+    type: array
+    minItems: 8
+    items:
+      type: object
+      required: [provider, openapiDocument, requiredCapabilities]
+      properties:
+        provider:
+          enum: [retail-data, supplier-knowledge, model-lifecycle, forecasting, planning-purchasing, assistant, audit-evidence, recovery-coordination]
+        openapiDocument: { type: string }
+        requiredCapabilities:
+          type: array
+          items: { type: string }
+        timeoutProfile: { enum: [interactive-read, interactive-command, long-running-job] }
+        retryProfile: { enum: [safe-read, idempotent-command, no-automatic-retry] }
+      additionalProperties: false
+additionalProperties: false

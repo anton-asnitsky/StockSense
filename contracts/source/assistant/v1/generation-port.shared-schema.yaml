@@ -1,0 +1,23 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://contracts.stocksense.local/ai/v1/generation-port.schema.json
+title: GenerationPort
+type: object
+required: [requestId, modelProfile, messages, tools, limits]
+properties:
+  requestId: { type: string, format: uuid }
+  modelProfile: { enum: [local-qwen, bedrock-configured] }
+  messages:
+    type: array
+    maxItems: 50
+    items: { type: object, required: [role, content], properties: { role: { enum: [system, user, assistant, tool] }, content: { type: string } } }
+  tools:
+    type: array
+    items: { type: object, required: [name, inputSchema], properties: { name: { type: string }, inputSchema: { type: object } } }
+  limits:
+    type: object
+    required: [maxInputTokens, maxOutputTokens, timeoutMs]
+    properties:
+      maxInputTokens: { type: integer, minimum: 1 }
+      maxOutputTokens: { type: integer, minimum: 1 }
+      timeoutMs: { type: integer, minimum: 1 }
+additionalProperties: false

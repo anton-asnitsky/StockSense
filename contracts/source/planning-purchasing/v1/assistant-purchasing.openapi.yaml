@@ -1,0 +1,61 @@
+openapi: 3.1.2
+info:
+  title: Planning-Purchasing Assistant Tools API
+  version: 1.0.0
+paths:
+  /api/v1/retailers/{retailerId}/assistant-tools/reviews:request:
+    parameters:
+      - in: path
+        name: retailerId
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: requestManualReviewForAssistant
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+      responses:
+        "202":
+          description: Review accepted with job ID, remaining allowance and reset time
+        "409":
+          description: A review is already active or idempotency payload differs
+        "429":
+          description: Three accepted manual requests used for the retailer-local day
+  /api/v1/retailers/{retailerId}/assistant-tools/purchase-drafts:
+    parameters:
+      - in: path
+        name: retailerId
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: createPurchaseDraftForAssistant
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Governed draft created; no order is submitted or approved
+        "403":
+          description: Current actor lacks planner authority
+        "422":
+          description: Proposed lines or evidence failed deterministic validation
+servers:
+  - url: /
+security:
+  - serviceToken: []
+components:
+  securitySchemes:
+    serviceToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

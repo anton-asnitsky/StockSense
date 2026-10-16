@@ -1,0 +1,12 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://contracts.stocksense.local/ai/v1/embedding-port.schema.json
+title: EmbeddingPort
+type: object
+required: [requestId, modelProfile, texts]
+properties:
+  requestId: { type: string, format: uuid }
+  modelProfile: { enum: [embeddinggemma, qwen-embedding] }
+  texts: { type: array, minItems: 1, items: { type: string } }
+  dimensions: { type: integer, minimum: 1 }
+  normalize: { type: boolean, default: true }
+additionalProperties: false

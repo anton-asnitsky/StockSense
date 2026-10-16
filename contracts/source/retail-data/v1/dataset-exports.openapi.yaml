@@ -1,0 +1,52 @@
+openapi: 3.1.2
+info:
+  title: Retail Data Model-Lifecycle Export API
+  version: 1.0.0
+servers:
+  - url: /
+security:
+  - serviceToken: []
+paths:
+  /api/v1/retailers/{retailerId}/dataset-exports:
+    post:
+      operationId: requestRetailDatasetExport
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema: { type: string, format: uuid }
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: { type: string }
+      responses:
+        '202':
+          description: Immutable export job accepted; Location identifies the job resource
+          headers:
+            Location:
+              schema: { type: string }
+        '409':
+          description: Idempotency conflict or stale source version
+  /api/v1/retailers/{retailerId}/dataset-exports/{jobId}:
+    parameters:
+      - in: path
+        name: retailerId
+        required: true
+        schema: { type: string, format: uuid }
+      - in: path
+        name: jobId
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      operationId: getRetailDatasetExport
+      responses:
+        '200':
+          description: Job status and checksummed artifact reference
+        '404':
+          description: Job not visible in this retailer context
+components:
+  securitySchemes:
+    serviceToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

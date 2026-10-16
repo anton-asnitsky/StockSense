@@ -1,0 +1,91 @@
+asyncapi: 3.0.0
+info:
+  title: StockSense Messaging Transport and Conformance Routes
+  version: 1.0.0
+  description: C23 reusable RabbitMQ routes and envelope boundaries. Message meaning and business effects remain with each producer and consumer.
+defaultContentType: application/json
+servers:
+  localRabbitMq:
+    host: rabbitmq.stocksense.svc.cluster.local:5672
+    protocol: amqp
+channels:
+  tenantMessages:
+    address: stocksense.audit.v1
+    messages:
+      tenantEnvelope:
+        $ref: '#/components/messages/tenantEnvelope'
+  tenantDeadLetters:
+    address: stocksense.audit.v1.dlq
+    messages:
+      tenantEnvelope:
+        $ref: '#/components/messages/tenantEnvelope'
+  globalIdentityMessages:
+    address: stocksense.identity.audit.global.v1
+    messages:
+      globalIdentityEnvelope:
+        $ref: '#/components/messages/globalIdentityEnvelope'
+  globalIdentityDeadLetters:
+    address: stocksense.identity.audit.global.v1.dlq
+    messages:
+      globalIdentityEnvelope:
+        $ref: '#/components/messages/globalIdentityEnvelope'
+operations:
+  publishTenantEnvelope:
+    action: send
+    channel: { $ref: '#/channels/tenantMessages' }
+  consumeTenantEnvelope:
+    action: receive
+    channel: { $ref: '#/channels/tenantMessages' }
+  deadLetterTenantEnvelope:
+    action: send
+    channel: { $ref: '#/channels/tenantDeadLetters' }
+  replayTenantEnvelope:
+    action: receive
+    channel: { $ref: '#/channels/tenantDeadLetters' }
+  publishGlobalIdentityEnvelope:
+    action: send
+    channel: { $ref: '#/channels/globalIdentityMessages' }
+  consumeGlobalIdentityEnvelope:
+    action: receive
+    channel: { $ref: '#/channels/globalIdentityMessages' }
+  deadLetterGlobalIdentityEnvelope:
+    action: send
+    channel: { $ref: '#/channels/globalIdentityDeadLetters' }
+  replayGlobalIdentityEnvelope:
+    action: receive
+    channel: { $ref: '#/channels/globalIdentityDeadLetters' }
+components:
+  messages:
+    tenantEnvelope:
+      name: TenantEnvelopeV1
+      title: Tenant-scoped C01 envelope
+      payload:
+        schemaFormat: 'application/schema+json;version=draft-2020-12'
+        schema:
+          $ref: 'https://contracts.stocksense.local/common/v1/message-envelope.schema.json'
+    globalIdentityEnvelope:
+      name: GlobalIdentityEnvelopeV1
+      title: Retailerless global identity C01 envelope
+      payload:
+        schemaFormat: 'application/schema+json;version=draft-2020-12'
+        schema:
+          $ref: 'https://contracts.stocksense.local/common/v1/global-identity-audit-envelope.schema.json'
+x-stocksense-conformance:
+  protocolProfile: messaging-platform/v1/protocol-compatibility.shared-schema.yaml
+  platformProfile: messaging-platform/v1/platform-profile.shared-schema.yaml
+  deliveryGuarantee: at-least-once
+  publisherConfirm: required
+  acknowledgeAfter: participant-inbox-and-effect-commit
+  authenticatedProducerBinding: before-publish-and-before-consume
+  canonicalPayloadDigest: sha256-rfc8785-data
+  envelopeMaximumBytes: 65536
+  maxTotalDeliveries: 5
+  backoffSecondsForAttempts2Through5: [1, 2, 4, 8]
+  deadLetterRetentionSeconds: 604800
+  replayAuthority: operator
+  replayAuditRequired: true
+  replayBatchMaximum: 100
+  replayIdentity: [messageId, idempotencyKey, payloadDigest]
+  ordering: no-global-order-claim
+  bootstrapPublishers: [identity-access, retail-data]
+  packageConsumers: [supplier-knowledge, model-lifecycle, forecasting, planning-purchasing, assistant, audit-evidence, recovery-coordination]

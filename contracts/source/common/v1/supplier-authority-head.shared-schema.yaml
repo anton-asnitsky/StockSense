@@ -1,0 +1,25 @@
+kind: vault-kv-authority-head
+name: SupplierSelectionAuthorityHead
+version: 1.0.0
+owner: U5 Supplier Knowledge
+store: existing-in-cluster-vault-kv-v2
+casRequired: true
+pathTemplate: stocksense/supplier-authority/v1/{retailerId}/{productId}
+writerIdentity: u5-supplier-knowledge-head-writer
+readerIdentity: u6-model-lifecycle-head-reader
+key: [retailerId, productId]
+fields: [schemaVersion, retailerId, productId, sourceVersion, acceptedTermVersion, state, revocationEpoch, placementGeneration, recoveryGeneration, sourceMutationId, updatedAt]
+digest: sha256-of-rfc8785-canonical-head-value
+authorityRevision: latest-vault-kv-v2-version
+states: [updating, active]
+rules:
+  - U5 may create and CAS-update only its retailer/product data paths; it may not delete, destroy, list or modify KV metadata
+  - U6 may read only the latest value and version for the same retailer/product; it may not write, list or read other secrets
+  - Vault audit is enabled; head values contain only version metadata and digests, never supplier terms or credentials
+  - current active-node read without an explicit historical version and same-key read-after-CAS consistency are deployment conformance requirements; stale follower, cache or unavailable active node fails closed
+  - U5 commits updating with CAS before any authoritative PostgreSQL or MongoDB mutation; no bypassing writer path is permitted
+  - U5 commits active with CAS only after authoritative records are durable and re-read under its local fence
+  - U6 reads the latest head on every new evaluation and checks version, digest, revocation epoch, scope and both generations against the signed selection and current tenant generation
+  - U6 persists the largest seen KV version per retailer/product and rejects a regression; after restore U5 must reconcile to the new recovery generation before selection or evaluation
+  - exact idempotent U5 transition returns the original Vault version; changed or stale CAS fails and keeps evaluation closed
+fixtures: [active-matching-accept, updating-reject, stale-version-reject, revoked-key-reject, missing-object-reject, changed-object-digest-reject, mongo-crash-leaves-updating, accepted-term-crash-leaves-updating, stale-follower-reject, recovery-generation-mismatch, cas-conflict, exact-replay]

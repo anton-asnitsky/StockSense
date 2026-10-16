@@ -1,0 +1,1836 @@
+openapi: 3.1.2
+info:
+  title: StockSense Recovery Coordination API
+  version: 1.0.0
+paths:
+  /internal/v1/recovery/participants/{participant}/registrations:
+    put:
+      operationId: registerRecoveryParticipantCapabilities
+      parameters:
+        - $ref: "#/components/parameters/Participant"
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      security:
+        - recoveryCoordinatorToken:
+            - recovery.participant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecoveryParticipantRegistrationRequest"
+      responses:
+        "200":
+          description: Compatible registration stored or matching current registration returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecoveryParticipantRegistration"
+        "403":
+          $ref: "#/components/responses/RecoveryProblem"
+        "409":
+          $ref: "#/components/responses/RecoveryProblem"
+        "422":
+          $ref: "#/components/responses/RecoveryProblem"
+  /api/v1/retailers/{retailerId}/recovery-runs:preview:
+    parameters:
+      - $ref: "#/components/parameters/RetailerId"
+    post:
+      operationId: previewRecoveryRun
+      security:
+        - recoveryOperatorDelegatedToken:
+            - recovery.operator
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecoveryPreviewRequest"
+      responses:
+        "200":
+          description: Scope, immutable roster snapshot, persisted preview plan and digest, generations, policy and bound confirmation token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecoveryPreviewResponse"
+        "401":
+          $ref: "#/components/responses/RecoveryProblem"
+        "403":
+          $ref: "#/components/responses/RecoveryProblem"
+        "409":
+          $ref: "#/components/responses/RecoveryProblem"
+        "422":
+          $ref: "#/components/responses/RecoveryProblem"
+  /api/v1/retailers/{retailerId}/recovery-runs:
+    parameters:
+      - $ref: "#/components/parameters/RetailerId"
+    post:
+      operationId: startRecoveryRun
+      security:
+        - recoveryOperatorDelegatedToken:
+            - recovery.operator
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - in: header
+          name: X-Recovery-Confirmation
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecoveryStartRequest"
+      responses:
+        "202":
+          description: Durable run accepted or matching idempotent result returned
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri-reference
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecoveryOperationHandle"
+        "401":
+          $ref: "#/components/responses/RecoveryProblem"
+        "403":
+          $ref: "#/components/responses/RecoveryProblem"
+        "409":
+          $ref: "#/components/responses/RecoveryProblem"
+        "422":
+          $ref: "#/components/responses/RecoveryProblem"
+  /api/v1/retailers/{retailerId}/recovery-runs/{runId}:
+    parameters:
+      - $ref: "#/components/parameters/RetailerId"
+      - $ref: "#/components/parameters/RunId"
+    get:
+      operationId: getRecoveryRun
+      security:
+        - recoveryOperatorDelegatedToken:
+            - recovery.operator
+      responses:
+        "200":
+          description: Phase, checkpoint, deadlines, immutable roster, terminal fencing inventory, reconciliation and outcome
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecoveryRunStatus"
+        "401":
+          $ref: "#/components/responses/RecoveryProblem"
+        "403":
+          $ref: "#/components/responses/RecoveryProblem"
+        "404":
+          $ref: "#/components/responses/RecoveryProblem"
+  /api/v1/retailers/{retailerId}/recovery-runs/{runId}:reconcile:
+    parameters:
+      - $ref: "#/components/parameters/RetailerId"
+      - $ref: "#/components/parameters/RunId"
+    post:
+      operationId: reconcileRecoveryRun
+      security:
+        - recoveryOperatorDelegatedToken:
+            - recovery.operator
+            - recovery.reconcile
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecoveryReconciliationRequest"
+      responses:
+        "202":
+          description: Reconciliation command accepted without clearing unresolved fences
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri-reference
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecoveryOperationHandle"
+        "401":
+          $ref: "#/components/responses/RecoveryProblem"
+        "403":
+          $ref: "#/components/responses/RecoveryProblem"
+        "409":
+          $ref: "#/components/responses/RecoveryProblem"
+        "422":
+          $ref: "#/components/responses/RecoveryProblem"
+  /api/v1/retailers/{retailerId}/recovery-runs/{runId}/manifest:
+    parameters:
+      - $ref: "#/components/parameters/RetailerId"
+      - $ref: "#/components/parameters/RunId"
+    get:
+      operationId: getRecoveryManifest
+      security:
+        - recoveryOperatorDelegatedToken:
+            - recovery.operator
+      responses:
+        "200":
+          description: Sealed versioned PostgreSQL/RabbitMQ recovery cut produced by this run; restore runs retrieve the source cut through its original run
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecoveryManifest"
+        "401":
+          $ref: "#/components/responses/RecoveryProblem"
+        "403":
+          $ref: "#/components/responses/RecoveryProblem"
+        "404":
+          $ref: "#/components/responses/RecoveryProblem"
+        "409":
+          $ref: "#/components/responses/RecoveryProblem"
+  /api/v1/retailers/{retailerId}/recovery-runs/{runId}/restore-execution:
+    parameters:
+      - $ref: "#/components/parameters/RetailerId"
+      - $ref: "#/components/parameters/RunId"
+    get:
+      operationId: getRestoreExecution
+      security:
+        - recoveryOperatorDelegatedToken:
+            - recovery.operator
+      responses:
+        "200":
+          description: Separate physical restore and owner-attestation evidence
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RestoreExecution"
+        "403":
+          $ref: "#/components/responses/RecoveryProblem"
+        "404":
+          $ref: "#/components/responses/RecoveryProblem"
+components:
+  securitySchemes:
+    recoveryCoordinatorToken:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: /connect/token
+          scopes:
+            recovery.participant: Register participant capabilities
+    recoveryOperatorDelegatedToken:
+      type: oauth2
+      description: Server-held delegated human access token acquired by the confidential Web BFF using authorization code with PKCE; never a client-credentials token.
+      flows:
+        authorizationCode:
+          authorizationUrl: /connect/authorize
+          tokenUrl: /connect/token
+          scopes:
+            recovery.operator: Preview, start and inspect a retailer recovery run as the current human Operator
+            recovery.reconcile: Reconcile a failed or uncertain run as the current human Operator
+      x-stocksense-claims:
+        issuer: configured-duende-issuer
+        audience: stocksense-recovery
+        client_id: stocksense-web-bff
+        subject: required-stable-human-sub
+        principalType: user
+        currentRetailerRole: Operator via Tenant Directory on every operation
+  parameters:
+    Participant:
+      in: path
+      name: participant
+      required: true
+      schema:
+        $ref: "#/components/schemas/RecoveryParticipantName"
+    RetailerId:
+      in: path
+      name: retailerId
+      required: true
+      schema:
+        type: string
+        format: uuid
+    RunId:
+      in: path
+      name: runId
+      required: true
+      schema:
+        type: string
+        format: uuid
+    IdempotencyKey:
+      in: header
+      name: Idempotency-Key
+      required: true
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 128
+  responses:
+    RecoveryProblem:
+      description: Stable RFC 9457 recovery failure
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/RecoveryProblemDetails"
+  schemas:
+    RecoveryParticipantName:
+      type: string
+      enum:
+        - identity-access
+        - tenant-directory
+        - inventory
+        - purchasing
+        - demand-history
+        - supplier-knowledge
+        - model-lifecycle
+        - forecasting
+        - replenishment
+        - assistant
+        - audit-evidence
+    RecoveryParticipantRegistrationRequest:
+      type: object
+      required:
+        - participant
+        - participantClass
+        - protocolVersion
+        - supportedPolicyVersions
+        - capabilities
+        - commandTransport
+        - commandRoute
+        - acknowledgementRoute
+        - restoreAttestationTransport
+        - restoreAttestationRoute
+        - workloadIdentity
+        - lifecycleState
+      properties:
+        participant:
+          $ref: "#/components/schemas/RecoveryParticipantName"
+        participantClass:
+          enum:
+            - A
+            - B
+            - C
+        protocolVersion:
+          const: 1.0.0
+        supportedPolicyVersions:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          contains:
+            const: recovery-policy-v1
+          items:
+            type: string
+        capabilities:
+          type: array
+          minItems: 4
+          maxItems: 4
+          uniqueItems: true
+          allOf:
+            - contains:
+                const: prepare
+            - contains:
+                const: close
+            - contains:
+                const: abort
+            - contains:
+                const: resume
+          items:
+            enum:
+              - prepare
+              - close
+              - abort
+              - resume
+        commandTransport:
+          enum:
+            - synchronous-http
+            - rabbitmq
+        commandRoute:
+          type: string
+          minLength: 1
+          maxLength: 300
+        acknowledgementRoute:
+          type: string
+          minLength: 1
+          maxLength: 300
+        restoreAttestationTransport:
+          enum:
+            - synchronous-http
+            - rabbitmq
+        restoreAttestationRoute:
+          type: string
+          minLength: 1
+          maxLength: 300
+        workloadIdentity:
+          type: string
+          minLength: 1
+          maxLength: 200
+        lifecycleState:
+          enum:
+            - ready
+            - draining
+            - unavailable
+        expectedRegistrationGeneration:
+          type:
+            - integer
+            - "null"
+          minimum: 1
+      additionalProperties: false
+    RecoveryParticipantRegistration:
+      type: object
+      required:
+        - registrationId
+        - registrationGeneration
+        - participant
+        - participantClass
+        - protocolVersion
+        - supportedPolicyVersions
+        - capabilities
+        - commandTransport
+        - commandRoute
+        - acknowledgementRoute
+        - restoreAttestationTransport
+        - restoreAttestationRoute
+        - workloadIdentity
+        - lifecycleState
+      properties:
+        registrationId:
+          type: string
+          format: uuid
+        registrationGeneration:
+          type: integer
+          minimum: 1
+        participant:
+          $ref: "#/components/schemas/RecoveryParticipantName"
+        participantClass:
+          enum:
+            - A
+            - B
+            - C
+        protocolVersion:
+          const: 1.0.0
+        supportedPolicyVersions:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          contains:
+            const: recovery-policy-v1
+          items:
+            type: string
+        capabilities:
+          type: array
+          minItems: 4
+          uniqueItems: true
+          allOf:
+            - contains:
+                const: prepare
+            - contains:
+                const: close
+            - contains:
+                const: abort
+            - contains:
+                const: resume
+          items:
+            enum:
+              - prepare
+              - close
+              - abort
+              - resume
+        commandTransport:
+          enum:
+            - synchronous-http
+            - rabbitmq
+        commandRoute:
+          type: string
+          minLength: 1
+          maxLength: 300
+        acknowledgementRoute:
+          type: string
+          minLength: 1
+          maxLength: 300
+        restoreAttestationTransport:
+          enum:
+            - synchronous-http
+            - rabbitmq
+        restoreAttestationRoute:
+          type: string
+          minLength: 1
+          maxLength: 300
+        workloadIdentity:
+          type: string
+          minLength: 1
+          maxLength: 200
+        lifecycleState:
+          enum:
+            - ready
+            - draining
+            - unavailable
+      additionalProperties: false
+    RecoveryRosterSnapshot:
+      type: object
+      required:
+        - runId
+        - retailerId
+        - placementGeneration
+        - recoveryGeneration
+        - policyVersion
+        - protocolVersion
+        - snapshottedAt
+        - coordinatorDeadlinesSeconds
+        - rosterDigest
+        - registrations
+      properties:
+        runId:
+          type: string
+          format: uuid
+        retailerId:
+          type: string
+          format: uuid
+        placementGeneration:
+          type: integer
+          minimum: 1
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+        policyVersion:
+          const: recovery-policy-v1
+        protocolVersion:
+          const: 1.0.0
+        snapshottedAt:
+          type: string
+          format: date-time
+        coordinatorDeadlinesSeconds:
+          type: object
+          required:
+            - registration
+            - allParticipantPrepare
+            - closeDrainEvidence
+            - localSnapshot
+            - globalAbort
+            - globalResumeAndReconciliation
+            - restartDurableResume
+          properties:
+            registration:
+              const: 60
+            allParticipantPrepare:
+              const: 300
+            closeDrainEvidence:
+              const: 300
+            localSnapshot:
+              const: 1800
+            globalAbort:
+              const: 300
+            globalResumeAndReconciliation:
+              const: 600
+            restartDurableResume:
+              const: 120
+          additionalProperties: false
+        rosterDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        registrations:
+          type: array
+          minItems: 11
+          maxItems: 11
+          items:
+            type: object
+            required:
+              - participant
+              - registrationId
+              - registrationGeneration
+              - participantClass
+              - commandTransport
+              - capabilities
+              - workloadIdentity
+              - commandRoute
+              - acknowledgementRoute
+              - restoreAttestationTransport
+              - restoreAttestationRoute
+              - requiredForSuccess
+              - deadlinesSeconds
+            properties:
+              participant:
+                $ref: "#/components/schemas/RecoveryParticipantName"
+              registrationId:
+                type: string
+                format: uuid
+              registrationGeneration:
+                type: integer
+                minimum: 1
+              participantClass:
+                enum:
+                  - A
+                  - B
+                  - C
+              commandTransport:
+                enum:
+                  - synchronous-http
+                  - rabbitmq
+              capabilities:
+                type: array
+                minItems: 4
+                maxItems: 4
+                uniqueItems: true
+                items:
+                  enum:
+                    - prepare
+                    - close
+                    - abort
+                    - resume
+              workloadIdentity:
+                type: string
+              commandRoute:
+                type: string
+              acknowledgementRoute:
+                type: string
+              restoreAttestationTransport:
+                enum:
+                  - synchronous-http
+                  - rabbitmq
+              restoreAttestationRoute:
+                type: string
+              requiredForSuccess:
+                const: true
+              deadlinesSeconds:
+                type: object
+                required:
+                  - prepare
+                  - close
+                  - abort
+                  - resume
+                properties:
+                  'prepare':
+                    type: integer
+                    minimum: 1
+                  close:
+                    type: integer
+                    minimum: 1
+                  abort:
+                    type: integer
+                    minimum: 1
+                  resume:
+                    type: integer
+                    minimum: 1
+                additionalProperties: false
+            additionalProperties: false
+      additionalProperties: false
+    RecoveryConfirmationBinding:
+      type: object
+      required:
+        - previewId
+        - reservedRunId
+        - operatorSubject
+        - operatorClientId
+        - retailerId
+        - operation
+        - previewDigest
+        - rosterDigest
+        - placementGeneration
+        - recoveryGeneration
+        - policyVersion
+        - expiresAt
+        - nonce
+      properties:
+        previewId:
+          type: string
+          format: uuid
+        reservedRunId:
+          type: string
+          format: uuid
+        operatorSubject:
+          type: string
+        operatorClientId:
+          const: stocksense-web-bff
+        retailerId:
+          type: string
+          format: uuid
+        operation:
+          enum:
+            - snapshot
+            - restore
+            - rollback
+            - tenant-migration
+        previewDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        rosterDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        placementGeneration:
+          type: integer
+          minimum: 1
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+        policyVersion:
+          const: recovery-policy-v1
+        expiresAt:
+          type: string
+          format: date-time
+        nonce:
+          type: string
+      additionalProperties: false
+    RecoveryPreviewRequest:
+      type: object
+      required:
+        - operation
+        - expectedPlacementGeneration
+        - expectedRecoveryGeneration
+        - policyVersion
+      properties:
+        operation:
+          enum:
+            - snapshot
+            - restore
+            - rollback
+            - tenant-migration
+        expectedPlacementGeneration:
+          type: integer
+          minimum: 1
+        expectedRecoveryGeneration:
+          type: integer
+          minimum: 1
+        policyVersion:
+          const: recovery-policy-v1
+        sourceRecoveryCutDigest:
+          type:
+            - string
+            - "null"
+          pattern: ^sha256:[0-9a-f]{64}$
+      additionalProperties: false
+    RecoveryPreviewPlan:
+      type: object
+      required:
+        - planVersion
+        - previewId
+        - previewDigest
+        - reservedRunId
+        - retailerId
+        - operation
+        - rosterDigest
+        - queueScopeDigest
+        - policyVersion
+        - placementGeneration
+        - recoveryGeneration
+        - sourceRecoveryCutDigest
+        - createdAt
+      properties:
+        planVersion:
+          const: 1.0.0
+        previewId:
+          type: string
+          format: uuid
+        previewDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        reservedRunId:
+          type: string
+          format: uuid
+        retailerId:
+          type: string
+          format: uuid
+        operation:
+          enum:
+            - snapshot
+            - restore
+            - rollback
+            - tenant-migration
+        rosterDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        queueScopeDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        policyVersion:
+          const: recovery-policy-v1
+        placementGeneration:
+          type: integer
+          minimum: 1
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+        sourceRecoveryCutDigest:
+          type:
+            - string
+            - "null"
+          pattern: ^sha256:[0-9a-f]{64}$
+        createdAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    RecoveryManifestSummary:
+      type: object
+      required:
+        - manifestVersion
+        - operation
+        - policyVersion
+        - recoveryObjectives
+        - expectedParticipantCount
+        - queueScopeDigest
+      properties:
+        manifestVersion:
+          const: 1.0.0
+        operation:
+          enum:
+            - snapshot
+            - restore
+            - rollback
+            - tenant-migration
+        policyVersion:
+          const: recovery-policy-v1
+        recoveryObjectives:
+          $ref: "#/components/schemas/RecoveryObjectives"
+        expectedParticipantCount:
+          const: 11
+        queueScopeDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+      additionalProperties: false
+    RecoveryPreviewResponse:
+      type: object
+      required:
+        - previewId
+        - previewPlan
+        - roster
+        - manifestSummary
+        - confirmationBinding
+        - confirmationToken
+      properties:
+        previewId:
+          type: string
+          format: uuid
+        previewPlan:
+          $ref: "#/components/schemas/RecoveryPreviewPlan"
+        roster:
+          $ref: "#/components/schemas/RecoveryRosterSnapshot"
+        manifestSummary:
+          $ref: "#/components/schemas/RecoveryManifestSummary"
+        confirmationBinding:
+          $ref: "#/components/schemas/RecoveryConfirmationBinding"
+        confirmationToken:
+          type: string
+          minLength: 32
+      additionalProperties: false
+    RecoveryStartRequest:
+      type: object
+      required:
+        - previewId
+        - operation
+        - previewDigest
+        - rosterDigest
+        - expectedPlacementGeneration
+        - expectedRecoveryGeneration
+      properties:
+        previewId:
+          type: string
+          format: uuid
+        operation:
+          enum:
+            - snapshot
+            - restore
+            - rollback
+            - tenant-migration
+        previewDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        rosterDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        expectedPlacementGeneration:
+          type: integer
+          minimum: 1
+        expectedRecoveryGeneration:
+          type: integer
+          minimum: 1
+      additionalProperties: false
+    RecoveryOperationHandle:
+      type: object
+      required:
+        - runId
+        - operation
+        - status
+        - acceptedAt
+        - statusUrl
+        - manifestUrl
+      properties:
+        runId:
+          type: string
+          format: uuid
+        operation:
+          enum:
+            - snapshot
+            - restore
+            - rollback
+            - tenant-migration
+            - reconcile
+        status:
+          enum:
+            - accepted
+            - registering
+            - preparing
+            - closing
+            - snapshotting
+            - aborting
+            - resuming
+            - reconciling
+        acceptedAt:
+          type: string
+          format: date-time
+        statusUrl:
+          type: string
+          format: uri-reference
+        manifestUrl:
+          type: string
+          format: uri-reference
+      additionalProperties: false
+    RecoveryParticipantCheckpoint:
+      type: object
+      required:
+        - participant
+        - registrationId
+        - command
+        - commandDeadlineAt
+        - checkpointReference
+        - checkpointDigest
+        - observedGeneration
+        - status
+        - fenceDisposition
+        - acknowledgedAt
+        - capturedAt
+      properties:
+        participant:
+          $ref: "#/components/schemas/RecoveryParticipantName"
+        registrationId:
+          type: string
+          format: uuid
+        command:
+          enum:
+            - prepare
+            - close
+            - abort
+            - resume
+        commandDeadlineAt:
+          type: string
+          format: date-time
+        checkpointReference:
+          type:
+            - string
+            - "null"
+        checkpointDigest:
+          type:
+            - string
+            - "null"
+          pattern: ^sha256:[0-9a-f]{64}$
+        observedGeneration:
+          type: integer
+          minimum: 1
+        status:
+          enum:
+            - pending
+            - acknowledged
+            - terminal
+            - failed
+            - stale
+            - digest-mismatch
+        fenceDisposition:
+          enum:
+            - active
+            - cleared
+            - terminally-suppressed
+            - unresolved
+        acknowledgedAt:
+          type: string
+          format: date-time
+        capturedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    RecoveryFencingEntry:
+      type: object
+      required:
+        - participant
+        - registrationId
+        - prepareDispatchRecordedAt
+        - preparePotentiallyDelivered
+        - abortRequired
+        - terminalPhase
+        - abortAcknowledgedAt
+        - fenceDisposition
+      properties:
+        participant:
+          $ref: "#/components/schemas/RecoveryParticipantName"
+        registrationId:
+          type: string
+          format: uuid
+        prepareDispatchRecordedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        preparePotentiallyDelivered:
+          type: boolean
+        abortRequired:
+          type: boolean
+        terminalPhase:
+          enum:
+            - none
+            - aborted
+            - resumed
+            - failed
+        abortAcknowledgedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        fenceDisposition:
+          enum:
+            - active
+            - cleared
+            - terminally-suppressed
+            - unresolved
+      additionalProperties: false
+    RecoveryParticipantCheckpointSet:
+      type: object
+      required:
+        - expectedParticipantCount
+        - capturedParticipantCount
+        - checkpointSetDigest
+        - status
+        - checkpoints
+        - closedAt
+      properties:
+        expectedParticipantCount:
+          const: 11
+        capturedParticipantCount:
+          type: integer
+          minimum: 0
+          maximum: 11
+        checkpointSetDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        status:
+          enum:
+            - open
+            - closed
+            - incomplete
+            - invalid
+        checkpoints:
+          type: array
+          maxItems: 44
+          items:
+            $ref: "#/components/schemas/RecoveryParticipantCheckpoint"
+        closedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+      additionalProperties: false
+    RecoveryTerminalOutcome:
+      type: string
+      enum:
+        - pending
+        - succeeded
+        - aborted
+        - safely-resumed
+        - failed
+    RecoveryFailure:
+      type: object
+      required:
+        - code
+        - failureClass
+        - phase
+        - occurredAt
+        - unresolvedParticipants
+        - retryable
+      properties:
+        code:
+          enum:
+            - RECOVERY_REGISTRATION_INCOMPLETE
+            - RECOVERY_PREPARE_ACK_TIMEOUT
+            - RECOVERY_CLOSE_CHECKPOINT_INVALID
+            - RECOVERY_POSTGRESQL_CUT_INVALID
+            - RECOVERY_QUEUE_CUT_INVALID
+            - RECOVERY_SNAPSHOT_TIMEOUT
+            - RECOVERY_SNAPSHOT_PARTIAL
+            - RECOVERY_SNAPSHOT_CHECKSUM_FAILED
+            - RECOVERY_ABORT_ACK_TIMEOUT
+            - RECOVERY_RESUME_ACK_TIMEOUT
+            - RECOVERY_RECONCILIATION_MISMATCH
+            - RECOVERY_STALE_RESPONSE
+            - RECOVERY_CONFLICTING_RESPONSE
+            - RECOVERY_DIGEST_MISMATCH
+        failureClass:
+          enum:
+            - registration
+            - prepare
+            - close-checkpoint
+            - postgresql-cut
+            - queue-cut
+            - snapshot
+            - abort
+            - resume
+            - reconciliation
+            - response-validation
+        phase:
+          enum:
+            - registering
+            - preparing
+            - closing
+            - snapshotting
+            - aborting
+            - resuming
+            - reconciling
+            - terminal
+        participant:
+          oneOf:
+            - $ref: "#/components/schemas/RecoveryParticipantName"
+            - type: "null"
+        occurredAt:
+          type: string
+          format: date-time
+        expected: {}
+        actual: {}
+        unresolvedParticipants:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/RecoveryParticipantName"
+        retryable:
+          type: boolean
+      additionalProperties: false
+    RecoveryReconciliationState:
+      type: object
+      required:
+        - status
+        - authoritativeChecks
+        - safeToResume
+        - unresolvedParticipants
+      properties:
+        status:
+          enum:
+            - not-required
+            - pending
+            - reconciled
+            - mismatch
+            - operator-action-required
+            - failed
+        authoritativeChecks:
+          type: array
+          maxItems: 100
+          items:
+            type: object
+            required:
+              - name
+              - outcome
+            properties:
+              name:
+                type: string
+              outcome:
+                enum:
+                  - passed
+                  - failed
+                  - unavailable
+              digest:
+                type:
+                  - string
+                  - "null"
+            additionalProperties: false
+        safeToResume:
+          type: boolean
+        unresolvedParticipants:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/RecoveryParticipantName"
+      additionalProperties: false
+    RecoveryRunStatus:
+      type: object
+      required:
+        - runId
+        - runVersion
+        - retailerId
+        - operation
+        - phase
+        - status
+        - previewDigest
+        - sourceRecoveryCutDigest
+        - producedRecoveryCutDigest
+        - terminalEvidenceDigest
+        - policyVersion
+        - placementGeneration
+        - recoveryGeneration
+        - activePhaseDeadlineAt
+        - roster
+        - participantCheckpointSet
+        - terminalFencingInventory
+        - reconciliation
+        - restoreExecutionId
+        - terminalOutcome
+        - failure
+        - updatedAt
+      properties:
+        runId:
+          type: string
+          format: uuid
+        runVersion:
+          type: integer
+          minimum: 1
+        retailerId:
+          type: string
+          format: uuid
+        operation:
+          enum:
+            - snapshot
+            - restore
+            - rollback
+            - tenant-migration
+        phase:
+          enum:
+            - registering
+            - preparing
+            - closing
+            - snapshotting
+            - aborting
+            - resuming
+            - reconciling
+            - terminal
+        status:
+          enum:
+            - accepted
+            - running
+            - aborting
+            - reconciling
+            - succeeded
+            - aborted
+            - safely-resumed
+            - failed
+        previewDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        sourceRecoveryCutDigest:
+          type:
+            - string
+            - "null"
+          pattern: ^sha256:[0-9a-f]{64}$
+        producedRecoveryCutDigest:
+          type:
+            - string
+            - "null"
+          pattern: ^sha256:[0-9a-f]{64}$
+        terminalEvidenceDigest:
+          type:
+            - string
+            - "null"
+          pattern: ^sha256:[0-9a-f]{64}$
+        policyVersion:
+          const: recovery-policy-v1
+        placementGeneration:
+          type: integer
+          minimum: 1
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+        activePhaseDeadlineAt:
+          type: string
+          format: date-time
+        roster:
+          $ref: "#/components/schemas/RecoveryRosterSnapshot"
+        participantCheckpointSet:
+          $ref: "#/components/schemas/RecoveryParticipantCheckpointSet"
+        terminalFencingInventory:
+          type: array
+          minItems: 11
+          maxItems: 11
+          items:
+            $ref: "#/components/schemas/RecoveryFencingEntry"
+        reconciliation:
+          $ref: "#/components/schemas/RecoveryReconciliationState"
+        restoreExecutionId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        terminalOutcome:
+          $ref: "#/components/schemas/RecoveryTerminalOutcome"
+        failure:
+          oneOf:
+            - $ref: "#/components/schemas/RecoveryFailure"
+            - type: "null"
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    RecoveryQueueCheckpoint:
+      type: object
+      required:
+        - vhost
+        - queueName
+        - queueIdentityDigest
+        - queueMessageDigest
+        - messageCount
+        - quiescedAt
+      properties:
+        vhost:
+          type: string
+        queueName:
+          type: string
+        queueIdentityDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        queueMessageDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        messageCount:
+          type: integer
+          minimum: 0
+        quiescedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    RecoveryManifest:
+      type: object
+      required:
+        - manifestVersion
+        - manifestId
+        - manifestDigest
+        - runId
+        - previewDigest
+        - retailerId
+        - operation
+        - barrierId
+        - barrierGeneration
+        - fencingEpoch
+        - placementGeneration
+        - recoveryGeneration
+        - policyVersion
+        - roster
+        - participantStateDigest
+        - recoveryObjectives
+        - backupCreatedAt
+        - backupExpiresAt
+        - postgresql
+        - rabbitmq
+        - participantCheckpointSet
+        - snapshot
+      properties:
+        manifestVersion:
+          const: 1.0.0
+        manifestId:
+          type: string
+          format: uuid
+        manifestDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        runId:
+          type: string
+          format: uuid
+        previewDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        retailerId:
+          type: string
+          format: uuid
+        operation:
+          enum:
+            - snapshot
+            - restore
+            - rollback
+            - tenant-migration
+        barrierId:
+          type: string
+          format: uuid
+        barrierGeneration:
+          type: integer
+          minimum: 1
+        fencingEpoch:
+          type: integer
+          minimum: 1
+        placementGeneration:
+          type: integer
+          minimum: 1
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+        policyVersion:
+          const: recovery-policy-v1
+        roster:
+          $ref: "#/components/schemas/RecoveryRosterSnapshot"
+        participantStateDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        recoveryObjectives:
+          $ref: "#/components/schemas/RecoveryObjectives"
+        backupCreatedAt:
+          type: string
+          format: date-time
+        backupExpiresAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: Null while OQ5 backup expiry is unapproved; an actual expiry requires a separately approved policy.
+        postgresql:
+          type: object
+          required:
+            - lsn
+            - transactionEvidenceReference
+            - transactionEvidenceDigest
+            - databaseSnapshotReference
+            - databaseSnapshotDigest
+          properties:
+            lsn:
+              type: string
+              pattern: ^[0-9A-F]+/[0-9A-F]+$
+            transactionEvidenceReference:
+              type: string
+              format: uri
+            transactionEvidenceDigest:
+              type: string
+              pattern: ^sha256:[0-9a-f]{64}$
+            databaseSnapshotReference:
+              type: string
+              format: uri
+            databaseSnapshotDigest:
+              type: string
+              pattern: ^sha256:[0-9a-f]{64}$
+          additionalProperties: false
+        rabbitmq:
+          type: object
+          required:
+            - brokerClusterIdentityDigest
+            - topologyDigest
+            - brokerSupportedQuiescedSnapshot
+            - brokerCheckpointReference
+            - brokerCheckpointDigest
+            - queueIdentityDigest
+            - queueMessageDigest
+            - queues
+          properties:
+            brokerClusterIdentityDigest:
+              type: string
+              pattern: ^sha256:[0-9a-f]{64}$
+            topologyDigest:
+              type: string
+              pattern: ^sha256:[0-9a-f]{64}$
+            brokerSupportedQuiescedSnapshot:
+              const: true
+            brokerCheckpointReference:
+              type: string
+              format: uri
+            brokerCheckpointDigest:
+              type: string
+              pattern: ^sha256:[0-9a-f]{64}$
+            queueIdentityDigest:
+              type: string
+              pattern: ^sha256:[0-9a-f]{64}$
+            queueMessageDigest:
+              type: string
+              pattern: ^sha256:[0-9a-f]{64}$
+            queues:
+              type: array
+              minItems: 1
+              items:
+                $ref: "#/components/schemas/RecoveryQueueCheckpoint"
+          additionalProperties: false
+        participantCheckpointSet:
+          $ref: "#/components/schemas/RecoveryParticipantCheckpointSet"
+        snapshot:
+          type: object
+          required:
+            - state
+            - reference
+            - digest
+            - capturedAt
+          properties:
+            state:
+              const: verified
+            reference:
+              type: string
+              format: uri
+            digest:
+              type: string
+              pattern: ^sha256:[0-9a-f]{64}$
+            capturedAt:
+              type: string
+              format: date-time
+          additionalProperties: false
+      additionalProperties: false
+    RecoveryObjectives:
+      type: object
+      required:
+        - status
+        - rpoSeconds
+        - rtoSeconds
+        - backupExpiryDays
+        - totalDiskGiB
+      properties:
+        status:
+          enum:
+            - pending-owner-decision
+            - approved
+        rpoSeconds:
+          type:
+            - integer
+            - "null"
+          minimum: 1
+        rtoSeconds:
+          type:
+            - integer
+            - "null"
+          minimum: 1
+        backupExpiryDays:
+          type:
+            - integer
+            - "null"
+          minimum: 1
+        totalDiskGiB:
+          type:
+            - number
+            - "null"
+          exclusiveMinimum: 0
+      if:
+        properties:
+          status:
+            const: pending-owner-decision
+        required:
+          - status
+      then:
+        properties:
+          rpoSeconds:
+            const: null
+          rtoSeconds:
+            const: null
+          backupExpiryDays:
+            const: null
+          totalDiskGiB:
+            const: null
+      else:
+        properties:
+          rpoSeconds:
+            type: integer
+            minimum: 1
+          rtoSeconds:
+            type: integer
+            minimum: 1
+          backupExpiryDays:
+            type: integer
+            minimum: 1
+          totalDiskGiB:
+            type: number
+            exclusiveMinimum: 0
+      additionalProperties: false
+    RestoreExecution:
+      type: object
+      required:
+        - restoreExecutionId
+        - runId
+        - executionVersion
+        - previewDigest
+        - sourceRecoveryCutDigest
+        - retailerId
+        - placementGeneration
+        - recoveryGeneration
+        - physicalRestoreStatus
+        - physicalRestoreDigest
+        - ownerAttestations
+        - retentionReconciliation
+        - exposureAllowed
+        - measuredDurationSeconds
+        - measuredRetainedGiB
+        - completedAt
+      properties:
+        restoreExecutionId:
+          type: string
+          format: uuid
+        runId:
+          type: string
+          format: uuid
+        executionVersion:
+          type: integer
+          minimum: 1
+        previewDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        sourceRecoveryCutDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        retailerId:
+          type: string
+          format: uuid
+        placementGeneration:
+          type: integer
+          minimum: 1
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+        physicalRestoreStatus:
+          enum:
+            - pending
+            - running
+            - verified
+            - failed
+        physicalRestoreDigest:
+          type:
+            - string
+            - "null"
+          pattern: ^sha256:[0-9a-f]{64}$
+        ownerAttestations:
+          type: array
+          minItems: 11
+          maxItems: 11
+          items:
+            type: object
+            required:
+              - participant
+              - runId
+              - restoreExecutionId
+              - registrationId
+              - rosterDigest
+              - transport
+              - sourceRecoveryCutDigest
+              - physicalRestoreDigest
+              - placementGeneration
+              - recoveryGeneration
+              - attestationEvidenceReference
+              - attestationEvidenceDigest
+              - restoredCheckpointDigest
+              - localFenceState
+              - localFenceDigest
+              - ownerStateDigest
+              - durableStateVersion
+              - workerQuiescence
+              - status
+            properties:
+              participant:
+                $ref: "#/components/schemas/RecoveryParticipantName"
+              runId:
+                type: string
+                format: uuid
+              restoreExecutionId:
+                type: string
+                format: uuid
+              registrationId:
+                type: string
+                format: uuid
+              rosterDigest:
+                type: string
+                pattern: ^sha256:[0-9a-f]{64}$
+              transport:
+                enum:
+                  - synchronous-http
+                  - rabbitmq
+              sourceRecoveryCutDigest:
+                type: string
+                pattern: ^sha256:[0-9a-f]{64}$
+              physicalRestoreDigest:
+                type:
+                  - string
+                  - "null"
+                pattern: ^sha256:[0-9a-f]{64}$
+              placementGeneration:
+                type: integer
+                minimum: 1
+              recoveryGeneration:
+                type: integer
+                minimum: 1
+              attestationEvidenceReference:
+                type:
+                  - string
+                  - "null"
+                format: uri
+              attestationEvidenceDigest:
+                type:
+                  - string
+                  - "null"
+                pattern: ^sha256:[0-9a-f]{64}$
+              restoredCheckpointDigest:
+                type:
+                  - string
+                  - "null"
+                pattern: ^sha256:[0-9a-f]{64}$
+              localFenceState:
+                enum:
+                  - active
+                  - unresolved
+              localFenceDigest:
+                type:
+                  - string
+                  - "null"
+                pattern: ^sha256:[0-9a-f]{64}$
+              ownerStateDigest:
+                type:
+                  - string
+                  - "null"
+                pattern: ^sha256:[0-9a-f]{64}$
+              durableStateVersion:
+                type:
+                  - integer
+                  - "null"
+                minimum: 1
+              workerQuiescence:
+                enum:
+                  - proven
+                  - not-applicable
+                  - unresolved
+              status:
+                enum:
+                  - verified
+                  - missing
+                  - stale
+                  - conflicting
+            additionalProperties: false
+        retentionReconciliation:
+          enum:
+            - pending
+            - verified
+            - failed
+        exposureAllowed:
+          type: boolean
+        measuredDurationSeconds:
+          type:
+            - number
+            - "null"
+          minimum: 0
+        measuredRetainedGiB:
+          type:
+            - number
+            - "null"
+          minimum: 0
+        completedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+      if:
+        properties:
+          exposureAllowed:
+            const: true
+        required:
+          - exposureAllowed
+      then:
+        properties:
+          physicalRestoreStatus:
+            const: verified
+          physicalRestoreDigest:
+            type: string
+            pattern: ^sha256:[0-9a-f]{64}$
+          retentionReconciliation:
+            const: verified
+          ownerAttestations:
+            items:
+              properties:
+                status:
+                  const: verified
+                localFenceState:
+                  const: active
+                physicalRestoreDigest:
+                  type: string
+                attestationEvidenceReference:
+                  type: string
+                restoredCheckpointDigest:
+                  type: string
+                localFenceDigest:
+                  type: string
+                ownerStateDigest:
+                  type: string
+                attestationEvidenceDigest:
+                  type: string
+                durableStateVersion:
+                  type: integer
+      additionalProperties: false
+    RecoveryReconciliationRequest:
+      type: object
+      required:
+        - expectedRunVersion
+        - action
+        - reason
+      properties:
+        expectedRunVersion:
+          type: integer
+          minimum: 1
+        action:
+          enum:
+            - retry-current-command
+            - compare-authoritative-state
+            - retry-from-checkpoint
+            - operator-rollback
+        participant:
+          oneOf:
+            - $ref: "#/components/schemas/RecoveryParticipantName"
+            - type: "null"
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+      additionalProperties: false
+    RecoveryProblemDetails:
+      type: object
+      required:
+        - type
+        - title
+        - status
+        - detail
+        - instance
+        - code
+        - correlationId
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri-reference
+        code:
+          enum:
+            - RECOVERY_AUTHENTICATION_INVALID
+            - RECOVERY_AUTHORITY_DENIED
+            - RECOVERY_OPERATOR_ROLE_REVOKED
+            - RECOVERY_OPERATOR_SUBJECT_MISMATCH
+            - RECOVERY_RUN_NOT_FOUND
+            - RECOVERY_CONFIRMATION_INVALID
+            - RECOVERY_GENERATION_STALE
+            - RECOVERY_IDEMPOTENCY_CONFLICT
+            - RECOVERY_REGISTRATION_MISSING
+            - RECOVERY_PROTOCOL_UNSUPPORTED
+            - RECOVERY_POLICY_UNSUPPORTED
+            - RECOVERY_DEADLINE_CLASS_MISMATCH
+            - RECOVERY_TRANSPORT_MISMATCH
+            - RECOVERY_ROUTE_MISMATCH
+            - RECOVERY_CAPABILITY_MISSING
+            - RECOVERY_WORKLOAD_IDENTITY_MISMATCH
+            - RECOVERY_REGISTRATION_STALE
+            - RECOVERY_MANIFEST_NOT_CLOSED
+            - RECOVERY_MANIFEST_VERIFICATION_FAILED
+            - RECOVERY_RECONCILIATION_REQUIRED
+            - RECOVERY_FENCE_UNRESOLVED
+            - RECOVERY_PERSISTENCE_UNAVAILABLE
+        correlationId:
+          type: string
+          format: uuid
+        participant:
+          type:
+            - string
+            - "null"
+        expected: {}
+        actual: {}
+        failure:
+          oneOf:
+            - $ref: "#/components/schemas/RecoveryFailure"
+            - type: "null"
+        reconciliation:
+          oneOf:
+            - $ref: "#/components/schemas/RecoveryReconciliationState"
+            - type: "null"
+      additionalProperties: false
+servers:
+  - url: /

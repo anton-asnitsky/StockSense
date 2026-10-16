@@ -1,0 +1,33 @@
+kind: in-process-port
+name: RetailOperationsInventoryPort
+version: 1.0.0
+deploymentBoundary: retail-operations-v1
+transaction:
+  owner: planning-purchasing-command-handler
+  database: shared-postgresql-instance
+  atomicEffects:
+    - purchasing-state-and-idempotency-result
+    - inventory-inbound-commitment
+    - stock-movement-on-receipt
+    - authoritative-audit-and-outbox
+  crossSchemaSql: prohibited
+operations:
+  getInventorySnapshot:
+    input: [retailerId, placementGeneration, asOf]
+    output: [inventoryVersion, movementWatermark, positions, datedInboundCommitments]
+  createApprovedCommitments:
+    input: [retailerId, orderId, expectedOrderVersion, approvedLines]
+    invariant: all-lines-or-none
+  cancelOpenCommitments:
+    input: [retailerId, orderId, expectedOrderVersion]
+    invariant: rejected-after-any-receipt
+  recordReceipt:
+    input: [retailerId, orderId, expectedOrderVersion, idempotencyKey, receiptLines]
+    invariant: cumulative-receipts-never-exceed-approved-quantity
+errors:
+  stale-authority: forbidden
+  stale-placement-generation: conflict
+  stale-order-version: conflict
+  idempotency-hash-mismatch: conflict
+  over-receipt: conflict
+  validation-failed: unprocessable

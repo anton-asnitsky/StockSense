@@ -1,0 +1,131 @@
+asyncapi: 3.0.0
+info: { title: StockSense Recovery Participant Protocol, version: 1.0.0 }
+defaultContentType: application/json
+channels:
+  recoveryCommands:
+    address: stocksense.recovery.command.v1.{participant}
+    parameters:
+      participant:
+        description: Registered Class B or C participant route identity from the run roster snapshot
+    messages:
+      recoveryCommand:
+        payload:
+          schemaFormat: 'application/schema+json;version=draft-2020-12'
+          schema:
+            allOf:
+              - $ref: 'https://contracts.stocksense.local/common/v1/message-envelope.schema.json'
+              - type: object
+                properties:
+                  messageType: { const: recovery.command }
+                  schemaVersion: { const: 1.0.0 }
+                  data:
+                    type: object
+                    required: [runId, commandId, registrationId, rosterDigest, command, recoveryGeneration, participant, policyVersion, deadlineClass, commandRoute, acknowledgementRoute, deadlineAt]
+                    properties:
+                      runId: { type: string, format: uuid }
+                      commandId: { type: string, format: uuid }
+                      registrationId: { type: string, format: uuid }
+                      rosterDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+                      command: { enum: [prepare, close, abort, resume] }
+                      recoveryGeneration: { type: integer, minimum: 1 }
+                      participant: { type: string }
+                      policyVersion: { const: recovery-policy-v1 }
+                      deadlineClass: { enum: [B, C] }
+                      commandRoute: { type: string, pattern: '^stocksense\.recovery\.command\.v1\.[a-z][a-z0-9-]*$' }
+                      acknowledgementRoute: { const: stocksense.recovery.acknowledgement.v1 }
+                      deadlineAt: { type: string, format: date-time }
+  recoveryAcknowledgements:
+    address: stocksense.recovery.acknowledgement.v1
+    messages:
+      recoveryAcknowledgement:
+        payload:
+          schemaFormat: 'application/schema+json;version=draft-2020-12'
+          schema:
+            allOf:
+              - $ref: 'https://contracts.stocksense.local/common/v1/message-envelope.schema.json'
+              - type: object
+                properties:
+                  messageType: { const: recovery.acknowledgement }
+                  schemaVersion: { const: 1.0.0 }
+                  data:
+                    type: object
+                    required: [runId, commandId, registrationId, rosterDigest, command, recoveryGeneration, participant, acknowledgementRoute, outcome, fenceDisposition, checkpointDigest, acknowledgedAt]
+                    properties:
+                      runId: { type: string, format: uuid }
+                      commandId: { type: string, format: uuid }
+                      registrationId: { type: string, format: uuid }
+                      rosterDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+                      command: { enum: [prepare, close, abort, resume] }
+                      recoveryGeneration: { type: integer, minimum: 1 }
+                      participant: { type: string }
+                      acknowledgementRoute: { const: stocksense.recovery.acknowledgement.v1 }
+                      outcome: { enum: [prepared, closed, aborted, resumed, terminal, failed] }
+                      fenceDisposition: { enum: [active, cleared, terminally-suppressed, unresolved] }
+                      checkpointDigest: { type: [string, 'null'] }
+                      acknowledgedAt: { type: string, format: date-time }
+  recoveryRestoreAttestations:
+    address: stocksense.recovery.restore-attestation.v1
+    messages:
+      recoveryRestoreAttestation:
+        payload:
+          schemaFormat: 'application/schema+json;version=draft-2020-12'
+          schema:
+            allOf:
+              - $ref: 'https://contracts.stocksense.local/common/v1/message-envelope.schema.json'
+              - type: object
+                properties:
+                  messageType: { const: recovery.participant.restore.attested }
+                  schemaVersion: { const: 1.0.0 }
+                  data:
+                    type: object
+                    required: [runId, restoreExecutionId, registrationId, rosterDigest, participant, recoveryCutManifestDigest, placementGeneration, recoveryGeneration, physicalRestoreDigest, restoredCheckpointDigest, localFenceState, localFenceDigest, ownerStateDigest, attestationEvidenceReference, attestationEvidenceDigest, durableStateVersion, workerQuiescence, attestedAt]
+                    properties:
+                      runId: { type: string, format: uuid }
+                      restoreExecutionId: { type: string, format: uuid }
+                      registrationId: { type: string, format: uuid }
+                      rosterDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+                      participant: { enum: [inventory, purchasing, demand-history, supplier-knowledge, model-lifecycle, forecasting, replenishment, assistant, audit-evidence] }
+                      recoveryCutManifestDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+                      placementGeneration: { type: integer, minimum: 1 }
+                      recoveryGeneration: { type: integer, minimum: 1 }
+                      physicalRestoreDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+                      restoredCheckpointDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+                      localFenceState: { const: active }
+                      localFenceDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+                      ownerStateDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+                      attestationEvidenceReference: { type: string, format: uri }
+                      attestationEvidenceDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+                      durableStateVersion: { type: integer, minimum: 1 }
+                      workerQuiescence: { enum: [proven, not-applicable] }
+                      attestedAt: { type: string, format: date-time }
+                    if: { properties: { participant: { const: supplier-knowledge } }, required: [participant] }
+                    then: { properties: { workerQuiescence: { const: proven } } }
+                    additionalProperties: false
+operations:
+  dispatchRecoveryCommand:
+    action: send
+    channel: { $ref: '#/channels/recoveryCommands' }
+  handleRecoveryCommand:
+    action: receive
+    channel: { $ref: '#/channels/recoveryCommands' }
+  sendRecoveryAcknowledgement:
+    action: send
+    channel: { $ref: '#/channels/recoveryAcknowledgements' }
+  collectRecoveryAcknowledgement:
+    action: receive
+    channel: { $ref: '#/channels/recoveryAcknowledgements' }
+  sendRestoreAttestation:
+    action: send
+    channel: { $ref: '#/channels/recoveryRestoreAttestations' }
+  collectRestoreAttestation:
+    action: receive
+    channel: { $ref: '#/channels/recoveryRestoreAttestations' }
+x-stocksense-recovery:
+  requiredRoster: versioned-policy-plus-capability-registration
+  commandRoutePattern: stocksense.recovery.command.v1.{participant}
+  acknowledgementRoute: stocksense.recovery.acknowledgement.v1
+  missingOrIncompatibleParticipant: stop-before-prepare
+  prepareDispatchInventory: durable-before-send
+  abortTargets: every-potentially-delivered-participant
+  latePrepareAfterAbort: return-terminal-disposition-without-fence
+  restoreAttestation: manifest-and-generation-bound-before-exposure

@@ -1,0 +1,120 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://contracts.stocksense.local/messaging-platform/v1/protocol-compatibility.shared-schema.yaml
+title: MessagingProtocolCompatibilityManifest
+description: C22 canonical definition; instance candidates live under contracts/profiles/messaging-platform.
+type: object
+required: [kind, version, protocol, packages, bootstrapPublishers, conformance, wireRules, breakingChange]
+properties:
+  kind: { const: messaging-protocol-compatibility-manifest }
+  version: { $ref: '#/$defs/version' }
+  protocol:
+    type: object
+    required: [owner, name, semanticVersion, asyncapiBaseline, envelopeSchemas]
+    properties:
+      owner: { const: contracts }
+      name: { const: stocksense-messaging }
+      semanticVersion: { $ref: '#/$defs/version' }
+      asyncapiBaseline: { const: 3.0.0 }
+      envelopeSchemas:
+        type: object
+        required: [tenant, globalIdentity]
+        properties:
+          tenant: { const: common/v1/message-envelope.schema.json }
+          globalIdentity: { const: common/v1/global-identity-audit-envelope.schema.json }
+        additionalProperties: false
+    additionalProperties: false
+  packages:
+    type: array
+    minItems: 2
+    maxItems: 2
+    items: { $ref: '#/$defs/package' }
+    allOf:
+      - contains: { type: object, properties: { language: { const: dotnet } }, required: [language] }
+      - contains: { type: object, properties: { language: { const: python } }, required: [language] }
+  bootstrapPublishers:
+    type: array
+    minItems: 2
+    maxItems: 2
+    items: { $ref: '#/$defs/bootstrapPublisher' }
+    allOf:
+      - contains: { type: object, properties: { owner: { const: identity-access } }, required: [owner] }
+      - contains: { type: object, properties: { owner: { const: retail-data } }, required: [owner] }
+  conformance:
+    type: object
+    required: [fixtureVersion, requiredSuites, crossLanguageResult, bootstrapPublisherResult]
+    properties:
+      fixtureVersion: { $ref: '#/$defs/version' }
+      requiredSuites: { $ref: '#/$defs/allSuites' }
+      crossLanguageResult: { const: required }
+      bootstrapPublisherResult: { const: required-per-service-for-applicable-suites }
+    additionalProperties: false
+  wireRules:
+    type: object
+    required: [canonicalization, digest, authenticatedProducerBinding, envelopeMaximumBytes, maxTotalDeliveries, initialDeliveryAttempt, deterministicBackoffSecondsForAttempts2Through5, backoffFormula, deadLetterRetentionDays, authorizedReplayBatchMaximum]
+    properties:
+      canonicalization: { const: RFC-8785 }
+      digest: { const: sha256-of-canonical-data }
+      authenticatedProducerBinding: { const: token-subject-client-audience-must-match-envelope-and-registration }
+      envelopeMaximumBytes: { const: 65536 }
+      maxTotalDeliveries: { const: 5 }
+      initialDeliveryAttempt: { const: 1 }
+      deterministicBackoffSecondsForAttempts2Through5: { const: [1, 2, 4, 8] }
+      backoffFormula: { const: min-2-power-attempt-minus-2-and-30-seconds-no-jitter }
+      deadLetterRetentionDays: { const: 7 }
+      authorizedReplayBatchMaximum: { const: 100 }
+    additionalProperties: false
+  breakingChange:
+    type: object
+    required: [protocol, package]
+    properties:
+      protocol: { const: new-major-and-routing-identity }
+      package: { const: independent-major-with-declared-protocol-range }
+    additionalProperties: false
+additionalProperties: false
+$defs:
+  version: { type: string, pattern: '^[1-9][0-9]*\.[0-9]+\.[0-9]+$' }
+  protocolRange: { type: string, pattern: '^>=[1-9][0-9]*\.[0-9]+\.[0-9]+ <[1-9][0-9]*\.[0-9]+\.[0-9]+$' }
+  suite:
+    enum: [tenant-envelope, global-identity-envelope, cross-profile-rejection, authenticated-producer, publisher-confirm, exact-replay, changed-payload-conflict, poison-message, retry-expiry, dead-letter, authorized-replay, authoritative-reconciliation, ordering, payload-limit, telemetry]
+  allSuites:
+    type: array
+    minItems: 15
+    maxItems: 15
+    uniqueItems: true
+    items: { $ref: '#/$defs/suite' }
+  tenantSuites:
+    type: array
+    minItems: 13
+    maxItems: 13
+    uniqueItems: true
+    items:
+      enum: [tenant-envelope, authenticated-producer, publisher-confirm, exact-replay, changed-payload-conflict, poison-message, retry-expiry, dead-letter, authorized-replay, authoritative-reconciliation, ordering, payload-limit, telemetry]
+  package:
+    type: object
+    required: [language, owner, package, semanticVersion, supportedProtocolRange]
+    properties:
+      language: { enum: [dotnet, python] }
+      owner: { const: messaging-platform }
+      package: { type: string, minLength: 1 }
+      semanticVersion: { $ref: '#/$defs/version' }
+      supportedProtocolRange: { $ref: '#/$defs/protocolRange' }
+    allOf:
+      - if: { properties: { language: { const: dotnet } }, required: [language] }
+        then: { properties: { package: { const: StockSense.Messaging } } }
+      - if: { properties: { language: { const: python } }, required: [language] }
+        then: { properties: { package: { const: stocksense-messaging } } }
+    additionalProperties: false
+  bootstrapPublisher:
+    type: object
+    required: [owner, implementation, protocolRange, fixtures]
+    properties:
+      owner: { enum: [identity-access, retail-data] }
+      implementation: { const: service-local }
+      protocolRange: { $ref: '#/$defs/protocolRange' }
+      fixtures: { type: array }
+    allOf:
+      - if: { properties: { owner: { const: identity-access } }, required: [owner] }
+        then: { properties: { fixtures: { $ref: '#/$defs/allSuites' } } }
+      - if: { properties: { owner: { const: retail-data } }, required: [owner] }
+        then: { properties: { fixtures: { $ref: '#/$defs/tenantSuites' } } }
+    additionalProperties: false

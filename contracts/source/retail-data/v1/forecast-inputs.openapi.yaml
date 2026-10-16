@@ -1,0 +1,19 @@
+openapi: 3.1.2
+info: { title: Retail Data Forecasting API, version: 1.0.0 }
+servers: [{ url: / }]
+security: [{ serviceToken: [] }]
+paths:
+  /api/v1/retailers/{retailerId}/forecast-inputs:
+    get:
+      operationId: getForecastInputs
+      parameters:
+        - { in: path, name: retailerId, required: true, schema: { type: string, format: uuid } }
+        - { in: query, name: asOf, required: true, schema: { type: string, format: date-time } }
+        - { in: query, name: sourceVersion, required: true, schema: { type: string } }
+      responses:
+        '200': { description: 'Demand observations, promotions and retailer-local calendar through asOf' }
+        '403': { description: Current membership or machine authority validation failed }
+        '409': { description: Source version or placement generation is stale }
+components:
+  securitySchemes:
+    serviceToken: { type: http, scheme: bearer, bearerFormat: JWT }

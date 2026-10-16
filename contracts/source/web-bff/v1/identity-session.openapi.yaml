@@ -1,0 +1,70 @@
+openapi: 3.1.2
+info:
+  title: StockSense BFF Identity Contract
+  version: 1.0.0
+paths:
+  /auth/login:
+    get:
+      operationId: beginLogin
+      parameters:
+        - in: query
+          name: returnUrl
+          schema:
+            type: string
+            pattern: ^/
+      responses:
+        "302":
+          description: Redirect to the configured identity provider
+      security: []
+  /auth/callback:
+    get:
+      operationId: completeLogin
+      description: Browser continuation only after the BFF middleware has validated and consumed the one-time OIDC response at /signin-oidc. This is not a registered OAuth redirect URI.
+      responses:
+        "302":
+          description: Establish rotated BFF session and redirect locally
+        "400":
+          description: Missing, invalid, direct or replayed validated continuation
+      security: []
+  /signin-oidc:
+    get:
+      operationId: receiveRegisteredOidcRedirect
+      description: Sole registered BFF OIDC redirect; server-side middleware validates state, nonce, PKCE and one-time code before any browser continuation.
+      responses:
+        "302":
+          description: Redirect to the local post-validation browser continuation
+        "400":
+          description: Invalid or replayed OIDC response
+      security: []
+  /signout-callback-oidc:
+    get:
+      operationId: receiveRegisteredOidcLogoutCallback
+      description: Registered BFF logout callback; never restores an invalidated session.
+      responses:
+        "302":
+          description: Redirect to the local signed-out page
+      security: []
+  /auth/logout:
+    post:
+      operationId: logout
+      responses:
+        "204":
+          description: BFF session invalidated
+  /api/v1/session:
+    get:
+      operationId: getCurrentSession
+      responses:
+        "200":
+          description: Browser-safe identity and available retailer contexts
+        "401":
+          description: Session missing, expired, revoked or replayed
+servers:
+  - url: /
+security:
+  - bffSession: []
+components:
+  securitySchemes:
+    bffSession:
+      type: apiKey
+      in: cookie
+      name: __Host-stocksense-session

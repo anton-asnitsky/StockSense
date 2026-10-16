@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": false,
+    "strictNullChecks": true,
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*.mjs", "scripts/**/*.mjs"],
+  "exclude": ["node_modules"]
+  // Tests are deliberately outside checkJs. They assert on thrown ContractError
+  // codes, where a catch predicate's argument is `unknown`, and they inject
+  // narrower doubles than the production seams accept. Type-checking the shipped
+  // implementation is the useful signal; type-checking the doubles is not.
+}

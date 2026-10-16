@@ -1,0 +1,113 @@
+openapi: 3.1.2
+info: { title: Model Lifecycle Supplier-Policy Evaluation API, version: 1.0.0 }
+servers: [{ url: / }]
+security: [{ serviceToken: [] }]
+paths:
+  /api/v1/retailers/{retailerId}/supplier-policy-evaluations:
+    post:
+      operationId: requestSupplierPolicyEvaluation
+      description: |
+        U8 forwards U5's signed selection metadata and content-addressed reference,
+        never client-authored term bytes or a caller-supplied object URL. U6 fetches
+        the immutable bytes from its configured object-store namespace and verifies
+        their RFC 8785 SHA-256 digest, Ed25519 signature, non-revoked signer,
+        retailer/product/requester scope, expiry and requester authority. For every
+        new evaluation U6 independently reads the latest U5-published active
+        SupplierSelectionAuthorityHead from Vault KV v2 through its narrow read-only
+        identity. The current active-node read must match the signed selection's
+        source and accepted-term versions, authorityRevision, authorityHeadDigest,
+        revocation epoch and placement/recovery generations. Unavailable, updating,
+        stale, revoked, conflicting or tampered authority fails closed. U6 persists
+        verified selection evidence before publishing a decision; an exact
+        Idempotency-Key replay returns the durable prior result.
+      parameters:
+        - { in: path, name: retailerId, required: true, schema: { type: string, format: uuid } }
+        - { in: header, name: Idempotency-Key, required: true, schema: { type: string, minLength: 16, maxLength: 128 } }
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/SupplierPolicyEvaluationRequest' } } }
+      responses:
+        '202': { description: Durable evaluation accepted or exact replay returned, content: { application/json: { schema: { $ref: '#/components/schemas/SupplierPolicyEvaluationStatus' } } } }
+        '403': { description: Current requester authority or retailer scope denied }
+        '409': { description: 'Selection version, placement generation or idempotency payload is stale' }
+        '410': { description: Selection or signer revoked or expired }
+        '422': { description: 'Digest, signature or canonical payload validation failed' }
+        '503': { description: 'Immutable object store, authoritative Vault head or trusted signer registry unavailable' }
+  /api/v1/retailers/{retailerId}/supplier-policy-evaluations/{evaluationRunId}:
+    get:
+      operationId: getSupplierPolicyEvaluation
+      parameters:
+        - { in: path, name: retailerId, required: true, schema: { type: string, format: uuid } }
+        - { in: path, name: evaluationRunId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: 'Durable status, decision and verified selection evidence', content: { application/json: { schema: { $ref: '#/components/schemas/SupplierPolicyEvaluationStatus' } } } }
+        '404': { description: Evaluation absent or outside the authorized retailer context }
+components:
+  securitySchemes:
+    serviceToken: { type: http, scheme: bearer, bearerFormat: JWT }
+  schemas:
+    SupplierPolicyEvaluationRequest:
+      type: object
+      required: [selection, requesterSubject, placementGeneration, recoveryGeneration]
+      properties:
+        selection: { $ref: '#/components/schemas/SealedSupplierSelection' }
+        requesterSubject: { type: string, minLength: 1 }
+        placementGeneration: { type: integer, minimum: 1 }
+        recoveryGeneration: { type: integer, minimum: 1 }
+      additionalProperties: false
+    SealedSupplierSelection:
+      type: object
+      required: [selectionId, retailerId, productId, requesterSubject, payloadReference, payloadDigest, sourceVersion, acceptedTermVersion, authorityRevision, authorityHeadDigest, signerKeyId, algorithm, signature, sealedAt, expiresAt]
+      properties:
+        selectionId: { type: string, format: uuid }
+        retailerId: { type: string, format: uuid }
+        productId: { type: string, format: uuid }
+        requesterSubject: { type: string, minLength: 1 }
+        payloadReference: { $ref: '#/components/schemas/SelectionPayloadReference' }
+        payloadDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+        sourceVersion: { type: string, minLength: 1 }
+        acceptedTermVersion: { type: string, minLength: 1 }
+        authorityRevision: { type: integer, minimum: 1 }
+        authorityHeadDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+        signerKeyId: { type: string, minLength: 1 }
+        algorithm: { const: Ed25519 }
+        signature: { type: string, contentEncoding: base64 }
+        sealedAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+      additionalProperties: false
+    SelectionPayloadReference:
+      type: object
+      required: [storeId, contentKey, sha256, lengthBytes]
+      properties:
+        storeId: { const: supplier-selections-v1 }
+        contentKey: { type: string, pattern: '^sha256/[0-9a-f]{64}$' }
+        sha256: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+        lengthBytes: { type: integer, minimum: 1, maximum: 65536 }
+      additionalProperties: false
+    SupplierPolicyEvaluationStatus:
+      type: object
+      required: [evaluationRunId, retailerId, selectionId, selectionDigest, status, verifiedEvidence]
+      properties:
+        evaluationRunId: { type: string, format: uuid }
+        retailerId: { type: string, format: uuid }
+        selectionId: { type: string, format: uuid }
+        selectionDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+        status: { enum: [queued, verifying, evaluating, completed, rejected, failed] }
+        verifiedEvidence:
+          oneOf:
+            - type: object
+              required: [payloadReference, payloadDigest, signerKeyId, signerStatusVersion, sourceVersion, acceptedTermVersion, authorityRevision, authorityHeadDigest, verifiedAt]
+              properties:
+                payloadReference: { $ref: '#/components/schemas/SelectionPayloadReference' }
+                payloadDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+                signerKeyId: { type: string, minLength: 1 }
+                signerStatusVersion: { type: integer, minimum: 1 }
+                sourceVersion: { type: string, minLength: 1 }
+                acceptedTermVersion: { type: string, minLength: 1 }
+                authorityRevision: { type: integer, minimum: 1 }
+                authorityHeadDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+                verifiedAt: { type: string, format: date-time }
+              additionalProperties: false
+            - type: 'null'
+        decisionDigest: { type: [string, 'null'], pattern: '^sha256:[0-9a-f]{64}$' }
+      additionalProperties: false

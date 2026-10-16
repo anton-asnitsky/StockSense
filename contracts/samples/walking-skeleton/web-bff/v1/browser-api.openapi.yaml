@@ -1,0 +1,494 @@
+openapi: 3.1.2
+info:
+  title: StockSense Browser API
+  version: 1.0.0
+  x-contract-owner: web-experience
+  x-contract-package: stocksense-contracts
+  x-contract-protocol-version: 1.0.0
+servers:
+  - { url: /, description: Same-origin Web BFF }
+paths:
+  /api/v1/session:
+    get:
+      operationId: getSession
+      responses:
+        '200': { description: 'Session, roles, authorized retailer choices and contract metadata', content: { application/json: { schema: { $ref: '#/components/schemas/SessionResponse' } } } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/session/csrf:
+    get:
+      operationId: bootstrapCsrf
+      responses:
+        '200':
+          description: Session-bound CSRF token; bootstrap and every rotation are non-cacheable
+          headers: { Cache-Control: { schema: { const: 'no-store' } }, Pragma: { schema: { const: 'no-cache' } } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/CsrfTokenResponse' } } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/retailers/{retailerId}/dashboard:
+    parameters: [{ $ref: '#/components/parameters/RetailerId' }]
+    get:
+      operationId: getDashboard
+      parameters: [{ $ref: '#/components/parameters/IfNoneMatch' }]
+      responses:
+        '200': { description: 'Typed inventory, forecast and review aggregate including empty, stale, unavailable and denied sections', content: { application/json: { schema: { $ref: '#/components/schemas/AggregateResponse' } } } }
+        '304': { description: Aggregate unchanged }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/retailers/{retailerId}/imports:
+    parameters: [{ $ref: '#/components/parameters/RetailerId' }]
+    post:
+      operationId: createImport
+      parameters: [{ $ref: '#/components/parameters/Csrf' }, { $ref: '#/components/parameters/Idempotency' }, { $ref: '#/components/parameters/UploadLength' }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: '#/components/schemas/ImportRequest' }
+            x-stocksense-max-bytes: 26214400
+      responses:
+        '202': { $ref: '#/components/responses/OperationAccepted' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '415': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/retailers/{retailerId}/reviews:request:
+    parameters: [{ $ref: '#/components/parameters/RetailerId' }]
+    post:
+      operationId: requestManualReview
+      parameters: [{ $ref: '#/components/parameters/Csrf' }, { $ref: '#/components/parameters/Idempotency' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ManualReviewRequest' } } } }
+      responses:
+        '202': { $ref: '#/components/responses/OperationAccepted' }
+        '429': { $ref: '#/components/responses/Problem' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/retailers/{retailerId}/purchase-drafts:
+    parameters: [{ $ref: '#/components/parameters/RetailerId' }]
+    post:
+      operationId: createPurchaseDraft
+      parameters: [{ $ref: '#/components/parameters/Csrf' }, { $ref: '#/components/parameters/Idempotency' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PurchaseDraftRequest' } } } }
+      responses:
+        '201': { description: 'Draft and aggregate version', headers: { X-CSRF-Token: { $ref: '#/components/headers/RotatedCsrf' } }, content: { application/json: { schema: { $ref: '#/components/schemas/PurchaseAggregateResponse' } } } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/retailers/{retailerId}/purchase-drafts/{proposalId}:
+    parameters: [{ $ref: '#/components/parameters/RetailerId' }, { in: path, name: proposalId, required: true, schema: { type: string, format: uuid } }]
+    patch:
+      operationId: editPurchaseDraft
+      parameters: [{ $ref: '#/components/parameters/Csrf' }, { $ref: '#/components/parameters/Idempotency' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PurchaseDraftRequest' } } } }
+      responses:
+        '200': { description: 'Updated draft and aggregate version', headers: { X-CSRF-Token: { $ref: '#/components/headers/RotatedCsrf' } }, content: { application/json: { schema: { $ref: '#/components/schemas/PurchaseAggregateResponse' } } } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/retailers/{retailerId}/purchase-orders/{orderId}/{command}:
+    parameters:
+      - { $ref: '#/components/parameters/RetailerId' }
+      - { in: path, name: orderId, required: true, schema: { type: string, format: uuid } }
+      - { in: path, name: command, required: true, schema: { enum: [submit, approve, reject, cancel, record-receipt] } }
+    post:
+      operationId: transitionPurchaseOrder
+      parameters: [{ $ref: '#/components/parameters/Csrf' }, { $ref: '#/components/parameters/Idempotency' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PurchaseCommandRequest' } } } }
+      responses:
+        '200': { description: 'Transition result and aggregate version', headers: { X-CSRF-Token: { $ref: '#/components/headers/RotatedCsrf' } }, content: { application/json: { schema: { $ref: '#/components/schemas/PurchaseAggregateResponse' } } } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/retailers/{retailerId}/assistant/conversations/{conversationId}/turns:
+    parameters: [{ $ref: '#/components/parameters/RetailerId' }, { in: path, name: conversationId, required: true, schema: { type: string, format: uuid } }]
+    post:
+      operationId: createAssistantTurn
+      parameters: [{ $ref: '#/components/parameters/Csrf' }, { $ref: '#/components/parameters/Idempotency' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AssistantTurnRequest' } } } }
+      responses:
+        '202': { $ref: '#/components/responses/OperationAccepted' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/retailers/{retailerId}/assistant/conversations/{conversationId}/events:
+    parameters: [{ $ref: '#/components/parameters/RetailerId' }, { in: path, name: conversationId, required: true, schema: { type: string, format: uuid } }]
+    get:
+      operationId: streamAssistantEvents
+      parameters: [{ in: header, name: Last-Event-ID, required: false, schema: { type: string, maxLength: 128 } }]
+      responses:
+        '200': { description: 'Ordered typed SSE stream with contiguous resumable sequence', content: { text/event-stream: { schema: { $ref: '#/components/schemas/AssistantStreamEvent' } } } }
+        '409': { description: Resume cursor expired; client must fetch the snapshot }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/retailers/{retailerId}/assistant/conversations/{conversationId}/snapshot:
+    parameters: [{ $ref: '#/components/parameters/RetailerId' }, { in: path, name: conversationId, required: true, schema: { type: string, format: uuid } }]
+    get:
+      operationId: getAssistantSnapshot
+      parameters: [{ in: query, name: afterSequence, required: false, schema: { type: integer, minimum: 0 } }]
+      responses:
+        '200': { description: 'Bounded conversation snapshot and latest resumable sequence', content: { application/json: { schema: { $ref: '#/components/schemas/AssistantSnapshotResponse' } } } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/retailers/{retailerId}/audit:
+    parameters: [{ $ref: '#/components/parameters/RetailerId' }]
+    get:
+      operationId: queryBusinessAudit
+      parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/PageLimit' }, { $ref: '#/components/parameters/From' }, { $ref: '#/components/parameters/To' }, { in: query, name: correlationId, required: false, schema: { type: string, format: uuid } }]
+      responses:
+        '200': { description: 'Bounded tenant-authorized audit page with lag and contract metadata', content: { application/json: { schema: { $ref: '#/components/schemas/QueryPageResponse' } } } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/platform/identity-audit:
+    get:
+      operationId: queryPlatformIdentityAudit
+      parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/PageLimit' }, { $ref: '#/components/parameters/From' }, { $ref: '#/components/parameters/To' }, { in: query, name: correlationId, required: false, schema: { type: string, format: uuid } }]
+      responses:
+        '200':
+          description: Redacted platform-Operator identity-audit page, separate from all retailer projections
+          headers: { Cache-Control: { schema: { const: 'no-store' } } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/GlobalIdentityAuditPageResponse' } } }
+        '401': { description: Human session missing or invalid; RFC 9457 problem }
+        '403': { description: Current platform Operator grant absent or revoked; retailer Operator alone is insufficient; RFC 9457 problem }
+        '503': { description: U3 grant check or U10 projection unavailable; fail closed with RFC 9457 problem }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/retailers/{retailerId}/evidence:
+    parameters: [{ $ref: '#/components/parameters/RetailerId' }]
+    get:
+      operationId: queryEvidence
+      parameters: [{ $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/PageLimit' }, { $ref: '#/components/parameters/From' }, { $ref: '#/components/parameters/To' }, { in: query, name: requirementId, required: false, schema: { type: string, maxLength: 50 } }]
+      responses:
+        '200': { description: 'Bounded requirement/evidence page with checksums', content: { application/json: { schema: { $ref: '#/components/schemas/QueryPageResponse' } } } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/retailers/{retailerId}/operations/{operationId}:
+    parameters: [{ $ref: '#/components/parameters/RetailerId' }, { in: path, name: operationId, required: true, schema: { type: string, format: uuid } }]
+    get:
+      operationId: getOperation
+      responses:
+        '200': { description: 'Durable status, progress, result/error reference and reconciliation state', content: { application/json: { schema: { $ref: '#/components/schemas/OperationStatusResponse' } } } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/retailers/{retailerId}/operations/{operationId}:reconcile:
+    parameters: [{ $ref: '#/components/parameters/RetailerId' }, { in: path, name: operationId, required: true, schema: { type: string, format: uuid } }]
+    post:
+      operationId: reconcileOperation
+      parameters: [{ $ref: '#/components/parameters/Csrf' }, { $ref: '#/components/parameters/Idempotency' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ReconciliationRequest' } } } }
+      responses:
+        '202': { $ref: '#/components/responses/OperationAccepted' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/retailers/{retailerId}/recovery-runs:preview:
+    parameters: [{ $ref: '#/components/parameters/RetailerId' }]
+    post:
+      operationId: previewRecovery
+      parameters: [{ $ref: '#/components/parameters/Csrf' }, { $ref: '#/components/parameters/Idempotency' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/RecoveryPreviewRequest' } } } }
+      responses:
+        '200': { description: 'Scope, roster, manifest summary and bound confirmation token', headers: { X-CSRF-Token: { $ref: '#/components/headers/RotatedCsrf' } }, content: { application/json: { schema: { $ref: '#/components/schemas/RecoveryPreviewResponse' } } } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/retailers/{retailerId}/recovery-runs:
+    parameters: [{ $ref: '#/components/parameters/RetailerId' }]
+    post:
+      operationId: startRecovery
+      parameters: [{ $ref: '#/components/parameters/Csrf' }, { $ref: '#/components/parameters/Idempotency' }, { in: header, name: X-Recovery-Confirmation, required: true, schema: { type: string, minLength: 32 } }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/RecoveryStartRequest' } } } }
+      responses:
+        '202': { description: 'Recovery run accepted', headers: { Location: { schema: { type: string, format: uri-reference } }, X-CSRF-Token: { $ref: '#/components/headers/RotatedCsrf' } }, content: { application/json: { schema: { $ref: '#/components/schemas/RecoveryOperationHandleResponse' } } } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/retailers/{retailerId}/recovery-runs/{runId}:
+    parameters: [{ $ref: '#/components/parameters/RetailerId' }, { in: path, name: runId, required: true, schema: { type: string, format: uuid } }]
+    get:
+      operationId: getRecoveryStatus
+      responses:
+        '200': { description: 'Current phase, deadlines, roster, fences, reconciliation and terminal outcome', content: { application/json: { schema: { $ref: '#/components/schemas/RecoveryStatusResponse' } } } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/retailers/{retailerId}/recovery-runs/{runId}/manifest:
+    parameters: [{ $ref: '#/components/parameters/RetailerId' }, { in: path, name: runId, required: true, schema: { type: string, format: uuid } }]
+    get:
+      operationId: getRecoveryManifest
+      responses:
+        '200': { description: 'Browser-safe versioned recovery manifest and verification result', content: { application/json: { schema: { type: object, required: [metadata, manifestVersion, digest, verificationState], properties: { metadata: { $ref: '#/components/schemas/ContractMetadata' }, manifestVersion: { type: string }, digest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }, verificationState: { enum: [pending, verified, failed] } } } } } }
+        default: { $ref: '#/components/responses/Problem' }
+components:
+  securitySchemes:
+    bffSession: { type: apiKey, in: cookie, name: __Host-stocksense-session }
+  parameters:
+    RetailerId: { in: path, name: retailerId, required: true, schema: { type: string, format: uuid } }
+    Csrf: { in: header, name: X-CSRF-Token, required: true, schema: { type: string, minLength: 32 } }
+    Idempotency: { in: header, name: Idempotency-Key, required: true, schema: { type: string, minLength: 16, maxLength: 128 } }
+    UploadLength: { in: header, name: Content-Length, required: true, schema: { type: integer, minimum: 1, maximum: 26214400 } }
+    IfNoneMatch: { in: header, name: If-None-Match, required: false, schema: { type: string, maxLength: 200 } }
+    Cursor: { in: query, name: cursor, required: false, schema: { type: string, maxLength: 512 } }
+    PageLimit: { in: query, name: limit, required: false, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
+    From: { in: query, name: from, required: true, schema: { type: string, format: date-time } }
+    To: { in: query, name: to, required: true, schema: { type: string, format: date-time }, description: Maximum query span is 31 days }
+  headers:
+    RotatedCsrf: { description: Fresh session-bound token returned after every successful mutation, schema: { type: string } }
+  responses:
+    OperationAccepted:
+      description: Durable operation accepted or matching prior command returned
+      headers: { Location: { schema: { type: string, format: uri-reference } }, X-CSRF-Token: { $ref: '#/components/headers/RotatedCsrf' } }
+      content: { application/json: { schema: { $ref: '#/components/schemas/OperationHandle' } } }
+    Problem:
+      description: Stable RFC 9457 error; unauthorized tenant resources are hidden as 404 where required
+      content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' } } }
+  schemas:
+    ContractMetadata:
+      type: object
+      required: [contractVersion, responseSchema, generatedAt, correlationId]
+      properties:
+        contractVersion: { const: 1.0.0 }
+        responseSchema: { type: string }
+        generatedAt: { type: string, format: date-time }
+        correlationId: { type: string, format: uuid }
+      additionalProperties: false
+    Section:
+      type: object
+      required: [name, state, observedAt, sourceVersion]
+      properties:
+        name: { type: string }
+        state: { enum: [ready, empty, stale, unavailable, denied, failed] }
+        observedAt: { type: string, format: date-time }
+        sourceVersion: { type: [string, 'null'] }
+        retryAfter: { type: [string, 'null'], format: date-time }
+        data: {}
+        problem: { oneOf: [{ $ref: '#/components/schemas/ProblemDetails' }, { type: 'null' }] }
+      additionalProperties: false
+    AggregateResponse:
+      type: object
+      required: [metadata, aggregateVersion, aggregateState, sections]
+      properties:
+        metadata: { $ref: '#/components/schemas/ContractMetadata' }
+        aggregateVersion: { type: string }
+        aggregateState: { enum: [complete, partial] }
+        sections: { type: array, maxItems: 20, items: { $ref: '#/components/schemas/Section' } }
+      additionalProperties: false
+    SessionResponse:
+      type: object
+      required: [metadata, subjectId, expiresAt, retailers]
+      properties:
+        metadata: { $ref: '#/components/schemas/ContractMetadata' }
+        subjectId: { type: string }
+        expiresAt: { type: string, format: date-time }
+        retailers: { type: array, maxItems: 100, items: { type: object, required: [retailerId, roles], properties: { retailerId: { type: string, format: uuid }, roles: { type: array, items: { enum: [planner, manager, operator] } } } } }
+      additionalProperties: false
+    CsrfTokenResponse:
+      type: object
+      required: [metadata, token, expiresAt, rotation]
+      properties:
+        metadata: { $ref: '#/components/schemas/ContractMetadata' }
+        token: { type: string, minLength: 32 }
+        expiresAt: { type: string, format: date-time }
+        rotation: { enum: [bootstrap, session-renewal, privilege-change, post-mutation] }
+      additionalProperties: false
+    OperationHandle:
+      type: object
+      required: [metadata, operationId, operationType, status, statusUrl, acceptedAt]
+      properties:
+        metadata: { $ref: '#/components/schemas/ContractMetadata' }
+        operationId: { type: string, format: uuid }
+        operationType: { type: string }
+        status: { enum: [accepted, queued, running, reconciling] }
+        statusUrl: { type: string, format: uri-reference }
+        acceptedAt: { type: string, format: date-time }
+      additionalProperties: false
+    OperationStatusResponse:
+      type: object
+      required: [metadata, operationId, status, reconciliation, updatedAt]
+      properties:
+        metadata: { $ref: '#/components/schemas/ContractMetadata' }
+        operationId: { type: string, format: uuid }
+        status: { enum: [accepted, queued, running, reconciling, succeeded, failed, cancelled, unavailable] }
+        progressPercent: { type: integer, minimum: 0, maximum: 100 }
+        result: {}
+        problem: { oneOf: [{ $ref: '#/components/schemas/ProblemDetails' }, { type: 'null' }] }
+        reconciliation: { enum: [not-required, pending, reconciled, mismatch, operator-action-required] }
+        updatedAt: { type: string, format: date-time }
+      additionalProperties: false
+    ImportRequest:
+      type: object
+      required: [kind, file]
+      properties:
+        kind: { enum: [inventory-csv, demand-csv, supplier-csv, supplier-text-pdf] }
+        file: { type: string, format: binary }
+      additionalProperties: false
+      x-stocksense-kind-limits:
+        supplier-csv: { maximumBytes: 5242880, maximumRows: 20000 }
+        supplier-text-pdf: { maximumBytes: 20971520, maximumPages: 200, scannedOrEncrypted: unsupported }
+    ManualReviewRequest: { type: object, required: [expectedInventoryVersion, expectedSupplierTermsVersion], properties: { expectedInventoryVersion: { type: string }, expectedSupplierTermsVersion: { type: string } }, additionalProperties: false }
+    PurchaseDraftRequest:
+      type: object
+      required: [expectedVersion, supplierId, lines]
+      properties:
+        expectedVersion: { type: integer, minimum: 0 }
+        supplierId: { type: string, format: uuid }
+        lines: { type: array, minItems: 1, maxItems: 200, items: { type: object, required: [productId, quantity, unitPrice, expectedRecommendationVersion], properties: { productId: { type: string, format: uuid }, quantity: { type: integer, minimum: 1 }, unitPrice: { type: number, exclusiveMinimum: 0 }, expectedRecommendationVersion: { type: string } }, additionalProperties: false } }
+      additionalProperties: false
+    PurchaseCommandRequest:
+      type: object
+      required: [expectedVersion]
+      properties:
+        expectedVersion: { type: integer, minimum: 1 }
+        reason: { type: string, maxLength: 1000 }
+        receipt: { type: object, required: [receiptId, receivedAt, lines], properties: { receiptId: { type: string, format: uuid }, receivedAt: { type: string, format: date-time }, lines: { type: array, minItems: 1, maxItems: 200, items: { type: object, required: [orderLineId, quantity], properties: { orderLineId: { type: string, format: uuid }, quantity: { type: integer, minimum: 1 } }, additionalProperties: false } } }, additionalProperties: false }
+      additionalProperties: false
+    PurchaseAggregateResponse: { type: object, required: [metadata, aggregateId, aggregateVersion, status, lines], properties: { metadata: { $ref: '#/components/schemas/ContractMetadata' }, aggregateId: { type: string, format: uuid }, aggregateVersion: { type: integer, minimum: 1 }, status: { enum: [draft, submitted, approved, rejected, cancelled, partially-received, received] }, lines: { type: array, maxItems: 200, items: { type: object } } }, additionalProperties: false }
+    AssistantTurnRequest: { type: object, required: [message, expectedConversationVersion], properties: { message: { type: string, minLength: 1, maxLength: 8000 }, expectedConversationVersion: { type: integer, minimum: 0 } }, additionalProperties: false }
+    AssistantStreamEvent:
+      type: object
+      required: [eventId, sequence, conversationId, turnId, operationId, eventType, occurredAt, terminal, payload]
+      properties:
+        eventId: { type: string, maxLength: 128 }
+        sequence: { type: integer, minimum: 1 }
+        conversationId: { type: string, format: uuid }
+        turnId: { type: string, format: uuid }
+        operationId: { type: string, format: uuid }
+        eventType: { enum: [turn.accepted, response.delta, citation.added, tool.started, tool.completed, turn.completed, turn.failed, snapshot.required] }
+        occurredAt: { type: string, format: date-time }
+        terminal: { type: boolean }
+        payload: { type: object }
+      additionalProperties: false
+    AssistantSnapshotResponse: { type: object, required: [metadata, conversationId, conversationVersion, latestSequence, turns], properties: { metadata: { $ref: '#/components/schemas/ContractMetadata' }, conversationId: { type: string, format: uuid }, conversationVersion: { type: integer, minimum: 0 }, latestSequence: { type: integer, minimum: 0 }, turns: { type: array, maxItems: 100, items: { type: object } } }, additionalProperties: false }
+    QueryPageResponse: { type: object, required: [metadata, items, hasMore], properties: { metadata: { $ref: '#/components/schemas/ContractMetadata' }, items: { type: array, maxItems: 100, items: { type: object } }, nextCursor: { type: [string, 'null'] }, hasMore: { type: boolean }, projectionLagSeconds: { type: integer, minimum: 0 } }, additionalProperties: false }
+    GlobalIdentityAuditPageResponse:
+      type: object
+      required: [metadata, items, hasMore, projectionLagSeconds]
+      properties:
+        metadata: { $ref: '#/components/schemas/ContractMetadata' }
+        items:
+          type: array
+          maxItems: 100
+          items:
+            type: object
+            required: [messageId, occurredAt, action, outcome, reasonCode, correlationId]
+            properties:
+              messageId: { type: string, format: uuid }
+              occurredAt: { type: string, format: date-time }
+              action: { type: string }
+              outcome: { enum: [accepted, denied, failed] }
+              reasonCode: { type: string }
+              correlationId: { type: string, format: uuid }
+            additionalProperties: false
+        nextCursor: { type: [string, 'null'] }
+        hasMore: { type: boolean }
+        projectionLagSeconds: { type: integer, minimum: 0 }
+      additionalProperties: false
+    ReconciliationRequest: { type: object, required: [expectedOperationVersion, action], properties: { expectedOperationVersion: { type: integer, minimum: 1 }, action: { enum: [retry-from-checkpoint, compare-authoritative-state, acknowledge-manual-resolution] }, reason: { type: string, maxLength: 1000 } }, additionalProperties: false }
+    RecoveryPreviewRequest:
+      type: object
+      required: [operation, expectedPlacementGeneration, expectedRecoveryGeneration, policyVersion]
+      properties:
+        operation: { enum: [snapshot, restore, rollback, tenant-migration] }
+        expectedPlacementGeneration: { type: integer, minimum: 1 }
+        expectedRecoveryGeneration: { type: integer, minimum: 1 }
+        policyVersion: { const: recovery-policy-v1 }
+        sourceRecoveryCutDigest: { type: [string, 'null'], pattern: '^sha256:[0-9a-f]{64}$' }
+      additionalProperties: false
+    RecoveryRosterSummary:
+      type: object
+      required: [runId, retailerId, placementGeneration, recoveryGeneration, policyVersion, rosterDigest, participants]
+      properties:
+        runId: { type: string, format: uuid }
+        retailerId: { type: string, format: uuid }
+        placementGeneration: { type: integer, minimum: 1 }
+        recoveryGeneration: { type: integer, minimum: 1 }
+        policyVersion: { const: recovery-policy-v1 }
+        rosterDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+        participants:
+          type: array
+          minItems: 11
+          maxItems: 11
+          items:
+            type: object
+            required: [participant, participantClass, requiredForSuccess, deadlinesSeconds]
+            properties:
+              participant: { type: string }
+              participantClass: { enum: [A, B, C] }
+              requiredForSuccess: { const: true }
+              deadlinesSeconds: { type: object, required: [prepare, close, abort, resume], properties: { prepare: { type: integer, minimum: 1 }, close: { type: integer, minimum: 1 }, abort: { type: integer, minimum: 1 }, resume: { type: integer, minimum: 1 } }, additionalProperties: false }
+            additionalProperties: false
+      additionalProperties: false
+    RecoveryManifestSummary:
+      type: object
+      required: [manifestVersion, operation, policyVersion, recoveryObjectives, expectedParticipantCount, queueScopeDigest]
+      properties:
+        manifestVersion: { const: 1.0.0 }
+        operation: { enum: [snapshot, restore, rollback, tenant-migration] }
+        policyVersion: { const: recovery-policy-v1 }
+        recoveryObjectives: { type: object, required: [status, rpoSeconds, rtoSeconds, backupExpiryDays, totalDiskGiB], properties: { status: { const: pending-owner-decision }, rpoSeconds: { const: null }, rtoSeconds: { const: null }, backupExpiryDays: { const: null }, totalDiskGiB: { const: null } }, additionalProperties: false }
+        expectedParticipantCount: { const: 11 }
+        queueScopeDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+      additionalProperties: false
+    RecoveryConfirmationBindingView:
+      type: object
+      required: [previewId, reservedRunId, operatorSubject, operatorClientId, retailerId, operation, previewDigest, rosterDigest, placementGeneration, recoveryGeneration, policyVersion, expiresAt]
+      properties:
+        previewId: { type: string, format: uuid }
+        reservedRunId: { type: string, format: uuid }
+        operatorSubject: { type: string }
+        operatorClientId: { const: stocksense-web-bff }
+        retailerId: { type: string, format: uuid }
+        operation: { enum: [snapshot, restore, rollback, tenant-migration] }
+        previewDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+        rosterDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+        placementGeneration: { type: integer, minimum: 1 }
+        recoveryGeneration: { type: integer, minimum: 1 }
+        policyVersion: { const: recovery-policy-v1 }
+        expiresAt: { type: string, format: date-time }
+      additionalProperties: false
+    RecoveryPreviewResponse:
+      type: object
+      required: [metadata, previewId, previewDigest, roster, manifestSummary, confirmationBinding, confirmationToken]
+      properties:
+        metadata: { $ref: '#/components/schemas/ContractMetadata' }
+        previewId: { type: string, format: uuid }
+        previewDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+        roster: { $ref: '#/components/schemas/RecoveryRosterSummary' }
+        manifestSummary: { $ref: '#/components/schemas/RecoveryManifestSummary' }
+        confirmationBinding: { $ref: '#/components/schemas/RecoveryConfirmationBindingView' }
+        confirmationToken: { type: string, minLength: 32 }
+      additionalProperties: false
+    RecoveryStartRequest:
+      type: object
+      required: [previewId, operation, previewDigest, rosterDigest, expectedPlacementGeneration, expectedRecoveryGeneration]
+      properties:
+        previewId: { type: string, format: uuid }
+        operation: { enum: [snapshot, restore, rollback, tenant-migration] }
+        previewDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+        rosterDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+        expectedPlacementGeneration: { type: integer, minimum: 1 }
+        expectedRecoveryGeneration: { type: integer, minimum: 1 }
+      additionalProperties: false
+    RecoveryOperationHandleResponse:
+      type: object
+      required: [metadata, runId, operation, status, acceptedAt, statusUrl, manifestUrl]
+      properties:
+        metadata: { $ref: '#/components/schemas/ContractMetadata' }
+        runId: { type: string, format: uuid }
+        operation: { enum: [snapshot, restore, rollback, tenant-migration, reconcile] }
+        status: { enum: [accepted, registering, preparing, closing, snapshotting, aborting, resuming, reconciling] }
+        acceptedAt: { type: string, format: date-time }
+        statusUrl: { type: string, format: uri-reference }
+        manifestUrl: { type: string, format: uri-reference }
+      additionalProperties: false
+    RecoveryStatusResponse:
+      type: object
+      required: [metadata, runId, runVersion, retailerId, operation, phase, status, policyVersion, placementGeneration, recoveryGeneration, activePhaseDeadlineAt, roster, participantCheckpointSet, terminalFencingInventory, reconciliation, terminalOutcome, failure, updatedAt]
+      properties:
+        metadata: { $ref: '#/components/schemas/ContractMetadata' }
+        runId: { type: string, format: uuid }
+        runVersion: { type: integer, minimum: 1 }
+        retailerId: { type: string, format: uuid }
+        operation: { enum: [snapshot, restore, rollback, tenant-migration] }
+        phase: { enum: [registering, preparing, closing, snapshotting, aborting, resuming, reconciling, terminal] }
+        status: { enum: [accepted, running, aborting, reconciling, succeeded, aborted, safely-resumed, failed] }
+        policyVersion: { const: recovery-policy-v1 }
+        placementGeneration: { type: integer, minimum: 1 }
+        recoveryGeneration: { type: integer, minimum: 1 }
+        activePhaseDeadlineAt: { type: string, format: date-time }
+        roster: { $ref: '#/components/schemas/RecoveryRosterSummary' }
+        participantCheckpointSet: { type: object, required: [expectedParticipantCount, capturedParticipantCount, status], properties: { expectedParticipantCount: { const: 11 }, capturedParticipantCount: { type: integer, minimum: 0, maximum: 11 }, status: { enum: [open, closed, incomplete, invalid] } }, additionalProperties: false }
+        terminalFencingInventory: { type: array, minItems: 11, maxItems: 11, items: { type: object, required: [participant, preparePotentiallyDelivered, abortRequired, terminalPhase, fenceDisposition], properties: { participant: { type: string }, preparePotentiallyDelivered: { type: boolean }, abortRequired: { type: boolean }, terminalPhase: { enum: [none, aborted, resumed, failed] }, fenceDisposition: { enum: [active, cleared, terminally-suppressed, unresolved] } }, additionalProperties: false } }
+        reconciliation: { type: object, required: [status, safeToResume, unresolvedParticipants], properties: { status: { enum: [not-required, pending, reconciled, mismatch, operator-action-required, failed] }, safeToResume: { type: boolean }, unresolvedParticipants: { type: array, uniqueItems: true, items: { type: string } } }, additionalProperties: false }
+        terminalOutcome: { enum: [pending, succeeded, aborted, safely-resumed, failed] }
+        failure: { oneOf: [{ type: object, required: [code, failureClass, phase, occurredAt, unresolvedParticipants, retryable], properties: { code: { type: string }, failureClass: { type: string }, phase: { type: string }, occurredAt: { type: string, format: date-time }, unresolvedParticipants: { type: array, items: { type: string } }, retryable: { type: boolean } }, additionalProperties: false }, { type: 'null' }] }
+        updatedAt: { type: string, format: date-time }
+      additionalProperties: false
+    ProblemDetails:
+      type: object
+      required: [type, title, status, detail, instance, code, correlationId]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer, minimum: 400, maximum: 599 }
+        detail: { type: string }
+        instance: { type: string, format: uri-reference }
+        code: { enum: [AUTHENTICATION_REQUIRED, AUTHORITY_DENIED, RESOURCE_NOT_FOUND, CSRF_INVALID, IDEMPOTENCY_CONFLICT, VERSION_CONFLICT, VALIDATION_FAILED, QUOTA_EXHAUSTED, DEPENDENCY_UNAVAILABLE, OPERATION_RECONCILIATION_REQUIRED, RESUME_CURSOR_EXPIRED, RECOVERY_CONFIRMATION_INVALID, RECOVERY_PARTICIPANT_INCOMPATIBLE] }
+        correlationId: { type: string, format: uuid }
+        errors: { type: array, maxItems: 100, items: { type: object, required: [path, code], properties: { path: { type: string }, code: { type: string }, message: { type: string } }, additionalProperties: false } }
+      additionalProperties: false
+security:
+  - bffSession: []

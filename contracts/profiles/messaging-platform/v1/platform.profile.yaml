@@ -1,0 +1,44 @@
+# C23 governed sidecar candidate; validate against the canonical C23 JSON Schema.
+# It describes required mechanics and evidence, not a passing runtime conformance result.
+kind: messaging-platform-profile
+version: 1.0.0
+delivery:
+  guarantee: at-least-once
+  publisherConfirm: required
+  acknowledgement: after-participant-inbox-and-effect-commit
+  deliveryIdentity: messageId
+  correlation: [correlationId, causationId, traceparent]
+  authenticatedProducerBinding: required-before-publish-and-before-consume
+  canonicalPayloadDigest: sha256-rfc8785-data
+  envelopeMaximumBytes: 65536
+policies:
+  retry:
+    maxTotalDeliveries: 5
+    attemptCounting: initial-delivery-is-attempt-1
+    backoffSecondsForAttempts2Through5: [1, 2, 4, 8]
+    formula: min-2-power-attempt-minus-2-and-30-seconds-no-jitter
+  deadLetter:
+    requiredAfterDeliveryFive: true
+    retentionDays: 7
+    expiredMessageDisposition: retain-expiry-evidence-and-reconcile-authoritative-state
+  replay:
+    authority: operator
+    auditRequired: true
+    maximumBatchMessages: 100
+    exactReplayReturnsDurablePriorResult: true
+    changedPayloadSameIdentity: quarantine-conflict-no-business-effect
+  payloadLimit: enforced-before-publish-and-after-receive
+  ordering: no-global-order-claim
+  duplicateTransportDelivery: expected
+domainResponsibilities:
+  messageMeaning: producer
+  schemaEvolution: producer-and-contracts
+  transactionalOutboxInbox: domain-unit
+  authorizationAndFencing: domain-unit
+  atomicBusinessEffects: domain-unit
+libraryConstraints:
+  stateless: true
+  tenantAuthority: none
+  directBusinessStorageAccess: prohibited
+acceptanceEvidence:
+  required: [exact-replay, changed-payload-conflict, poison-message-to-dlq, seven-day-expiry, replay-batch-limit, authoritative-state-reconciliation]

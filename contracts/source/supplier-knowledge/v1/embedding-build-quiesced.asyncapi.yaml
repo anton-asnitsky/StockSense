@@ -1,0 +1,53 @@
+asyncapi: 3.0.0
+info: { title: Embedding-build quiescence proof, version: 1.0.0 }
+defaultContentType: application/json
+channels:
+  embeddingBuildQuiesced:
+    address: stocksense.embedding.build.quiesced.v1
+    messages:
+      embeddingBuildQuiesced:
+        payload:
+          schemaFormat: 'application/schema+json;version=draft-2020-12'
+          schema:
+            allOf:
+              - $ref: 'https://contracts.stocksense.local/common/v1/message-envelope.schema.json'
+              - type: object
+                properties:
+                  messageType: { const: embedding.build.quiesced }
+                  schemaVersion: { const: 1.0.0 }
+                  data:
+                    type: object
+                    required: [leaseId, requestId, embeddingBuildAttemptId, candidateIndexVersion, workerId, supervisorId, fencingToken, localFenceGeneration, placementGeneration, recoveryGeneration, terminalAttemptDigest, localFenceDigest, workerExitProofDigest, workerExitDisposition, terminalOutcome]
+                    properties:
+                      leaseId: { type: string, format: uuid }
+                      requestId: { type: string, format: uuid }
+                      embeddingBuildAttemptId: { type: string, format: uuid }
+                      candidateIndexVersion: { type: string, minLength: 1 }
+                      workerId: { type: string, minLength: 1 }
+                      supervisorId: { type: string, minLength: 1 }
+                      fencingToken: { type: integer, minimum: 1 }
+                      localFenceGeneration: { type: integer, minimum: 1 }
+                      placementGeneration: { type: integer, minimum: 1 }
+                      recoveryGeneration: { type: integer, minimum: 1 }
+                      terminalAttemptDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+                      localFenceDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+                      workerExitProofDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+                      workerExitDisposition: { enum: [exited, force-terminated] }
+                      terminalOutcome: { enum: [completed, failed, cancelled, recovery-fenced] }
+                    additionalProperties: false
+operations:
+  publishEmbeddingBuildQuiesced:
+    action: send
+    channel: { $ref: '#/channels/embeddingBuildQuiesced' }
+    messages: [{ $ref: '#/channels/embeddingBuildQuiesced/messages/embeddingBuildQuiesced' }]
+  receiveEmbeddingBuildQuiesced:
+    action: receive
+    channel: { $ref: '#/channels/embeddingBuildQuiesced' }
+    messages: [{ $ref: '#/channels/embeddingBuildQuiesced/messages/embeddingBuildQuiesced' }]
+x-contract-fixtures:
+  - { id: matching-u5-proof, expected: slot-released-after-durable-inbox-and-u6-fence-check }
+  - { id: duplicate-identical-message, expected: original-slot-disposition }
+  - { id: changed-message-digest, expected: quarantine-and-slot-reserved }
+  - { id: stale-attempt-or-token, expected: slot-reserved }
+  - { id: crash-before-u5-commit, expected: no-proof-and-slot-reserved }
+  - { id: recovery-generation-mismatch, expected: slot-reserved }

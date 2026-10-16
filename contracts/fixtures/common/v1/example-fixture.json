@@ -1,0 +1,110 @@
+{
+  "fixtureVersion": "1.1.0",
+  "syntheticOnly": true,
+  "fixtures": [
+    {
+      "fixtureId": "c01-package-manifest-positive",
+      "boundaryIds": [
+        "C01"
+      ],
+      "contractElementId": "StockSenseContractPackage",
+      "scenarioType": "valid",
+      "expectedOutcome": "pass",
+      "payload": {
+        "packageVersion": "1.0.0",
+        "manifestStatus": "candidate",
+        "sourceRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "openapi": [],
+        "asyncapi": [],
+        "schemas": [
+          {
+            "owner": "U1 Contracts",
+            "boundaryIds": [
+              "C01"
+            ],
+            "document": "common/v1/message-envelope.schema.json",
+            "semanticVersion": "1.0.0",
+            "contentDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+          }
+        ],
+        "governedArtifacts": [
+          {
+            "kind": "example-fixture",
+            "owner": "U1 Contracts",
+            "boundaryIds": [
+              "C01"
+            ],
+            "document": "governance/example-fixture.json",
+            "semanticVersion": "1.0.0",
+            "contentDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "sourceRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        ],
+        "boundaryCoverage": [
+          {
+            "boundaryId": "C01",
+            "canonicalDocuments": [
+              "common/v1/message-envelope.schema.json"
+            ],
+            "sidecars": [
+              "governance/example-fixture.json"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "fixtureId": "c01-package-manifest-missing-revision",
+      "boundaryIds": [
+        "C01"
+      ],
+      "contractElementId": "StockSenseContractPackage",
+      "scenarioType": "invalid",
+      "expectedOutcome": "fail",
+      "expectedFailureCode": "SCHEMA_REQUIRED",
+      "expectedFailureRuleId": "BR2.4",
+      "expectedFailurePath": "/sourceRevision",
+      "payload": {
+        "packageVersion": "1.0.0",
+        "manifestStatus": "candidate",
+        "openapi": [],
+        "asyncapi": [],
+        "schemas": [
+          {
+            "owner": "U1 Contracts",
+            "boundaryIds": [
+              "C01"
+            ],
+            "document": "common/v1/message-envelope.schema.json",
+            "semanticVersion": "1.0.0",
+            "contentDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+          }
+        ],
+        "governedArtifacts": [
+          {
+            "kind": "example-fixture",
+            "owner": "U1 Contracts",
+            "boundaryIds": [
+              "C01"
+            ],
+            "document": "governance/example-fixture.json",
+            "semanticVersion": "1.0.0",
+            "contentDigest": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "sourceRevision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        ],
+        "boundaryCoverage": [
+          {
+            "boundaryId": "C01",
+            "canonicalDocuments": [
+              "common/v1/message-envelope.schema.json"
+            ],
+            "sidecars": [
+              "governance/example-fixture.json"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

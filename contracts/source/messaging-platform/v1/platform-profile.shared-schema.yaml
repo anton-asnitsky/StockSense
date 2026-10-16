@@ -1,0 +1,88 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://contracts.stocksense.local/messaging-platform/v1/platform-profile.shared-schema.yaml
+title: MessagingPlatformProfile
+description: C23 canonical definition; the governed instance candidate lives outside contracts/source.
+type: object
+required: [kind, version, delivery, policies, domainResponsibilities, libraryConstraints, acceptanceEvidence]
+properties:
+  kind: { const: messaging-platform-profile }
+  version: { type: string, pattern: '^[1-9][0-9]*\.[0-9]+\.[0-9]+$' }
+  delivery:
+    type: object
+    required: [guarantee, publisherConfirm, acknowledgement, deliveryIdentity, correlation, authenticatedProducerBinding, canonicalPayloadDigest, envelopeMaximumBytes]
+    properties:
+      guarantee: { const: at-least-once }
+      publisherConfirm: { const: required }
+      acknowledgement: { const: after-participant-inbox-and-effect-commit }
+      deliveryIdentity: { const: messageId }
+      correlation: { const: [correlationId, causationId, traceparent] }
+      authenticatedProducerBinding: { const: required-before-publish-and-before-consume }
+      canonicalPayloadDigest: { const: sha256-rfc8785-data }
+      envelopeMaximumBytes: { const: 65536 }
+    additionalProperties: false
+  policies:
+    type: object
+    required: [retry, deadLetter, replay, payloadLimit, ordering, duplicateTransportDelivery]
+    properties:
+      retry:
+        type: object
+        required: [maxTotalDeliveries, attemptCounting, backoffSecondsForAttempts2Through5, formula]
+        properties:
+          maxTotalDeliveries: { const: 5 }
+          attemptCounting: { const: initial-delivery-is-attempt-1 }
+          backoffSecondsForAttempts2Through5: { const: [1, 2, 4, 8] }
+          formula: { const: min-2-power-attempt-minus-2-and-30-seconds-no-jitter }
+        additionalProperties: false
+      deadLetter:
+        type: object
+        required: [requiredAfterDeliveryFive, retentionDays, expiredMessageDisposition]
+        properties:
+          requiredAfterDeliveryFive: { const: true }
+          retentionDays: { const: 7 }
+          expiredMessageDisposition: { const: retain-expiry-evidence-and-reconcile-authoritative-state }
+        additionalProperties: false
+      replay:
+        type: object
+        required: [authority, auditRequired, maximumBatchMessages, exactReplayReturnsDurablePriorResult, changedPayloadSameIdentity]
+        properties:
+          authority: { const: operator }
+          auditRequired: { const: true }
+          maximumBatchMessages: { const: 100 }
+          exactReplayReturnsDurablePriorResult: { const: true }
+          changedPayloadSameIdentity: { const: quarantine-conflict-no-business-effect }
+        additionalProperties: false
+      payloadLimit: { const: enforced-before-publish-and-after-receive }
+      ordering: { const: no-global-order-claim }
+      duplicateTransportDelivery: { const: expected }
+    additionalProperties: false
+  domainResponsibilities:
+    type: object
+    required: [messageMeaning, schemaEvolution, transactionalOutboxInbox, authorizationAndFencing, atomicBusinessEffects]
+    properties:
+      messageMeaning: { const: producer }
+      schemaEvolution: { const: producer-and-contracts }
+      transactionalOutboxInbox: { const: domain-unit }
+      authorizationAndFencing: { const: domain-unit }
+      atomicBusinessEffects: { const: domain-unit }
+    additionalProperties: false
+  libraryConstraints:
+    type: object
+    required: [stateless, tenantAuthority, directBusinessStorageAccess]
+    properties:
+      stateless: { const: true }
+      tenantAuthority: { const: none }
+      directBusinessStorageAccess: { const: prohibited }
+    additionalProperties: false
+  acceptanceEvidence:
+    type: object
+    required: [required]
+    properties:
+      required:
+        type: array
+        minItems: 6
+        maxItems: 6
+        uniqueItems: true
+        items:
+          enum: [exact-replay, changed-payload-conflict, poison-message-to-dlq, seven-day-expiry, replay-batch-limit, authoritative-state-reconciliation]
+    additionalProperties: false
+additionalProperties: false

@@ -1,0 +1,32 @@
+asyncapi: 3.0.0
+info: { title: StockSense Recovery Audit Events, version: 1.0.0 }
+channels:
+  recoveryEvents:
+    address: stocksense.recovery.event.v1
+    messages:
+      recoveryEvent:
+        payload:
+          schemaFormat: 'application/schema+json;version=draft-2020-12'
+          schema:
+            allOf:
+              - $ref: 'https://contracts.stocksense.local/common/v1/message-envelope.schema.json'
+              - type: object
+                properties:
+                  messageType:
+                    enum: [recovery.run.requested, recovery.phase.changed, recovery.participant.acknowledged, recovery.manifest.closed, recovery.run.terminal]
+                  schemaVersion: { const: 1.0.0 }
+                  data:
+                    type: object
+                    required: [runId, recoveryGeneration, phase, details]
+                    properties:
+                      runId: { type: string, format: uuid }
+                      recoveryGeneration: { type: integer, minimum: 1 }
+                      phase: { enum: [registering, preparing, closing, snapshotting, aborting, resuming, reconciling, terminal] }
+                      details: { type: object }
+operations:
+  publishRecoveryEvent:
+    action: send
+    channel: { $ref: '#/channels/recoveryEvents' }
+  projectRecoveryEvent:
+    action: receive
+    channel: { $ref: '#/channels/recoveryEvents' }

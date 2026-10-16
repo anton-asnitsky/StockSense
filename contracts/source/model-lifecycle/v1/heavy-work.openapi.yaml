@@ -1,0 +1,1750 @@
+openapi: 3.1.2
+info:
+  title: Model Lifecycle Forecasting API
+  version: 1.0.0
+paths:
+  /api/v1/retailers/{retailerId}/heavy-work-requests:
+    post:
+      operationId: requestHeavyWork
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HeavyWorkRequest"
+      responses:
+        "202":
+          description: Request accepted or matching durable request returned; Location identifies its resource
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeavyWorkRequestStatus"
+        "409":
+          description: Idempotency payload conflict or stale placement/recovery generation
+        "422":
+          description: Unsupported work type or deadline already elapsed
+  /api/v1/retailers/{retailerId}/heavy-work-requests/{requestId}:
+    get:
+      operationId: getHeavyWorkRequest
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: requestId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Queued, leased, completed, failed, cancelled, or deadline-expired request with immutable forecast binding
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeavyWorkRequestStatus"
+        "404":
+          description: Request absent or outside the authorized retailer context
+  /api/v1/retailers/{retailerId}/heavy-work-requests/{requestId}:cancel:
+    post:
+      operationId: cancelHeavyWorkRequest
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: requestId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - placementGeneration
+                - recoveryGeneration
+                - reason
+              properties:
+                placementGeneration:
+                  type: integer
+                  minimum: 1
+                recoveryGeneration:
+                  type: integer
+                  minimum: 1
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 1000
+              additionalProperties: false
+      responses:
+        "200":
+          description: Request cancelled and any active lease permanently fenced; matching replay returns this result
+        "409":
+          description: Request already completed or cancellation payload/generation conflicts
+  /api/v1/retailers/{retailerId}/heavy-work-requests/{requestId}/leases:acquire:
+    post:
+      operationId: acquireHeavyWorkLease
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: requestId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - workerId
+                - workType
+                - requestedLeaseSeconds
+                - placementGeneration
+                - recoveryGeneration
+              if:
+                properties:
+                  workType:
+                    const: batch-forecast
+                required:
+                  - workType
+              then:
+                required:
+                  - forecastRunId
+                  - forecastRoutePinId
+                  - forecastAttemptId
+              else:
+                not:
+                  anyOf:
+                    - required:
+                        - forecastRunId
+                    - required:
+                        - forecastRoutePinId
+                    - required:
+                        - forecastAttemptId
+              properties:
+                workerId:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                workType:
+                  enum:
+                    - training
+                    - evaluation
+                    - batch-forecast
+                    - embedding-index
+                requestedLeaseSeconds:
+                  type: integer
+                  minimum: 30
+                  maximum: 900
+                placementGeneration:
+                  type: integer
+                  minimum: 1
+                recoveryGeneration:
+                  type: integer
+                  minimum: 1
+                forecastRunId:
+                  type: string
+                  format: uuid
+                forecastRoutePinId:
+                  type: string
+                  format: uuid
+                forecastAttemptId:
+                  type: string
+                  format: uuid
+                embeddingBuildAttemptId:
+                  type: string
+                  format: uuid
+                candidateIndexVersion:
+                  type: string
+                  minLength: 1
+                localFenceGeneration:
+                  type: integer
+                  minimum: 1
+                supervisorId:
+                  type: string
+                  minLength: 1
+              allOf:
+                - if:
+                    properties:
+                      workType:
+                        const: embedding-index
+                    required:
+                      - workType
+                  then:
+                    required:
+                      - embeddingBuildAttemptId
+                      - candidateIndexVersion
+                      - localFenceGeneration
+                      - supervisorId
+                  else:
+                    not:
+                      anyOf:
+                        - required:
+                            - embeddingBuildAttemptId
+                        - required:
+                            - candidateIndexVersion
+                        - required:
+                            - localFenceGeneration
+                        - required:
+                            - supervisorId
+              additionalProperties: false
+      responses:
+        "200":
+          description: Lease acquired or the same idempotent acquisition returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HeavyWorkLease"
+        "202":
+          description: Request remains queued; Retry-After gives the earliest allowed reacquisition time
+        "409":
+          description: Lease already held, stale generation, or acquisition payload conflict
+        "410":
+          description: Request deadline elapsed or request was cancelled
+  /api/v1/retailers/{retailerId}/heavy-work-leases/{leaseId}:renew:
+    post:
+      operationId: renewHeavyWorkLease
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: leaseId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+        - in: header
+          name: X-Fencing-Token
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Lease expiry and heartbeat advanced for the current fencing token
+        "409":
+          description: Lease expired, superseded, fenced by recovery, or token does not match
+  /api/v1/retailers/{retailerId}/heavy-work-leases/{leaseId}:complete:
+    post:
+      operationId: completeHeavyWorkLease
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: leaseId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+        - in: header
+          name: X-Fencing-Token
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - outcome
+                - resultDigest
+              properties:
+                outcome:
+                  enum:
+                    - completed
+                    - failed
+                    - cancelled
+                resultDigest:
+                  type: string
+                  pattern: ^sha256:[0-9a-f]{64}$
+                resultReference:
+                  type: string
+                  format: uri
+      responses:
+        "200":
+          description: U6-owned terminal result accepted once and lease released; U5 embedding publication uses its own owner route and quiescence proof
+        "403":
+          description: U5 embedding work cannot use the U6-owned completion operation or the U7 finalizer
+        "409":
+          description: Terminal result conflicts, lease expired/superseded, or fencing token is stale
+  /api/v1/retailers/{retailerId}/heavy-work-leases/{leaseId}:release:
+    post:
+      operationId: releaseHeavyWorkLease
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: leaseId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+        - in: header
+          name: X-Fencing-Token
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "204":
+          description: U6/U7 current lease released; U5 release remains capacity-blocking until quiescence attestation is verified
+        "409":
+          description: Release conflicts with a newer lease or terminal result
+  /api/v1/retailers/{retailerId}/heavy-work-leases/{leaseId}:attest-quiescence:
+    post:
+      operationId: attestEmbeddingBuildQuiescence
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: leaseId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmbeddingBuildQuiescenceReceiptRequest"
+      responses:
+        "200":
+          description: Referenced U5 event was durably verified by U6; exact replay returns the same slot disposition
+        "202":
+          description: Reconciliation requested but authoritative event is not yet in the U6 inbox; slot remains reserved
+        "403":
+          description: Authenticated U5 producer identity is invalid for this lease
+        "409":
+          description: Event digest, lease, token, attempt, generation or terminal proof conflicts; slot remains reserved
+  /api/v1/retailers/{retailerId}/heavy-work-leases:reconcile:
+    post:
+      operationId: reconcileHeavyWorkLeases
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - recoveryRunId
+                - placementGeneration
+                - recoveryGeneration
+                - checkpointDigest
+              properties:
+                recoveryRunId:
+                  type: string
+                  format: uuid
+                placementGeneration:
+                  type: integer
+                  minimum: 1
+                recoveryGeneration:
+                  type: integer
+                  minimum: 1
+                checkpointDigest:
+                  type: string
+                  pattern: ^sha256:[0-9a-f]{64}$
+              additionalProperties: false
+      responses:
+        "200":
+          description: Older-generation leases fenced, queue reconstructed, affected tokens advanced, and acquisition reopened atomically
+        "403":
+          description: Recovery-authorized workload identity required
+        "409":
+          description: Recovery generation or checkpoint conflicts with durable state
+  /api/v1/retailers/{retailerId}/promoted-models/forecasting:
+    get:
+      operationId: getPromotedForecastModel
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: runtimeCompatibility
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Read-only package inspection; this response never admits or pins a Forecast Run
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromotedModelPackageManifest"
+        "404":
+          description: No compatible promoted model is available
+        "409":
+          description: Promotion metadata, signature, allowlist, or overlap state is inconsistent
+        "410":
+          description: Selected release or signer has been revoked
+        "422":
+          description: Runtime does not support the package type or feature contract
+  /api/v1/retailers/{retailerId}/promoted-models/forecasting/pins:admit:
+    post:
+      operationId: admitForecastRoutePin
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForecastRoutePinRequest"
+      responses:
+        "200":
+          description: Exact idempotent replay returns the original pin and package
+        "201":
+          description: Durable pin and signed package admitted together
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForecastRoutePin"
+        "409":
+          description: Route draining, generation changed, or key reused with different payload
+        "410":
+          description: Release or signer revoked or no longer valid
+        "503":
+          description: Route state cannot be checked authoritatively; no pin admitted
+  /api/v1/retailers/{retailerId}/promoted-models/forecasting/pins/{pinId}:release:
+    post:
+      operationId: releaseForecastRoutePin
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: pinId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForecastRoutePinRelease"
+      responses:
+        "200":
+          description: Current pin terminally released or exact replay returned
+        "409":
+          description: Pin owner, generation or payload conflicts; unresolved pin remains blocking
+  /api/v1/retailers/{retailerId}/promoted-models/forecasting/drains:start:
+    post:
+      operationId: startForecastRouteDrain
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForecastRouteDrainRequest"
+      responses:
+        "200":
+          description: Exact replay returns the same drain resource
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForecastRouteDrain"
+        "202":
+          description: Route atomically closed to new old-generation pins
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForecastRouteDrain"
+        "409":
+          description: Expected generation stale or another drain is active
+  /api/v1/retailers/{retailerId}/promoted-models/forecasting/drains/{drainId}:
+    get:
+      operationId: getForecastRouteDrain
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: drainId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Durable route generation, state, deadline and exact outstanding pin count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForecastRouteDrain"
+        "404":
+          description: Drain absent or outside retailer authority
+  /api/v1/retailers/{retailerId}/promoted-models/forecasting/drains/{drainId}:abort:
+    post:
+      operationId: abortForecastRouteDrain
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: drainId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForecastRouteDrainAbort"
+      responses:
+        "200":
+          description: Old route reopened only after current generation and release validity are rechecked; otherwise remains unavailable
+        "409":
+          description: Drain already committed, recovery fenced, or route cannot safely reopen
+  /api/v1/retailers/{retailerId}/promoted-models/forecasting:promote:
+    post:
+      operationId: promoteForecastModel
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+        - in: header
+          name: X-Lease-Id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: X-Fencing-Token
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromoteModelRequest"
+      responses:
+        "200":
+          description: Route activation and evaluation lease completion committed atomically; exact replay returns the same decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForecastRouteChangeResult"
+        "403":
+          description: Operator authority or model-promoter machine scope denied
+        "409":
+          description: Stale lease/fence, promotion generation, recovery generation or idempotency payload
+        "410":
+          description: Lease, signer, allowlist or retained package is expired or revoked
+        "422":
+          description: Evaluation evidence or package verification failed
+  /api/v1/retailers/{retailerId}/promoted-models/forecasting:rollback:
+    post:
+      operationId: rollbackForecastModel
+      parameters:
+        - in: path
+          name: retailerId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 128
+        - in: header
+          name: X-Lease-Id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: X-Fencing-Token
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - drainId
+                - retainedModelVersion
+                - expectedPromotionGeneration
+                - placementGeneration
+                - recoveryGeneration
+                - evaluationEvidenceDigest
+                - reason
+              properties:
+                drainId:
+                  type: string
+                  format: uuid
+                retainedModelVersion:
+                  type: string
+                expectedPromotionGeneration:
+                  type: integer
+                  minimum: 1
+                placementGeneration:
+                  type: integer
+                  minimum: 1
+                recoveryGeneration:
+                  type: integer
+                  minimum: 1
+                evaluationEvidenceDigest:
+                  type: string
+                  pattern: ^sha256:[0-9a-f]{64}$
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 1000
+              additionalProperties: false
+      responses:
+        "200":
+          description: Retained release activation and evaluation lease completion committed atomically; exact replay returns the same decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForecastRouteChangeResult"
+        "403":
+          description: Operator authority denied
+        "409":
+          description: Expected promotion generation is stale
+        "410":
+          description: Retained package, signer or overlap eligibility was revoked or expired
+        "422":
+          description: Retained package no longer passes signature, trust or runtime compatibility checks
+components:
+  securitySchemes:
+    modelLifecycleMachineToken:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: /connect/token
+          scopes:
+            model-lifecycle.work: Acquire and finalize fenced work
+            model-lifecycle.read: Resolve promoted packages
+            model-lifecycle.recover: Reconcile leases
+            model-lifecycle.promote: Promote or roll back packages
+  schemas:
+    HeavyWorkRequest:
+      type: object
+      required:
+        - workType
+        - requestHash
+        - priority
+        - deadlineAt
+        - placementGeneration
+        - recoveryGeneration
+      properties:
+        workType:
+          enum:
+            - training
+            - evaluation
+            - batch-forecast
+            - embedding-index
+        requestHash:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        priority:
+          type: integer
+          minimum: 0
+          maximum: 100
+        deadlineAt:
+          type: string
+          format: date-time
+        placementGeneration:
+          type: integer
+          minimum: 1
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+        forecastRunId:
+          type: string
+          format: uuid
+        forecastRoutePinId:
+          type: string
+          format: uuid
+        initialForecastAttemptId:
+          type: string
+          format: uuid
+        initialEmbeddingBuildAttemptId:
+          type: string
+          format: uuid
+        candidateIndexVersion:
+          type: string
+          minLength: 1
+        localFenceGeneration:
+          type: integer
+          minimum: 1
+      if:
+        properties:
+          workType:
+            const: batch-forecast
+        required:
+          - workType
+      then:
+        required:
+          - forecastRunId
+          - forecastRoutePinId
+          - initialForecastAttemptId
+      else:
+        not:
+          anyOf:
+            - required:
+                - forecastRunId
+            - required:
+                - forecastRoutePinId
+            - required:
+                - initialForecastAttemptId
+      allOf:
+        - if:
+            properties:
+              workType:
+                const: embedding-index
+            required:
+              - workType
+          then:
+            required:
+              - initialEmbeddingBuildAttemptId
+              - candidateIndexVersion
+              - localFenceGeneration
+          else:
+            not:
+              anyOf:
+                - required:
+                    - initialEmbeddingBuildAttemptId
+                - required:
+                    - candidateIndexVersion
+                - required:
+                    - localFenceGeneration
+      additionalProperties: false
+    HeavyWorkRequestStatus:
+      type: object
+      required:
+        - requestId
+        - retailerId
+        - workType
+        - status
+        - requestHash
+        - deadlineAt
+        - placementGeneration
+        - recoveryGeneration
+        - currentLeaseId
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        retailerId:
+          type: string
+          format: uuid
+        workType:
+          enum:
+            - training
+            - evaluation
+            - batch-forecast
+            - embedding-index
+        status:
+          enum:
+            - queued
+            - leased
+            - completed
+            - failed
+            - cancelled
+            - deadline-expired
+        requestHash:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        deadlineAt:
+          type: string
+          format: date-time
+        placementGeneration:
+          type: integer
+          minimum: 1
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+        currentLeaseId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        forecastRunId:
+          type: string
+          format: uuid
+        forecastRoutePinId:
+          type: string
+          format: uuid
+        initialForecastAttemptId:
+          type: string
+          format: uuid
+        initialEmbeddingBuildAttemptId:
+          type: string
+          format: uuid
+        candidateIndexVersion:
+          type: string
+          minLength: 1
+        localFenceGeneration:
+          type: integer
+          minimum: 1
+        slotDisposition:
+          enum:
+            - free
+            - reserved
+            - quiescence-pending
+            - reconciliation-required
+      if:
+        properties:
+          workType:
+            const: batch-forecast
+        required:
+          - workType
+      then:
+        required:
+          - forecastRunId
+          - forecastRoutePinId
+          - initialForecastAttemptId
+      else:
+        not:
+          anyOf:
+            - required:
+                - forecastRunId
+            - required:
+                - forecastRoutePinId
+            - required:
+                - initialForecastAttemptId
+      allOf:
+        - if:
+            properties:
+              workType:
+                const: embedding-index
+            required:
+              - workType
+          then:
+            required:
+              - initialEmbeddingBuildAttemptId
+              - candidateIndexVersion
+              - localFenceGeneration
+              - slotDisposition
+          else:
+            not:
+              anyOf:
+                - required:
+                    - initialEmbeddingBuildAttemptId
+                - required:
+                    - candidateIndexVersion
+                - required:
+                    - localFenceGeneration
+      additionalProperties: false
+    HeavyWorkLease:
+      type: object
+      required:
+        - leaseId
+        - requestId
+        - workerId
+        - workType
+        - acquiredAt
+        - expiresAt
+        - heartbeatAt
+        - fencingToken
+        - status
+        - placementGeneration
+        - recoveryGeneration
+      properties:
+        leaseId:
+          type: string
+          format: uuid
+        requestId:
+          type: string
+          format: uuid
+        workerId:
+          type: string
+        workType:
+          enum:
+            - training
+            - evaluation
+            - batch-forecast
+            - embedding-index
+        forecastRunId:
+          type: string
+          format: uuid
+        forecastRoutePinId:
+          type: string
+          format: uuid
+        forecastAttemptId:
+          type: string
+          format: uuid
+        embeddingBuildAttemptId:
+          type: string
+          format: uuid
+        candidateIndexVersion:
+          type: string
+          minLength: 1
+        localFenceGeneration:
+          type: integer
+          minimum: 1
+        supervisorId:
+          type: string
+          minLength: 1
+        acquiredAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        heartbeatAt:
+          type: string
+          format: date-time
+        fencingToken:
+          type: integer
+          minimum: 1
+        status:
+          enum:
+            - active
+            - released
+            - completed
+            - failed
+            - cancelled
+            - expired
+            - superseded
+            - recovery-fenced
+        placementGeneration:
+          type: integer
+          minimum: 1
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+      if:
+        properties:
+          workType:
+            const: batch-forecast
+        required:
+          - workType
+      then:
+        required:
+          - forecastRunId
+          - forecastRoutePinId
+          - forecastAttemptId
+      else:
+        not:
+          anyOf:
+            - required:
+                - forecastRunId
+            - required:
+                - forecastRoutePinId
+            - required:
+                - forecastAttemptId
+      allOf:
+        - if:
+            properties:
+              workType:
+                const: embedding-index
+            required:
+              - workType
+          then:
+            required:
+              - embeddingBuildAttemptId
+              - candidateIndexVersion
+              - localFenceGeneration
+              - supervisorId
+          else:
+            not:
+              anyOf:
+                - required:
+                    - embeddingBuildAttemptId
+                - required:
+                    - candidateIndexVersion
+                - required:
+                    - localFenceGeneration
+                - required:
+                    - supervisorId
+      additionalProperties: false
+    EmbeddingBuildQuiescenceReceiptRequest:
+      type: object
+      required:
+        - messageId
+        - payloadDigest
+      properties:
+        messageId:
+          type: string
+          format: uuid
+        payloadDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+      additionalProperties: false
+    PromotedModelPackageManifest:
+      type: object
+      required:
+        - manifestVersion
+        - manifestDigest
+        - retailerId
+        - modelVersion
+        - promotionGeneration
+        - artifact
+        - featureContract
+        - runtimeProfile
+        - trustPolicy
+        - signer
+        - signature
+        - release
+        - verification
+      properties:
+        manifestVersion:
+          const: 1.0.0
+        manifestDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        retailerId:
+          type: string
+          format: uuid
+        modelVersion:
+          type: string
+        promotionGeneration:
+          type: integer
+          minimum: 1
+        artifact:
+          type: object
+          required:
+            - uri
+            - type
+            - sha256
+            - sizeBytes
+          properties:
+            uri:
+              type: string
+              format: uri
+            type:
+              const: skops.io
+            sha256:
+              type: string
+              pattern: ^[0-9a-f]{64}$
+            sizeBytes:
+              type: integer
+              minimum: 1
+          additionalProperties: false
+        featureContract:
+          type: object
+          required:
+            - version
+            - schemaSha256
+          properties:
+            version:
+              type: string
+            schemaSha256:
+              type: string
+              pattern: ^[0-9a-f]{64}$
+          additionalProperties: false
+        runtimeProfile:
+          type: object
+          required:
+            - profileId
+            - pythonVersion
+            - scikitLearnVersion
+            - skopsVersion
+            - os
+            - architecture
+            - requiredDevice
+          properties:
+            profileId:
+              type: string
+            pythonVersion:
+              type: string
+            scikitLearnVersion:
+              type: string
+            skopsVersion:
+              type: string
+            os:
+              type: string
+            architecture:
+              type: string
+            requiredDevice:
+              const: cpu
+          additionalProperties: false
+        trustPolicy:
+          type: object
+          required:
+            - trustedTypeAllowlistVersion
+            - trustedTypeAllowlistSha256
+          properties:
+            trustedTypeAllowlistVersion:
+              type: string
+            trustedTypeAllowlistSha256:
+              type: string
+              pattern: ^[0-9a-f]{64}$
+          additionalProperties: false
+        signer:
+          type: object
+          required:
+            - keyId
+            - algorithm
+          properties:
+            keyId:
+              type: string
+            algorithm:
+              const: Ed25519
+          additionalProperties: false
+        signature:
+          type: object
+          required:
+            - value
+            - signedAt
+          properties:
+            value:
+              type: string
+              contentEncoding: base64
+            signedAt:
+              type: string
+              format: date-time
+          additionalProperties: false
+        release:
+          type: object
+          required:
+            - status
+            - validFrom
+            - overlapUntil
+          properties:
+            status:
+              enum:
+                - active
+                - overlap
+                - revoked
+            validFrom:
+              type: string
+              format: date-time
+            overlapUntil:
+              type:
+                - string
+                - "null"
+              format: date-time
+            supersedesModelVersion:
+              type:
+                - string
+                - "null"
+            revokedAt:
+              type:
+                - string
+                - "null"
+              format: date-time
+            revocationReason:
+              type:
+                - string
+                - "null"
+          additionalProperties: false
+        verification:
+          type: object
+          required:
+            - signerStatus
+            - signerStatusCheckedAt
+          properties:
+            signerStatus:
+              enum:
+                - active
+                - verify-only-overlap
+                - revoked
+            signerStatusCheckedAt:
+              type: string
+              format: date-time
+          additionalProperties: false
+      additionalProperties: false
+    PromoteModelRequest:
+      type: object
+      required:
+        - drainId
+        - expectedPromotionGeneration
+        - placementGeneration
+        - recoveryGeneration
+        - evaluationEvidenceDigest
+        - package
+      properties:
+        drainId:
+          type: string
+          format: uuid
+        expectedPromotionGeneration:
+          type: integer
+          minimum: 0
+        placementGeneration:
+          type: integer
+          minimum: 1
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+        evaluationEvidenceDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        package:
+          $ref: "#/components/schemas/PromotedModelPackageManifest"
+      additionalProperties: false
+    ForecastRoutePinRequest:
+      type: object
+      required:
+        - forecastRunId
+        - initialForecastAttemptId
+        - runtimeCompatibility
+        - expectedPromotionGeneration
+        - placementGeneration
+        - recoveryGeneration
+      properties:
+        forecastRunId:
+          type: string
+          format: uuid
+        initialForecastAttemptId:
+          type: string
+          format: uuid
+        runtimeCompatibility:
+          type: string
+          minLength: 1
+        expectedPromotionGeneration:
+          type: integer
+          minimum: 1
+        placementGeneration:
+          type: integer
+          minimum: 1
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+      additionalProperties: false
+    ForecastRoutePin:
+      type: object
+      required:
+        - pinId
+        - forecastRunId
+        - initialForecastAttemptId
+        - promotionGeneration
+        - placementGeneration
+        - recoveryGeneration
+        - modelReleaseId
+        - promotionDecisionId
+        - modelKind
+        - evaluationSummaryReference
+        - evaluationEvidenceDigest
+        - inputSchemaDigest
+        - outputSchemaDigest
+        - activatedAt
+        - package
+      properties:
+        pinId:
+          type: string
+          format: uuid
+        forecastRunId:
+          type: string
+          format: uuid
+        initialForecastAttemptId:
+          type: string
+          format: uuid
+        promotionGeneration:
+          type: integer
+          minimum: 1
+        placementGeneration:
+          type: integer
+          minimum: 1
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+        modelReleaseId:
+          type: string
+          format: uuid
+        promotionDecisionId:
+          type: string
+          format: uuid
+        modelKind:
+          enum:
+            - seasonalNaive
+            - movingAverage
+            - trained
+        evaluationSummaryReference:
+          type: string
+          format: uri
+        evaluationEvidenceDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        inputSchemaDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        outputSchemaDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        activatedAt:
+          type: string
+          format: date-time
+        package:
+          $ref: "#/components/schemas/PromotedModelPackageManifest"
+      additionalProperties: false
+    ForecastRoutePinRelease:
+      type: object
+      required:
+        - forecastRunId
+        - placementGeneration
+        - recoveryGeneration
+        - terminalReason
+      properties:
+        forecastRunId:
+          type: string
+          format: uuid
+        placementGeneration:
+          type: integer
+          minimum: 1
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+        terminalReason:
+          enum:
+            - completed
+            - failed
+            - cancelled
+            - recovery-fenced
+      additionalProperties: false
+    ForecastRouteDrainRequest:
+      type: object
+      required:
+        - expectedPromotionGeneration
+        - placementGeneration
+        - recoveryGeneration
+        - purpose
+      properties:
+        expectedPromotionGeneration:
+          type: integer
+          minimum: 0
+        placementGeneration:
+          type: integer
+          minimum: 1
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+        purpose:
+          enum:
+            - promote
+            - rollback
+      additionalProperties: false
+    ForecastRouteDrain:
+      type: object
+      required:
+        - drainId
+        - retailerId
+        - expectedPromotionGeneration
+        - placementGeneration
+        - recoveryGeneration
+        - purpose
+        - status
+        - deadlineAt
+        - outstandingPinCount
+        - evaluationRequestId
+        - evaluationLeaseId
+      properties:
+        drainId:
+          type: string
+          format: uuid
+        retailerId:
+          type: string
+          format: uuid
+        expectedPromotionGeneration:
+          type: integer
+          minimum: 0
+        placementGeneration:
+          type: integer
+          minimum: 1
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+        purpose:
+          enum:
+            - promote
+            - rollback
+        status:
+          enum:
+            - draining
+            - committed
+            - aborted
+            - recovery-required
+        deadlineAt:
+          type: string
+          format: date-time
+        outstandingPinCount:
+          type: integer
+          minimum: 0
+        evaluationRequestId:
+          type:
+            - string
+            - "null"
+          format: uuid
+        evaluationLeaseId:
+          type:
+            - string
+            - "null"
+          format: uuid
+      additionalProperties: false
+    ForecastRouteDrainAbort:
+      type: object
+      required:
+        - expectedPromotionGeneration
+        - placementGeneration
+        - recoveryGeneration
+        - reason
+      properties:
+        expectedPromotionGeneration:
+          type: integer
+          minimum: 0
+        placementGeneration:
+          type: integer
+          minimum: 1
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+      additionalProperties: false
+    ForecastRouteChangeResult:
+      type: object
+      required:
+        - decisionId
+        - drainId
+        - retailerId
+        - modelReleaseId
+        - promotionGeneration
+        - evaluationRequestId
+        - evaluationLeaseId
+        - evaluationTerminalResultId
+        - evaluationResultDigest
+        - evaluationLeaseStatus
+        - placementGeneration
+        - recoveryGeneration
+      properties:
+        decisionId:
+          type: string
+          format: uuid
+        drainId:
+          type: string
+          format: uuid
+        retailerId:
+          type: string
+          format: uuid
+        modelReleaseId:
+          type: string
+          format: uuid
+        promotionGeneration:
+          type: integer
+          minimum: 1
+        evaluationRequestId:
+          type: string
+          format: uuid
+        evaluationLeaseId:
+          type: string
+          format: uuid
+        evaluationTerminalResultId:
+          type: string
+          format: uuid
+        evaluationResultDigest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+        evaluationLeaseStatus:
+          const: completed
+        placementGeneration:
+          type: integer
+          minimum: 1
+        recoveryGeneration:
+          type: integer
+          minimum: 1
+      additionalProperties: false
+security:
+  - modelLifecycleMachineToken: []
+x-contract-fixtures:
+  - name: pin-admission-valid
+    schemaRef: "#/components/schemas/ForecastRoutePinRequest"
+    expectedValid: true
+    value:
+      forecastRunId: 00000000-0000-4000-8000-000000000103
+      initialForecastAttemptId: 00000000-0000-4000-8000-000000000105
+      runtimeCompatibility: cpu-sklearn-v1
+      expectedPromotionGeneration: 1
+      placementGeneration: 1
+      recoveryGeneration: 1
+  - name: pin-admission-missing-run-invalid
+    schemaRef: "#/components/schemas/ForecastRoutePinRequest"
+    expectedValid: false
+    value:
+      initialForecastAttemptId: 00000000-0000-4000-8000-000000000105
+      runtimeCompatibility: cpu-sklearn-v1
+      expectedPromotionGeneration: 1
+      placementGeneration: 1
+      recoveryGeneration: 1
+  - name: batch-lease-valid
+    schemaRef: "#/components/schemas/HeavyWorkLease"
+    expectedValid: true
+    value:
+      leaseId: 00000000-0000-4000-8000-000000000101
+      requestId: 00000000-0000-4000-8000-000000000102
+      workerId: forecast-worker-1
+      workType: batch-forecast
+      forecastRunId: 00000000-0000-4000-8000-000000000103
+      forecastRoutePinId: 00000000-0000-4000-8000-000000000104
+      forecastAttemptId: 00000000-0000-4000-8000-000000000105
+      acquiredAt: 2026-09-25T10:00:00Z
+      expiresAt: 2026-09-25T10:05:00Z
+      heartbeatAt: 2026-09-25T10:00:00Z
+      fencingToken: 17
+      status: active
+      placementGeneration: 1
+      recoveryGeneration: 1
+  - name: batch-lease-missing-attempt-invalid
+    schemaRef: "#/components/schemas/HeavyWorkLease"
+    expectedValid: false
+    value:
+      leaseId: 00000000-0000-4000-8000-000000000101
+      requestId: 00000000-0000-4000-8000-000000000102
+      workerId: forecast-worker-1
+      workType: batch-forecast
+      forecastRunId: 00000000-0000-4000-8000-000000000103
+      forecastRoutePinId: 00000000-0000-4000-8000-000000000104
+      acquiredAt: 2026-09-25T10:00:00Z
+      expiresAt: 2026-09-25T10:05:00Z
+      heartbeatAt: 2026-09-25T10:00:00Z
+      fencingToken: 17
+      status: active
+      placementGeneration: 1
+      recoveryGeneration: 1
+  - name: nonbatch-lease-valid
+    schemaRef: "#/components/schemas/HeavyWorkLease"
+    expectedValid: true
+    value:
+      leaseId: 00000000-0000-4000-8000-000000000201
+      requestId: 00000000-0000-4000-8000-000000000202
+      workerId: evaluator-1
+      workType: evaluation
+      acquiredAt: 2026-09-25T10:00:00Z
+      expiresAt: 2026-09-25T10:05:00Z
+      heartbeatAt: 2026-09-25T10:00:00Z
+      fencingToken: 18
+      status: active
+      placementGeneration: 1
+      recoveryGeneration: 1
+  - name: nonbatch-lease-with-attempt-invalid
+    schemaRef: "#/components/schemas/HeavyWorkLease"
+    expectedValid: false
+    value:
+      leaseId: 00000000-0000-4000-8000-000000000201
+      requestId: 00000000-0000-4000-8000-000000000202
+      workerId: evaluator-1
+      workType: evaluation
+      forecastAttemptId: 00000000-0000-4000-8000-000000000105
+      acquiredAt: 2026-09-25T10:00:00Z
+      expiresAt: 2026-09-25T10:05:00Z
+      heartbeatAt: 2026-09-25T10:00:00Z
+      fencingToken: 18
+      status: active
+      placementGeneration: 1
+      recoveryGeneration: 1
+  - name: embedding-lease-valid
+    schemaRef: "#/components/schemas/HeavyWorkLease"
+    expectedValid: true
+    value:
+      leaseId: 00000000-0000-4000-8000-000000000301
+      requestId: 00000000-0000-4000-8000-000000000302
+      workerId: embedding-worker-1
+      workType: embedding-index
+      embeddingBuildAttemptId: 00000000-0000-4000-8000-000000000303
+      candidateIndexVersion: index-v3
+      localFenceGeneration: 3
+      supervisorId: embedding-supervisor-1
+      acquiredAt: 2026-09-28T10:00:00Z
+      expiresAt: 2026-09-28T10:05:00Z
+      heartbeatAt: 2026-09-28T10:00:00Z
+      fencingToken: 19
+      status: active
+      placementGeneration: 1
+      recoveryGeneration: 1
+  - name: embedding-lease-missing-fence-invalid
+    schemaRef: "#/components/schemas/HeavyWorkLease"
+    expectedValid: false
+    value:
+      leaseId: 00000000-0000-4000-8000-000000000301
+      requestId: 00000000-0000-4000-8000-000000000302
+      workerId: embedding-worker-1
+      workType: embedding-index
+      embeddingBuildAttemptId: 00000000-0000-4000-8000-000000000303
+      candidateIndexVersion: index-v3
+      supervisorId: embedding-supervisor-1
+      acquiredAt: 2026-09-28T10:00:00Z
+      expiresAt: 2026-09-28T10:05:00Z
+      heartbeatAt: 2026-09-28T10:00:00Z
+      fencingToken: 19
+      status: active
+      placementGeneration: 1
+      recoveryGeneration: 1
+servers:
+  - url: /

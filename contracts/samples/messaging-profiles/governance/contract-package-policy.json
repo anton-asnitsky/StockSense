@@ -1,0 +1,140 @@
+{
+  "contractPackagePolicyVersion": "1.0.0",
+  "requiredBoundaryIds": [
+    "C01",
+    "C02",
+    "C03",
+    "C04",
+    "C05",
+    "C06",
+    "C07",
+    "C08",
+    "C09",
+    "C10",
+    "C11",
+    "C12",
+    "C13",
+    "C14",
+    "C15",
+    "C16",
+    "C17",
+    "C18",
+    "C19",
+    "C20",
+    "C21",
+    "C22",
+    "C23",
+    "C24",
+    "C25",
+    "C26",
+    "C27"
+  ],
+  "requiredCanonicalKinds": {
+    "schema": [
+      "C01",
+      "C02",
+      "C05",
+      "C07",
+      "C08",
+      "C09",
+      "C15",
+      "C16",
+      "C17",
+      "C19",
+      "C20",
+      "C21",
+      "C22",
+      "C23"
+    ],
+    "openapi": [
+      "C03",
+      "C04",
+      "C05",
+      "C06",
+      "C07",
+      "C09",
+      "C10",
+      "C11",
+      "C12",
+      "C13",
+      "C14",
+      "C17",
+      "C18",
+      "C24",
+      "C26"
+    ],
+    "asyncapi": [
+      "C03",
+      "C07",
+      "C15",
+      "C23",
+      "C25",
+      "C27"
+    ]
+  },
+  "requiredCanonicalPaths": {
+    "C01": [
+      "common/v1/message-envelope.schema.json",
+      "common/v1/global-identity-audit-envelope.schema.json"
+    ],
+    "C05": [
+      "common/v1/supplier-authority-head.shared-schema.yaml"
+    ],
+    "C07": [
+      "model-lifecycle/v1/finalize-heavy-work.shared-schema.yaml",
+      "supplier-knowledge/v1/embedding-build-quiesced.asyncapi.yaml"
+    ],
+    "C09": [
+      "common/v1/supplier-authority-head.shared-schema.yaml"
+    ],
+    "C15": [
+      "common/v1/global-identity-audit-envelope.schema.json"
+    ]
+  },
+  "requiredSidecarKinds": {
+    "candidateEveryBoundary": [
+      "example-fixture"
+    ],
+    "releaseEveryBoundary": [
+      "example-fixture",
+      "compatibility-assessment",
+      "validation-run",
+      "evidence-record"
+    ],
+    "candidateForCanonicalDocuments": [
+      "generation-profile"
+    ],
+    "releaseForGeneratedConsumers": [
+      "generated-output-manifest"
+    ],
+    "candidateByBoundary": {
+      "C01": [
+        "contract-package-policy"
+      ],
+      "C22": [
+        "protocol-compatibility-manifest"
+      ],
+      "C23": [
+        "messaging-conformance-profile"
+      ],
+      "C24": [
+        "recovery-policy"
+      ],
+      "C25": [
+        "recovery-policy"
+      ],
+      "C26": [
+        "recovery-policy"
+      ],
+      "C27": [
+        "recovery-policy"
+      ]
+    }
+  },
+  "candidateScope": [
+    "C01",
+    "C22",
+    "C23"
+  ],
+  "releaseReady": false
+}
