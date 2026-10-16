@@ -1,7 +1,7 @@
 {
   "stage": "code-generation",
   "unit": "contracts",
-  "decision_basis": "Approved U1 code-generation plan; local verification on feat/contracts-governance-foundation. OK is claimed only where a workspace file implements and tests the identifier.",
+  "decision_basis": "U1 source matches protected main commit 581b70a1020e5ae36d631625a41392fddf30dbfb (the later HEAD has no tools/contracts, contracts, or workflow diff). Evidence: 2026-10-16 U1 bootstrap verification, hosted runs 38876246986 and 38876247058, clean candidate-bundle attestation verification, protected-base PR probes #19/#20, and source-bound tests. OK means the complete named criterion is demonstrated; a validated C01-C27 candidate is not a C01 release or provider/runtime proof. GAP retains incomplete release, runtime, compatibility, evidence, and OQ8 obligations. No U1 acceptance or formal review outcome is inferred.",
   "upstream_ids": [
     "AC8.2.1",
     "AC8.2.2",
@@ -108,7 +108,7 @@
     {
       "id": "AC8.2.2",
       "status": "GAP",
-      "target": "All 38 draft canonical sources cover C01-C27 required kinds in contracts/source/ and every one now validates through its selected dialect under the retained resource bounds (tools/contracts/test/integration/catalogue-resource.test.mjs). No complete revision-stamped package with sidecars and exact fixtures for every applicable revision exists."
+      "target": "The C01-C27 candidate validates all 12 declared AsyncAPI channel messages with revision-bound positive/negative fixtures (tools/contracts/test/integration/full-package.test.mjs), but the specifically required inventory-import requested/completed/failed representative messages are absent from canonical sources and tests."
     },
     {
       "id": "AC8.2.3",
@@ -118,27 +118,27 @@
     {
       "id": "AC8.2.4",
       "status": "GAP",
-      "target": "All 38 draft canonical sources cover C01-C27 required kinds in contracts/source/ and every one now validates through the validator its own dialect selects, under the retained resource bounds, in tools/contracts/test/integration/catalogue-resource.test.mjs. No complete revision-stamped C01-C27 package, and no exact fixtures for every applicable revision, exists: the candidates cover C01/C18 and C01/C22/C23 only."
+      "target": "A complete C01-C27 candidate with 38 canonical sources, sidecars, 34 bound elements and 10 inventoried exemptions validates (tools/contracts/test/integration/full-package.test.mjs; hosted run 38876247058). Semantic security/idempotency cases and immutable-baseline compatibility across changed non-OpenAPI documents remain incomplete; candidate coverage is not an approved release catalogue."
     },
     {
       "id": "AC8.5.1",
       "status": "GAP",
-      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
+      "target": "C22-C27 candidate contracts and revision-bound schema fixtures validate in tools/contracts/test/integration/full-package.test.mjs and recovery-policy.test.mjs. Broker publication/commit, authenticated delivery, timing/size edges and each domain consumer failure schedule require real broker/provider runtime proof."
     },
     {
       "id": "AC8.5.2",
       "status": "GAP",
-      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
+      "target": "C22-C27 candidate contracts and revision-bound schema fixtures validate in tools/contracts/test/integration/full-package.test.mjs and recovery-policy.test.mjs. Broker publication/commit, authenticated delivery, timing/size edges and each domain consumer failure schedule require real broker/provider runtime proof."
     },
     {
       "id": "AC8.5.3",
       "status": "GAP",
-      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
+      "target": "C22-C27 candidate contracts and revision-bound schema fixtures validate in tools/contracts/test/integration/full-package.test.mjs and recovery-policy.test.mjs. Broker publication/commit, authenticated delivery, timing/size edges and each domain consumer failure schedule require real broker/provider runtime proof."
     },
     {
       "id": "AC8.5.4",
       "status": "GAP",
-      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
+      "target": "C22-C27 candidate contracts and revision-bound schema fixtures validate in tools/contracts/test/integration/full-package.test.mjs and recovery-policy.test.mjs. Broker publication/commit, authenticated delivery, timing/size edges and each domain consumer failure schedule require real broker/provider runtime proof."
     },
     {
       "id": "AC8.7.1",
@@ -148,52 +148,52 @@
     {
       "id": "AC8.7.2",
       "status": "GAP",
-      "target": "Branch protection on main now requires the U1 contracts check, and a red required check did leave pull request 4 unmergeable through two failing runs. This stays a GAP on the rest of the criterion: merge readiness was never formally evaluated and recorded against a failed required check, and the branch safeguards are not verified under SS-01. The vulnerability gate is deliberately not a required context while its 12 advisories are undispositioned, so it does not demonstrate blocking either."
+      "target": "Protected main now requires U1 contracts, Vulnerability scan and U2 protected-base PR policy; PR #20 failed required checks and remained unmergeable (verification/u1-bootstrap-2026-10-16.md). The record does not include a complete SS-01 safeguard/squash-settings verification or formal failed-check merge-readiness evaluation."
     },
     {
       "id": "AC8.7.3",
       "status": "GAP",
-      "target": "The workflow keeps every job read-only with no secrets and the policy refuses a self-hosted runner on an untrusted trigger, which assertCiPolicy verifies. The criterion also requires that OQ8 resolve runner isolation, and OQ8 is open and scheduled for Bolt 2 under U2/U13: trusted-runner and state/backend controls are to be defined before CI deployment. A synthetic workflow-changing pull request has also not been exercised against the protected base."
+      "target": "Protected-base guard passed docs-only PR #19 and rejected workflow-changing PR #20; public jobs use GitHub-hosted runners, read permissions and no deployment secrets (verification/u1-bootstrap-2026-10-16.md). OQ8 trusted-runner isolation and state/backend controls remain open under U2/U13."
     },
     {
       "id": "AC9.11.1",
       "status": "GAP",
-      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
+      "target": "C24-C27 candidate schemas and recovery-policy tests exist, but no real participant fencing, broker snapshot/LSN binding, failure-injected abort/resume, or authorized Operator confirmation evidence demonstrates the full recovery criterion (tools/contracts/test/integration/recovery-policy.test.mjs; verification/u1-bootstrap-2026-10-16.md)."
     },
     {
       "id": "AC9.11.2",
       "status": "GAP",
-      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
+      "target": "C24-C27 candidate schemas and recovery-policy tests exist, but no real participant fencing, broker snapshot/LSN binding, failure-injected abort/resume, or authorized Operator confirmation evidence demonstrates the full recovery criterion (tools/contracts/test/integration/recovery-policy.test.mjs; verification/u1-bootstrap-2026-10-16.md)."
     },
     {
       "id": "AC9.11.3",
       "status": "GAP",
-      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
+      "target": "C24-C27 candidate schemas and recovery-policy tests exist, but no real participant fencing, broker snapshot/LSN binding, failure-injected abort/resume, or authorized Operator confirmation evidence demonstrates the full recovery criterion (tools/contracts/test/integration/recovery-policy.test.mjs; verification/u1-bootstrap-2026-10-16.md)."
     },
     {
       "id": "AC9.11.4",
       "status": "GAP",
-      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
+      "target": "C24-C27 candidate schemas and recovery-policy tests exist, but no real participant fencing, broker snapshot/LSN binding, failure-injected abort/resume, or authorized Operator confirmation evidence demonstrates the full recovery criterion (tools/contracts/test/integration/recovery-policy.test.mjs; verification/u1-bootstrap-2026-10-16.md)."
     },
     {
       "id": "AC10.2.1",
       "status": "GAP",
-      "target": "Release evidence, scans, SBOM and attestation are not produced by any run."
+      "target": "The trusted main push produced an attested C01-C27 candidate and SBOM (run 38876247058), but no identified released revision has complete requirement-to-validation evidence links."
     },
     {
       "id": "AC10.2.2",
       "status": "GAP",
-      "target": "Release evidence, scans, SBOM and attestation are not produced by any run."
+      "target": "The candidate and SBOM exist (run 38876247058); model/data cards, rejected candidates, measured heavy-job profiles, recovery findings and separated OQ5 limitations are not in a released Reviewer evidence report."
     },
     {
       "id": "AC10.2.3",
       "status": "GAP",
-      "target": "Release evidence, scans, SBOM and attestation are not produced by any run."
+      "target": "The main-push candidate is attested and clean-consumer verified, with releaseReady: false (verification/u1-bootstrap-2026-10-16.md). No owner-approved versioned release/tag/image or publication is evidenced."
     },
     {
       "id": "AC10.2.4",
       "status": "GAP",
-      "target": "All 38 draft canonical sources cover C01-C27 required kinds and validate under the retained bounds in tools/contracts/test/integration/catalogue-resource.test.mjs. No complete revision-stamped package or release evidence exists."
+      "target": "The 38-source C01-C27 candidate validates, but the machine-checkable all-delivered-story matrix and per-boundary authorization/audit/retry/runtime evidence required for final coverage are absent."
     },
     {
       "id": "AC10.2.5",
@@ -203,7 +203,7 @@
     {
       "id": "AC10.2.6",
       "status": "GAP",
-      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
+      "target": "Recovery schemas and candidate fixtures exist; no Reviewer-facing evidence from actual blocked, Failed, Aborted and Safely resumed recovery runs, including separate OQ5 blockers, has been verified."
     },
     {
       "id": "BR1.1",
@@ -247,8 +247,8 @@
     },
     {
       "id": "BR2.2",
-      "status": "OK",
-      "target": "tools/contracts/src/validators.mjs"
+      "status": "GAP",
+      "target": "The canonical AsyncAPI catalogue has 12 revision-bound message fixtures, but it does not declare the required inventory-import requested/completed/failed trio or an import-specific authoritative audit event (contracts/source/; tools/contracts/test/integration/full-package.test.mjs)."
     },
     {
       "id": "BR2.3",
@@ -313,7 +313,7 @@
     {
       "id": "BR4.3",
       "status": "GAP",
-      "target": "oasdiff 1.28.0 was locally pinned and exercised on identical/breaking fixtures; no complete immutable-baseline compatibility run for the C01-C27 package exists."
+      "target": "Pinned oasdiff and immutable-baseline catalogue tests run, including fail-closed changed non-OpenAPI cases (tools/contracts/test/integration/baseline-compatibility.test.mjs). No approved intentional breaking replacement with major identity, predecessor and overlap is evidenced."
     },
     {
       "id": "BR4.4",
@@ -323,37 +323,37 @@
     {
       "id": "BR5.1",
       "status": "GAP",
-      "target": "Draft job and event documents now exist in contracts/source/, including C01/C03/C07/C23. The full package, exact event fixtures and owner-runtime envelope binding evidence remain absent."
+      "target": "The full candidate binds 12 AsyncAPI channel messages to exact fixtures and C15 envelope schemas, but the specified inventory-import job/outcome/audit distinction and full message-identity policy are not yet demonstrated by a canonical import flow."
     },
     {
       "id": "BR5.2",
       "status": "GAP",
-      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
+      "target": "C22/C23 policy documents and exact candidate fixtures exist; the full durable outbox/inbox, current-authority redelivery, bounded retry/DLQ/replay rules need scenario-specific conformance and owner-runtime broker/consumer evidence."
     },
     {
       "id": "BR5.3",
       "status": "GAP",
-      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
+      "target": "C22/C23 policy documents and exact candidate fixtures exist; the full durable outbox/inbox, current-authority redelivery, bounded retry/DLQ/replay rules need scenario-specific conformance and owner-runtime broker/consumer evidence."
     },
     {
       "id": "BR5.4",
       "status": "GAP",
-      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
+      "target": "C22/C23 policy documents and exact candidate fixtures exist; the full durable outbox/inbox, current-authority redelivery, bounded retry/DLQ/replay rules need scenario-specific conformance and owner-runtime broker/consumer evidence."
     },
     {
       "id": "BR5.5",
       "status": "GAP",
-      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
+      "target": "C22-C27 candidate sidecars and recovery-policy tests exist. Exact cross-protocol compatibility, all 11 owner attestations, durable dispatch/fencing, and live Operator grant plus single-use preview confirmation remain unproven."
     },
     {
       "id": "BR5.6",
       "status": "GAP",
-      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
+      "target": "C22-C27 candidate sidecars and recovery-policy tests exist. Exact cross-protocol compatibility, all 11 owner attestations, durable dispatch/fencing, and live Operator grant plus single-use preview confirmation remain unproven."
     },
     {
       "id": "BR5.7",
       "status": "GAP",
-      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
+      "target": "C22-C27 candidate sidecars and recovery-policy tests exist. Exact cross-protocol compatibility, all 11 owner attestations, durable dispatch/fencing, and live Operator grant plus single-use preview confirmation remain unproven."
     },
     {
       "id": "BR5.8",
@@ -363,12 +363,12 @@
     {
       "id": "BR5.9",
       "status": "GAP",
-      "target": "Draft C22-C27 canonical sources exist in contracts/source/messaging-platform/ and contracts/source/recovery-coordination/; the C01/C22/C23 candidate has eight exact schema fixtures. C24-C27 governed sidecars, full-package fixtures, owner-runtime conformance and recovery proof remain absent."
+      "target": "Candidate C22/C23 fixtures exist, but U3/U4 publisher-local, U14 language-package and each domain consumer crash/duplicate/authority conformance run remain absent."
     },
     {
       "id": "BR5.10",
       "status": "GAP",
-      "target": "Draft C02, C17 and C18 sources exist. A complete package and delegated-token/platform-route conformance evidence are absent."
+      "target": "C02/C17/C18 candidate contracts describe separate platform identity-audit reads, but approved live human-grant checks and negative delegated-token/route runtime conformance are not demonstrated."
     },
     {
       "id": "BR6.1",
@@ -377,8 +377,8 @@
     },
     {
       "id": "BR6.2",
-      "status": "GAP",
-      "target": "The vulnerability gate fails and scan:vuln exits 1 with 12 advisories after the owner-approved AsyncAPI CLI upgrade from 6.0.2 to 6.2.0, down from 55. The gate correctly blocks: the residue is undispositioned. Every remaining advisory arrives through the generate and convert subcommands of the CLI, while this project invokes only validate, inside a container with no network, a read-only filesystem, no secrets and a dropped capability set - an exposure argument, not a disposition. The drafted U2 check runs this gate as its own job so the finding is visible as itself."
+      "status": "OK",
+      "target": "aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-bootstrap-2026-10-16.md"
     },
     {
       "id": "BR6.3",
@@ -393,12 +393,12 @@
     {
       "id": "BR6.5",
       "status": "GAP",
-      "target": "Release evidence, scans, SBOM and attestation are not produced by any run."
+      "target": "Run 38876247058 produced an attested candidate and SBOM; model/data cards, rejected candidates, measured resource/recovery findings and Reviewer-readable distinct outcomes remain incomplete."
     },
     {
       "id": "BR6.6",
       "status": "GAP",
-      "target": "Release evidence, scans, SBOM and attestation are not produced by any run."
+      "target": "Clean verification bound the candidate bundle to main commit 581b70a and its trusted workflow, but releaseReady is false and no explicitly owner-approved versioned release/tag/package is published (verification/u1-bootstrap-2026-10-16.md)."
     },
     {
       "id": "BR6.7",
@@ -408,12 +408,12 @@
     {
       "id": "NFR3.1",
       "status": "GAP",
-      "target": "All 38 draft canonical sources cover C01-C27 required kinds and each selects its declared dialect under the retained bounds (tools/contracts/test/integration/catalogue-resource.test.mjs). No complete revision-stamped C01-C27 package with per-revision fixtures exists."
+      "target": "C15 tenant and retailerless global envelopes have candidate schema fixtures, but complete authority-context, identifier-substitution, stale-placement and per-owner runtime isolation evidence is absent."
     },
     {
       "id": "NFR5.1",
       "status": "GAP",
-      "target": "All 38 draft canonical sources cover C01-C27 required kinds and validate through their selected dialects (tools/contracts/test/integration/catalogue-resource.test.mjs). No complete revision-stamped C01-C27 package with per-revision fixtures exists."
+      "target": "C18 and machine-facing candidates declare authority boundaries; full CSRF, narrow workload issuer/audience/scope, machine approval denial and provider-owned negative runtime tests remain absent."
     },
     {
       "id": "NFR6.1",
@@ -428,17 +428,17 @@
     {
       "id": "NFR7.2",
       "status": "GAP",
-      "target": "All 38 draft canonical sources cover C01-C27 required kinds in contracts/source/, but no complete revision-stamped package, exact fixtures for every applicable revision, or full-catalogue validation/resource proof exists."
+      "target": "Six AsyncAPI 3.0.0 documents and 12 exact message fixture pairs validate in the C01-C27 candidate; operation/reliability policy and immutable-baseline diff coverage for changed async documents remain incomplete."
     },
     {
       "id": "NFR7.3",
       "status": "GAP",
-      "target": "All 38 draft canonical sources cover C01-C27 required kinds in contracts/source/, but no complete revision-stamped package, exact fixtures for every applicable revision, or full-catalogue validation/resource proof exists."
+      "target": "C15 closed tenant/global envelope candidates validate; authenticated RabbitMQ producer binding, 64 KiB edges, five delivery attempts, seven-day DLQ, replay bounds and U3/U4/U14 conformance require real owner/broker tests."
     },
     {
       "id": "NFR7.4",
       "status": "GAP",
-      "target": "All 38 draft canonical sources cover C01-C27 required kinds in contracts/source/, but no complete revision-stamped package, exact fixtures for every applicable revision, or full-catalogue validation/resource proof exists."
+      "target": "C22/C23 candidate reliability policies and fixtures exist; requested/terminal/audit inventory-import examples plus duplicate, exhausted-retry and replay runtime scenarios remain unproven."
     },
     {
       "id": "NFR8.4",
@@ -463,12 +463,12 @@
     {
       "id": "NFR8.8",
       "status": "GAP",
-      "target": "oasdiff 1.28.0 was locally pinned and exercised on identical/breaking fixtures; no complete immutable-baseline compatibility run for the C01-C27 package exists."
+      "target": "Pinned oasdiff assesses immutable catalogue draft 20dc934 and rejects unsupported changed non-OpenAPI documents (tools/contracts/test/integration/baseline-compatibility.test.mjs); actual story/Bolt/release integration baselines and complete compatible outcomes are not verified."
     },
     {
       "id": "NFR8.9",
-      "status": "GAP",
-      "target": "Kiota 1.35.0 is restored from the checked-in .config/dotnet-tools.json manifest and exercised through the pinned runner by tools/contracts/test/integration/generation.test.mjs: two clean workspaces produce byte-identical output, 104 C# files. openapi-typescript sample generation passes with declared-output drift detection. The .NET client is not wired into a consumer profile output manifest, because that machinery maps file paths to digests and this generator emits a directory tree, so no complete consumer-local .NET/message output manifest or full-catalogue drift run exists."
+      "status": "OK",
+      "target": "tools/contracts/test/integration/bounded-generation.test.mjs"
     },
     {
       "id": "NFR8.10",
@@ -478,12 +478,12 @@
     {
       "id": "NFR8.11",
       "status": "GAP",
-      "target": "Six exact revision-bound C18 OpenAPI request-body fixtures in contracts/fixtures/web-bff/v1/example-fixture.json pass through tools/contracts/src/policy.mjs and tools/contracts/test/integration/cli.package.test.mjs. CSRF, idempotency, dashboard, SSE, audit and runtime behavior still lack full fixture/conformance evidence."
+      "target": "C18 is in the full candidate and browser types regenerate; request-body and synthesized schema fixtures run. Full CSRF rotation, idempotency reuse, dashboard/reconciliation, SSE, bounded audit and provider-runtime negative cases required by NFR8.11 remain unverified."
     },
     {
       "id": "NFR8.12",
       "status": "GAP",
-      "target": "oasdiff 1.28.0 was locally pinned and exercised on identical/breaking fixtures; no complete immutable-baseline compatibility run for the C01-C27 package exists."
+      "target": "Candidate version policy and immutable-baseline tests exist, but changed non-OpenAPI documents fail closed without an approved same-kind compatibility outcome; no full per-revision predecessor/major-identity release assessment exists."
     },
     {
       "id": "NFR8.13",
@@ -508,12 +508,12 @@
     {
       "id": "NFR8.17",
       "status": "GAP",
-      "target": "All 17 OpenAPI documents declare 3.1.2 and pass the pinned Redocly lint with no-unresolved-refs as an error, proven for the whole catalogue by tools/contracts/test/integration/catalogue-resource.test.mjs. The owner has now dispositioned both canonical-source repairs, so upstream approval is no longer the blocker. This stays a GAP because NFR8.17 also requires example and compatibility checks for every OpenAPI document: only C18 carries example fixtures, and oasdiff has not been run as a baseline comparison across the other sixteen."
+      "target": "All 17 OpenAPI 3.1.2 documents pass pinned validation in the full candidate; seven documents have only operation-profile exemptions and changed-catalogue compatibility is not completely assessed. The required per-document example and compatibility checks are incomplete."
     },
     {
       "id": "NFR10.1",
       "status": "GAP",
-      "target": "Size and reference limits are enforced, and the isolated validator runner sets 60 seconds and 2 GiB. The full C01-C27 catalogue is now measured under those bounds by tools/contracts/test/integration/catalogue-resource.test.mjs with the pinned image: 332 reference occurrences against the 1024 cap, slowest single document 7.0 s, peak RSS 151 MB. The CLI diagnostic shape still lacks complete severity, bounded location and remediation evidence, so this identifier remains a GAP on that clause alone."
+      "target": "tools/contracts/test/unit/diagnostics.test.mjs proves bounded location, severity, remediation, control/path/credential stripping and size limits, and cli.mjs applies the mapper. It does not demonstrate that an arbitrary short raw document or full-prompt excerpt embedded in a governed refusal message is suppressed; the complete excluded-content clause remains unproven."
     },
     {
       "id": "NFR11.2",
@@ -523,7 +523,7 @@
     {
       "id": "NFR11.3",
       "status": "GAP",
-      "target": "A clean hosted run now exists and is green for the required check: a fresh runner, no owner credentials, exact locked versions through a frozen lockfile on the pinned Node 24.19.0, oasdiff verified against its published SHA-256, the standards image verified against this tree tool-source digest, the fixture oracle executed and both candidates validated. It stays a GAP because the criterion requires regenerating all required outputs and recording source, configuration and output digests as evidence: the pinned Kiota generation skipped on the runner because the .NET tool is absent, and no evidence record is produced since release evidence is unimplemented."
+      "target": "Hosted U1 run 38876246986 used frozen dependencies, pinned validator and Kiota images and passed integration/generation checks. The record does not show a complete clean-checkout regeneration and source/configuration/output digest plus elapsed evidence for every required C01-C27 consumer output."
     },
     {
       "id": "NFR13.1",
@@ -533,47 +533,47 @@
     {
       "id": "NFR13.2",
       "status": "GAP",
-      "target": "Release evidence, scans, SBOM and attestation are not produced by any run."
+      "target": "Hosted run 38876247058 built a CycloneDX SBOM and passed secret/vulnerability scans, but full validator/generator dependency coverage including Kiota and retained finding-specific exception evidence has not been demonstrated."
     },
     {
       "id": "NFR13.3",
       "status": "GAP",
-      "target": "Release evidence, scans, SBOM and attestation are not produced by any run."
+      "target": "A clean consumer verified the exact candidate bundle attestation and 45-file digest manifest at main 581b70a (verification/u1-bootstrap-2026-10-16.md); no released package manifest covers all required sources, tools, outputs, SBOM and validation result."
     },
     {
       "id": "NFR13.4",
       "status": "GAP",
-      "target": "Release evidence, scans, SBOM and attestation are not produced by any run."
+      "target": "Protected-base PR probes #19/#20 prove the untrusted policy guard and the trusted main push attested a candidate (verification/u1-bootstrap-2026-10-16.md). OQ8 isolation of the eventual deployment runner and full released-revision trust path remain open."
     },
     {
       "id": "NFR13.5",
       "status": "GAP",
-      "target": "secretlint 13.0.6 and pnpm audit are pinned and run as the secret-scan and vulnerability-scan gates. Per the owner decision to pin only what the required check needs, the SBOM generator and AsyncAPI template stay unpinned and their gates stay unavailable with reasons; actions/attest-build-provenance is identified and SHA-pinned for a future push-only release workflow but excluded from the required check, because it needs id-token write and assertCiPolicy rejects a write permission on a pull_request trigger."
+      "target": "Run 38876247058 produced and uploaded a CycloneDX SBOM and passed secret/vulnerability scans on main; complete dependency coverage, retained scanner/exception review and a released package gate remain unverified."
     },
     {
       "id": "NFR15.1",
       "status": "GAP",
-      "target": "The U1 worktree has no .github/workflows files; U2 CI design is design-only. No protected-base required public-PR check or clean hosted U1 run exists; AC8.7.1 remains blocked."
+      "target": "Main-push candidate and attestations now exist; no complete machine-checked security/supply-chain evidence record resolves all inception/rule IDs, check outcomes and artifact digests for a release."
     },
     {
       "id": "NFR15.2",
       "status": "GAP",
-      "target": "The U1 worktree has no .github/workflows files; U2 CI design is design-only. No protected-base required public-PR check or clean hosted U1 run exists; AC8.7.1 remains blocked."
+      "target": "The candidate vulnerability scan is green, and basic exact-finding/expiry exception logic has unit tests. The full required exception fields, current-finding CI match and retained approval record are not demonstrated."
     },
     {
       "id": "NFR15.3",
       "status": "GAP",
-      "target": "The U1 worktree has no .github/workflows files; U2 CI design is design-only. No protected-base required public-PR check or clean hosted U1 run exists; AC8.7.1 remains blocked."
+      "target": "The candidate bundle has checked SHA-256 entries and a verified manifest digest, but no release digest manifest binds all required tools, configurations, generated outputs, SBOM and validation result."
     },
     {
       "id": "NFR15.4",
       "status": "GAP",
-      "target": "The U1 worktree has no .github/workflows files; U2 CI design is design-only. No protected-base required public-PR check or clean hosted U1 run exists; AC8.7.1 remains blocked."
+      "target": "A clean checkout verified the candidate subject, signer workflow, main ref and commit with GitHub attestation; no released C01 package subject/manifest verification exists (verification/u1-bootstrap-2026-10-16.md)."
     },
     {
       "id": "NFR15.5",
       "status": "GAP",
-      "target": "The U1 worktree has no .github/workflows files; U2 CI design is design-only. No protected-base required public-PR check or clean hosted U1 run exists; AC8.7.1 remains blocked."
+      "target": "The C19 candidate schema and source-bound fixtures exist, but full six-outcome metadata, contradiction/unresolved-ID tests and owner-runtime semantics for actual evidence records remain unverified."
     }
   ]
 }
