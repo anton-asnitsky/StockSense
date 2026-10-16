@@ -1,7 +1,7 @@
 {
   "stage": "code-generation",
   "unit": "contracts",
-  "decision_basis": "U1 source matches protected main commit 581b70a1020e5ae36d631625a41392fddf30dbfb (the later HEAD has no tools/contracts, contracts, or workflow diff). Evidence: 2026-10-16 U1 bootstrap verification, hosted runs 38876246986 and 38876247058, clean candidate-bundle attestation verification, protected-base PR probes #19/#20, and source-bound tests. OK means the complete named criterion is demonstrated; a validated C01-C27 candidate is not a C01 release or provider/runtime proof. GAP retains incomplete release, runtime, compatibility, evidence, and OQ8 obligations. No U1 acceptance or formal review outcome is inferred.",
+  "decision_basis": "U1 source matches protected main commit 581b70a1020e5ae36d631625a41392fddf30dbfb. Evidence: 2026-10-16 U1 bootstrap and required-check verification records, hosted runs 38876246986 and 38876247058, clean candidate-bundle attestation verification, protected-base PR probes #19/#20 and non-draft blocked PR #21, and source-bound tests. The owner's 2026-10-09 audit decision resolves OQ8 public-PR isolation for U1 only; state/backend and deployment-runner decisions remain U2/U13 work. OK means the complete named criterion is demonstrated and targets an implementation or test file; a validated C01-C27 candidate is not a C01 release or provider/runtime proof. GAP retains incomplete release, runtime, compatibility and downstream evidence obligations. No U1 acceptance or formal review outcome is inferred.",
   "upstream_ids": [
     "AC8.2.1",
     "AC8.2.2",
@@ -147,13 +147,13 @@
     },
     {
       "id": "AC8.7.2",
-      "status": "GAP",
-      "target": "Protected main now requires U1 contracts, Vulnerability scan and U2 protected-base PR policy; PR #20 failed required checks and remained unmergeable (verification/u1-bootstrap-2026-10-16.md). The record does not include a complete SS-01 safeguard/squash-settings verification or formal failed-check merge-readiness evaluation."
+      "status": "OK",
+      "target": ".github/workflows/public-pr-policy.yml"
     },
     {
       "id": "AC8.7.3",
-      "status": "GAP",
-      "target": "Protected-base guard passed docs-only PR #19 and rejected workflow-changing PR #20; public jobs use GitHub-hosted runners, read permissions and no deployment secrets (verification/u1-bootstrap-2026-10-16.md). OQ8 trusted-runner isolation and state/backend controls remain open under U2/U13."
+      "status": "OK",
+      "target": "tools/contracts/src/evidence.mjs"
     },
     {
       "id": "AC9.11.1",
@@ -378,7 +378,7 @@
     {
       "id": "BR6.2",
       "status": "OK",
-      "target": "aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-bootstrap-2026-10-16.md"
+      "target": ".github/workflows/contracts-required.yml"
     },
     {
       "id": "BR6.3",
@@ -543,7 +543,7 @@
     {
       "id": "NFR13.4",
       "status": "GAP",
-      "target": "Protected-base PR probes #19/#20 prove the untrusted policy guard and the trusted main push attested a candidate (verification/u1-bootstrap-2026-10-16.md). OQ8 isolation of the eventual deployment runner and full released-revision trust path remain open."
+      "target": "Public-PR runner isolation is evidenced for U1 by the owner's 2026-10-09 scoped decision, protected-base PR probes and non-draft blocked PR #21 (verification/u1-required-check-block-2026-10-16.md). OQ8 deployment-runner state/backend isolation and a complete released-revision trust path remain open with U2/U13."
     },
     {
       "id": "NFR13.5",
