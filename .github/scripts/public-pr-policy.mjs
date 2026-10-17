@@ -11,6 +11,8 @@ const SCAN_AUTHORITY = new Set([
   'tools/contracts/scripts/security-reports.mjs',
   'tools/contracts/scripts/check-ci-policy.mjs',
   'tools/contracts/scripts/build-sbom.mjs',
+  'tools/contracts/scripts/build-standards-image.mjs',
+  'tools/contracts/scripts/build-kiota-image.mjs',
   'tools/contracts/scripts/build-candidate-bundle.mjs',
   'tools/contracts/scripts/image-evidence.mjs',
   'tools/contracts/src/ci-policy.mjs',
@@ -21,6 +23,8 @@ const SCAN_AUTHORITY = new Set([
   'tools/contracts/src/sbom.mjs',
   'tools/contracts/package.json',
   'tools/contracts/pnpm-lock.yaml',
+  'tools/contracts/dockerfile.validator',
+  'tools/contracts/dockerfile.generator-kiota',
   'pnpm-workspace.yaml', '.npmrc', '.pnpmfile.cjs',
   'tools/contracts/.npmrc', 'tools/contracts/.pnpmfile.cjs'
 ]);

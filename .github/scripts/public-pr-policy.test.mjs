@@ -40,12 +40,14 @@ test('workflow edits, same-name job additions, local actions and renames are ref
 test('a PR cannot change the scanner, its dependency inputs or exception authority', () => {
   for (const path of ['tools/contracts/scripts/security-reports.mjs',
     'tools/contracts/scripts/check-ci-policy.mjs', 'tools/contracts/scripts/build-sbom.mjs',
+    'tools/contracts/scripts/build-standards-image.mjs', 'tools/contracts/scripts/build-kiota-image.mjs',
     'tools/contracts/scripts/build-candidate-bundle.mjs', 'tools/contracts/scripts/image-evidence.mjs',
     'tools/contracts/src/ci-policy.mjs', 'tools/contracts/src/evidence.mjs',
     'tools/contracts/src/candidate-provenance.mjs', 'tools/contracts/src/image-evidence.mjs',
     'tools/contracts/src/package-loader.mjs', 'tools/contracts/src/sbom.mjs',
     'tools/contracts/package.json',
-    'tools/contracts/pnpm-lock.yaml', '.npmrc', 'tools/contracts/.pnpmfile.cjs']) {
+    'tools/contracts/pnpm-lock.yaml', 'tools/contracts/Dockerfile.validator',
+    'tools/contracts/Dockerfile.generator-kiota', '.npmrc', 'tools/contracts/.pnpmfile.cjs']) {
     assert.throws(() => evaluatePublicPr({ ...input,
       baseTree: tree(...baseTree.tree, entry(path, 'c'.repeat(40))),
       headTree: tree(...headTree.tree, entry(path, 'f'.repeat(40))) }),

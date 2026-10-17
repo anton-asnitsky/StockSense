@@ -37,6 +37,7 @@ export function inspectImageScan(report, name, imageId, sbomDigest) {
       report.imageId !== imageId || report.sbomDigest !== sbomDigest ||
       report.scanner !== SCANNERS.grype || report.status !== 'completed' ||
       !Array.isArray(report.findings) || report.database?.status !== 'valid' ||
+      !/^v?6\.\d+\.\d+$/.test(report.database?.schemaVersion ?? '') ||
       typeof report.database?.source !== 'string' ||
       !report.database.source.startsWith('https://grype.anchore.io/databases/') ||
       !Number.isFinite(Date.parse(report.database?.built))) {

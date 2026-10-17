@@ -80,7 +80,9 @@ if (command === 'verify') {
       const db = parse(run([...common, 'db', 'status', '-o', 'json'], 'Grype database status'), 'Grype DB');
       const report = { schema: 'stocksense-image-scan-v1', image: name, imageId,
         sbomDigest: sha256(sbomBytes), scanner: SCANNERS.grype, status: 'completed',
-        database: { built: db.built, source: db.from, status: db.status },
+        // Grype v0.120.1 serializes ProviderStatus as `valid: boolean`.
+        database: { built: db.built, source: db.from, schemaVersion: db.schemaVersion,
+          status: db.valid === true && !db.error ? 'valid' : 'invalid' },
         findings: raw.matches.map(match => ({ id: match.vulnerability?.id,
           severity: match.vulnerability?.severity, package: match.artifact?.name,
           version: match.artifact?.version, type: match.artifact?.type,

@@ -72,7 +72,7 @@ async function imageFixture(directory, name, imageId, findings = []) {
   await writeFile(join(directory, `${name}.cdx.json`), bytes);
   await writeFile(join(directory, `${name}.scan.json`), JSON.stringify({
     schema: 'stocksense-image-scan-v1', image: name, imageId, sbomDigest: sha256(bytes),
-    scanner: SCANNERS.grype, status: 'completed', database: { status: 'valid',
+    scanner: SCANNERS.grype, status: 'completed', database: { status: 'valid', schemaVersion: 'v6.1.9',
       source: 'https://grype.anchore.io/databases/v6/example', built: new Date().toISOString() },
     findings
   }) + '\n');
@@ -115,6 +115,10 @@ test('missing, stale, malformed and vulnerable image evidence fails closed', asy
     const path = join(directory, 'kiota.scan.json');
     const scan = JSON.parse(await readFile(path, 'utf8'));
     scan.database.built = '2020-01-01T00:00:00Z';
+    await writeFile(path, JSON.stringify(scan));
+    await expectCode(readImageEvidence(directory, ids), 'IMAGE_SCAN');
+    scan.database.built = new Date().toISOString();
+    scan.database.schemaVersion = 'v5.0.0';
     await writeFile(path, JSON.stringify(scan));
     await expectCode(readImageEvidence(directory, ids), 'IMAGE_SCAN');
   } finally { await rm(directory, { recursive: true, force: true }); }
