@@ -4,6 +4,8 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import Ajv2020 from 'ajv/dist/2020.js';
+import addFormats from 'ajv-formats';
 import { ALL_BOUNDARIES, loadPackage } from '../../src/package-loader.mjs';
 import { DIALECTS, createSchemaValidator } from '../../src/validators.mjs';
 import { asyncApiFixtureSchema, asyncApiMessageElements, mapSchemaFindings, runFixtureOracle } from '../../src/policy.mjs';
@@ -135,6 +137,10 @@ test('inventory import audit binds job identity and rejects contradictory termin
   const registry = new Map([[envelope.$id, envelope]]);
   const element = ASYNCAPI_MESSAGES[documentPath][0];
   const schema = asyncApiFixtureSchema(document, element);
+  const strict = new Ajv2020({ strict: true, allErrors: true, validateFormats: true, logger: false });
+  addFormats(strict);
+  strict.addSchema(envelope);
+  assert.equal(typeof strict.compile(schema), 'function');
   const pair = fixturePair({ artifactKind: 'asyncapi', document: documentPath,
     revisionId: 'test-revision', boundaryIds: ['C15'] }, { element, schema, root: schema }, registry);
   assert.equal(pair.problem, null);
