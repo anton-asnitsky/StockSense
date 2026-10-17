@@ -5,9 +5,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ALL_BOUNDARIES, loadPackage } from '../../src/package-loader.mjs';
-import { DIALECTS } from '../../src/validators.mjs';
-import { asyncApiMessageElements, runFixtureOracle } from '../../src/policy.mjs';
-import { buildFullPackage } from '../../src/full-package.mjs';
+import { DIALECTS, createSchemaValidator } from '../../src/validators.mjs';
+import { asyncApiFixtureSchema, asyncApiMessageElements, mapSchemaFindings, runFixtureOracle } from '../../src/policy.mjs';
+import { buildFullPackage, fixturePair } from '../../src/full-package.mjs';
 import { buildPackageBundle, verifyPackageBundle } from '../../src/package-bundle.mjs';
 
 // Only the thin C01/C18 walking skeleton had ever been packaged, so every rule
@@ -65,11 +65,92 @@ const ASYNCAPI_MESSAGES = Object.freeze({
   ]
 });
 
+const TENANT_ENVELOPE_ID = 'https://contracts.stocksense.local/common/v1/message-envelope.schema.json';
+const TENANT_ENVELOPE_FIELDS = Object.freeze([
+  'messageId', 'messageType', 'schemaVersion', 'occurredAt', 'retailerId',
+  'actor', 'correlationId', 'causationId', 'idempotencyKey',
+  'placementGeneration', 'producer', 'payloadDigest', 'data'
+]);
+
 async function assembled() {
   const out = await mkdtemp(join(tmpdir(), 'stocksense-full-package-test-'));
   try { return { out, built: await buildFullPackage(repoRoot, out), clean: () => rm(out, { recursive: true, force: true }) }; }
   catch (error) { await rm(out, { recursive: true, force: true }); throw error; }
 }
+
+test('C01 generates and verifies every required tenant envelope omission across bound messages', async () => {
+  const YAML = (await import('yaml')).default;
+  const envelope = JSON.parse(await readFile(join(repoRoot,
+    'contracts/source/common/v1/message-envelope.schema.json'), 'utf8'));
+  assert.deepEqual(envelope.required, TENANT_ENVELOPE_FIELDS);
+  const registry = new Map([[envelope.$id, envelope]]);
+  let bound = 0;
+  const fixtureIds = new Set();
+  for (const [documentPath, elements] of Object.entries(ASYNCAPI_MESSAGES)) {
+    const document = YAML.parse(await readFile(join(repoRoot, 'contracts/source', documentPath), 'utf8'),
+      { strict: true, uniqueKeys: true });
+    for (const element of elements) {
+      const schema = asyncApiFixtureSchema(document, element);
+      if (!(schema.$ref === TENANT_ENVELOPE_ID ||
+          schema.allOf?.some(branch => branch.$ref === TENANT_ENVELOPE_ID))) continue;
+      bound += 1;
+      const revisionId = 'test-revision';
+      const pair = fixturePair({ artifactKind: 'asyncapi', document: documentPath,
+        revisionId, boundaryIds: ['C01'] }, { element, schema, root: schema }, registry);
+      assert.equal(pair.problem, null, `${documentPath} ${element}: ${pair.problem}`);
+      const positive = pair.fixtures.find(fixture => fixture.scenarioType === 'valid');
+      const omissions = pair.fixtures.filter(fixture => fixture.fixtureId.includes('-envelope-'));
+      assert.deepEqual(omissions.map(fixture => fixture.expectedFailurePath),
+        TENANT_ENVELOPE_FIELDS.map(field => `/${field}`), element);
+      const validate = createSchemaValidator(schema, registry, { openApiComponents: true });
+      assert.equal(validate(positive.payload), true, element);
+      for (const fixture of omissions) {
+        assert.equal(fixtureIds.has(fixture.fixtureId), false, fixture.fixtureId);
+        fixtureIds.add(fixture.fixtureId);
+        assert.ok(fixture.fixtureId.length <= 128, fixture.fixtureId);
+        assert.equal(fixture.documentRevisionId, revisionId);
+        assert.equal(validate(fixture.payload), false, fixture.fixtureId);
+        assert.deepEqual(mapSchemaFindings(validate.errors, { revisionId, contractElementId: element }), [{
+          findingCode: 'SCHEMA_REQUIRED', ruleId: 'BR2.4', revisionId,
+          contractElementId: element, instancePath: fixture.expectedFailurePath
+        }], fixture.fixtureId);
+      }
+    }
+  }
+  assert.equal(bound, 13);
+  assert.equal(fixtureIds.size, bound * TENANT_ENVELOPE_FIELDS.length);
+});
+
+test('inventory import audit binds job identity and rejects contradictory terminal outcomes', async () => {
+  const YAML = (await import('yaml')).default;
+  const documentPath = 'retail-data/v1/inventory-import-audit.asyncapi.yaml';
+  const document = YAML.parse(await readFile(join(repoRoot, 'contracts/source', documentPath), 'utf8'));
+  assert.deepEqual(document['x-stocksense-import-audit-link'], {
+    jobIdentity: ['retailerId', 'data.resourceId'], matchingJobField: 'data.jobId',
+    matchingSourceDigest: 'data.sourceDigest', matchingCorrelationId: 'correlationId',
+    enforceBeforeAuditOutboxCommit: true
+  });
+  const envelope = JSON.parse(await readFile(join(repoRoot,
+    'contracts/source/common/v1/message-envelope.schema.json'), 'utf8'));
+  const registry = new Map([[envelope.$id, envelope]]);
+  const element = ASYNCAPI_MESSAGES[documentPath][0];
+  const schema = asyncApiFixtureSchema(document, element);
+  const pair = fixturePair({ artifactKind: 'asyncapi', document: documentPath,
+    revisionId: 'test-revision', boundaryIds: ['C15'] }, { element, schema, root: schema }, registry);
+  assert.equal(pair.problem, null);
+  const positive = pair.fixtures.find(fixture => fixture.scenarioType === 'valid').payload;
+  const validate = createSchemaValidator(schema, registry, { openApiComponents: true });
+  assert.equal(validate(positive), true);
+  const failed = { ...positive, data: { ...positive.data, action: 'inventory.import.failed',
+    outcome: 'failed', reasonCode: 'IMPORT_FAILED' } };
+  assert.equal(validate(failed), true);
+  assert.equal(validate({ ...failed, data: { ...failed.data, outcome: 'accepted' } }), false);
+  const missingReason = { ...failed, data: { ...failed.data } };
+  delete missingReason.data.reasonCode;
+  assert.equal(validate(missingReason), false);
+  assert.equal(validate({ ...positive, data: { ...positive.data,
+    action: 'inventory.import.completed', outcome: 'failed' } }), false);
+});
 
 test('every canonical schema, OpenAPI target, and AsyncAPI message binds or has an allowed exemption', async () => {
   const { out, built, clean } = await assembled();
@@ -112,11 +193,11 @@ test('each bound element contributes a positive, a required negative, and the mu
     const positives = sidecar.fixtures.filter(fixture => fixture.scenarioType === 'valid');
     const negatives = sidecar.fixtures.filter(fixture => fixture.scenarioType === 'invalid');
     assert.equal(positives.length, built.bound);
-    // One required-omission negative per bound element, plus the non-required
-    // mutations each element admits.
+    // One generic required omission per bound element, every required tenant
+    // envelope omission, and the non-required mutations each element admits.
     assert.ok(negatives.length > built.bound, `expected more than ${built.bound} negatives, got ${negatives.length}`);
 
-    const requiredOnly = negatives.filter(fixture => fixture.expectedFailureCode !== undefined);
+    const requiredOnly = negatives.filter(fixture => fixture.fixtureId.endsWith('-negative'));
     assert.equal(requiredOnly.length, built.bound);
     for (const fixture of requiredOnly) {
       assert.equal(fixture.expectedOutcome, 'fail');
@@ -131,7 +212,10 @@ test('each bound element contributes a positive, a required negative, and the mu
     // exercised an enum, a closed object or a conditional discriminator - the
     // architecture review's A-05.
     const mutations = negatives.filter(fixture => Array.isArray(fixture.expectedFailures));
-    assert.equal(requiredOnly.length + mutations.length, negatives.length);
+    const envelopeOmissions = negatives.filter(fixture =>
+      fixture.expectedFailureCode === 'SCHEMA_REQUIRED' &&
+      TENANT_ENVELOPE_FIELDS.some(field => fixture.fixtureId.endsWith(`-envelope-${field}`)));
+    assert.equal(requiredOnly.length + envelopeOmissions.length + mutations.length, negatives.length);
     assert.ok(mutations.length > 0, 'no non-required negatives were produced');
     for (const fixture of mutations) {
       assert.equal(fixture.expectedOutcome, 'fail');
@@ -163,12 +247,16 @@ test('all sixteen AsyncAPI channel messages bind distinct revision-scoped exact 
     const loaded = await loadPackage(out);
     const fixtures = JSON.parse(await readFile(join(out, 'governance/example-fixture.json'), 'utf8')).fixtures;
     const results = await runFixtureOracle(out, loaded);
+    const tenantEnvelope = JSON.parse(await readFile(join(out,
+      'common/v1/message-envelope.schema.json'), 'utf8'));
+    assert.deepEqual(tenantEnvelope.required, TENANT_ENVELOPE_FIELDS);
     const asyncEntries = loaded.entries.filter(entry => entry.artifactKind === 'asyncapi');
     assert.deepEqual(asyncEntries.map(entry => entry.document).sort(), Object.keys(ASYNCAPI_MESSAGES).sort());
     assert.equal(Object.values(ASYNCAPI_MESSAGES).flat().length, 16);
     assert.equal(new Set(fixtures.map(fixture => fixture.fixtureId)).size, fixtures.length,
       'fixture IDs must remain unique when C23 reuses a message on two channels');
 
+    let tenantMessages = 0;
     for (const entry of asyncEntries) {
       const document = YAML.parse(await readFile(join(out, entry.document), 'utf8'),
         { strict: true, uniqueKeys: true });
@@ -179,16 +267,40 @@ test('all sixteen AsyncAPI channel messages bind distinct revision-scoped exact 
           fixture.contractElementId === element);
         assert.equal(pair.filter(fixture => fixture.scenarioType === 'valid').length, 1, element);
         const requiredNegative = pair.filter(fixture => fixture.expectedFailureCode === 'SCHEMA_REQUIRED');
-        assert.equal(requiredNegative.length, 1, element);
-        assert.equal(requiredNegative[0].expectedFailureRuleId, 'BR2.4');
-        assert.match(requiredNegative[0].expectedFailurePath, /^\/[^/]/);
-        assert.ok(pair.every(fixture => fixture.fixtureId.includes(slug)), element);
+        const generic = requiredNegative.filter(fixture => fixture.fixtureId.endsWith('-negative'));
+        assert.equal(generic.length, 1, element);
+        assert.equal(generic[0].expectedFailureRuleId, 'BR2.4');
+        assert.match(generic[0].expectedFailurePath, /^\/[^/]/);
+        const schema = asyncApiFixtureSchema(document, element);
+        const isTenantEnvelope = schema.$ref === TENANT_ENVELOPE_ID ||
+          schema.allOf?.some(branch => branch.$ref === TENANT_ENVELOPE_ID);
+        if (isTenantEnvelope) tenantMessages += 1;
+        const omissions = pair.filter(fixture => fixture.fixtureId.includes('-envelope-'));
+        assert.equal(omissions.length, isTenantEnvelope ? TENANT_ENVELOPE_FIELDS.length : 0, element);
+        assert.equal(requiredNegative.length, 1 + omissions.length, element);
+        assert.deepEqual(omissions.map(fixture => fixture.expectedFailurePath),
+          isTenantEnvelope ? TENANT_ENVELOPE_FIELDS.map(field => `/${field}`) : [], element);
+        for (const fixture of omissions) {
+          const field = fixture.expectedFailurePath.slice(1);
+          assert.ok(fixture.fixtureId.endsWith(`-envelope-${field}`), fixture.fixtureId);
+          assert.equal(fixture.expectedFailureCode, 'SCHEMA_REQUIRED');
+          assert.equal(fixture.expectedFailureRuleId, 'BR2.4');
+          assert.equal(fixture.expectedOutcome, 'fail');
+          assert.ok(Object.hasOwn(pair[0].payload, field), fixture.fixtureId);
+          assert.equal(Object.hasOwn(fixture.payload, field), false, fixture.fixtureId);
+          assert.deepEqual({ ...fixture.payload, [field]: pair[0].payload[field] }, pair[0].payload,
+            `the ${field} omission must leave every other value intact`);
+          assert.equal(results.find(row => row.fixtureId === fixture.fixtureId)?.observed, 'fail', fixture.fixtureId);
+        }
+        assert.ok(pair.filter(fixture => !fixture.fixtureId.includes('-envelope-'))
+          .every(fixture => fixture.fixtureId.includes(slug)), element);
         assert.ok(pair.every(fixture => fixture.boundaryIds.every(id => entry.boundaryIds.includes(id))), element);
         assert.deepEqual(results.filter(row => pair.some(fixture => fixture.fixtureId === row.fixtureId))
           .filter(row => row.fixtureId.endsWith('-positive') || row.fixtureId.endsWith('-negative'))
           .map(row => row.observed), ['pass', 'fail'], element);
       }
     }
+    assert.equal(tenantMessages, 13);
     assert.equal(built.bound, 22 + 16);
   } finally { await clean(); }
 });
