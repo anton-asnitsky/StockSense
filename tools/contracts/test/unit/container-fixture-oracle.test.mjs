@@ -111,10 +111,10 @@ test('image worker accepts revision-bound inline responses and AsyncAPI messages
     assert.ok(inline.some(row => row.observed === 'pass'));
     assert.ok(inline.some(row => row.observed === 'fail'));
     const messages = result.fixtureResults.filter(row => row.contractElementId.startsWith('message:'));
-    assert.equal(messages.filter(row => row.scenarioType === 'valid').length, 12);
+    assert.equal(messages.filter(row => row.scenarioType === 'valid').length, 16);
     assert.equal(messages.filter(row => row.scenarioType === 'invalid' &&
-      row.fixtureId.endsWith('-negative')).length, 12);
-    assert.equal(new Set(messages.map(row => row.contractElementId)).size, 12);
+      row.fixtureId.endsWith('-negative')).length, 16);
+    assert.equal(new Set(messages.map(row => row.contractElementId)).size, 16);
 
     // Re-digesting a sidecar after removing all AsyncAPI pairs must not turn a
     // full catalogue back into a document-only candidate inside the worker.

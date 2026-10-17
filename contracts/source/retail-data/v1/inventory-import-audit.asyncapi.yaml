@@ -1,0 +1,51 @@
+asyncapi: 3.0.0
+info:
+  title: StockSense Inventory Import Authoritative Audit
+  version: 1.0.0
+  description: U4 writes the authoritative audit row and outbox atomically; U10 projects this wire event.
+defaultContentType: application/json
+servers:
+  localRabbitMq:
+    host: rabbitmq.stocksense.svc.cluster.local:5672
+    protocol: amqp
+channels:
+  inventoryImportAuditEvents:
+    address: stocksense.audit.v1
+    messages:
+      inventoryImportAuditEvent:
+        name: inventory-import.audit.recorded
+        title: Immutable authoritative inventory-import audit event
+        payload:
+          schemaFormat: 'application/schema+json;version=draft-2020-12'
+          schema:
+            allOf:
+              - $ref: 'https://contracts.stocksense.local/common/v1/message-envelope.schema.json'
+              - type: object
+                properties:
+                  messageType: { const: inventory.audit.recorded }
+                  schemaVersion: { const: 1.0.0 }
+                  data:
+                    type: object
+                    required: [action, resourceType, resourceId, outcome, sourceDigest]
+                    properties:
+                      action:
+                        enum: [inventory.import.requested, inventory.import.completed, inventory.import.failed]
+                      resourceType: { const: inventory-import }
+                      resourceId: { type: string, format: uuid }
+                      outcome: { enum: [accepted, failed] }
+                      sourceDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+                      reasonCode: { type: string, pattern: '^[A-Z][A-Z0-9_]{2,63}$' }
+                    additionalProperties: false
+operations:
+  publishInventoryImportAuditEvent:
+    action: send
+    channel: { $ref: '#/channels/inventoryImportAuditEvents' }
+  projectInventoryImportAuditEvent:
+    action: receive
+    channel: { $ref: '#/channels/inventoryImportAuditEvents' }
+x-stocksense-authority:
+  producer: retail-data
+  authoritativeStore: retail-data-postgresql
+  outboxCommit: atomic-with-authoritative-audit
+  projectionOwner: audit-evidence
+  syntheticExamplesOnly: true
