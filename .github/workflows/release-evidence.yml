@@ -27,8 +27,8 @@ permissions:
 jobs:
   evidence:
     name: Release evidence
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     permissions:
       # The three scopes assertCiPolicy allows on a trusted trigger, and no
       # others: contents to read the tree, id-token to mint the OIDC token the
@@ -60,35 +60,90 @@ jobs:
       - name: Install from the frozen lockfile
         run: pnpm --dir tools/contracts install --frozen-lockfile
 
-      # The sbom gate. Deterministic by construction: the same lockfile always
-      # produces the same bytes and the same digest, which is what lets the
-      # digest be recorded as the gate's report rather than a timestamped blob.
-      - name: Build the CycloneDX SBOM
-        id: sbom
-        run: |
-          set -euo pipefail
-          digest="$(pnpm --silent --dir tools/contracts build:sbom)"
-          echo "digest=${digest}" >> "$GITHUB_OUTPUT"
-          echo "SBOM digest ${digest}"
+      - name: Produce sanitized secret scan report
+        run: node tools/contracts/scripts/security-reports.mjs secret-scan
 
-      # The secret-scan gate.
-      - name: Secret scan
-        run: pnpm --dir tools/contracts scan:secrets
+      - name: Produce vulnerability scan report
+        if: always()
+        run: node tools/contracts/scripts/security-reports.mjs vulnerability-scan
 
-      # The vulnerability-scan gate. It is a required context on the protected
-      # base as well, so a regression blocks pull requests too.
-      - name: Vulnerability scan
-        run: pnpm --dir tools/contracts scan:vuln
+      - name: Retain exact scan report bytes
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: security-reports-${{ github.sha }}
+          path: tools/contracts/dist/security-reports/*.json
+          if-no-files-found: error
+          retention-days: 30
 
-      # Build the same pinned standards image used by the U1 required check.
-      # The candidate assembler validates all C01-C27 canonical documents and
-      # fixtures before writing a portable, digest-bound bundle.
+      - name: Attest the scan report bytes
+        if: always()
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v2
+        with:
+          subject-path: tools/contracts/dist/security-reports/*.json
+
+      - name: Require current clean or approved finding-specific scans
+        run: node tools/contracts/scripts/security-reports.mjs verify
+
+      - name: Set up the pinned differ
+        run: pnpm --dir tools/contracts setup:oasdiff
+
       - name: Build the pinned standards image
         id: standards-image
         run: |
           id="$(pnpm --dir tools/contracts --silent build:standards-image | grep -oE '^sha256:[0-9a-f]{64}$')"
           test -n "$id"
           echo "id=$id" >> "$GITHUB_OUTPUT"
+
+      - name: Build the pinned Kiota image
+        id: kiota-image
+        run: |
+          id="$(pnpm --dir tools/contracts --silent build:kiota-image | grep -oE '^sha256:[0-9a-f]{64}$')"
+          test -n "$id"
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
+      - name: Inventory and scan the exact built images
+        env:
+          STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
+          STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
+        run: node tools/contracts/scripts/image-evidence.mjs build
+
+      - name: Retain image inventories and current vulnerability findings
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: image-evidence-${{ github.sha }}
+          path: tools/contracts/dist/image-evidence/*.json
+          if-no-files-found: error
+          retention-days: 30
+
+      # The sbom gate. Deterministic by construction: the same lockfile always
+      # produces the same bytes and the same digest, which is what lets the
+      # digest be recorded as the gate's report rather than a timestamped blob.
+      - name: Build the CycloneDX SBOM
+        id: sbom
+        env:
+          STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
+          STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
+          STOCKSENSE_IMAGE_EVIDENCE_DIR: tools/contracts/dist/image-evidence
+        run: |
+          set -euo pipefail
+          digest="$(pnpm --silent --dir tools/contracts build:sbom)"
+          echo "digest=${digest}" >> "$GITHUB_OUTPUT"
+          echo "SBOM digest ${digest}"
+
+      - name: Attest the SBOM's build provenance
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v2
+        with:
+          subject-path: tools/contracts/sbom.cdx.json
+
+      - name: Retain the exact SBOM bytes
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: sbom-${{ github.sha }}
+          path: tools/contracts/sbom.cdx.json
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Build and validate the C01-C27 candidate bundle
         run: pnpm --dir tools/contracts bundle:candidate dist/candidate.bundle.json
@@ -107,21 +162,5 @@ jobs:
         with:
           name: candidate-bundle-${{ github.sha }}
           path: tools/contracts/dist/candidate.bundle.json
-          if-no-files-found: error
-          retention-days: 30
-
-      # Attest the SBOM separately from the package subject. It binds the
-      # dependency set to this workflow, commit and runner through the OIDC
-      # token. Neither attestation is a release claim.
-      - name: Attest the SBOM's build provenance
-        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v2
-        with:
-          subject-path: tools/contracts/sbom.cdx.json
-
-      - name: Upload the SBOM and its digest
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: sbom-${{ github.sha }}
-          path: tools/contracts/sbom.cdx.json
           if-no-files-found: error
           retention-days: 30
