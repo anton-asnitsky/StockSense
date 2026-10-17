@@ -36,8 +36,9 @@ test('the SBOM covers the locked tree with a hash for every component', async ()
   assert.equal(document.components.length, components);
   // Every component carries an integrity hash, so the SBOM is verifiable
   // rather than a list of names. The lockfile is the reason that holds.
-  assert.equal(document.components.filter(item => item.hashes?.length).length, components);
-  for (const item of document.components) {
+  assert.equal(document.components.filter(item => item.purl?.startsWith('pkg:npm/') && item.hashes?.length).length,
+    document.components.filter(item => item.purl?.startsWith('pkg:npm/')).length);
+  for (const item of document.components.filter(item => item.purl?.startsWith('pkg:npm/'))) {
     assert.match(item.purl, /^pkg:npm\//);
     assert.equal(item['bom-ref'], item.purl);
     assert.match(item.hashes[0].content, /^[0-9a-f]{64,128}$/);
@@ -45,6 +46,10 @@ test('the SBOM covers the locked tree with a hash for every component', async ()
   }
   assert.match(digest, /^sha256:[0-9a-f]{64}$/);
   assert.match(document.serialNumber, /^urn:uuid:[0-9a-f-]{36}$/);
+  for (const name of ['validator-node-image', 'kiota-dotnet-sdk-image', 'Microsoft.OpenApi.Kiota',
+    'oasdiff-linux-amd64-archive', 'actions/checkout', 'GitHub hosted runner']) {
+    assert.ok(document.components.some(item => item.name === name), `missing ${name}`);
+  }
 });
 
 test('the same lockfile always produces the same bytes', async () => {
@@ -55,6 +60,15 @@ test('the same lockfile always produces the same bytes', async () => {
   assert.equal(first.digest, second.digest);
   assert.ok(first.bytes.equals(second.bytes));
   assert.ok(!JSON.stringify(first.document).includes('timestamp'));
+});
+
+test('built validator and Kiota image IDs join the SBOM only as exact digests', async () => {
+  const image = 'sha256:' + 'a'.repeat(64);
+  const { document } = await buildSbom(lockfile, { ...subject, validatorImageDigest: image, kiotaImageDigest: image });
+  for (const name of ['validator-image', 'kiota-image']) {
+    assert.equal(document.components.find(item => item.name === name).hashes[0].content, image.slice(7));
+  }
+  await expectCode(buildSbom(lockfile, { ...subject, validatorImageDigest: 'latest' }), 'SBOM_TOOL_PIN');
 });
 
 test('the SBOM digest lets the release sbom gate report a pass', async () => {
@@ -90,9 +104,9 @@ test('a component without an integrity hash is counted rather than hidden', asyn
   await withLockfile("lockfileVersion: '9.0'\npackages:\n  local-thing@1.0.0:\n    resolution:\n      directory: ../x\n",
     async path => {
       const { document } = await buildSbom(path, subject);
-      assert.equal(document.components.length, 1);
+      assert.ok(document.components.length > 1);
       assert.equal(document.components[0].hashes, undefined);
-      const property = document.metadata.properties.find(item => item.name === 'stocksense:componentsWithoutHash');
+      const property = document.metadata.properties.find(item => item.name === 'stocksense:pnpmComponentsWithoutHash');
       assert.equal(property.value, '1');
     });
 });
