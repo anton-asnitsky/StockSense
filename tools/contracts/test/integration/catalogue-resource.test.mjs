@@ -201,7 +201,7 @@ test('every canonical source in the catalogue validates within the retained reso
   // package rather than only its own document.
   const inventory = await buildSourceInventory(repository);
   const entries = inventory.entries.map(entry => ({ ...entry }));
-  assert.equal(entries.length, 38);
+  assert.equal(entries.length, 40);
   const policy = JSON.parse(await readFile(
     join(repository, 'contracts/samples/walking-skeleton/governance/contract-package-policy.json'), 'utf8'));
 
@@ -254,7 +254,7 @@ test('every canonical source in the catalogue validates within the retained reso
     // Every dialect the catalogue declares is actually exercised, so a silent
     // drop to one validator cannot pass this test.
     assert.deepEqual(Object.fromEntries([...dialects].sort()), {
-      'asyncapi:3.0.0': 6,
+      'asyncapi:3.0.0': 8,
       'governed-record:1': 1,
       'https://json-schema.org/draft/2020-12/schema': 12,
       'in-process-port:1': 1,

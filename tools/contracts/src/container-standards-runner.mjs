@@ -381,7 +381,7 @@ export async function runContainerStandardsValidator(dialect, sourceDocument, op
     // Name the document, never the tool's own diagnostic: the path comes from
     // the manifest we loaded, while stderr is untrusted output that may carry
     // anything the validator happened to read. Without the path a package of
-    // 38 documents reports only that one of them was rejected.
+    // A complete catalogue report still only says that one document was rejected.
     if (result.status !== 0) {
       throw new ContractError('STANDARDS_VALIDATION', tool.rule,
         `Pinned standards validator rejected the canonical document ${sourceDocument}`, sourceDocument);

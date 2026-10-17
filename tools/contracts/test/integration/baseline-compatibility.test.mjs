@@ -27,7 +27,7 @@ test('the whole catalogue is assessed against an immutable baseline commit', asy
 
   // Every diffable canonical document is accounted for exactly once, so a
   // document can never be dropped from the comparison unnoticed.
-  assert.equal(assessments.length + undiffable.length, 38);
+  assert.equal(assessments.length + undiffable.length, 40);
   assert.equal(new Set(assessments.map(row => row.document)).size, assessments.length);
   for (const row of assessments) {
     assert.ok(OUTCOMES.includes(row.outcome), `${row.document}: ${row.outcome}`);
@@ -37,7 +37,14 @@ test('the whole catalogue is assessed against an immutable baseline commit', asy
     // breaking changes means an approval existed.
     if (row.breakingChanges.length) assert.equal(row.outcome, 'breaking-approved');
   }
-  assert.equal(Object.keys(tally).reduce((sum, key) => sum + tally[key], 0), 38);
+  assert.equal(Object.keys(tally).reduce((sum, key) => sum + tally[key], 0), 40);
+  for (const document of ['retail-data/v1/inventory-import.asyncapi.yaml',
+    'retail-data/v1/inventory-import-audit.asyncapi.yaml']) {
+    const row = assessments.find(item => item.document === document);
+    assert.equal(row?.outcome, 'first-release', document);
+    assert.equal(row?.predecessorRevisionId, null, document);
+    assert.match(row.firstReleaseReason, new RegExp(`absent at baseline ${CATALOGUE_DRAFT}`));
+  }
 });
 
 test('a changed document of a kind the pinned differ cannot read is reported, never credited', async () => {
