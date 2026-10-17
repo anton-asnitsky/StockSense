@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
 import { basename, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { verifyPackageBundle } from '../src/package-bundle.mjs';
 import { withPrivateBundleSnapshot } from '../src/bundle-snapshot.mjs';
+import { verifyCandidateEvidence } from '../src/candidate-provenance.mjs';
 
 // The identity and subject checks must succeed before parsing any package
 // content. GitHub CLI verifies the signature, certificate and exact file digest.
 const TRUSTED_REPOSITORY = 'anton-asnitsky/StockSense';
 const TRUSTED_WORKFLOW = `${TRUSTED_REPOSITORY}/.github/workflows/release-evidence.yml`;
+const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const [bundlePath, sourceCommit] = process.argv.slice(2);
 if (process.argv.length !== 4 || !/^[0-9a-f]{40}$/.test(sourceCommit ?? '')) {
   process.stderr.write('Usage: node scripts/verify-candidate-bundle.mjs <bundle-file> <signing-source-commit>\n');
@@ -36,11 +39,13 @@ try {
       /^([0-9a-f]{64})$/.test(subject?.digest?.sha256 ?? ''))?.digest?.sha256;
   if (!subjectDigest) throw new Error('Verified attestation lacks the exact package subject');
   const bundle = verifyPackageBundle(bytes, { expectedDigest: `sha256:${subjectDigest}` });
+  const evidence = await verifyCandidateEvidence(bundle, { repoRoot, sourceCommit });
   const manifest = JSON.parse(bundle.files.get('manifest.json').toString('utf8'));
   process.stdout.write(JSON.stringify({ artifactDigest: bundle.artifactDigest,
     manifestDigest: bundle.manifestDigest, signingSourceCommit: sourceCommit,
     canonicalSourceRevision: manifest.sourceRevision, fileCount: bundle.fileCount,
-    totalBytes: bundle.totalBytes, releaseReady: false }) + '\n');
+    totalBytes: bundle.totalBytes, ...evidence, attestation: 'cryptographically-verified-hosted',
+    releaseReady: false }) + '\n');
 } catch (error) {
   const failure = error instanceof VerificationFailure ||
     ['BUNDLE_SIZE_LIMIT', 'BUNDLE_CHANGED'].includes(error?.code) ? error :

@@ -7,6 +7,7 @@ import { inspectContent, LIMITS } from './preflight.mjs';
 // This is a transport format for a validated candidate, not a release receipt.
 // The artifact digest is deliberately detached: a file cannot contain its own hash.
 const FORMAT = 'stocksense-candidate-bundle-v1';
+const EVIDENCE_FORMAT = 'stocksense-candidate-bundle-v2';
 const MAX_FILES = 4096;
 const MAX_PATH_BYTES = 512;
 export const MAX_ARTIFACT_BYTES = 48 * 1024 * 1024; // base64 and bounded JSON overhead for 32 MiB of inputs
@@ -76,8 +77,10 @@ function checkManifestBindings(manifest, byPath) {
 /**
  * Build a portable, deterministic in-memory bundle from an existing candidate.
  * No output path, clock, host path or release claim is encoded in the artifact.
+ * @param {string} root
+ * @param {{candidateEvidence?: Record<string, unknown>}} [options]
  */
-export async function buildPackageBundle(root) {
+export async function buildPackageBundle(root, { candidateEvidence } = {}) {
   const absolute = resolve(root);
   if (!(await lstat(absolute)).isDirectory()) fail('PACKAGE_ROOT', 'BR1.1', 'Package root is not a directory');
   const listed = (await snapshotPaths(absolute)).sort();
@@ -123,7 +126,9 @@ export async function buildPackageBundle(root) {
   if (canonicalJson((await snapshotPaths(absolute)).sort()) !== canonicalJson(listed)) {
     fail('PACKAGE_CHANGED', 'BR6.6', 'Package inventory changed while bundling');
   }
-  const bytes = Buffer.from(canonicalJson({ format: FORMAT, manifestDigest: loaded.manifestDigest, files }));
+  const bytes = Buffer.from(canonicalJson({ format: candidateEvidence ? EVIDENCE_FORMAT : FORMAT,
+    manifestDigest: loaded.manifestDigest, files,
+    ...(candidateEvidence ? { candidateEvidence } : {}) }));
   if (bytes.length > MAX_ARTIFACT_BYTES) fail('BUNDLE_SIZE_LIMIT', 'NFR10.1', 'Encoded bundle exceeds 48 MiB');
   return bytes;
 }
@@ -146,7 +151,11 @@ export function verifyPackageBundle(input, { expectedDigest } = {}) {
   let bundle;
   try { bundle = JSON.parse(input.toString('utf8')); }
   catch { fail('BUNDLE_FORMAT', 'BR6.6', 'Bundle is not valid JSON'); }
-  if (!own(bundle, ['format', 'manifestDigest', 'files']) || bundle.format !== FORMAT || !SHA256.test(bundle.manifestDigest) ||
+  const hasEvidence = bundle?.format === EVIDENCE_FORMAT;
+  if (!own(bundle, hasEvidence ? ['format', 'manifestDigest', 'files', 'candidateEvidence'] :
+    ['format', 'manifestDigest', 'files']) || ![FORMAT, EVIDENCE_FORMAT].includes(bundle.format) ||
+      (hasEvidence && (!bundle.candidateEvidence || typeof bundle.candidateEvidence !== 'object' ||
+        Array.isArray(bundle.candidateEvidence))) || !SHA256.test(bundle.manifestDigest) ||
       !Array.isArray(bundle.files)) fail('BUNDLE_FORMAT', 'BR6.6', 'Unsupported bundle structure');
   checkedPaths(bundle.files.map(file => file?.path));
   for (const file of bundle.files) {
@@ -182,5 +191,6 @@ export function verifyPackageBundle(input, { expectedDigest } = {}) {
     fail('UNLISTED_FILE', 'BR1.1', 'Bundle file inventory differs from C01 manifest');
   }
   checkManifestBindings(manifest, bindings);
-  return { artifactDigest, manifestDigest: bundle.manifestDigest, fileCount: files.size, totalBytes, files };
+  return { artifactDigest, manifestDigest: bundle.manifestDigest, fileCount: files.size, totalBytes, files,
+    candidateEvidence: hasEvidence ? bundle.candidateEvidence : null };
 }
