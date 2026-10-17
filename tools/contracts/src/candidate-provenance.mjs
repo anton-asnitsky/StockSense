@@ -92,13 +92,38 @@ export function validateCandidateScan(name, scan) {
 }
 
 function checkValidation(validation, bundle, manifest) {
+  const canonical = sourceEntries(manifest);
+  const fixturesEntry = manifest.governedArtifacts.find(entry => entry.kind === 'example-fixture');
+  const fixtureBytes = fixturesEntry && bundle.files.get(fixturesEntry.document);
+  if (!fixtureBytes || digest(fixtureBytes) !== fixturesEntry.contentDigest) {
+    fail('VALIDATION_EVIDENCE_MISMATCH', 'BR6.5', 'Candidate fixtures are missing or changed');
+  }
+  const declared = parseJson(fixtureBytes, 'VALIDATION_EVIDENCE_MISMATCH').fixtures;
+  const expected = Array.isArray(declared) ? declared.map(row => ({
+    fixtureId: row.fixtureId, contractElementId: row.contractElementId,
+    scenarioType: row.scenarioType, observed: row.expectedOutcome,
+    revisionId: row.documentRevisionId ?? row.schemaRevisionId
+  })) : [];
+  const actual = validation?.fixtureResults;
+  const byId = new Map(expected.map(row => [row.fixtureId, row]));
   if (!validation || validation.releaseReady !== false || validation.manifestDigest !== bundle.manifestDigest ||
       validation.sourceRevision !== manifest.sourceRevision ||
-      !Array.isArray(validation.validatedCanonical) || !validation.validatedCanonical.length ||
+      !['verified', 'verified-canonical-package-outside-repository'].includes(validation.sourceBinding) ||
+      !Array.isArray(validation.validatedCanonical) ||
       !Array.isArray(validation.uncoveredBoundaries) || validation.uncoveredBoundaries.length ||
-      !Array.isArray(validation.fixtureResults) || !validation.fixtureResults.length ||
-      !same(validation.validatedCanonical.map(row => row.document).sort(),
-        sourceEntries(manifest).map(row => row.document).sort())) {
+      !Array.isArray(actual) || !actual.length || !expected.length ||
+      new Set(expected.map(row => row.fixtureId)).size !== expected.length ||
+      actual.length !== expected.length || new Set(actual.map(row => row.fixtureId)).size !== actual.length ||
+      !same(validation.validatedCanonical.map(row => [row.document, row.revisionId]).sort(),
+        canonical.map(row => [row.document, row.revisionId]).sort()) ||
+      actual.some(row => {
+        const declaredRow = byId.get(row.fixtureId);
+        return !declaredRow || row.contractElementId !== declaredRow.contractElementId ||
+          row.scenarioType !== declaredRow.scenarioType || row.observed !== declaredRow.observed ||
+          !['pass', 'fail'].includes(row.observed) ||
+          !canonical.some(entry => entry.revisionId === row.revisionId) ||
+          (declaredRow.revisionId && row.revisionId !== declaredRow.revisionId);
+      })) {
     fail('VALIDATION_EVIDENCE_MISMATCH', 'BR6.5', 'Candidate validation is missing, stale or incomplete');
   }
 }

@@ -84,19 +84,38 @@ function syntheticCandidate() {
     sourceRevision: revision, consumers }));
   const sourceFiles = new Map([['api.yaml', Buffer.from('synthetic REST')],
     ['events.yaml', Buffer.from('synthetic messages')]]);
+  const apiRevision = digest('api revision');
+  const eventsRevision = digest('events revision');
+  const fixtures = Buffer.from(JSON.stringify({ fixtures: [
+    { fixtureId: 'synthetic-valid', contractElementId: 'synthetic',
+      documentRevisionId: apiRevision, scenarioType: 'valid', expectedOutcome: 'pass' },
+    { fixtureId: 'synthetic-invalid', contractElementId: 'synthetic',
+      documentRevisionId: eventsRevision, scenarioType: 'invalid', expectedOutcome: 'fail' }
+  ] }));
   const manifest = { sourceRevision: revision,
-    openapi: [{ document: 'api.yaml', contentDigest: digest(sourceFiles.get('api.yaml')) }],
-    asyncapi: [{ document: 'events.yaml', contentDigest: digest(sourceFiles.get('events.yaml')) }],
+    openapi: [{ document: 'api.yaml', revisionId: apiRevision,
+      contentDigest: digest(sourceFiles.get('api.yaml')) }],
+    asyncapi: [{ document: 'events.yaml', revisionId: eventsRevision,
+      contentDigest: digest(sourceFiles.get('events.yaml')) }],
     schemas: [], governedArtifacts: [{ kind: 'generation-profile',
-      document: 'governance/generation-profile.json', contentDigest: digest(profile) }] };
+      document: 'governance/generation-profile.json', contentDigest: digest(profile) },
+    { kind: 'example-fixture', document: 'governance/example-fixture.json',
+      contentDigest: digest(fixtures) }] };
   const manifestBytes = Buffer.from(JSON.stringify(manifest));
   const bundle = { manifestDigest: digest(manifestBytes), files: new Map([
-    ['manifest.json', manifestBytes], ['governance/generation-profile.json', profile], ...sourceFiles
+    ['manifest.json', manifestBytes], ['governance/generation-profile.json', profile],
+    ['governance/example-fixture.json', fixtures], ...sourceFiles
   ]) };
   const validation = { releaseReady: false, manifestDigest: bundle.manifestDigest,
-    sourceRevision: revision, uncoveredBoundaries: [],
-    validatedCanonical: [{ document: 'api.yaml' }, { document: 'events.yaml' }],
-    fixtureResults: [{ fixtureId: 'synthetic', observed: 'pass' }] };
+    sourceRevision: revision, sourceBinding: 'verified', uncoveredBoundaries: [],
+    validatedCanonical: [{ document: 'api.yaml', revisionId: apiRevision },
+      { document: 'events.yaml', revisionId: eventsRevision }],
+    fixtureResults: [
+      { fixtureId: 'synthetic-valid', contractElementId: 'synthetic', revisionId: apiRevision,
+        scenarioType: 'valid', observed: 'pass' },
+      { fixtureId: 'synthetic-invalid', contractElementId: 'synthetic', revisionId: eventsRevision,
+        scenarioType: 'invalid', observed: 'fail' }
+    ] };
   const scans = { secret: scan([]), vulnerability: scan({ advisories: {},
     metadata: { vulnerabilities: { moderate: 0, high: 0, critical: 0, total: 0 } } }) };
   const sbomBytes = Buffer.from('{"bomFormat":"CycloneDX","specVersion":"1.6"}');
@@ -140,6 +159,23 @@ test('clean verification rejects stale output, tool, SBOM, validation and scan b
   const changedValidation = JSON.parse(JSON.stringify(candidateEvidence));
   changedValidation.validation.sourceRevision = 'c'.repeat(40);
   await assert.rejects(verify(changedValidation), error => error.code === 'VALIDATION_EVIDENCE_MISMATCH');
+  const forgedFailure = JSON.parse(JSON.stringify(candidateEvidence));
+  forgedFailure.validation.fixtureResults[0].observed = 'fail';
+  forgedFailure.validationDigest = digest(Buffer.from(canonicalJson(forgedFailure.validation)));
+  await assert.rejects(verify(forgedFailure), error => error.code === 'VALIDATION_EVIDENCE_MISMATCH');
+  const missingFixture = JSON.parse(JSON.stringify(candidateEvidence));
+  missingFixture.validation.fixtureResults.pop();
+  missingFixture.validationDigest = digest(Buffer.from(canonicalJson(missingFixture.validation)));
+  await assert.rejects(verify(missingFixture), error => error.code === 'VALIDATION_EVIDENCE_MISMATCH');
+  const wrongRevision = JSON.parse(JSON.stringify(candidateEvidence));
+  wrongRevision.validation.fixtureResults[0].revisionId =
+    wrongRevision.validation.fixtureResults[1].revisionId;
+  wrongRevision.validationDigest = digest(Buffer.from(canonicalJson(wrongRevision.validation)));
+  await assert.rejects(verify(wrongRevision), error => error.code === 'VALIDATION_EVIDENCE_MISMATCH');
+  const unverified = JSON.parse(JSON.stringify(candidateEvidence));
+  unverified.validation.sourceBinding = 'unverified-no-repository';
+  unverified.validationDigest = digest(Buffer.from(canonicalJson(unverified.validation)));
+  await assert.rejects(verify(unverified), error => error.code === 'VALIDATION_EVIDENCE_MISMATCH');
   const missingScan = JSON.parse(JSON.stringify(candidateEvidence));
   delete missingScan.scans.secret;
   await assert.rejects(verify(missingScan), error => error.code === 'SCAN_EVIDENCE_MISSING');
