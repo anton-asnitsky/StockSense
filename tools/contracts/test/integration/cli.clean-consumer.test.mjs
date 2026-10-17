@@ -3,11 +3,12 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import test from 'node:test';
 import { buildPackageBundle, verifyPackageBundle } from '../../src/package-bundle.mjs';
 import { buildCandidateEvidence, validateCandidateScan,
-  verifyCandidateEvidence, pnpmInvocation } from '../../src/candidate-provenance.mjs';
+  verifyCandidateEvidence, pnpmInvocation, candidateScanScope } from '../../src/candidate-provenance.mjs';
 import { generatorConfigurationDigest, GENERATORS } from '../../src/generators.mjs';
 import { canonicalJson, digest } from '../../src/package-loader.mjs';
 import { makePackage } from '../support/package-fixture.mjs';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const scopeDigest = digest('synthetic-scan-scope');
 const scan = report => ({ status: 'passed', scopeDigest, report: JSON.stringify(report),
@@ -42,6 +43,17 @@ test('Windows scans launch pinned pnpm JavaScript directly and refuse a missing 
     env: { npm_execpath: 'C:\\pinned\\pnpm.mjs' } }),
   { command: process.execPath, args: ['C:\\pinned\\pnpm.mjs', 'audit', '--json'] });
   rejects(() => pnpmInvocation(['audit'], { platform: 'win32', env: {} }), 'SCAN_UNVERIFIED');
+});
+
+test('the signed scan scope includes canonical contracts, workflow and scanner sources', () => {
+  const root = fileURLToPath(new URL('../../../../', import.meta.url));
+  const scope = candidateScanScope(root);
+  for (const path of ['contracts/source/common/v1/message-envelope.schema.json',
+    '.github/workflows/contracts-required.yml',
+    'tools/contracts/src/candidate-provenance.mjs']) {
+    assert.ok(scope.paths.includes(path), path);
+  }
+  assert.match(scope.digest, /^sha256:[0-9a-f]{64}$/);
 });
 
 test('portable bundle carries candidate evidence inside the attested subject bytes', async () => {
