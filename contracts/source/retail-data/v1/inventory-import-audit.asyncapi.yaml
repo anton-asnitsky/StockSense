@@ -41,21 +41,25 @@ channels:
                     additionalProperties: false
                     allOf:
                       - if:
+                          type: object
                           properties:
                             action: { const: inventory.import.failed }
                           required: [action]
                         then:
+                          type: object
                           properties:
                             outcome: { const: failed }
-                          required: [outcome, reasonCode]
+                            reasonCode: { type: string, pattern: '^[A-Z][A-Z0-9_]{2,63}$' }
+                          required: [reasonCode]
                       - if:
+                          type: object
                           properties:
                             action: { enum: [inventory.import.requested, inventory.import.completed] }
                           required: [action]
                         then:
+                          type: object
                           properties:
                             outcome: { const: accepted }
-                          required: [outcome]
 operations:
   publishInventoryImportAuditEvent:
     action: send
