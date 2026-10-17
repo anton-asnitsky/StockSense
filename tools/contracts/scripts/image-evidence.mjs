@@ -12,6 +12,10 @@ const imageIds = { validator: process.env.STOCKSENSE_STANDARDS_IMAGE,
   kiota: process.env.STOCKSENSE_KIOTA_IMAGE };
 const docker = process.platform === 'win32'
   ? 'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe' : '/usr/bin/docker';
+// Write scanner caches as the host runner. Root-owned files in the bind mount
+// cannot be removed by an unprivileged runner and can mask the scan result.
+const scannerUser = typeof process.getuid === 'function' && typeof process.getgid === 'function'
+  ? ['--user', `${process.getuid()}:${process.getgid()}`] : [];
 const run = (args, label, maxBuffer = 64 * 1024 * 1024) => {
   const result = spawnSync(docker, args, { encoding: 'utf8', windowsHide: true, shell: false,
     maxBuffer, timeout: 12 * 60 * 1000 });
@@ -49,7 +53,7 @@ if (command === 'verify') {
       await chmod(archive, 0o644);
       await chmod(scratch, 0o755);
       const sbomText = run(['run', '--rm', '--pull=never', '--platform', 'linux/amd64',
-        '--network=none', '--cpus=1', '--memory=2g', '--read-only',
+        ...scannerUser, '--network=none', '--cpus=1', '--memory=2g', '--read-only',
         '-e', 'SYFT_CHECK_FOR_APP_UPDATE=false', '-e', 'SYFT_CACHE_DIR=/work/syft-cache',
         '-e', 'TMPDIR=/work/tmp', '-v', `${scratch}:/scan:ro`, '-v', `${scratch}:/work`,
         SCANNERS.syft, `docker-archive:/scan/${name}.tar`, '-o', 'cyclonedx-json@1.6'], 'Syft image inventory');
@@ -67,7 +71,7 @@ if (command === 'verify') {
       await chmod(scanFile, 0o644);
       const mounts = ['-v', `${scratch}:/scan:ro`, '-v', `${scratch}:/work`];
       const common = ['run', '--rm', '--pull=never', '--platform', 'linux/amd64',
-        '--cpus=1', '--memory=2g', '--read-only',
+        ...scannerUser, '--cpus=1', '--memory=2g', '--read-only',
         ...env, ...mounts, SCANNERS.grype];
       const raw = parse(run([...common, `sbom:/scan/${name}.cdx.json`, '-o', 'json'], 'Grype image scan'), 'Grype');
       if (!Array.isArray(raw.matches) || (raw.ignoredMatches?.length ?? 0) !== 0) {
