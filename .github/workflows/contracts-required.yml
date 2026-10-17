@@ -29,7 +29,7 @@ jobs:
   contracts:
     name: U1 contracts
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 60
     permissions:
       contents: read
     steps:
@@ -160,6 +160,21 @@ jobs:
         env:
           STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
           STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
+
+      - name: Inventory and scan the exact built images
+        env:
+          STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
+          STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
+        run: node tools/contracts/scripts/image-evidence.mjs build
+
+      - name: Retain image inventories and current vulnerability findings
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: image-evidence-${{ github.sha }}
+          path: tools/contracts/dist/image-evidence/*.json
+          if-no-files-found: error
+          retention-days: 30
 
   # Its own required job retains the secret and vulnerability findings even
   # when their gate fails, making current disposition reviewable.

@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildSbom, parsePackageKey } from '../../src/sbom.mjs';
+import { SCANNERS, readImageEvidence, sha256 } from '../../src/image-evidence.mjs';
 import { assertScanGates } from '../../src/evidence.mjs';
 
 const lockfile = fileURLToPath(new URL('../../pnpm-lock.yaml', import.meta.url));
@@ -62,13 +63,61 @@ test('the same lockfile always produces the same bytes', async () => {
   assert.ok(!JSON.stringify(first.document).includes('timestamp'));
 });
 
-test('built validator and Kiota image IDs join the SBOM only as exact digests', async () => {
+async function imageFixture(directory, name, imageId, findings = []) {
+  const sbom = { bomFormat: 'CycloneDX', specVersion: '1.6',
+    metadata: { properties: [{ name: 'stocksense:imageId', value: imageId }] },
+    components: [{ type: 'library', name: name === 'kiota' ? 'Microsoft.OpenApi.Kiota' : 'yaml',
+      version: '1.0.0', purl: name === 'kiota' ? 'pkg:nuget/Microsoft.OpenApi.Kiota@1.0.0' : 'pkg:npm/yaml@1.0.0' }] };
+  const bytes = Buffer.from(JSON.stringify(sbom) + '\n');
+  await writeFile(join(directory, `${name}.cdx.json`), bytes);
+  await writeFile(join(directory, `${name}.scan.json`), JSON.stringify({
+    schema: 'stocksense-image-scan-v1', image: name, imageId, sbomDigest: sha256(bytes),
+    scanner: SCANNERS.grype, status: 'completed', database: { status: 'valid',
+      source: 'https://grype.anchore.io/databases/v6/example', built: new Date().toISOString() },
+    findings
+  }) + '\n');
+}
+
+test('built image packages enter the SBOM with exact image IDs and scanned inventories', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'stocksense-images-'));
   const image = 'sha256:' + 'a'.repeat(64);
-  const { document } = await buildSbom(lockfile, { ...subject, validatorImageDigest: image, kiotaImageDigest: image });
-  for (const name of ['validator-image', 'kiota-image']) {
-    assert.equal(document.components.find(item => item.name === name).hashes[0].content, image.slice(7));
-  }
+  try {
+    await imageFixture(directory, 'validator', image);
+    await imageFixture(directory, 'kiota', image);
+    const { document } = await buildSbom(lockfile, { ...subject, validatorImageDigest: image,
+      kiotaImageDigest: image, imageEvidenceDirectory: directory });
+    for (const name of ['validator-image', 'kiota-image']) {
+      assert.equal(document.components.find(item => item.name === name).hashes[0].content, image.slice(7));
+    }
+    for (const name of ['validator', 'kiota']) {
+      assert.ok(document.components.some(item => item.properties?.some(p =>
+        p.name === 'stocksense:image' && p.value === name)));
+    }
+    assert.ok(document.components.some(item => item.purl?.startsWith('pkg:nuget/')));
+    assert.ok(document.components.some(item => item.name === 'syft-image-scanner'));
+  } finally { await rm(directory, { recursive: true, force: true }); }
   await expectCode(buildSbom(lockfile, { ...subject, validatorImageDigest: 'latest' }), 'SBOM_TOOL_PIN');
+});
+
+test('missing, stale, malformed and vulnerable image evidence fails closed', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'stocksense-images-'));
+  const image = 'sha256:' + 'a'.repeat(64);
+  const ids = { validator: image, kiota: image };
+  try {
+    await expectCode(readImageEvidence(directory, ids), 'IMAGE_MISSING');
+    await imageFixture(directory, 'validator', image);
+    await imageFixture(directory, 'kiota', image);
+    await expectCode(readImageEvidence(directory, { ...ids, kiota: 'sha256:' + 'b'.repeat(64) }), 'IMAGE_STALE');
+    await imageFixture(directory, 'kiota', image, [{ id: 'CVE-2026-12345', severity: 'High',
+      package: 'Kiota', version: '1.0.0', type: 'dotnet' }]);
+    await expectCode(readImageEvidence(directory, ids), 'IMAGE_FINDINGS');
+    await imageFixture(directory, 'kiota', image);
+    const path = join(directory, 'kiota.scan.json');
+    const scan = JSON.parse(await readFile(path, 'utf8'));
+    scan.database.built = '2020-01-01T00:00:00Z';
+    await writeFile(path, JSON.stringify(scan));
+    await expectCode(readImageEvidence(directory, ids), 'IMAGE_SCAN');
+  } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
 test('the SBOM digest lets the release sbom gate report a pass', async () => {

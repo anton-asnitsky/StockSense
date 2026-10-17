@@ -4,6 +4,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
 import { ContractError, canonicalJson } from './package-loader.mjs';
+import { readImageEvidence, SCANNERS } from './image-evidence.mjs';
 
 // A CycloneDX 1.6 SBOM built from the pnpm lockfile and pinned tool recipes.
 //
@@ -45,7 +46,7 @@ const purl = (name, version) =>
 
 /**
  * @param {string} lockfilePath
- * @param {{ name: string, version: string, generator: string, validatorImageDigest?: string, kiotaImageDigest?: string }} subject
+ * @param {{ name: string, version: string, generator: string, validatorImageDigest?: string, kiotaImageDigest?: string, imageEvidenceDirectory?: string }} subject
  * @returns {Promise<{ document: object, bytes: Buffer, digest: string, components: number }>}
  */
 export async function buildSbom(lockfilePath, subject) {
@@ -64,6 +65,7 @@ export async function buildSbom(lockfilePath, subject) {
 
   /** @type {any[]} */
   const components = [];
+  let imageRecords = [];
   let withoutHash = 0;
   for (const [key, value] of Object.entries(lock.packages).sort(([a], [b]) => (a < b ? -1 : 1))) {
     const { name, version } = parsePackageKey(key);
@@ -118,6 +120,16 @@ export async function buildSbom(lockfilePath, subject) {
       add('container', name, 'local-build', value.slice(7), 'verified CI build');
     }
   }
+  if (subject.validatorImageDigest || subject.kiotaImageDigest || subject.imageEvidenceDirectory) {
+    if (!subject.imageEvidenceDirectory) fail('IMAGE_MISSING', 'Built image inventory and scan directory is required');
+    const images = await readImageEvidence(subject.imageEvidenceDirectory, {
+      validator: subject.validatorImageDigest, kiota: subject.kiotaImageDigest
+    });
+    imageRecords = images.records;
+    components.push(...images.components);
+    add('container', 'syft-image-scanner', 'v1.54.1', SCANNERS.syft.split('@sha256:')[1], 'image-evidence.mjs');
+    add('container', 'grype-vulnerability-scanner', 'v0.120.1', SCANNERS.grype.split('@sha256:')[1], 'image-evidence.mjs');
+  }
   for (const [file, source] of [[requiredWorkflow, 'contracts-required.yml'], [releaseWorkflow, 'release-evidence.yml']]) {
     for (const [, name, hash] of file.matchAll(/uses: ([\w-]+\/[\w-]+)@([0-9a-f]{40})/g)) {
       // Git commit IDs use SHA-1; retain them as explicit properties below.
@@ -147,7 +159,12 @@ export async function buildSbom(lockfilePath, subject) {
         { name: 'stocksense:source', value: 'pnpm-lock.yaml' },
         { name: 'stocksense:lockfileVersion', value: String(lock.lockfileVersion) },
         { name: 'stocksense:pnpmComponentsWithoutHash', value: String(withoutHash) },
-        { name: 'stocksense:componentsWithoutHash', value: String(components.filter(item => !item.hashes?.length).length) }
+        { name: 'stocksense:componentsWithoutHash', value: String(components.filter(item => !item.hashes?.length).length) },
+        ...imageRecords.flatMap(record => [
+          { name: `stocksense:${record.name}:imageId`, value: record.imageId },
+          { name: `stocksense:${record.name}:imageSbomDigest`, value: record.sbomDigest },
+          { name: `stocksense:${record.name}:imageScanDigest`, value: record.scanDigest }
+        ])
       ]
     },
     components

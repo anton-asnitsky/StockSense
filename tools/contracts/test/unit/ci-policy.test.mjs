@@ -18,6 +18,15 @@ const check = (report, options = {}) => verifyScanReport(report, {
   bytes: Buffer.from(JSON.stringify(report)), ...options
 });
 const code = (fn, wanted) => assert.throws(fn, error => error.code === wanted);
+const affected = (overrides = {}) => ({ findingCode: 'GHSA-1111-2222-3333', ruleId: 'NFR13.2',
+  package: '@example/parser', version: '1.2.3', dependencyPath: '.>@example/parser', severity: 'high', ...overrides });
+const disposition = (finding = affected(), overrides = {}) => ({
+  findingCode: finding.findingCode, ruleId: 'NFR13.2', revisionId: hashBytes(Buffer.from(revision)),
+  package: finding.package, version: finding.version, dependencyPath: finding.dependencyPath,
+  approvedBy: 'security owner', reason: 'tracked mitigation', compensatingControl: 'isolated parser',
+  approvalReference: 'SEC-123', createdAt: '2026-01-01T00:00:00Z',
+  expiresAt: '2099-01-01T00:00:00Z', ...overrides
+});
 
 test('current clean reports bind revision, toolchain, source and exact bytes', () => {
   const report = base('secret-scan');
@@ -39,14 +48,62 @@ test('secret findings cannot be waived', () => {
 });
 
 test('vulnerability findings require exact live approved exceptions', () => {
-  const finding = { findingCode: 'GHSA-1111-2222-3333', ruleId: 'NFR13.2', package: 'sample', severity: 'high' };
+  const finding = affected();
   const report = base('vulnerability-scan', { findings: [finding] });
   code(() => check(report), 'SCAN_FINDINGS');
-  const exception = { findingCode: finding.findingCode, ruleId: 'NFR13.2', revisionId: hashBytes(Buffer.from(revision)),
-    approvedBy: 'owner', reason: 'tracked', expiresAt: '2099-01-01T00:00:00Z' };
+  const exception = disposition(finding);
   assert.equal(check(report, { exceptions: [exception] }).disposed, 1);
   code(() => check(report, { exceptions: [{ ...exception, expiresAt: '2020-01-01T00:00:00Z' }] }), 'EXCEPTION_EXPIRED');
   code(() => check(report, { exceptions: [{ ...exception, findingCode: '*' }] }), 'SCAN_EXCEPTION');
+});
+
+test('one advisory exception cannot clear another affected version or dependency path', () => {
+  const first = affected();
+  const otherVersion = affected({ version: '1.2.4' });
+  const otherPath = affected({ dependencyPath: '.>other>@example/parser' });
+  const otherPackage = affected({ package: 'other', dependencyPath: '.>other' });
+  const report = base('vulnerability-scan', { findings: [first, otherVersion, otherPath, otherPackage] });
+  code(() => check(report, { exceptions: [disposition(first)] }), 'SCAN_FINDINGS');
+  assert.equal(check(report, { exceptions: [disposition(first), disposition(otherVersion),
+    disposition(otherPath), disposition(otherPackage)] }).disposed, 4);
+  code(() => check(report, { exceptions: [disposition(first), disposition(first)] }), 'SCAN_EXCEPTION');
+  code(() => check(report, { exceptions: [disposition(first, { dependencyPath: '*' })] }), 'SCAN_EXCEPTION');
+  code(() => check(report, { exceptions: [disposition(first, { version: '1.2.9' })] }), 'SCAN_EXCEPTION');
+});
+
+test('incomplete, ownerless, future and unmatched exceptions fail closed', () => {
+  const finding = affected();
+  const report = base('vulnerability-scan', { findings: [finding] });
+  for (const field of ['package', 'version', 'dependencyPath', 'approvedBy', 'reason',
+    'compensatingControl', 'approvalReference', 'createdAt', 'expiresAt']) {
+    const exception = disposition(finding);
+    delete exception[field];
+    code(() => check(report, { exceptions: [exception] }), 'SCAN_EXCEPTION');
+  }
+  code(() => check(report, { exceptions: [disposition(finding, { approvedBy: ' ' })] }), 'SCAN_EXCEPTION');
+  code(() => check(report, { exceptions: [disposition(finding, { approvedBy: '*' })] }), 'SCAN_EXCEPTION');
+  code(() => check(report, { exceptions: [disposition(finding, { approvalReference: ' ' })] }), 'SCAN_EXCEPTION');
+  code(() => check(report, { exceptions: [disposition(finding, { createdAt: '2098-01-01T00:00:00Z' })],
+    now: new Date('2026-10-17T00:00:00Z') }), 'SCAN_EXCEPTION');
+  code(() => check(report, { exceptions: [disposition(finding, { createdAt: '2026-01-01' })] }),
+    'SCAN_EXCEPTION');
+  code(() => check(report, { exceptions: [disposition(finding, {
+    createdAt: '2099-02-01T00:00:00Z' })] }), 'SCAN_EXCEPTION');
+  code(() => check(report, { exceptions: [disposition(finding, { revisionId: hashBytes(Buffer.from('other')) })] }),
+    'SCAN_EXCEPTION');
+  code(() => check(base('vulnerability-scan'), { exceptions: [disposition(finding)] }), 'SCAN_EXCEPTION');
+});
+
+test('malformed vulnerability identities and duplicate findings cannot receive credit', () => {
+  for (const finding of [affected({ version: undefined }), affected({ dependencyPath: undefined }),
+    affected({ package: undefined }), affected({ package: '..' }),
+    affected({ dependencyPath: '.>..' }), affected({ dependencyPath: '/home/runner/secret' }),
+    affected({ findingCode: '123' }),
+    affected({ severity: 'unknown' })]) {
+    code(() => check(base('vulnerability-scan', { findings: [finding] })), 'SCAN_FORMAT');
+  }
+  code(() => check(base('vulnerability-scan', { findings: [affected(), affected()] }),
+    { exceptions: [disposition()] }), 'SCAN_FORMAT');
 });
 
 test('scanner output is reduced to findings without sensitive messages', () => {
@@ -54,9 +111,18 @@ test('scanner output is reduced to findings without sensitive messages', () => {
     { ruleId: '@secretlint/rule-preset', line: 3, message: 'secret material' }] }]),
   [{ findingCode: '@secretlint/rule-preset', ruleId: 'NFR13.1', fileDigest: hashBytes(Buffer.from('fixture')), line: 3 }]);
   assert.deepEqual(scannerFindings('vulnerability-scan', { advisories: { '123': {
-    github_advisory_id: 'GHSA-1111-2222-3333', module_name: 'example', severity: 'high', title: 'untrusted' } } }),
-  [{ findingCode: 'GHSA-1111-2222-3333', ruleId: 'NFR13.2', package: 'example', severity: 'high' }]);
+    github_advisory_id: 'GHSA-1111-2222-3333', module_name: '@example/parser', severity: 'high',
+    title: 'untrusted', findings: [{ version: '1.2.3', paths: ['.>@example/parser', '.>other>@example/parser'] }] } } }),
+  [affected(), affected({ dependencyPath: '.>other>@example/parser' })]);
   code(() => scannerFindings('vulnerability-scan', { error: 'offline' }), 'SCAN_FORMAT');
+  for (const item of [{ module_name: 'example', severity: 'high', findings: [] },
+    { module_name: 'example', severity: 'high', findings: [{ version: '1.2.3', paths: [] }] },
+    { module_name: 'example', severity: 'high', findings: [{ version: '1.2.3', paths: ['.>bad\npath'] }] },
+    { module_name: 'example', severity: 'high', findings: [{ version: '1.2.3', paths: ['.>..'] }] },
+    { module_name: 'example', severity: 'high', findings: [{ version: '1.2.3', paths: ['/home/runner/secret'] }] }]) {
+    code(() => scannerFindings('vulnerability-scan', { advisories: { '123': {
+      github_advisory_id: 'GHSA-1111-2222-3333', ...item } } }), 'SCAN_FORMAT');
+  }
 });
 
 test('report reader refuses missing, stale and failed exact report files', async () => {

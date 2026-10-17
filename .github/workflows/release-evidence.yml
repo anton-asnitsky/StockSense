@@ -28,7 +28,7 @@ jobs:
   evidence:
     name: Release evidence
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 60
     permissions:
       # The three scopes assertCiPolicy allows on a trusted trigger, and no
       # others: contents to read the tree, id-token to mint the OIDC token the
@@ -102,6 +102,21 @@ jobs:
           test -n "$id"
           echo "id=$id" >> "$GITHUB_OUTPUT"
 
+      - name: Inventory and scan the exact built images
+        env:
+          STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
+          STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
+        run: node tools/contracts/scripts/image-evidence.mjs build
+
+      - name: Retain image inventories and current vulnerability findings
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: image-evidence-${{ github.sha }}
+          path: tools/contracts/dist/image-evidence/*.json
+          if-no-files-found: error
+          retention-days: 30
+
       # The sbom gate. Deterministic by construction: the same lockfile always
       # produces the same bytes and the same digest, which is what lets the
       # digest be recorded as the gate's report rather than a timestamped blob.
@@ -110,6 +125,7 @@ jobs:
         env:
           STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
           STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
+          STOCKSENSE_IMAGE_EVIDENCE_DIR: tools/contracts/dist/image-evidence
         run: |
           set -euo pipefail
           digest="$(pnpm --silent --dir tools/contracts build:sbom)"

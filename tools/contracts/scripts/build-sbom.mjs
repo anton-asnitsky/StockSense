@@ -18,7 +18,8 @@ const { bytes, digest, components } = await buildSbom(join(packageRoot, 'pnpm-lo
   version: manifest.version ?? '1.0.0',
   generator: 'stocksense-contracts-sbom',
   validatorImageDigest: process.env.STOCKSENSE_STANDARDS_IMAGE,
-  kiotaImageDigest: process.env.STOCKSENSE_KIOTA_IMAGE
+  kiotaImageDigest: process.env.STOCKSENSE_KIOTA_IMAGE,
+  imageEvidenceDirectory: process.env.STOCKSENSE_IMAGE_EVIDENCE_DIR
 });
 await writeFile(output, bytes);
 process.stdout.write(`${digest}\n`);
