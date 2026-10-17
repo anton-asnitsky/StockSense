@@ -1,7 +1,8 @@
 # US8.7 image evidence hosted probe
 
 This validation-only child branch starts at `feat/us8-7-ci-evidence` commit
-`1779dde`. Its PR targets that branch and changes only this note, allowing the
+`1779dde`. Its PR now targets that branch at `cfee91a`, after the scanner-user
+permission correction, and changes only this note, allowing the
 hosted U1 workflow to exercise the proposed image inventory, vulnerability
 scan, SBOM, and CI policy without a workflow edit in the child PR's diff.
 
