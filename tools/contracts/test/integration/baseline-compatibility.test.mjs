@@ -14,6 +14,9 @@ const repoRoot = fileURLToPath(new URL('../../../../', import.meta.url));
 // requires of a baseline, and it is the earliest point at which the whole
 // catalogue exists to compare against.
 const CATALOGUE_DRAFT = '20dc9345cf702848167ba6bb4ab5c4aabf756876';
+// The protected integration base for the two new import documents. Every
+// earlier canonical document is unchanged here; the additions are first releases.
+const CURRENT_BOLT_BASE = '581b70a1020e5ae36d631625a41392fddf30dbfb';
 // An earlier commit, before most canonical sources existed.
 const BEFORE_CATALOGUE = '3de357c7502f7ffffb653c7ff353a4930a7f96cd';
 const OUTCOMES = ['unchanged', 'first-release', 'compatible', 'breaking-approved', 'change-approved'];
@@ -27,7 +30,7 @@ test('the whole catalogue is assessed against an immutable baseline commit', asy
 
   // Every diffable canonical document is accounted for exactly once, so a
   // document can never be dropped from the comparison unnoticed.
-  assert.equal(assessments.length + undiffable.length, 38);
+  assert.equal(assessments.length + undiffable.length, 40);
   assert.equal(new Set(assessments.map(row => row.document)).size, assessments.length);
   for (const row of assessments) {
     assert.ok(OUTCOMES.includes(row.outcome), `${row.document}: ${row.outcome}`);
@@ -37,7 +40,14 @@ test('the whole catalogue is assessed against an immutable baseline commit', asy
     // breaking changes means an approval existed.
     if (row.breakingChanges.length) assert.equal(row.outcome, 'breaking-approved');
   }
-  assert.equal(Object.keys(tally).reduce((sum, key) => sum + tally[key], 0), 38);
+  assert.equal(Object.keys(tally).reduce((sum, key) => sum + tally[key], 0), 40);
+  for (const document of ['retail-data/v1/inventory-import.asyncapi.yaml',
+    'retail-data/v1/inventory-import-audit.asyncapi.yaml']) {
+    const row = assessments.find(item => item.document === document);
+    assert.equal(row?.outcome, 'first-release', document);
+    assert.equal(row?.predecessorRevisionId, null, document);
+    assert.match(row.firstReleaseReason, new RegExp(`absent at baseline ${CATALOGUE_DRAFT}`));
+  }
 });
 
 test('a changed document of a kind the pinned differ cannot read is reported, never credited', async () => {
@@ -61,6 +71,23 @@ test('required compatibility refuses a changed non-OpenAPI document without appr
       assert.equal(error.ruleId, 'BR4.4');
       return true;
     });
+});
+
+test('required compatibility passes the current immutable integration base with explicit import first releases', async () => {
+  const { baseline, assessments, undiffable, tally } = await assessCatalogueAgainstBaseline(
+    repoRoot, CURRENT_BOLT_BASE, { requirePinnedDiffer: true });
+  assert.equal(baseline.commit, CURRENT_BOLT_BASE);
+  assert.deepEqual(undiffable, []);
+  assert.equal(assessments.length, 40);
+  assert.equal(tally.unchanged, 38);
+  assert.equal(tally['first-release'], 2);
+  for (const document of ['retail-data/v1/inventory-import.asyncapi.yaml',
+    'retail-data/v1/inventory-import-audit.asyncapi.yaml']) {
+    const row = assessments.find(item => item.document === document);
+    assert.equal(row?.outcome, 'first-release', document);
+    assert.equal(row?.predecessorRevisionId, null, document);
+    assert.match(row.firstReleaseReason, new RegExp(`absent at baseline ${CURRENT_BOLT_BASE}`));
+  }
 });
 
 test('a document absent at the baseline is a recorded first release, not a silent gap', async () => {

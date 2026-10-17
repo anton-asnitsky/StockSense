@@ -7,7 +7,9 @@ import { buildSourceInventory } from './catalogue.mjs';
 import { DIALECTS, createSchemaValidator } from './validators.mjs';
 import { asyncApiFixtureSchema, asyncApiMessageElements, mapSchemaFindings,
   openApiFixtureSchema, openApiInlineResponseElements } from './policy.mjs';
-import { negativeCandidates, omitRequired, synthesize } from './instance-synthesis.mjs';
+import { negativeCandidates, omitRequired, propertyPointer, synthesize } from './instance-synthesis.mjs';
+
+const TENANT_ENVELOPE_ID = 'https://contracts.stocksense.local/common/v1/message-envelope.schema.json';
 
 // Assemble the complete C01-C27 candidate package from the committed canonical
 // sources. Until now only the thin C01/C18 walking skeleton was ever packaged,
@@ -89,14 +91,20 @@ function bindTargets(entry, source) {
   return target ? [target] : null;
 }
 
+// Only a top-level tenant envelope (possibly composed through allOf) gives
+// the message its C01 fields. A nested data property is not an envelope.
+function bindsTenantEnvelope(schema) {
+  return schema?.$ref === TENANT_ENVELOPE_ID ||
+    (Array.isArray(schema?.allOf) && schema.allOf.some(bindsTenantEnvelope));
+}
+
 /**
- * Derive a verified positive and negative fixture for one canonical element.
- * The positive is synthesized from the schema and validated by the pinned
- * oracle; the negative removes one required property, which the same oracle
- * must then reject for exactly that pointer. A document that cannot produce
- * both is reported, never silently credited.
+ * Derive verified fixtures for one canonical element. The positive is
+ * synthesized from the schema; each negative is accepted only after the pinned
+ * oracle rejects it with its declared finding. A document that cannot produce
+ * its required fixtures is reported, never silently credited.
  */
-function fixturePair(entry, target, registry) {
+export function fixturePair(entry, target, registry) {
   const refused = problem => ({ problem, fixtures: [] });
   const validate = createSchemaValidator(target.schema, registry,
     { openApiComponents: entry.artifactKind !== 'schema' });
@@ -135,6 +143,39 @@ function fixturePair(entry, target, registry) {
       expectedFailureCode: 'SCHEMA_REQUIRED', expectedFailureRuleId: 'BR2.4',
       expectedFailurePath: negative.pointer, payload: negative.payload }
   ];
+
+  if (entry.artifactKind === 'asyncapi' && bindsTenantEnvelope(target.schema)) {
+    const required = registry.get(TENANT_ENVELOPE_ID)?.required;
+    if (!Array.isArray(required) || !required.length || new Set(required).size !== required.length) {
+      return refused('the canonical tenant envelope has no unique required-field set');
+    }
+    // A digest of both document and channel message keeps IDs short even for
+    // the longest message name, while retaining a readable field suffix.
+    const fieldSlug = `${entry.document.split('/')[0]}-${digest(Buffer.from(`${entry.document}:${target.element}`)).slice(7, 19)}`;
+    for (const field of required) {
+      if (typeof field !== 'string' || !Object.hasOwn(positive, field)) {
+        return refused(`the positive tenant envelope does not carry required field ${String(field)}`);
+      }
+      const payload = { ...positive };
+      delete payload[field];
+      const path = propertyPointer(field);
+      if (validate(payload)) return refused(`omitting tenant envelope field ${field} still satisfies the schema`);
+      const findings = mapSchemaFindings(validate.errors ?? [], {
+        revisionId: entry.revisionId, contractElementId: target.element
+      });
+      if (findings.length !== 1 || findings[0].findingCode !== 'SCHEMA_REQUIRED' ||
+          findings[0].ruleId !== 'BR2.4' || findings[0].instancePath !== path) {
+        return refused(`omitting tenant envelope field ${field} did not produce its exact required finding`);
+      }
+      fixtures.push({
+        fixtureId: `${fieldSlug}-envelope-${field}`,
+        boundaryIds: [...entry.boundaryIds], contractElementId: target.element,
+        ...binding, scenarioType: 'invalid', expectedOutcome: 'fail',
+        expectedFailureCode: 'SCHEMA_REQUIRED', expectedFailureRuleId: 'BR2.4',
+        expectedFailurePath: path, payload
+      });
+    }
+  }
 
   // Negatives that violate something other than `required`. Every one is put
   // through the same oracle and declared from the findings that oracle actually

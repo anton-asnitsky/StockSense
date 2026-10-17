@@ -17,7 +17,7 @@ complete, revision-stamped package with fixtures and release evidence.
 map. After committing canonical source edits, run
 `node tools/contracts/scripts/build-source-inventory.mjs` from the repository
 root. It inventories every canonical file, checks each required artifact kind,
-and verifies all 38 source digests against the Git `sourceRevision` it reports.
+and verifies all 40 source digests against the Git `sourceRevision` it reports.
 This is an input to package assembly, not a validated package or release claim.
 
 Compatibility against an immutable Git baseline uses the pinned OpenAPI differ.
