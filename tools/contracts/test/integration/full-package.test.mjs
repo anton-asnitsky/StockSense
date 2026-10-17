@@ -38,6 +38,9 @@ const ASYNCAPI_MESSAGES = Object.freeze({
   'audit-evidence/v1/authoritative-audit.asyncapi.yaml': [
     'message:auditEvents:auditEvent', 'message:globalIdentityAuditEvents:globalIdentityAuditEvent'
   ],
+  'retail-data/v1/inventory-import-audit.asyncapi.yaml': [
+    'message:inventoryImportAuditEvents:inventoryImportAuditEvent'
+  ],
   'messaging-platform/v1/transport-conformance.asyncapi.yaml': [
     'message:tenantMessages:tenantEnvelope', 'message:tenantDeadLetters:tenantEnvelope',
     'message:globalIdentityMessages:globalIdentityEnvelope',
@@ -51,6 +54,11 @@ const ASYNCAPI_MESSAGES = Object.freeze({
   'recovery-coordination/v1/recovery-audit.asyncapi.yaml': ['message:recoveryEvents:recoveryEvent'],
   'retail-data/v1/retail-reference-changed.asyncapi.yaml': [
     'message:retailReferenceChanged:retailReferenceChanged'
+  ],
+  'retail-data/v1/inventory-import.asyncapi.yaml': [
+    'message:inventoryImportRequested:inventoryImportRequested',
+    'message:inventoryImportCompleted:inventoryImportCompleted',
+    'message:inventoryImportFailed:inventoryImportFailed'
   ],
   'supplier-knowledge/v1/embedding-build-quiesced.asyncapi.yaml': [
     'message:embeddingBuildQuiesced:embeddingBuildQuiesced'
@@ -67,12 +75,12 @@ test('every canonical schema, OpenAPI target, and AsyncAPI message binds or has 
   const { out, built, clean } = await assembled();
   try {
     // Nothing is refused and nothing is unaccounted for. The exempt documents
-    // are seven OpenAPI documents and three closed-dialect schemas. The six
-    // AsyncAPI documents contribute twelve channel-message targets.
+    // are seven OpenAPI documents and three closed-dialect schemas. The eight
+    // AsyncAPI documents contribute sixteen channel-message targets.
     assert.deepEqual(built.problems, []);
-    assert.equal(built.bound, 34);
+    assert.equal(built.bound, 38);
     assert.equal(built.exempt, 10);
-    assert.equal(built.bound + built.exempt, 44);
+    assert.equal(built.bound + built.exempt, 48);
     const loaded = await loadPackage(out);
     const bundleBytes = await buildPackageBundle(out);
     const bundled = verifyPackageBundle(bundleBytes);
@@ -148,7 +156,7 @@ test('each bound element contributes a positive, a required negative, and the mu
   } finally { await clean(); }
 });
 
-test('all twelve AsyncAPI channel messages bind distinct revision-scoped exact oracle pairs', async () => {
+test('all sixteen AsyncAPI channel messages bind distinct revision-scoped exact oracle pairs', async () => {
   const YAML = (await import('yaml')).default;
   const { out, built, clean } = await assembled();
   try {
@@ -157,7 +165,7 @@ test('all twelve AsyncAPI channel messages bind distinct revision-scoped exact o
     const results = await runFixtureOracle(out, loaded);
     const asyncEntries = loaded.entries.filter(entry => entry.artifactKind === 'asyncapi');
     assert.deepEqual(asyncEntries.map(entry => entry.document).sort(), Object.keys(ASYNCAPI_MESSAGES).sort());
-    assert.equal(Object.values(ASYNCAPI_MESSAGES).flat().length, 12);
+    assert.equal(Object.values(ASYNCAPI_MESSAGES).flat().length, 16);
     assert.equal(new Set(fixtures.map(fixture => fixture.fixtureId)).size, fixtures.length,
       'fixture IDs must remain unique when C23 reuses a message on two channels');
 
@@ -181,7 +189,7 @@ test('all twelve AsyncAPI channel messages bind distinct revision-scoped exact o
           .map(row => row.observed), ['pass', 'fail'], element);
       }
     }
-    assert.equal(built.bound, 22 + 12);
+    assert.equal(built.bound, 22 + 16);
   } finally { await clean(); }
 });
 
