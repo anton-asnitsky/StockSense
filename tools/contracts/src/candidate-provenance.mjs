@@ -7,6 +7,7 @@ import { createPinnedGeneratorRunner, generatorConfigurationDigest, GENERATORS }
 import { readBlob, verifySourceBinding } from './provenance.mjs';
 import { assertEvidenceContentSafe } from './evidence.mjs';
 
+/** @returns {never} */
 const fail = (code, rule, message) => { throw new ContractError(code, rule, message); };
 const SHA = /^sha256:[0-9a-f]{64}$/;
 const COMMIT = /^[0-9a-f]{40}$/;
@@ -70,8 +71,9 @@ export function validateCandidateScan(name, scan) {
   if (!['secret', 'vulnerability'].includes(name)) {
     fail('SCAN_REPORT_INVALID', 'BR6.2', 'Unknown candidate scan');
   }
-  if (!scan || Object.keys(scan).sort().join(',') !== 'digest,report,status' ||
-      scan.status !== 'passed' || !SHA.test(scan.digest) || typeof scan.report !== 'string' ||
+  if (!scan || Object.keys(scan).sort().join(',') !== 'digest,report,scopeDigest,status' ||
+      scan.status !== 'passed' || !SHA.test(scan.digest) || !SHA.test(scan.scopeDigest) ||
+      typeof scan.report !== 'string' ||
       scan.report.length > 4 * 1024 * 1024 || digest(Buffer.from(scan.report)) !== scan.digest) {
     fail('SCAN_EVIDENCE_MISSING', 'BR6.2', `Current ${name} scan evidence is absent or changed`);
   }
@@ -89,6 +91,46 @@ export function validateCandidateScan(name, scan) {
       (report.vulnerabilities && Object.keys(report.vulnerabilities).length)) {
     fail('SCAN_FINDINGS', 'BR6.2', 'Vulnerability scan has findings or an unknown report shape');
   }
+}
+
+/** Bind scan scope to committed Git blobs, independent of checkout line endings. */
+export function candidateScanScope(repoRoot, commit = 'HEAD') {
+  const result = spawnSync('git', ['ls-tree', '-r', '-z', commit, '--',
+    'contracts', 'tools/contracts', '.github'], { cwd: repoRoot,
+    shell: false, timeout: 60_000, maxBuffer: 4 * 1024 * 1024 });
+  if (result.error || result.status !== 0 || !result.stdout?.length) {
+    fail('SCAN_INPUT', 'BR6.2', 'Committed scan input inventory is unavailable');
+  }
+  const entries = result.stdout.toString('utf8').split('\0').filter(Boolean).map(line => {
+    const match = /^(100644|100755) blob ([0-9a-f]{40})\t([^\r\n\0]+)$/.exec(line);
+    if (!match || match[3].split('/').some(part => !part || part === '.' || part === '..')) {
+      fail('SCAN_INPUT', 'BR6.2', 'Committed scan input inventory is unsafe');
+    }
+    return { mode: match[1], blob: match[2], path: match[3] };
+  }).sort((a, b) => a.path.localeCompare(b.path, 'en'));
+  if (!entries.length || entries.length > 4096 ||
+      !entries.some(row => row.path.startsWith('contracts/source/')) ||
+      new Set(entries.map(row => row.path)).size !== entries.length) {
+    fail('SCAN_INPUT', 'BR6.2', 'Committed scan input inventory is incomplete');
+  }
+  const clean = spawnSync('git', ['diff', '--quiet', commit, '--',
+    'contracts', 'tools/contracts', '.github'], { cwd: repoRoot, shell: false,
+    timeout: 60_000 });
+  if (clean.error || clean.status !== 0) {
+    fail('SCAN_INPUT', 'BR6.2', 'Scan input checkout differs from the signing revision');
+  }
+  return { paths: entries.map(row => row.path),
+    digest: digest(Buffer.from(canonicalJson(entries))) };
+}
+
+/** Windows pnpm is a .cmd shim; invoke its JavaScript entry without a shell. */
+export function pnpmInvocation(args, { platform = process.platform, env = process.env } = {}) {
+  if (platform !== 'win32') return { command: 'pnpm', args };
+  const entry = env.npm_execpath;
+  if (typeof entry !== 'string' || !/\.[cm]?js$/i.test(entry)) {
+    fail('SCAN_UNVERIFIED', 'BR6.2', 'The pinned pnpm JavaScript entry is unavailable');
+  }
+  return { command: process.execPath, args: [entry, ...args] };
 }
 
 function checkValidation(validation, bundle, manifest) {
@@ -207,12 +249,16 @@ async function currentSbom(repoRoot) {
 /** Construct evidence only from current committed inputs and real clean generation. */
 export async function buildCandidateEvidence(bundle, { repoRoot, sourceCommit, validation, scans,
   runGenerator = createPinnedGeneratorRunner(repoRoot), verifySources = checkSources,
-  readToolInputs = toolInputs, readSbom = currentSbom }) {
+  readToolInputs = toolInputs, readSbom = currentSbom, readScanScope = candidateScanScope }) {
   if (!COMMIT.test(sourceCommit)) fail('EVIDENCE_COMMIT', 'BR6.6', 'A full signing commit is required');
   const { manifest, profile, profileDigest, sources } = packageInputs(bundle);
   checkValidation(validation, bundle, manifest);
   validateCandidateScan('secret', scans?.secret);
   validateCandidateScan('vulnerability', scans?.vulnerability);
+  const scope = await readScanScope(repoRoot, sourceCommit);
+  if (scans.secret.scopeDigest !== scope.digest || scans.vulnerability.scopeDigest !== scope.digest) {
+    fail('SCAN_INPUT', 'BR6.2', 'Candidate scan did not cover the signing revision');
+  }
   await verifySources(repoRoot, manifest, sources);
   const tools = await readToolInputs(repoRoot, sourceCommit);
   const consumers = await checkConsumers(profile, sources, null, runGenerator);
@@ -230,7 +276,7 @@ export async function buildCandidateEvidence(bundle, { repoRoot, sourceCommit, v
 /** Verify the attested bundle's evidence against the clean checkout and generators. */
 export async function verifyCandidateEvidence(bundle, { repoRoot, sourceCommit,
   runGenerator = createPinnedGeneratorRunner(repoRoot), verifySources = checkSources,
-  readToolInputs = toolInputs, readSbom = currentSbom }) {
+  readToolInputs = toolInputs, readSbom = currentSbom, readScanScope = candidateScanScope }) {
   const evidence = bundle.candidateEvidence;
   if (!evidence || evidence.format !== FORMAT || evidence.releaseReady !== false ||
       !COMMIT.test(sourceCommit) || evidence.sourceCommit !== sourceCommit ||
@@ -251,6 +297,11 @@ export async function verifyCandidateEvidence(bundle, { repoRoot, sourceCommit,
   }
   validateCandidateScan('secret', evidence.scans.secret);
   validateCandidateScan('vulnerability', evidence.scans.vulnerability);
+  const scope = await readScanScope(repoRoot, sourceCommit);
+  if (evidence.scans.secret.scopeDigest !== scope.digest ||
+      evidence.scans.vulnerability.scopeDigest !== scope.digest) {
+    fail('SCAN_INPUT', 'BR6.2', 'Attested scan did not cover the signing revision');
+  }
   await verifySources(repoRoot, manifest, sources);
   if (!same(evidence.tools, await readToolInputs(repoRoot, sourceCommit))) {
     fail('TOOL_INPUT_STALE', 'BR6.6', 'Toolchain input digest differs from the signing commit');
@@ -270,19 +321,23 @@ export async function verifyCandidateEvidence(bundle, { repoRoot, sourceCommit,
 
 /** Pinned JSON scanners; their actual reports are embedded, never a green-job label. */
 export function runCandidateScans(repoRoot) {
+  const scope = candidateScanScope(repoRoot);
   const commands = {
     secret: ['exec', 'secretlint', '--format', 'json', 'src/**/*', 'test/**/*', 'scripts/**/*'],
     vulnerability: ['audit', '--json', '--audit-level', 'moderate']
   };
   const scans = {};
   for (const [name, args] of Object.entries(commands)) {
-    const result = spawnSync('pnpm', args, { cwd: join(repoRoot, 'tools/contracts'),
+    const invocation = pnpmInvocation(name === 'secret'
+      ? ['exec', 'secretlint', '--format', 'json', ...scope.paths.map(path => join(repoRoot, path))]
+      : args);
+    const result = spawnSync(invocation.command, invocation.args, { cwd: join(repoRoot, 'tools/contracts'),
       encoding: 'utf8', shell: false, windowsHide: true, timeout: 120_000,
-      maxBuffer: 4 * 1024 * 1024 });
+      maxBuffer: 16 * 1024 * 1024 });
     if (result.error || result.status !== 0 || !result.stdout?.trim()) {
       fail('SCAN_UNVERIFIED', 'BR6.2', `Current ${name} scan did not pass`);
     }
-    scans[name] = { status: 'passed', report: result.stdout,
+    scans[name] = { status: 'passed', report: result.stdout, scopeDigest: scope.digest,
       digest: digest(Buffer.from(result.stdout)) };
     validateCandidateScan(name, scans[name]);
   }

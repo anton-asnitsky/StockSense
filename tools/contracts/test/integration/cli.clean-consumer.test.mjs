@@ -3,13 +3,14 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import test from 'node:test';
 import { buildPackageBundle, verifyPackageBundle } from '../../src/package-bundle.mjs';
 import { buildCandidateEvidence, validateCandidateScan,
-  verifyCandidateEvidence } from '../../src/candidate-provenance.mjs';
+  verifyCandidateEvidence, pnpmInvocation } from '../../src/candidate-provenance.mjs';
 import { generatorConfigurationDigest, GENERATORS } from '../../src/generators.mjs';
 import { canonicalJson, digest } from '../../src/package-loader.mjs';
 import { makePackage } from '../support/package-fixture.mjs';
 import { dirname, join } from 'node:path';
 
-const scan = report => ({ status: 'passed', report: JSON.stringify(report),
+const scopeDigest = digest('synthetic-scan-scope');
+const scan = report => ({ status: 'passed', scopeDigest, report: JSON.stringify(report),
   digest: digest(Buffer.from(JSON.stringify(report))) });
 const rejects = (action, code) => assert.throws(action,
   error => error.code === code && typeof error.ruleId === 'string');
@@ -34,6 +35,13 @@ test('missing, failed and finding-bearing scan evidence is never credited', () =
     metadata: { vulnerabilities: { high: 1 } } })), 'SCAN_FINDINGS');
   rejects(() => validateCandidateScan('vulnerability', scan({ audit: 'green' })), 'SCAN_FINDINGS');
   rejects(() => validateCandidateScan('secret', scan({ conclusion: 'success' })), 'SCAN_FINDINGS');
+});
+
+test('Windows scans launch pinned pnpm JavaScript directly and refuse a missing entry', () => {
+  assert.deepEqual(pnpmInvocation(['audit', '--json'], { platform: 'win32',
+    env: { npm_execpath: 'C:\\pinned\\pnpm.mjs' } }),
+  { command: process.execPath, args: ['C:\\pinned\\pnpm.mjs', 'audit', '--json'] });
+  rejects(() => pnpmInvocation(['audit'], { platform: 'win32', env: {} }), 'SCAN_UNVERIFIED');
 });
 
 test('portable bundle carries candidate evidence inside the attested subject bytes', async () => {
@@ -121,6 +129,7 @@ function syntheticCandidate() {
   const sbomBytes = Buffer.from('{"bomFormat":"CycloneDX","specVersion":"1.6"}');
   const seams = { repoRoot: '.', sourceCommit: commit,
     verifySources: async () => {}, readToolInputs: async () => ({ 'pinned-tool': digest('tool') }),
+    readScanScope: async () => ({ digest: scopeDigest }),
     readSbom: async () => ({ bytes: sbomBytes, digest: digest(sbomBytes) }),
     runGenerator: async (consumer, workspace) => {
       const [path, content] = outputs[consumer.consumerId];
@@ -179,6 +188,9 @@ test('clean verification rejects stale output, tool, SBOM, validation and scan b
   const missingScan = JSON.parse(JSON.stringify(candidateEvidence));
   delete missingScan.scans.secret;
   await assert.rejects(verify(missingScan), error => error.code === 'SCAN_EVIDENCE_MISSING');
+  const narrowScan = JSON.parse(JSON.stringify(candidateEvidence));
+  narrowScan.scans.secret.scopeDigest = digest('only-tool-sources');
+  await assert.rejects(verify(narrowScan), error => error.code === 'SCAN_INPUT');
 });
 
 test('source bytes, profile revision and generator configuration are checked before credit', async () => {
