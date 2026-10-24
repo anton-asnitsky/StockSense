@@ -14,6 +14,17 @@ RUN corepack enable \
     && node node_modules/@redocly/cli/bin/cli.js --version
 
 FROM docker.io/library/node@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df
+# The pinned Node base includes build-only npm packages and older Debian
+# perl/pcre2 packages. Keep Node 24.19.0, install the fixed OS versions, and
+# remove npm/Corepack from the validator runtime image. Production dependencies
+# below are copied from the locked build stage.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends --only-upgrade \
+      perl-base=5.36.0-7+deb12u4 \
+      libpcre2-8-0=10.42-1+deb12u2 \
+    && rm -rf /var/lib/apt/lists/* \
+      /usr/local/lib/node_modules/npm \
+      /usr/local/lib/node_modules/corepack
 ENV NODE_ENV=production \
     NO_UPDATE_NOTIFIER=1 \
     SUPPRESS_NO_CONFIG_WARNING=1 \

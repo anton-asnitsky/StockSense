@@ -71,7 +71,7 @@ async function imageFixture(directory, name, imageId, findings = []) {
   const bytes = Buffer.from(JSON.stringify(sbom) + '\n');
   await writeFile(join(directory, `${name}.cdx.json`), bytes);
   await writeFile(join(directory, `${name}.scan.json`), JSON.stringify({
-    schema: 'stocksense-image-scan-v1', image: name, imageId, sbomDigest: sha256(bytes),
+    schema: 'stocksense-image-scan-v2', image: name, imageId, sbomDigest: sha256(bytes),
     scanner: SCANNERS.grype, status: 'completed', database: { status: 'valid', schemaVersion: 'v6.1.9',
       source: 'https://grype.anchore.io/databases/v6/example', built: new Date().toISOString() },
     findings
@@ -109,8 +109,13 @@ test('missing, stale, malformed and vulnerable image evidence fails closed', asy
     await imageFixture(directory, 'kiota', image);
     await expectCode(readImageEvidence(directory, { ...ids, kiota: 'sha256:' + 'b'.repeat(64) }), 'IMAGE_STALE');
     await imageFixture(directory, 'kiota', image, [{ id: 'CVE-2026-12345', severity: 'High',
-      package: 'Kiota', version: '1.0.0', type: 'dotnet' }]);
+      package: 'Kiota', version: '1.0.0', type: 'dotnet', fixState: 'fixed', fixVersions: ['1.1.0'] }]);
     await expectCode(readImageEvidence(directory, ids), 'IMAGE_FINDINGS');
+    const findingPath = join(directory, 'kiota.scan.json');
+    const incomplete = JSON.parse(await readFile(findingPath, 'utf8'));
+    delete incomplete.findings[0].fixState;
+    await writeFile(findingPath, JSON.stringify(incomplete));
+    await expectCode(readImageEvidence(directory, ids), 'IMAGE_SCAN');
     await imageFixture(directory, 'kiota', image);
     const path = join(directory, 'kiota.scan.json');
     const scan = JSON.parse(await readFile(path, 'utf8'));

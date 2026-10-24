@@ -78,7 +78,7 @@ if (command === 'verify') {
         throw new Error('Grype scan returned incomplete or suppressed matches');
       }
       const db = parse(run([...common, 'db', 'status', '-o', 'json'], 'Grype database status'), 'Grype DB');
-      const report = { schema: 'stocksense-image-scan-v1', image: name, imageId,
+      const report = { schema: 'stocksense-image-scan-v2', image: name, imageId,
         sbomDigest: sha256(sbomBytes), scanner: SCANNERS.grype, status: 'completed',
         // Grype v0.120.1 serializes ProviderStatus as `valid: boolean`.
         database: { built: db.built, source: db.from, schemaVersion: db.schemaVersion,
@@ -86,7 +86,8 @@ if (command === 'verify') {
         findings: raw.matches.map(match => ({ id: match.vulnerability?.id,
           severity: match.vulnerability?.severity, package: match.artifact?.name,
           version: match.artifact?.version, type: match.artifact?.type,
-          purl: match.artifact?.purl ?? null, fixVersions: match.vulnerability?.fix?.versions ?? [] })) };
+          purl: match.artifact?.purl ?? null, fixState: match.vulnerability?.fix?.state,
+          fixVersions: match.vulnerability?.fix?.versions ?? [] })) };
       inspectImageScan(report, name, imageId, report.sbomDigest);
       await writeFile(join(directory, `${name}.scan.json`), JSON.stringify(report, null, 2) + '\n');
       await rm(archive);

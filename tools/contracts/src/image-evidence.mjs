@@ -33,7 +33,7 @@ export function inspectImageSbom(document, name, imageId) {
 }
 
 export function inspectImageScan(report, name, imageId, sbomDigest) {
-  if (!report || report.schema !== 'stocksense-image-scan-v1' || report.image !== name ||
+  if (!report || report.schema !== 'stocksense-image-scan-v2' || report.image !== name ||
       report.imageId !== imageId || report.sbomDigest !== sbomDigest ||
       report.scanner !== SCANNERS.grype || report.status !== 'completed' ||
       !Array.isArray(report.findings) || report.database?.status !== 'valid' ||
@@ -48,7 +48,11 @@ export function inspectImageScan(report, name, imageId, sbomDigest) {
   for (const finding of report.findings) {
     if (!/^(?:CVE-\d{4}-\d{4,}|GHSA-[\w-]+)$/.test(finding.id) ||
         !/^(?:Unknown|Negligible|Low|Medium|High|Critical)$/.test(finding.severity) ||
-        !finding.package || !finding.version || !finding.type) {
+        !finding.package || !finding.version || !finding.type ||
+        !['fixed', 'not-fixed', 'wont-fix', 'unknown'].includes(finding.fixState) ||
+        !Array.isArray(finding.fixVersions) ||
+        finding.fixVersions.some(version => typeof version !== 'string' || !version.trim()) ||
+        (finding.fixState === 'fixed') !== (finding.fixVersions.length > 0)) {
       fail('IMAGE_SCAN', `${name} scan has an incomplete finding`);
     }
   }

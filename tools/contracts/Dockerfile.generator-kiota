@@ -10,5 +10,9 @@ WORKDIR /repo
 RUN dotnet tool install Microsoft.OpenApi.Kiota --tool-path /opt/kiota --version 1.35.0 \
     && /opt/kiota/kiota --version \
     && echo '5e75f6adf161717be8d9f39eb596f93d52535e7b8cbcc00cffdcef3d0d3c3486  /opt/kiota/.store/microsoft.openapi.kiota/1.35.0/microsoft.openapi.kiota/1.35.0/microsoft.openapi.kiota.1.35.0.nupkg' | sha256sum -c -
+# PowerShell is part of the SDK base image, not Kiota's runtime. Its bundled
+# 10.0.10 crypto assemblies account for the fixable image findings. Kiota's
+# exact package and CLI version are checked above and again after the build.
+RUN rm -rf /usr/share/powershell
 USER 65532:65532
 ENTRYPOINT ["/opt/kiota/kiota"]
