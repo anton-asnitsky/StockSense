@@ -65,15 +65,17 @@ jobs:
       # whose recorded digest does not match this checkout.
       - name: Build the pinned standards image
         id: standards-image
+        working-directory: tools/contracts
         run: |
-          id="$(node tools/contracts/scripts/build-standards-image.mjs | grep -oE '^sha256:[0-9a-f]{64}$')"
+          id="$(node scripts/build-standards-image.mjs | grep -oE '^sha256:[0-9a-f]{64}$')"
           test -n "$id"
           echo "id=$id" >> "$GITHUB_OUTPUT"
 
       - name: Build the pinned Kiota image
         id: kiota-image
+        working-directory: tools/contracts
         run: |
-          id="$(node tools/contracts/scripts/build-kiota-image.mjs | grep -oE '^sha256:[0-9a-f]{64}$')"
+          id="$(node scripts/build-kiota-image.mjs | grep -oE '^sha256:[0-9a-f]{64}$')"
           test -n "$id"
           echo "id=$id" >> "$GITHUB_OUTPUT"
 
