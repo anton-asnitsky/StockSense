@@ -10,6 +10,13 @@ WORKDIR /repo
 RUN dotnet tool install Microsoft.OpenApi.Kiota --tool-path /opt/kiota --version 1.35.0 \
     && /opt/kiota/kiota --version \
     && echo '5e75f6adf161717be8d9f39eb596f93d52535e7b8cbcc00cffdcef3d0d3c3486  /opt/kiota/.store/microsoft.openapi.kiota/1.35.0/microsoft.openapi.kiota/1.35.0/microsoft.openapi.kiota.1.35.0.nupkg' | sha256sum -c -
+# This image has only a .NET 10 runtime; the SDK-installed tool also carries
+# net8.0 and net9.0 copies that cannot execute in the final stage. Keep the
+# verified nupkg and net10.0 payload, then prove the final CLI still runs.
+RUN test -d /opt/kiota/.store/microsoft.openapi.kiota/1.35.0/microsoft.openapi.kiota/1.35.0/tools/net10.0 \
+    && rm -rf \
+      /opt/kiota/.store/microsoft.openapi.kiota/1.35.0/microsoft.openapi.kiota/1.35.0/tools/net8.0 \
+      /opt/kiota/.store/microsoft.openapi.kiota/1.35.0/microsoft.openapi.kiota/1.35.0/tools/net9.0
 # Probe whether the pinned Kiota tool runs without the build-only SDK and
 # PowerShell packages. The hosted build verifies the CLI and scans this exact
 # final image before the variant can be considered for the U1 story branch.
