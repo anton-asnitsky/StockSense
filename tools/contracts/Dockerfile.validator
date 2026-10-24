@@ -12,6 +12,7 @@ RUN corepack enable \
     && pnpm install --prod --frozen-lockfile --ignore-scripts \
     && node node_modules/@redocly/cli/bin/cli.js --version
 COPY src ./src
+COPY Dockerfile.validator ./Dockerfile.validator
 RUN node --check src/container-schema-validator.mjs \
     && node --check src/container-fixture-oracle.mjs \
     && node --check src/container-asyncapi-validator.mjs \

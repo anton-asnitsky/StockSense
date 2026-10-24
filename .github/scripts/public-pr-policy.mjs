@@ -18,6 +18,7 @@ const SCAN_AUTHORITY = new Set([
   'tools/contracts/scripts/image-evidence.mjs',
   'tools/contracts/src/ci-policy.mjs',
   'tools/contracts/src/bounded-generators.mjs',
+  'tools/contracts/src/container-tool-launcher.mjs',
   'tools/contracts/src/candidate-provenance.mjs',
   'tools/contracts/src/evidence.mjs',
   'tools/contracts/src/generators.mjs',
