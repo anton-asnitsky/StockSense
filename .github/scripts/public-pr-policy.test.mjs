@@ -39,8 +39,10 @@ test('image disposition precedes candidate package installation and tests', () =
   assert.ok(position('Build the pinned standards image') < position('Inventory and scan the exact built images'));
   assert.ok(position('Inventory and scan the exact built images') < verified);
   const beforeVerification = workflow.slice(0, verified);
-  assert.match(beforeVerification, /node tools\/contracts\/scripts\/build-standards-image\.mjs/);
-  assert.match(beforeVerification, /node tools\/contracts\/scripts\/build-kiota-image\.mjs/);
+  for (const name of ['build-standards-image', 'build-kiota-image']) {
+    assert.match(beforeVerification,
+      new RegExp(`working-directory: tools/contracts\\s+run: \\|\\s+id="\\$\\(node scripts/${name}\\.mjs`));
+  }
   assert.doesNotMatch(beforeVerification, /pnpm --(?:dir|silent)/);
 });
 
