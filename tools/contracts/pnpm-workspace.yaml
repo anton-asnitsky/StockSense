@@ -20,6 +20,7 @@ allowBuilds:
 # exists, so an override cannot resolve them and pretending otherwise would
 # hide a real finding.
 overrides:
+  fast-uri: '3.1.9'
   jsonpath-plus: '>=10.3.0'
   simple-git: '>=4.0.1'
   '@simple-git/argv-parser': '>=2.0.1'

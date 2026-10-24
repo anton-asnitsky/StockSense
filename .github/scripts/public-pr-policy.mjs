@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 
 const SHA = /^[0-9a-f]{40}$/;
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
-const BASES = new Set(['main', 'bolt/u1-candidate-ready']);
+const BASES = new Set(['main']);
 // These bytes define or configure the required scan verdict. A candidate PR
 // may supply files to scan, but may not supply the scanner, its dependency tree
 // or the exception evaluator that decides whether its own findings pass.
@@ -58,7 +58,7 @@ export function evaluatePublicPr({ event, repository, baseSha, pull, baseTree, h
   requireValue(BASES.has(event.pull_request.base?.ref) &&
     event.pull_request.base.repo?.full_name === repository &&
     pull?.base?.ref === event.pull_request.base.ref && pull.base.repo?.full_name === repository,
-  'The pull request must target this repository\'s protected main or U1 Bolt branch');
+  'The pull request must target this repository\'s protected main branch');
   requireValue(SHA.test(baseSha) && event.pull_request.base.sha === baseSha &&
     pull.base.sha === baseSha, 'The protected base revision changed during the check');
   requireValue(SHA.test(event.pull_request.head?.sha) &&

@@ -62,17 +62,6 @@ test('a PR cannot change the scanner, its dependency inputs or exception authori
   }
 });
 
-test('the base-owned policy also checks U1 Bolt PRs', () => {
-  const boltBase = { ...event.pull_request.base, ref: 'bolt/u1-candidate-ready' };
-  const boltEvent = { ...event, pull_request: { ...event.pull_request, base: boltBase } };
-  const boltPull = { ...pull, base: boltBase };
-  assert.deepEqual(evaluatePublicPr({ ...input, event: boltEvent, pull: boltPull }),
-    { baseSha, headSha, comparedPaths: 1 });
-  assert.throws(() => evaluatePublicPr({ ...input, event: boltEvent, pull: boltPull,
-    headTree: tree(...headTree.tree, entry('tools/contracts/src/ci-policy.mjs', 'f'.repeat(40))) }),
-  /Protected CI paths changed/);
-});
-
 test('stale revisions, wrong repository and truncated trees fail closed', () => {
   assert.throws(() => evaluatePublicPr({ ...input, baseSha: 'f'.repeat(40) }), /base revision changed/);
   assert.throws(() => evaluatePublicPr({ ...input,
