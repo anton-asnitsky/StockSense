@@ -3,6 +3,7 @@ import { chmod, mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { IMAGE_NAMES, SCANNERS, inspectImageSbom, inspectImageScan, readImageEvidence, sha256 } from '../src/image-evidence.mjs';
+import { candidateTreeDigestFromGit, fetchImageLedger, verifyBoundImageEvidence } from '../src/image-ledger.mjs';
 
 // Usage: image-evidence.mjs build|verify [output-directory]. Build scans the
 // exact local IDs supplied by the two image build steps. No tag is a subject.
@@ -31,10 +32,36 @@ const env = ['-e', 'GRYPE_DB_AUTO_UPDATE=true', '-e', 'GRYPE_DB_REQUIRE_UPDATE_C
   '-e', 'TMPDIR=/work/tmp'];
 
 if (command === 'verify') {
-  // No exception input is accepted here until a protected source can prove
-  // approval authority. readImageEvidence therefore blocks every finding.
-  const evidence = await readImageEvidence(directory, imageIds);
-  process.stdout.write(`Verified ${evidence.records.map(r => `${r.name}:${r.packages}`).join(' ')} image packages\n`);
+  const source = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8', shell: false,
+    windowsHide: true, timeout: 10_000 });
+  if (source.error || source.status !== 0) throw new Error('Candidate Git revision is unavailable');
+  const checkout = spawnSync('git', ['status', '--porcelain=v1', '--untracked-files=all', '--',
+    'tools/contracts/src', 'tools/contracts/scripts', 'tools/contracts/Dockerfile.validator',
+    'tools/contracts/Dockerfile.generator-kiota', 'tools/contracts/package.json',
+    'tools/contracts/pnpm-lock.yaml', 'tools/contracts/pnpm-workspace.yaml',
+    'tools/contracts/.npmrc', 'tools/contracts/.pnpmfile.cjs'],
+  { encoding: 'utf8', shell: false, windowsHide: true, timeout: 10_000 });
+  if (checkout.error || checkout.status !== 0 || checkout.stdout.trim()) {
+    throw new Error('Candidate image and scanner sources differ from the checked-out revision');
+  }
+  const revision = source.stdout.trim();
+  const tree = spawnSync('git', ['rev-parse', `${revision}^{tree}`], { encoding: 'utf8', shell: false,
+    windowsHide: true, timeout: 10_000 });
+  const listing = spawnSync('git', ['ls-tree', '-r', '-z', '--full-tree', revision],
+    { shell: false, windowsHide: true, timeout: 10_000, maxBuffer: 32 * 1024 * 1024 });
+  if (tree.error || tree.status !== 0 || listing.error || listing.status !== 0) {
+    throw new Error('Candidate immutable Git tree is unavailable');
+  }
+  const candidateTreeDigest = candidateTreeDigestFromGit(listing.stdout);
+  process.stdout.write(`Candidate ${revision}, tree ${tree.stdout.trim()}, source manifest ${candidateTreeDigest}\n`);
+  const ledger = await fetchImageLedger({ repository: process.env.GITHUB_REPOSITORY,
+    token: process.env.GITHUB_TOKEN, candidateRevision: process.env.GITHUB_SHA,
+    candidateGitTreeSha: tree.stdout.trim() });
+  const result = await verifyBoundImageEvidence({ directory, imageIds, ledger,
+    expectedRevision: process.env.GITHUB_SHA, actualRevision: revision,
+    candidateTreeDigest });
+  await writeFile(join(directory, 'ledger-verification.json'), JSON.stringify(result, null, 2) + '\n');
+  process.stdout.write(`Verified image scans against main ${result.mainSha}, ledger blob ${result.ledgerBlobSha}\n`);
 } else if (command === 'build') {
   await mkdir(directory, { recursive: true });
   const scratch = await mkdtemp(join(tmpdir(), 'stocksense-image-evidence-'));
@@ -96,6 +123,6 @@ if (command === 'verify') {
       process.stdout.write(`${name}: ${sbom.components.length} components, ${report.findings.length} findings\n`);
     }
   } finally { await rm(scratch, { recursive: true, force: true }); }
-  // Retain the exact report, then fail closed on findings pending trusted disposition input.
-  await readImageEvidence(directory, imageIds);
+  // Validate the retained reports; the separate verify step fetches main's ledger.
+  await readImageEvidence(directory, imageIds, { requireClean: false });
 } else throw new Error('Usage: image-evidence.mjs build|verify [output-directory]');

@@ -59,6 +59,55 @@ jobs:
           cache: pnpm
           cache-dependency-path: tools/contracts/pnpm-lock.yaml
 
+      # The image bakes in a copy of tools/contracts/src and its dependency
+      # manifests, and the build is not bit-reproducible, so no image ID can be
+      # committed: this job builds its own and the runner refuses any image
+      # whose recorded digest does not match this checkout.
+      - name: Build the pinned standards image
+        id: standards-image
+        run: |
+          id="$(node tools/contracts/scripts/build-standards-image.mjs | grep -oE '^sha256:[0-9a-f]{64}$')"
+          test -n "$id"
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
+      - name: Build the pinned Kiota image
+        id: kiota-image
+        run: |
+          id="$(node tools/contracts/scripts/build-kiota-image.mjs | grep -oE '^sha256:[0-9a-f]{64}$')"
+          test -n "$id"
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
+      - name: Inventory and scan the exact built images
+        env:
+          STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
+          STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
+        run: node tools/contracts/scripts/image-evidence.mjs build
+
+      - name: Retain image inventories and current vulnerability findings
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: image-evidence-${{ github.sha }}
+          path: tools/contracts/dist/image-evidence/*.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Verify current findings against protected main ledger
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
+          STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
+        run: node tools/contracts/scripts/image-evidence.mjs verify
+
+      - name: Retain ledger and scan binding
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: image-ledger-verification-${{ github.sha }}
+          path: tools/contracts/dist/image-evidence/ledger-verification.json
+          if-no-files-found: warn
+          retention-days: 30
+
       - name: Install from the frozen lockfile
         run: pnpm --dir tools/contracts install --frozen-lockfile
 
@@ -116,24 +165,6 @@ jobs:
       # The dedicated required scan job retains both reports, including red
       # results. Tests here stay focused on the contract implementation.
 
-      # The image bakes in a copy of tools/contracts/src and its dependency
-      # manifests, and the build is not bit-reproducible, so no image ID can be
-      # committed: this job builds its own and the runner refuses any image
-      # whose recorded digest does not match this checkout.
-      - name: Build the pinned standards image
-        id: standards-image
-        run: |
-          id="$(pnpm --dir tools/contracts --silent build:standards-image | grep -oE '^sha256:[0-9a-f]{64}$')"
-          test -n "$id"
-          echo "id=$id" >> "$GITHUB_OUTPUT"
-
-      - name: Build the pinned Kiota image
-        id: kiota-image
-        run: |
-          id="$(pnpm --dir tools/contracts --silent build:kiota-image | grep -oE '^sha256:[0-9a-f]{64}$')"
-          test -n "$id"
-          echo "id=$id" >> "$GITHUB_OUTPUT"
-
       - name: Unit tests
         run: pnpm --dir tools/contracts test:unit
         env:
@@ -160,21 +191,6 @@ jobs:
         env:
           STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
           STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
-
-      - name: Inventory and scan the exact built images
-        env:
-          STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
-          STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
-        run: node tools/contracts/scripts/image-evidence.mjs build
-
-      - name: Retain image inventories and current vulnerability findings
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: image-evidence-${{ github.sha }}
-          path: tools/contracts/dist/image-evidence/*.json
-          if-no-files-found: error
-          retention-days: 30
 
   # Its own required job retains the secret and vulnerability findings even
   # when their gate fails, making current disposition reviewable.
