@@ -31,6 +31,8 @@ const env = ['-e', 'GRYPE_DB_AUTO_UPDATE=true', '-e', 'GRYPE_DB_REQUIRE_UPDATE_C
   '-e', 'TMPDIR=/work/tmp'];
 
 if (command === 'verify') {
+  // No exception input is accepted here until a protected source can prove
+  // approval authority. readImageEvidence therefore blocks every finding.
   const evidence = await readImageEvidence(directory, imageIds);
   process.stdout.write(`Verified ${evidence.records.map(r => `${r.name}:${r.packages}`).join(' ')} image packages\n`);
 } else if (command === 'build') {
@@ -94,5 +96,6 @@ if (command === 'verify') {
       process.stdout.write(`${name}: ${sbom.components.length} components, ${report.findings.length} findings\n`);
     }
   } finally { await rm(scratch, { recursive: true, force: true }); }
+  // Retain the exact report, then fail closed on findings pending trusted disposition input.
   await readImageEvidence(directory, imageIds);
 } else throw new Error('Usage: image-evidence.mjs build|verify [output-directory]');

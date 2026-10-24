@@ -11,8 +11,115 @@ export const SCANNERS = Object.freeze({
 });
 export const IMAGE_NAMES = Object.freeze(['validator', 'kiota']);
 const HEX = /^sha256:[0-9a-f]{64}$/;
+const ADVISORY = /^(?:CVE-\d{4}-\d{4,}|GHSA-[A-Za-z0-9]{4}(?:-[A-Za-z0-9]{4}){2})$/;
+const UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/;
+const EXCEPTION_FIELDS = new Set(['id', 'image', 'package', 'version', 'type', 'purl', 'severity',
+  'fixState', 'owner', 'rationale', 'compensatingControl', 'approvalReference',
+  'createdAt', 'expiresAt']);
 const digest = bytes => `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
 const fail = (code, message) => { throw new ContractError(code, 'BR6.5', message); };
+const exactText = (value, limit = 512) => typeof value === 'string' && value.length > 0 &&
+  value.length <= limit && value === value.trim() && !/[\x00-\x1f\x7f*]/.test(value);
+const exactIdentityText = (value, limit) => exactText(value, limit) && !value.includes('?');
+const PURL = /^pkg:([a-z][a-z0-9.+-]*)\/([^?#]+)(?:\?([^#]+))?(?:#(.+))?$/;
+const safePurlPart = value => value.length > 0 && !/[\s/?#*%\x00-\x1f\x7f]/.test(value);
+
+function purlMatches(record) {
+  if (!exactText(record.purl, 2048) || !exactIdentityText(record.package, 256) ||
+      !exactIdentityText(record.version, 256)) return false;
+  const match = PURL.exec(record.purl);
+  if (!match) return false;
+  const [, type, path, qualifiers, subpath] = match;
+  if ({ deb: 'deb', npm: 'npm', dotnet: 'nuget' }[record.type] !== type) return false;
+  const versionAt = path.lastIndexOf('@');
+  if (versionAt < 1 || versionAt === path.length - 1) return false;
+  try {
+    // Decode each path segment separately so an encoded slash cannot invent a namespace.
+    const segments = path.slice(0, versionAt).split('/').map(decodeURIComponent);
+    const version = decodeURIComponent(path.slice(versionAt + 1));
+    if (!segments.every(safePurlPart) || !safePurlPart(version) ||
+        qualifiers !== undefined && !decodeURIComponent(qualifiers) ||
+        subpath !== undefined && !decodeURIComponent(subpath)) return false;
+    const packageName = type === 'npm' && segments.length === 2 && segments[0].startsWith('@')
+      ? segments.join('/') : (segments.at(-1) ?? '');
+    if (type === 'npm' && segments.length !== (segments[0].startsWith('@') ? 2 : 1)) return false;
+    if (type === 'nuget' && segments.length !== 1) return false;
+    const agrees = type === 'nuget'
+      ? packageName.toLowerCase() === record.package.toLowerCase()
+      : packageName === record.package;
+    return agrees && version === record.version;
+  } catch (error) {
+    if (error instanceof URIError) return false;
+    throw error;
+  }
+}
+const identity = (record, image) => JSON.stringify([record.id, image, record.package,
+  record.version, record.type, record.purl, record.fixState, record.severity]);
+
+function utcTime(value) {
+  if (typeof value !== 'string' || !UTC.test(value)) return NaN;
+  const time = Date.parse(value);
+  if (!Number.isFinite(time)) return NaN;
+  const canonical = new Date(time).toISOString();
+  return canonical === value || canonical.replace('.000Z', 'Z') === value ? time : NaN;
+}
+
+/** Validate current scan findings against candidate records; approval provenance is caller-owned.
+ * @param {{image?: string, imageId?: string, sbomDigest?: string, now?: Date}} [options]
+ */
+export function verifyImageDispositions(report, exceptions, options = {}) {
+  const { image, imageId, sbomDigest, now = new Date() } = options;
+  if (typeof image !== 'string' || !IMAGE_NAMES.includes(image) || !Array.isArray(exceptions)) {
+    fail('IMAGE_EXCEPTION', 'Image disposition input is invalid');
+  }
+  const findings = inspectImageScan(report, image, imageId, sbomDigest, now);
+  const current = new Map();
+  for (const finding of findings) {
+    if (!finding || !ADVISORY.test(finding.id ?? '') ||
+        !['Negligible', 'Low', 'Medium', 'High', 'Critical'].includes(finding.severity) ||
+        !exactIdentityText(finding.package, 256) || !exactIdentityText(finding.version, 256) ||
+        !exactIdentityText(finding.type, 128) || !purlMatches(finding) ||
+        !['fixed', 'not-fixed', 'wont-fix'].includes(finding.fixState)) {
+      fail('IMAGE_SCAN', 'Image finding cannot be identified or safely disposed');
+    }
+    const key = identity(finding, image);
+    if (current.has(key)) fail('IMAGE_SCAN', 'Duplicate or ambiguous current image finding');
+    current.set(key, finding);
+    if (finding.fixState === 'fixed' && ['High', 'Critical'].includes(finding.severity)) {
+      fail('IMAGE_FINDINGS', 'A fixed High or Critical image finding blocks the gate');
+    }
+  }
+  const disposed = new Set();
+  for (const exception of exceptions) {
+    if (!exception || typeof exception !== 'object' || Array.isArray(exception) ||
+        Object.keys(exception).length !== EXCEPTION_FIELDS.size ||
+        Object.keys(exception).some(field => !EXCEPTION_FIELDS.has(field)) ||
+        !ADVISORY.test(exception.id ?? '') || !IMAGE_NAMES.includes(exception.image) ||
+        !exactIdentityText(exception.package, 256) || !exactIdentityText(exception.version, 256) ||
+        !exactIdentityText(exception.type, 128) || !purlMatches(exception) ||
+        !['Negligible', 'Low', 'Medium', 'High', 'Critical'].includes(exception.severity) ||
+        !['fixed', 'not-fixed', 'wont-fix'].includes(exception.fixState) ||
+        ['owner', 'rationale', 'compensatingControl', 'approvalReference']
+          .some(field => !exactText(exception[field]))) {
+      fail('IMAGE_EXCEPTION', 'Image exception is malformed or broad');
+    }
+    const created = utcTime(exception.createdAt);
+    const expires = utcTime(exception.expiresAt);
+    if (!Number.isFinite(created) || !Number.isFinite(expires) ||
+        created > now.getTime() || expires <= now.getTime() || created >= expires) {
+      fail('IMAGE_EXCEPTION', 'Image exception is future, expired or has invalid times');
+    }
+    const key = identity(exception, exception.image);
+    if (!current.has(key) || disposed.has(key)) {
+      fail('IMAGE_EXCEPTION', 'Image exception is unmatched or duplicates a disposition');
+    }
+    disposed.add(key);
+  }
+  if (disposed.size !== current.size) {
+    fail('IMAGE_FINDINGS', 'Current image findings lack a permitted disposition');
+  }
+  return { findings: current.size, disposed: disposed.size };
+}
 
 export function inspectImageSbom(document, name, imageId) {
   if (!document || document.bomFormat !== 'CycloneDX' || !/^1\.[456]$/.test(document.specVersion) ||
@@ -32,8 +139,10 @@ export function inspectImageSbom(document, name, imageId) {
   return packages;
 }
 
-export function inspectImageScan(report, name, imageId, sbomDigest) {
-  if (!report || report.schema !== 'stocksense-image-scan-v2' || report.image !== name ||
+export function inspectImageScan(report, name, imageId, sbomDigest, now = new Date()) {
+  if (!HEX.test(imageId ?? '') || !HEX.test(sbomDigest ?? '') ||
+      !(now instanceof Date) || !Number.isFinite(now.getTime()) ||
+      !report || report.schema !== 'stocksense-image-scan-v2' || report.image !== name ||
       report.imageId !== imageId || report.sbomDigest !== sbomDigest ||
       report.scanner !== SCANNERS.grype || report.status !== 'completed' ||
       !Array.isArray(report.findings) || report.database?.status !== 'valid' ||
@@ -43,12 +152,12 @@ export function inspectImageScan(report, name, imageId, sbomDigest) {
       !Number.isFinite(Date.parse(report.database?.built))) {
     fail('IMAGE_SCAN', `${name} scan is missing, stale or incomplete`);
   }
-  const age = Date.now() - Date.parse(report.database.built);
+  const age = now.getTime() - Date.parse(report.database.built);
   if (age < 0 || age > 120 * 60 * 60 * 1000) fail('IMAGE_SCAN', `${name} vulnerability database is stale`);
   for (const finding of report.findings) {
-    if (!/^(?:CVE-\d{4}-\d{4,}|GHSA-[\w-]+)$/.test(finding.id) ||
+    if (!finding || !ADVISORY.test(finding.id) ||
         !/^(?:Unknown|Negligible|Low|Medium|High|Critical)$/.test(finding.severity) ||
-        !finding.package || !finding.version || !finding.type ||
+        !finding.package || !finding.version || !finding.type || !purlMatches(finding) ||
         !['fixed', 'not-fixed', 'wont-fix', 'unknown'].includes(finding.fixState) ||
         !Array.isArray(finding.fixVersions) ||
         finding.fixVersions.some(version => typeof version !== 'string' || !version.trim()) ||

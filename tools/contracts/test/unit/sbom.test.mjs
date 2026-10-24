@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildSbom, parsePackageKey } from '../../src/sbom.mjs';
-import { SCANNERS, readImageEvidence, sha256 } from '../../src/image-evidence.mjs';
+import { SCANNERS, readImageEvidence, sha256, verifyImageDispositions } from '../../src/image-evidence.mjs';
 import { assertScanGates } from '../../src/evidence.mjs';
 
 const lockfile = fileURLToPath(new URL('../../pnpm-lock.yaml', import.meta.url));
@@ -109,7 +109,8 @@ test('missing, stale, malformed and vulnerable image evidence fails closed', asy
     await imageFixture(directory, 'kiota', image);
     await expectCode(readImageEvidence(directory, { ...ids, kiota: 'sha256:' + 'b'.repeat(64) }), 'IMAGE_STALE');
     await imageFixture(directory, 'kiota', image, [{ id: 'CVE-2026-12345', severity: 'High',
-      package: 'Kiota', version: '1.0.0', type: 'dotnet', fixState: 'fixed', fixVersions: ['1.1.0'] }]);
+      package: 'Kiota', version: '1.0.0', type: 'dotnet', purl: 'pkg:nuget/Kiota@1.0.0',
+      fixState: 'fixed', fixVersions: ['1.1.0'] }]);
     await expectCode(readImageEvidence(directory, ids), 'IMAGE_FINDINGS');
     const findingPath = join(directory, 'kiota.scan.json');
     const incomplete = JSON.parse(await readFile(findingPath, 'utf8'));
@@ -126,6 +127,154 @@ test('missing, stale, malformed and vulnerable image evidence fails closed', asy
     scan.database.schemaVersion = 'v5.0.0';
     await writeFile(path, JSON.stringify(scan));
     await expectCode(readImageEvidence(directory, ids), 'IMAGE_SCAN');
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+const imageNow = new Date('2026-10-20T12:00:00Z');
+const imageFinding = { id: 'CVE-2026-12345', severity: 'Medium', package: 'yaml',
+  version: '2.8.3', type: 'npm', purl: 'pkg:npm/yaml@2.8.3',
+  fixState: 'not-fixed', fixVersions: [] };
+const imageException = { id: imageFinding.id, image: 'validator', package: imageFinding.package,
+  version: imageFinding.version, type: imageFinding.type, purl: imageFinding.purl,
+  fixState: imageFinding.fixState, severity: imageFinding.severity,
+  owner: 'security-owner', rationale: 'No fixed release yet',
+  compensatingControl: 'Restrict image execution', approvalReference: 'SEC-42',
+  createdAt: '2026-10-19T12:00:00Z', expiresAt: '2026-10-21T12:00:00Z' };
+const imageId = 'sha256:' + 'a'.repeat(64);
+const imageSbomDigest = 'sha256:' + 'b'.repeat(64);
+const imageReport = (findings = [imageFinding]) => ({ schema: 'stocksense-image-scan-v2',
+  image: 'validator', imageId, sbomDigest: imageSbomDigest, scanner: SCANNERS.grype,
+  status: 'completed', database: { status: 'valid', schemaVersion: 'v6.1.9',
+    source: 'https://grype.anchore.io/databases/v6/example', built: imageNow.toISOString() }, findings });
+const verifyDisposition = (findings = [imageFinding], exceptions = [imageException], image = 'validator') =>
+  verifyImageDispositions(imageReport(findings), exceptions,
+    { image, imageId, sbomDigest: imageSbomDigest, now: imageNow });
+const expectImageCode = (code, callback) => assert.throws(callback, error => error.code === code);
+
+test('one current non-secret image finding accepts one exact live disposition', () => {
+  assert.deepEqual(verifyDisposition(), { findings: 1, disposed: 1 });
+  assert.deepEqual(verifyDisposition([], []), { findings: 0, disposed: 0 });
+});
+
+test('an undisposed finding and an unmatched or duplicate exception fail closed', () => {
+  expectImageCode('IMAGE_FINDINGS', () => verifyDisposition([imageFinding], []));
+  expectImageCode('IMAGE_EXCEPTION', () => verifyDisposition([], [imageException]));
+  expectImageCode('IMAGE_EXCEPTION', () => verifyDisposition([imageFinding], [imageException, imageException]));
+  expectImageCode('IMAGE_SCAN', () => verifyDisposition([imageFinding, { ...imageFinding }], [imageException]));
+});
+
+test('the disposition identity includes exact version, purl, image, type, fix state and severity', () => {
+  for (const field of ['version', 'purl', 'image', 'type', 'fixState', 'severity']) {
+    const changed = { ...imageException, [field]: field === 'image' ? 'kiota' : `${imageException[field]}-changed` };
+    expectImageCode('IMAGE_EXCEPTION', () => verifyDisposition([imageFinding], [changed]));
+  }
+  expectImageCode('IMAGE_SCAN', () => verifyDisposition([imageFinding], [imageException], 'kiota'));
+  expectImageCode('IMAGE_SCAN', () => verifyDisposition([{ ...imageFinding, version: '2.8.4' }]));
+  expectImageCode('IMAGE_SCAN', () => verifyDisposition([{ ...imageFinding, purl: 'pkg:npm/yaml@2.8.4' }]));
+  expectImageCode('IMAGE_EXCEPTION', () => verifyDisposition([{ ...imageFinding,
+    version: '2.8.4', purl: 'pkg:npm/yaml@2.8.4' }]));
+});
+
+test('a Medium to High or High to Critical change requires a new disposition', () => {
+  const high = { ...imageFinding, severity: 'High' };
+  const critical = { ...imageFinding, severity: 'Critical' };
+  const highException = { ...imageException, severity: 'High' };
+  expectImageCode('IMAGE_EXCEPTION', () => verifyDisposition([high], [imageException]));
+  assert.deepEqual(verifyDisposition([high], [highException]), { findings: 1, disposed: 1 });
+  expectImageCode('IMAGE_EXCEPTION', () => verifyDisposition([critical], [highException]));
+  assert.deepEqual(verifyDisposition([critical], [{ ...imageException, severity: 'Critical' }]),
+    { findings: 1, disposed: 1 });
+});
+
+test('decoded Debian, NuGet and scoped npm PURLs bind the reported package and version', () => {
+  for (const { package: packageName, version, type, purl } of [
+    { package: 'libstdc++6', version: '12.2.0-14+deb12u1', type: 'deb',
+      purl: 'pkg:deb/debian/libstdc%2B%2B6@12.2.0-14%2Bdeb12u1?arch=amd64&distro=debian-12' },
+    { package: 'Microsoft.OpenApi.Kiota', version: '1.35.0', type: 'dotnet',
+      purl: 'pkg:nuget/microsoft.openapi.kiota@1.35.0' },
+    { package: '@asyncapi/parser', version: '3.6.4', type: 'npm',
+      purl: 'pkg:npm/%40asyncapi/parser@3.6.4' }
+  ]) {
+    const finding = { ...imageFinding, package: packageName, version, type, purl };
+    const exception = { ...imageException, package: packageName, version, type, purl };
+    assert.deepEqual(verifyDisposition([finding], [exception]), { findings: 1, disposed: 1 });
+  }
+});
+
+test('PURL package/version disagreement or malformed percent encoding fails closed', () => {
+  for (const finding of [
+    { ...imageFinding, purl: 'pkg:npm/other@2.8.3' },
+    { ...imageFinding, purl: 'pkg:npm/yaml@2.8.4' },
+    { ...imageFinding, purl: 'pkg:nuget/yaml@2.8.3' },
+    { ...imageFinding, purl: 'pkg:npm/yaml@2.8.%ZZ' }
+  ]) expectImageCode('IMAGE_SCAN', () => verifyDisposition([finding]));
+  for (const exception of [
+    { ...imageException, purl: 'pkg:npm/other@2.8.3' },
+    { ...imageException, purl: 'pkg:npm/yaml@2.8.4' },
+    { ...imageException, purl: 'pkg:nuget/yaml@2.8.3' },
+    { ...imageException, purl: 'pkg:npm/yaml@2.8.%ZZ' }
+  ]) expectImageCode('IMAGE_EXCEPTION', () => verifyDisposition([imageFinding], [exception]));
+});
+
+test('malformed, broad and ownerless image exceptions are rejected', () => {
+  for (const exception of [
+    { ...imageException, version: '*' },
+    { ...imageException, type: '?' },
+    { ...imageException, purl: 'pkg:npm/yaml@?' },
+    { ...imageException, owner: '' },
+    { ...imageException, severity: undefined },
+    { ...imageException, approvalReference: ' ' },
+    { ...imageException, compensatingControl: undefined },
+    { ...imageException, unexpected: 'value' }
+  ]) expectImageCode('IMAGE_EXCEPTION', () => verifyDisposition([imageFinding], [exception]));
+});
+
+test('expired, future and impossible UTC disposition times fail', () => {
+  for (const exception of [
+    { ...imageException, expiresAt: '2026-10-20T12:00:00Z' },
+    { ...imageException, createdAt: '2026-10-20T12:00:01Z' },
+    { ...imageException, createdAt: '2026-02-30T12:00:00Z' },
+    { ...imageException, expiresAt: '2026-10-19T12:00:00Z' }
+  ]) expectImageCode('IMAGE_EXCEPTION', () => verifyDisposition([imageFinding], [exception]));
+});
+
+test('a fixed High or Critical finding blocks even with an exact exception', () => {
+  for (const severity of ['High', 'Critical']) {
+    const finding = { ...imageFinding, severity, fixState: 'fixed', fixVersions: ['2.8.4'] };
+    const exception = { ...imageException, fixState: 'fixed', severity };
+    expectImageCode('IMAGE_FINDINGS', () => verifyDisposition([finding], [exception]));
+  }
+});
+
+test('unknown fix state or severity and missing purl cannot be disposed', () => {
+  for (const finding of [
+    { ...imageFinding, fixState: 'unknown' },
+    { ...imageFinding, severity: 'Unknown' },
+    { ...imageFinding, purl: null }
+  ]) expectImageCode('IMAGE_SCAN', () => verifyDisposition([finding], [imageException]));
+});
+
+test('disposition verification rejects stale image, SBOM and scanner database bindings', () => {
+  const report = imageReport();
+  for (const binding of [
+    { image: 'kiota', imageId, sbomDigest: imageSbomDigest, now: imageNow },
+    { image: 'validator', imageId: 'sha256:' + 'c'.repeat(64), sbomDigest: imageSbomDigest, now: imageNow },
+    { image: 'validator', imageId, sbomDigest: 'sha256:' + 'c'.repeat(64), now: imageNow }
+  ]) expectImageCode('IMAGE_SCAN', () => verifyImageDispositions(report, [imageException], binding));
+  const stale = imageReport();
+  stale.database.built = '2026-10-01T00:00:00Z';
+  expectImageCode('IMAGE_SCAN', () => verifyImageDispositions(stale, [imageException],
+    { image: 'validator', imageId, sbomDigest: imageSbomDigest, now: imageNow }));
+});
+
+test('a local exception file has no authority over the image evidence gate', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'stocksense-image-exceptions-'));
+  const ids = { validator: imageId, kiota: imageId };
+  try {
+    await imageFixture(directory, 'validator', imageId, [imageFinding]);
+    await imageFixture(directory, 'kiota', imageId);
+    await writeFile(join(directory, 'validator.exceptions.json'), JSON.stringify([imageException]));
+    await expectCode(readImageEvidence(directory, ids), 'IMAGE_FINDINGS');
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
