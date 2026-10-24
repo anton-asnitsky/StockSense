@@ -1,6 +1,6 @@
 # Resource-bounded Kiota proof image. Pin the SDK by immutable image digest;
 # the approved generator version is restored during the build.
-FROM mcr.microsoft.com/dotnet/sdk@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa
+FROM mcr.microsoft.com/dotnet/sdk@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa AS build
 
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_NOLOGO=1 \
@@ -10,5 +10,16 @@ WORKDIR /repo
 RUN dotnet tool install Microsoft.OpenApi.Kiota --tool-path /opt/kiota --version 1.35.0 \
     && /opt/kiota/kiota --version \
     && echo '5e75f6adf161717be8d9f39eb596f93d52535e7b8cbcc00cffdcef3d0d3c3486  /opt/kiota/.store/microsoft.openapi.kiota/1.35.0/microsoft.openapi.kiota/1.35.0/microsoft.openapi.kiota.1.35.0.nupkg' | sha256sum -c -
+
+# Probe whether the pinned Kiota tool runs without the build-only SDK and
+# PowerShell packages. The hosted build verifies the CLI and scans this exact
+# final image before the variant can be considered for the U1 story branch.
+FROM mcr.microsoft.com/dotnet/runtime@sha256:0cf09aaccf6a9f68900aed4c73fb28fe25bb59ec85de4dea08ba02240a8635f3
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+    DOTNET_NOLOGO=1 \
+    HOME=/tmp
+WORKDIR /repo
+COPY --from=build /opt/kiota /opt/kiota
+RUN /opt/kiota/kiota --version
 USER 65532:65532
 ENTRYPOINT ["/opt/kiota/kiota"]
