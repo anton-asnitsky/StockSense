@@ -90,8 +90,10 @@ if (command === 'verify') {
           version: match.artifact?.version, type: match.artifact?.type,
           purl: match.artifact?.purl ?? null, fixState: match.vulnerability?.fix?.state,
           fixVersions: match.vulnerability?.fix?.versions ?? [] })) };
-      inspectImageScan(report, name, imageId, report.sbomDigest);
       await writeFile(join(directory, `${name}.scan.json`), JSON.stringify(report, null, 2) + '\n');
+      // Retain sanitized scanner output even when strict validation rejects a
+      // finding, so the hosted failure can be diagnosed without weakening it.
+      inspectImageScan(report, name, imageId, report.sbomDigest);
       await rm(archive);
       process.stdout.write(`${name}: ${sbom.components.length} components, ${report.findings.length} findings\n`);
     }
