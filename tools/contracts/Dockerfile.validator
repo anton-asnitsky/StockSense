@@ -1,6 +1,5 @@
-# Build context: tools/contracts from a clean checkout.
-# The base manifest is fixed; the resulting validator image must be built,
-# smoke-tested, inspected, and supplied to the runner by its own sha256 digest.
+# Build context: tools/contracts from a clean checkout. Keep the approved,
+# immutable Node build image; the final Linux/amd64 runtime is distroless.
 FROM docker.io/library/node@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df AS dependencies
 
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
@@ -12,19 +11,15 @@ RUN corepack enable \
     && corepack prepare pnpm@11.25.0 --activate \
     && pnpm install --prod --frozen-lockfile --ignore-scripts \
     && node node_modules/@redocly/cli/bin/cli.js --version
+COPY src ./src
+RUN node --check src/container-schema-validator.mjs \
+    && node --check src/container-fixture-oracle.mjs \
+    && node --check src/container-asyncapi-validator.mjs \
+    && node --check src/container-tool-launcher.mjs \
+    && node src/source-digest.mjs > source-digest.txt
 
-FROM docker.io/library/node@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df
-# The pinned Node base includes build-only npm packages and older Debian
-# perl/pcre2 packages. Keep Node 24.19.0, install the fixed OS versions, and
-# remove npm/Corepack from the validator runtime image. Production dependencies
-# below are copied from the locked build stage.
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends --only-upgrade \
-      perl-base=5.36.0-7+deb12u4 \
-      libpcre2-8-0=10.42-1+deb12u2 \
-    && rm -rf /var/lib/apt/lists/* \
-      /usr/local/lib/node_modules/npm \
-      /usr/local/lib/node_modules/corepack
+# Official linux/amd64 manifest, Node 24.22.1. No shell or cat is available.
+FROM --platform=linux/amd64 gcr.io/distroless/nodejs24-debian13:nonroot@sha256:4d0e659ef1f628c75d9940766cb444fa9605cc190b13676b9e62e1fa567c5cf4
 ENV NODE_ENV=production \
     NO_UPDATE_NOTIFIER=1 \
     SUPPRESS_NO_CONFIG_WARNING=1 \
@@ -32,17 +27,8 @@ ENV NODE_ENV=production \
 WORKDIR /opt/contracts
 COPY --from=dependencies /opt/contracts/package.json /opt/contracts/pnpm-lock.yaml ./
 COPY --from=dependencies /opt/contracts/node_modules ./node_modules
-COPY src ./src
-RUN node --check /opt/contracts/src/container-schema-validator.mjs
-RUN node --check /opt/contracts/src/container-fixture-oracle.mjs
-RUN node --check /opt/contracts/src/container-asyncapi-validator.mjs
-# Record which tool sources this image carries. The runner compares this with
-# the tree it is being asked to speak for and refuses a mismatch, so a stale
-# image cannot silently report an old tool's verdict as the current one.
-RUN node /opt/contracts/src/source-digest.mjs > /opt/contracts/source-digest.txt \
-    && cat /opt/contracts/source-digest.txt
-RUN groupadd --gid 65532 stocksense \
-    && useradd --uid 65532 --gid 65532 --home-dir /tmp --no-create-home --shell /usr/sbin/nologin stocksense
+COPY --from=dependencies /opt/contracts/src ./src
+COPY --from=dependencies /opt/contracts/source-digest.txt ./source-digest.txt
 USER 65532:65532
-ENTRYPOINT ["/usr/local/bin/node"]
+ENTRYPOINT ["/nodejs/bin/node"]
 CMD ["--version"]

@@ -1,23 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { copyFile, mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
-import { readFileSync } from 'node:fs';
+import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runContainerStandardsValidator } from '../../src/container-standards-runner.mjs';
-import { deriveIdentity, loadPackage } from '../../src/package-loader.mjs';
+import { deriveIdentity } from '../../src/package-loader.mjs';
 import { sourceTreeDigest } from '../../src/source-digest.mjs';
 
 const hostSourceDigest = await sourceTreeDigest();
+const digestContainerId = 'd'.repeat(64);
 
 const image = 'ghcr.io/stocksense/contracts-tools@sha256:' + 'a'.repeat(64);
 const docker = process.platform === 'win32'
   ? 'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe' : '/usr/bin/docker';
 const hash = bytes => 'sha256:' + createHash('sha256').update(bytes).digest('hex');
 const localContext = process.platform === 'win32' ? 'npipe:////./pipe/dockerDesktopLinuxEngine' : 'unix:///var/run/docker.sock';
-const sampleRoot = fileURLToPath(new URL('../../../../contracts/samples/walking-skeleton/', import.meta.url));
 const ok = stdout => ({ status: 0, stdout, stderr: '', error: undefined, signal: null });
 const expectCode = (promise, code, rule) => assert.rejects(promise,
   error => error.code === code && error.ruleId === rule);
@@ -36,15 +36,30 @@ async function withGraph(action) {
 
 async function withFixtureGraph(action) {
   await withGraph(async options => {
-    const loaded = await loadPackage(sampleRoot);
-    const entries = JSON.parse(JSON.stringify(loaded.entries));
-    for (const entry of entries) {
-      const target = join(options.graphRoot, ...entry.document.split('/'));
+    const declared = [
+      { artifactKind: 'openapi', document: options.sourceDocument,
+        bytes: await readFile(join(options.graphRoot, options.sourceDocument)) },
+      { artifactKind: 'schema', document: 'common/v1/message-envelope.schema.json',
+        bytes: Buffer.from('{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object"}') },
+      { artifactKind: 'sidecar', kind: 'example-fixture', document: 'governance/example-fixture.json',
+        bytes: Buffer.from('{"version":1}') }
+    ];
+    const entries = [];
+    const files = [];
+    for (const item of declared) {
+      const contentDigest = hash(item.bytes);
+      const semanticOwner = 'Synthetic';
+      const semanticVersion = '1.0.0';
+      const entry = { artifactKind: item.artifactKind, ...(item.kind ? { kind: item.kind } : {}),
+        document: item.document, semanticOwner, semanticVersion, contentDigest, boundaryIds: ['C01'],
+        ...deriveIdentity(item.kind ?? item.artifactKind, semanticOwner, item.document,
+          semanticVersion, contentDigest) };
+      entries.push(entry);
+      files.push({ document: item.document, digest: contentDigest, artifactKind: item.artifactKind });
+      const target = join(options.graphRoot, ...item.document.split('/'));
       await mkdir(dirname(target), { recursive: true });
-      await copyFile(join(sampleRoot, ...entry.document.split('/')), target);
+      if (item.document !== options.sourceDocument) await writeFile(target, item.bytes);
     }
-    const files = entries.map(entry => ({ document: entry.document,
-      digest: entry.contentDigest, artifactKind: entry.artifactKind }));
     const sourceDocument = entries.find(entry => entry.kind === 'example-fixture').document;
     await action({ ...options, entries, files, sourceDocument });
   });
@@ -58,7 +73,12 @@ async function withFixtureGraph(action) {
 function seam(run = () => ok(''), digest = hostSourceDigest) {
   const calls = [];
   const spawn = (command, argv, options) => {
-    if (argv.includes('--entrypoint=/bin/cat')) return ok(digest + '\n');
+    if (argv[0] === 'create') return ok(digestContainerId + '\n');
+    if (argv[0] === 'cp') {
+      writeFileSync(argv[2], digest + '\n');
+      return ok('');
+    }
+    if (argv[0] === 'rm' && argv[2] === digestContainerId) return ok('');
     calls.push({ command, argv, options });
     if (argv[0] === 'context') return ok(localContext + '\n');
     if (argv[0] === 'info') return ok('linux\n');
@@ -94,7 +114,7 @@ test('OpenAPI launches the exact constrained Docker profile and binds only snaps
       '--tmpfs=/tmp:rw,noexec,nosuid,size=67108864', '--env=HOME=/tmp', '--env=NO_UPDATE_NOTIFIER=1',
       '--mount', `type=bind,source=${snapshot},target=/workspace,readonly`,
       '--mount', `type=bind,source=${configDir},target=/config,readonly`,
-      '--entrypoint=/usr/local/bin/node', image,
+      '--entrypoint=/nodejs/bin/node', image,
       '/opt/contracts/node_modules/@redocly/cli/bin/cli.js', 'lint', '/workspace/' + options.sourceDocument,
       '--config', '/config/redocly.yaml', '--format', 'json']);
     assert.deepEqual(fake.calls[3].argv, ['rm', '--force', name]);
@@ -167,7 +187,7 @@ test('schema and AsyncAPI payload modes use the fixed in-image Ajv worker and de
         '--tmpfs=/tmp:rw,noexec,nosuid,size=67108864', '--env=HOME=/tmp', '--env=NO_UPDATE_NOTIFIER=1',
         '--mount', `type=bind,source=${snapshot},target=/workspace,readonly`,
         '--mount', `type=bind,source=${configDir},target=/config,readonly`,
-        '--entrypoint=/usr/local/bin/node', image, '/opt/contracts/src/container-schema-validator.mjs', mode, sourceDocument]);
+        '--entrypoint=/nodejs/bin/node', image, '/opt/contracts/src/container-schema-validator.mjs', mode, sourceDocument]);
       assert.equal(fake.calls[2].options.timeout, 60_000);
     }
   });
@@ -320,7 +340,7 @@ test('fixture mode mounts the full verified graph and returns only bounded revis
       '--tmpfs=/tmp:rw,noexec,nosuid,size=67108864', '--env=HOME=/tmp', '--env=NO_UPDATE_NOTIFIER=1',
       '--mount', `type=bind,source=${snapshot},target=/workspace,readonly`,
       '--mount', `type=bind,source=${configDir},target=/config,readonly`,
-      '--entrypoint=/usr/local/bin/node', image, '/opt/contracts/src/container-fixture-oracle.mjs',
+      '--entrypoint=/nodejs/bin/node', image, '/opt/contracts/src/container-fixture-oracle.mjs',
       options.sourceDocument]);
     assert.equal(fake.calls[2].options.timeout, 60_000);
     assert.deepEqual(fake.calls[3].argv, ['rm', '--force', name]);
@@ -415,54 +435,52 @@ test('fixture mode accepts channel-qualified AsyncAPI results and rejects malfor
   });
 });
 
-test('the standards image must carry this tree\'s tool sources', async () => {
+test('the standards image must carry exact source bytes without a shell', async () => {
   await withGraph(async options => {
-    // The image bakes in a copy of src, so a stale one answers with an older
-    // tool's verdict and nothing in a passing run says which tool spoke.
-    const digestRead = argv => argv.includes('--entrypoint=/bin/cat');
-    const reading = reply => {
+    const run = (subject, spawn) => runContainerStandardsValidator('openapi:3.1.2', options.sourceDocument,
+      { ...options, image: subject, spawn });
+    const subject = letter => 'ghcr.io/stocksense/contracts-tools@sha256:' + letter.repeat(64);
+    const reading = (marker, failure) => {
       const calls = [];
-      const spawn = (command, argv) => {
-        if (digestRead(argv)) { calls.push(argv); return reply(argv); }
+      const spawn = (_command, argv) => {
+        calls.push(argv);
         if (argv[0] === 'context') return ok(localContext + '\n');
         if (argv[0] === 'info') return ok('linux\n');
+        if (argv[0] === 'create') return failure === 'create' ? { status: 125 } : ok(digestContainerId + '\n');
+        if (argv[0] === 'cp') {
+          if (failure === 'cp') return { status: 1 };
+          if (failure === 'cp-error') return { error: { code: 'ETIMEDOUT' }, status: null };
+          writeFileSync(argv[2], marker);
+          return ok('');
+        }
+        if (argv[0] === 'rm') return failure === 'rm' && argv[2] === digestContainerId
+          ? { status: 1 } : ok('');
         return ok('');
       };
       return { calls, spawn };
     };
-    // Its own pinned image, because the verdict is cached per image for the
-    // process: under a pinned digest the image cannot change identity mid-run,
-    // so re-reading it on every validator call would be waste.
-    const subject = 'ghcr.io/stocksense/contracts-tools@sha256:' + 'c'.repeat(64);
-    const run = spawn => runContainerStandardsValidator('openapi:3.1.2', options.sourceDocument,
-      { ...options, image: subject, spawn });
-
-    // A digest from different sources, and an image built before the marker
-    // existed, are both the same instruction to the operator: rebuild.
-    for (const reply of [
-      () => ok('sha256:' + 'b'.repeat(64) + '\n'),
-      () => ({ status: 1, stdout: '', stderr: 'No such file or directory', error: undefined, signal: null }),
-      () => ok('not-a-digest\n')
-    ]) await expectCode(run(reading(reply).spawn), 'STANDARDS_IMAGE_STALE', 'NFR6.2');
-
-    // Docker failing to start the container is an environment fault, and must
-    // not be reported as a stale image: it sends the operator somewhere else.
-    for (const reply of [
-      () => ({ status: 125, stdout: '', stderr: '', error: undefined, signal: null }),
-      () => ({ status: null, stdout: '', stderr: '', error: new Error('spawn failed'), signal: null })
-    ]) await expectCode(run(reading(reply).spawn), 'STANDARDS_ENGINE', 'NFR6.2');
-
-    // The read is a minimal, network-less, read-only container.
-    const matching = reading(() => ok(hostSourceDigest + '\n'));
-    assert.deepEqual(await run(matching.spawn), { dialect: 'openapi:3.1.2', valid: true });
-    assert.equal(matching.calls.length, 1);
-    for (const flag of ['--rm', '--pull=never', '--network=none', '--read-only', '--cap-drop=ALL']) {
-      assert.ok(matching.calls[0].includes(flag), flag);
+    for (const [letter, marker, failure, code] of [
+      ['c', 'sha256:' + 'b'.repeat(64) + '\n', undefined, 'STANDARDS_IMAGE_STALE'],
+      ['d', '', 'cp', 'STANDARDS_IMAGE_STALE'],
+      ['3', '', 'cp-error', 'STANDARDS_ENGINE'],
+      ['e', hostSourceDigest + '\n\n', undefined, 'STANDARDS_IMAGE_STALE'],
+      ['f', hostSourceDigest + '\n', 'create', 'STANDARDS_ENGINE'],
+      ['1', hostSourceDigest + '\n', 'rm', 'STANDARDS_ENGINE']
+    ]) {
+      const fake = reading(marker, failure);
+      await expectCode(run(subject(letter), fake.spawn), code, 'NFR6.2');
+      assert.equal(fake.calls.some(argv => argv[0] === 'run'), false);
+      if (failure !== 'create') assert.ok(fake.calls.some(argv => argv[0] === 'rm' && argv[2] === digestContainerId));
     }
-    assert.deepEqual(matching.calls[0].slice(-2), [subject, '/opt/contracts/source-digest.txt']);
-    // Cached: a second validator call on the same pinned image does not re-read it.
-    const again = reading(() => ok(hostSourceDigest + '\n'));
-    assert.deepEqual(await run(again.spawn), { dialect: 'openapi:3.1.2', valid: true });
-    assert.equal(again.calls.length, 0);
+    const matching = reading(hostSourceDigest + '\n');
+    assert.deepEqual(await run(subject('2'), matching.spawn), { dialect: 'openapi:3.1.2', valid: true });
+    assert.deepEqual(matching.calls.map(argv => argv[0]), ['context', 'info', 'create', 'cp', 'rm', 'run', 'rm']);
+    assert.ok(matching.calls[2].includes('--network=none'));
+    assert.ok(matching.calls[2].includes('--pull=never'));
+    assert.ok(matching.calls[2].includes('--read-only'));
+    assert.equal(matching.calls.flat().some(arg => arg === '/bin/sh' || arg === '/bin/cat'), false);
+    const again = reading('');
+    assert.deepEqual(await run(subject('2'), again.spawn), { dialect: 'openapi:3.1.2', valid: true });
+    assert.equal(again.calls.some(argv => argv[0] === 'create' || argv[0] === 'cp'), false);
   });
 });

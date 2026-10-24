@@ -15,7 +15,6 @@ const KIOTA_PACKAGE = '/opt/kiota/.store/microsoft.openapi.kiota/1.35.0/microsof
 const KIOTA_SHA = '5e75f6adf161717be8d9f39eb596f93d52535e7b8cbcc00cffdcef3d0d3c3486';
 const CONTAINER_ID = /^[0-9a-f]{64}$/;
 const PEAK = /(?:^|\n)STOCKSENSE_GENERATOR_PEAK=(\d+)\r?\n?$/;
-const WRAPPER = '"$@"\ncode=$?\nprintf "\\nSTOCKSENSE_GENERATOR_PEAK=" >&2\ncat /sys/fs/cgroup/memory.peak >&2\nexit "$code"';
 /** @returns {never} */
 const fail = (code, message) => { throw new ContractError(code, 'NFR10.1', message); };
 
@@ -118,9 +117,9 @@ export function createBoundedGeneratorRunner(repoRoot, { standardsImage, kiotaIm
     const target = '/work/' + generator.outputPath;
     const image = consumer.generator === 'kiota' ? kiotaId : standardId;
     const command = consumer.generator === 'modelina'
-        ? ['/usr/local/bin/node', '/opt/contracts/src/modelina-message-generator.mjs',
+        ? ['/opt/contracts/src/modelina-message-generator.mjs',
             ...generator.args(source, target)]
-        : ['/usr/local/bin/node', '/opt/contracts/node_modules/openapi-typescript/bin/cli.js',
+        : ['/opt/contracts/node_modules/openapi-typescript/bin/cli.js',
             ...generator.args(source, target)];
     // Kiota's host invocation starts with `tool run kiota --`; the image
     // installs that same pinned binary directly.
@@ -135,7 +134,8 @@ export function createBoundedGeneratorRunner(repoRoot, { standardsImage, kiotaIm
       ...(consumer.generator === 'kiota'
         ? ['--entrypoint=/usr/share/dotnet/dotnet', image, '/opt/kiota-probe/kiota-probe.dll',
             ...generator.args(source, target).slice(4)]
-        : ['--entrypoint=/bin/sh', image, '-c', WRAPPER, '_', ...command])];
+        : ['--entrypoint=/nodejs/bin/node', image,
+            '/opt/contracts/src/container-tool-launcher.mjs', ...command])];
     const start = now();
     const result = dockerCall(spawn, args, limitMs);
     const elapsedMs = Math.ceil(now() - start);
