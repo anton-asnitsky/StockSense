@@ -30,7 +30,7 @@ function purlMatches(record) {
   const match = PURL.exec(record.purl);
   if (!match) return false;
   const [, type, path, qualifiers, subpath] = match;
-  if ({ deb: 'deb', npm: 'npm', dotnet: 'nuget' }[record.type] !== type) return false;
+  if ({ deb: 'deb', apk: 'apk', npm: 'npm', dotnet: 'nuget' }[record.type] !== type) return false;
   const versionAt = path.lastIndexOf('@');
   if (versionAt < 1 || versionAt === path.length - 1) return false;
   try {
@@ -44,6 +44,7 @@ function purlMatches(record) {
       ? segments.join('/') : (segments.at(-1) ?? '');
     if (type === 'npm' && segments.length !== (segments[0].startsWith('@') ? 2 : 1)) return false;
     if (type === 'nuget' && segments.length !== 1) return false;
+    if (type === 'apk' && (segments.length !== 2 || segments[0] !== 'alpine')) return false;
     const agrees = type === 'nuget'
       ? packageName.toLowerCase() === record.package.toLowerCase()
       : packageName === record.package;

@@ -156,6 +156,19 @@ test('one current non-secret image finding accepts one exact live disposition', 
   assert.deepEqual(verifyDisposition([], []), { findings: 0, disposed: 0 });
 });
 
+test('Alpine APK findings need a matching namespace, package, version and exact disposition', () => {
+  const finding = { ...imageFinding, package: 'apk-tools', version: '3.0.6-r0',
+    type: 'apk', purl: 'pkg:apk/alpine/apk-tools@3.0.6-r0?arch=x86_64&distro=alpine-3.23.5' };
+  const exception = { ...imageException, package: finding.package, version: finding.version,
+    type: finding.type, purl: finding.purl };
+  assert.deepEqual(verifyDisposition([finding], [exception]), { findings: 1, disposed: 1 });
+  for (const purl of [
+    'pkg:apk/other/apk-tools@3.0.6-r0?arch=x86_64',
+    'pkg:apk/apk-tools@3.0.6-r0?arch=x86_64',
+    'pkg:apk/alpine/other@3.0.6-r0?arch=x86_64'
+  ]) expectImageCode('IMAGE_SCAN', () => verifyDisposition([{ ...finding, purl }], [exception]));
+});
+
 test('an undisposed finding and an unmatched or duplicate exception fail closed', () => {
   expectImageCode('IMAGE_FINDINGS', () => verifyDisposition([imageFinding], []));
   expectImageCode('IMAGE_EXCEPTION', () => verifyDisposition([], [imageException]));
