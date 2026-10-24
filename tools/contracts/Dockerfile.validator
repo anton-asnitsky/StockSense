@@ -1,7 +1,7 @@
 # Build context: tools/contracts from a clean checkout.
 # The base manifest is fixed; the resulting validator image must be built,
 # smoke-tested, inspected, and supplied to the runner by its own sha256 digest.
-FROM docker.io/library/node@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df AS dependencies
+FROM docker.io/library/node@sha256:5098ee834c9345ddd7fc2828a01dc90aa6de0e9ed6804a09a959b19a1fded97a AS dependencies
 
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     NO_UPDATE_NOTIFIER=1 \
@@ -13,18 +13,11 @@ RUN corepack enable \
     && pnpm install --prod --frozen-lockfile --ignore-scripts \
     && node node_modules/@redocly/cli/bin/cli.js --version
 
-FROM docker.io/library/node@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df
-# The pinned Node base includes build-only npm packages and older Debian
-# perl/pcre2 packages. Keep Node 24.19.0, install the fixed OS versions, and
-# remove npm/Corepack from the validator runtime image. Production dependencies
-# below are copied from the locked build stage.
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends --only-upgrade \
-      perl-base=5.36.0-7+deb12u4 \
-      libpcre2-8-0=10.42-1+deb12u2 \
-    && rm -rf /var/lib/apt/lists/* \
-      /usr/local/lib/node_modules/npm \
-      /usr/local/lib/node_modules/corepack
+FROM docker.io/library/node@sha256:5098ee834c9345ddd7fc2828a01dc90aa6de0e9ed6804a09a959b19a1fded97a
+# Alpine keeps the current shell and Node entrypoints while reducing the
+# runtime package closure. Remove npm/Corepack from the final validator.
+RUN rm -rf /usr/local/lib/node_modules/npm \
+    /usr/local/lib/node_modules/corepack
 ENV NODE_ENV=production \
     NO_UPDATE_NOTIFIER=1 \
     SUPPRESS_NO_CONFIG_WARNING=1 \
@@ -41,8 +34,6 @@ RUN node --check /opt/contracts/src/container-asyncapi-validator.mjs
 # image cannot silently report an old tool's verdict as the current one.
 RUN node /opt/contracts/src/source-digest.mjs > /opt/contracts/source-digest.txt \
     && cat /opt/contracts/source-digest.txt
-RUN groupadd --gid 65532 stocksense \
-    && useradd --uid 65532 --gid 65532 --home-dir /tmp --no-create-home --shell /usr/sbin/nologin stocksense
 USER 65532:65532
 ENTRYPOINT ["/usr/local/bin/node"]
 CMD ["--version"]
