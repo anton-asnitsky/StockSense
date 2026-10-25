@@ -18,7 +18,7 @@ RUN ["/bin/sh", "-c", "test -d /opt/kiota/.store/microsoft.openapi.kiota/1.35.0/
 RUN ["/bin/sh", "-c", "mkdir -p /opt/kiota-probe-src && printf '%s\n' '<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><UseAppHost>false</UseAppHost></PropertyGroup></Project>' > /opt/kiota-probe-src/kiota-probe.csproj && printf '%s\n' 'using System;' 'using System.Diagnostics;' 'using System.IO;' 'try {' '  var start = new ProcessStartInfo(\"/opt/kiota/kiota\") { UseShellExecute = false };' '  foreach (var arg in args) start.ArgumentList.Add(arg);' '  using var child = Process.Start(start);' '  if (child is null) return 125;' '  child.WaitForExit();' '  Console.Error.WriteLine(\"STOCKSENSE_GENERATOR_PEAK=\" + File.ReadAllText(\"/sys/fs/cgroup/memory.peak\").Trim());' '  return child.ExitCode;' '} catch { return 125; }' > /opt/kiota-probe-src/Program.cs && dotnet publish /opt/kiota-probe-src/kiota-probe.csproj -c Release -o /opt/kiota-probe -p:RestoreIgnoreFailedSources=true"]
 # Run the pinned Kiota tool without build-only SDK and PowerShell packages.
 # The final runtime image is smoke-tested and scanned as the exact CI subject.
-FROM mcr.microsoft.com/dotnet/runtime@sha256:e5316053d31edfd98aa5742dd24987f315ba1265b4c838afc9799ce6a3602be8
+FROM --platform=linux/amd64 cgr.dev/chainguard/dotnet-runtime:latest@sha256:e09b08bbe55a530fa08c5131a22c62a2ab35da8c7ab93791115d6d3ce8b804a6
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_NOLOGO=1 \
     HOME=/tmp
