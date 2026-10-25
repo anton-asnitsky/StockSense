@@ -59,10 +59,26 @@ import {
 import { appendAuditEntry } from "../tools/aidlc-audit.ts";
 import { recordPlanApprovalHumanResponse } from "../tools/aidlc-testing-posture.ts";
 
-function extractResponseText(value: unknown): string {
+export function extractResponseText(value: unknown): string {
   if (typeof value === "string") {
     const trimmed = value.trim();
     if (!trimmed) return "";
+    // Codex Desktop can submit a question-widget reply as this user-message
+    // wrapper. Extract only one explicit answer; the approval challenge still
+    // checks that it is an offered choice for the active session.
+    const widgetReply = /^<send_user_message_question_reply>\s*([\s\S]*?)\s*<\/send_user_message_question_reply>$/.exec(trimmed);
+    if (widgetReply) {
+      try {
+        const replies = JSON.parse(widgetReply[1]) as unknown;
+        if (!Array.isArray(replies) || replies.length !== 1) return "";
+        const reply = replies[0];
+        if (reply === null || typeof reply !== "object") return "";
+        const answer = (reply as Record<string, unknown>).answer;
+        return typeof answer === "string" ? answer.trim() : "";
+      } catch {
+        return "";
+      }
+    }
     try {
       return extractResponseText(JSON.parse(trimmed));
     } catch {
