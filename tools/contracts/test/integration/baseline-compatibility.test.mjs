@@ -16,7 +16,7 @@ const repoRoot = fileURLToPath(new URL('../../../../', import.meta.url));
 const CATALOGUE_DRAFT = '20dc9345cf702848167ba6bb4ab5c4aabf756876';
 // The protected integration base for the two new import documents. Every
 // earlier canonical document is unchanged here; the additions are first releases.
-const CURRENT_BOLT_BASE = '581b70a1020e5ae36d631625a41392fddf30dbfb';
+const CURRENT_BOLT_BASE = '9c86ccb9aba07bf5a81b9770885bd452b5749363';
 // An earlier commit, before most canonical sources existed.
 const BEFORE_CATALOGUE = '3de357c7502f7ffffb653c7ff353a4930a7f96cd';
 const OUTCOMES = ['unchanged', 'first-release', 'compatible', 'breaking-approved', 'change-approved'];

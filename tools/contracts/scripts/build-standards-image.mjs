@@ -17,7 +17,7 @@ const docker = process.platform === 'win32'
 const tag = process.env.STOCKSENSE_STANDARDS_TAG ?? 'stocksense-validator:local';
 
 const run = (args, label) => {
-  const result = spawnSync(docker, args, { encoding: 'utf8', shell: false, windowsHide: true,
+  const result = spawnSync(docker, args, { cwd: contractsRoot, encoding: 'utf8', shell: false, windowsHide: true,
     maxBuffer: 16 * 1_048_576, stdio: ['ignore', 'pipe', 'inherit'] });
   if (result.error || result.status !== 0) {
     process.stderr.write(`${label} failed${result.error ? ': ' + result.error.message : ''}\n`);
@@ -27,7 +27,7 @@ const run = (args, label) => {
 };
 
 const expected = await sourceTreeDigest();
-run(['build', '--file', 'Dockerfile.validator', '--tag', tag, contractsRoot], 'docker build');
+run(['build', '--file', 'Dockerfile.validator', '--tag', tag, '.'], 'docker build');
 const id = run(['image', 'inspect', tag, '--format', '{{.Id}}'], 'docker image inspect');
 if (!/^sha256:[0-9a-f]{64}$/.test(id)) {
   process.stderr.write(`Unexpected image ID: ${id}\n`);

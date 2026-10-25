@@ -18,8 +18,15 @@ const oasdiff = resolve(repoRoot, '.tools', 'oasdiff', '1.28.0', `${process.plat
   process.platform === 'win32' ? 'oasdiff.exe' : 'oasdiff');
 const oasdiffConfig = resolve(repoRoot, 'tools', 'contracts', 'oasdiff.yaml');
 
-const approvedOverlap = value => string(value) && OVERLAP_DATE.test(value) &&
-  !Number.isNaN(Date.parse(value.length === 10 ? `${value}T00:00:00Z` : value));
+const approvedOverlap = value => {
+  if (!string(value) || !OVERLAP_DATE.test(value)) return false;
+  const instant = new Date(value.length === 10 ? `${value}T00:00:00Z` : value);
+  if (Number.isNaN(instant.getTime())) return false;
+  // Date.parse normalizes dates such as February 30 instead of rejecting them.
+  const normalized = instant.toISOString();
+  return value.length === 10 ? normalized.slice(0, 10) === value :
+    `${normalized.slice(0, 19)}Z` === value;
+};
 
 /**
  * The integration baseline must be an exact immutable commit. A branch or tag
