@@ -25,9 +25,10 @@ RUN node --check src/container-schema-validator.mjs \
     && node --check src/container-tool-launcher.mjs \
     && node src/source-digest.mjs > source-digest.txt
 
-# Official linux/amd64 manifest. Its Node binary is replaced by the reviewed
-# 24.19.0 binary from the immutable build image; no shell or cat is available.
-FROM --platform=linux/amd64 gcr.io/distroless/nodejs24-debian13:nonroot@sha256:4d0e659ef1f628c75d9940766cb444fa9605cc190b13676b9e62e1fa567c5cf4
+# Pin the immutable Linux/amd64 Chainguard glibc runtime. It supplies the
+# dynamic C/C++ libraries without a shell; retain the reviewed Node 24.19.0
+# binary from the immutable build image and verify it in the image build step.
+FROM --platform=linux/amd64 cgr.dev/chainguard/glibc-dynamic@sha256:6169708f3c53a6fab9c8911bc6c91f7a8425c2f529d8a92b731c1a47e24f0e67
 ENV NODE_ENV=production \
     NO_UPDATE_NOTIFIER=1 \
     SUPPRESS_NO_CONFIG_WARNING=1 \
