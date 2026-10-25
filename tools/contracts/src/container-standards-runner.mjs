@@ -61,27 +61,42 @@ const imageSourceDigests = new Map();
  * rules reject. Only the image can be trusted to say what it contains, so the
  * digest is read out of it rather than from a label or a build argument.
  */
-function assertImageMatchesSources(spawn, image, hostDigest) {
+async function assertImageMatchesSources(spawn, image, hostDigest) {
   if (imageSourceDigests.get(image) === hostDigest) return;
-  const result = dockerCall(spawn, ['run', '--rm', '--pull=never', '--network=none',
-    '--read-only', '--security-opt=no-new-privileges=true', '--cap-drop=ALL', '--entrypoint=/bin/cat',
-    image, '/opt/contracts/source-digest.txt'], 30_000);
-  // Docker failing to start a container is an environment fault; a container
-  // that ran and found no marker is an image built before this check existed.
-  // Reporting both as an engine failure would send the operator to the wrong
-  // place, which is the whole mistake this check exists to prevent.
-  if (!result || result.error || result.signal || typeof result.status !== 'number' ||
-      [125, 126, 127].includes(result.status)) {
-    fail('STANDARDS_ENGINE', 'NFR6.2', 'Pinned standards container could not be run safely');
+  const created = dockerCall(spawn, ['create', '--pull=never', '--network=none',
+    '--read-only', '--entrypoint=/nodejs/bin/node', image, '--version'], 15_000);
+  const containerId = String(created?.stdout ?? '').trim();
+  if (created?.error || created?.status !== 0 || !/^[0-9a-f]{64}$/.test(containerId)) {
+    fail('STANDARDS_ENGINE', 'NFR6.2', 'Pinned standards container could not be created safely');
   }
-  const baked = String(result.stdout ?? '').trim();
-  if (result.status !== 0 || !SHA.test(baked)) {
-    fail('STANDARDS_IMAGE_STALE', 'NFR6.2',
-      'Standards image records no tool-source digest; rebuild it from this tree');
-  }
-  if (baked !== hostDigest) {
-    fail('STANDARDS_IMAGE_STALE', 'NFR6.2',
-      'Standards image was built from different tool sources; rebuild it from this tree');
+  let directory;
+  try {
+    directory = await mkdtemp(join(tmpdir(), 'stocksense-standards-digest-'));
+    const destination = join(directory, 'source-digest.txt');
+    const copied = dockerCall(spawn,
+      ['cp', containerId + ':/opt/contracts/source-digest.txt', destination], 15_000);
+    if (copied?.error || copied?.signal || typeof copied?.status !== 'number') {
+      fail('STANDARDS_ENGINE', 'NFR6.2', 'Source-digest copy could not complete safely');
+    }
+    if (copied.status !== 0) {
+      fail('STANDARDS_IMAGE_STALE', 'NFR6.2',
+        'Standards image records no tool-source digest; rebuild it from this tree');
+    }
+    const stat = await lstat(destination).catch(() => null);
+    const bytes = stat?.isFile() ? await readFile(destination).catch(() => null) : null;
+    if (!bytes || !bytes.equals(Buffer.from(hostDigest + '\n'))) {
+      fail('STANDARDS_IMAGE_STALE', 'NFR6.2',
+        'Standards image was built from different tool sources; rebuild it from this tree');
+    }
+  } finally {
+    let localCleanupFailed = false;
+    if (directory) await rm(directory, { recursive: true, force: true })
+      .catch(() => { localCleanupFailed = true; });
+    const removed = dockerCall(spawn, ['rm', '--force', containerId], 5_000);
+    if (removed?.error || removed?.status !== 0) {
+      fail('STANDARDS_ENGINE', 'NFR6.2', 'Source-digest container cleanup failed');
+    }
+    if (localCleanupFailed) fail('STANDARDS_ENGINE', 'NFR6.2', 'Source-digest cleanup failed');
   }
   imageSourceDigests.set(image, hostDigest);
 }
@@ -307,7 +322,7 @@ export async function runContainerStandardsValidator(dialect, sourceDocument, op
       'STANDARDS_ENGINE', 'NFR6.2') !== 'linux') {
       fail('STANDARDS_ENGINE', 'NFR6.2', 'Standards image requires Linux containers');
     }
-    assertImageMatchesSources(spawn, image, await sourceTreeDigest());
+    await assertImageMatchesSources(spawn, image, await sourceTreeDigest());
     configDir = await mkdtemp(join(tmpdir(), 'stocksense-validator-config-'))
       .catch(() => fail('STANDARDS_ENGINE', 'NFR6.2', 'Validator configuration directory is unavailable'));
     if (/[,\r\n\x00-\x1f]/.test(configDir)) fail('STANDARDS_GRAPH', 'NFR6.2', 'Host bind path cannot be represented safely');
@@ -353,7 +368,7 @@ export async function runContainerStandardsValidator(dialect, sourceDocument, op
     if (dialect === 'openapi:3.1.2' || schemaDialect || payloadDialect || fixtureDialect) {
       args.push('--mount', `type=bind,source=${configDir},target=/config,readonly`);
     }
-    args.push('--entrypoint=/usr/local/bin/node', image, tool.binary,
+    args.push('--entrypoint=/nodejs/bin/node', image, tool.binary,
       ...(dialect === 'openapi:3.1.2'
         ? ['lint', '/workspace/' + sourceDocument, '--config', '/config/redocly.yaml', '--format', 'json']
         : schemaDialect ? ['schema:2020-12', sourceDocument]
