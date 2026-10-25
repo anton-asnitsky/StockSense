@@ -50,3 +50,5 @@ The final validator image uses Node 24.19.0. The 40 findings below are the exact
 | kiota | Negligible | CVE-2016-20013 | libc6 | 2.39-0ubuntu8.9 | deb | pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc | wont-fix | — |
 
 The only scanner-reported available fix in this candidate is Kiota MessagePack 2.5.302 to 2.5.303 (Medium). Its remediation needs a supported, pinned Kiota toolchain change and fresh integration/scan proof; no package substitution is assumed safe. The other 39 rows report not-fixed or wont-fix. Evaluate upstream image updates and exposure individually before proposing any time-limited exception.
+
+Follow-up on 2026-10-25: the [official Microsoft.OpenApi.Kiota 1.36.1 NuGet package](https://www.nuget.org/packages/Microsoft.OpenApi.Kiota/1.36.1) (download SHA-256 `e2e3e7991328fd7e686a5dc6728d95f7f9404c150ef66fc843f3d297d8480488`) still declares `MessagePack/2.5.302` in `tools/net10.0/any/kiota.deps.json`. A Kiota version bump to 1.36.1 alone therefore would not address this finding. This is package inspection evidence, not an image scan or a claim that changing the pinned 1.35.0 toolchain is approved.
