@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
+import { EventEmitter } from 'node:events';
 import { readFile } from 'node:fs/promises';
 import { writeFileSync } from 'node:fs';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { createBoundedGeneratorRunner, verifyKiotaPackageImage } from '../../src/bounded-generators.mjs';
+import { launchTool } from '../../src/container-tool-launcher.mjs';
 
 const repoRoot = fileURLToPath(new URL('../../../../', import.meta.url));
 const profile = JSON.parse(await readFile(new URL('../../../../contracts/samples/walking-skeleton/governance/generation-profile.json', import.meta.url)));
@@ -35,7 +37,7 @@ function fixture(runResult, inspectStatus = 1, removeStatus = 0, copyStatus = 0)
 test('a timed-out generator is killed at the configured limit and its container is removed', () => {
   const { calls, run } = fixture({ error: { code: 'ETIMEDOUT' }, signal: 'SIGTERM' }, 0);
   assert.throws(() => run(profile.consumers[0], repoRoot), { code: 'GENERATOR_LIMIT' });
-  assert.equal(calls.find(call => call.args[0] === 'run' && call.args.includes('--entrypoint=/bin/sh')).timeout, 500);
+  assert.equal(calls.find(call => call.args[0] === 'run' && call.args.includes('--entrypoint=/nodejs/bin/node')).timeout, 500);
   assert.ok(calls.some(call => call.args[0] === 'rm' && call.args[1] === '--force'));
 });
 
@@ -64,10 +66,58 @@ test('generator memory and time limits cannot exceed their approved maxima', () 
 test('Modelina uses the fixed offline entry point and constrained source mount', () => {
   const { calls, run } = fixture({ status: 0, stderr: '\nSTOCKSENSE_GENERATOR_PEAK=123\n' });
   run(profile.consumers.find(consumer => consumer.consumerId === 'messaging-typescript'), repoRoot);
-  const args = calls.find(call => call.args.includes('--entrypoint=/bin/sh')).args;
+  const args = calls.find(call => call.args.includes('--entrypoint=/nodejs/bin/node')).args;
   assert.ok(args.includes('/opt/contracts/src/modelina-message-generator.mjs'));
+  assert.ok(args.includes('/opt/contracts/src/container-tool-launcher.mjs'));
   assert.ok(args.includes('--network=none'));
   assert.ok(args.includes('--memory=2147483648'));
+  assert.equal(args.includes('/bin/sh'), false);
+});
+
+test('openapi-typescript uses the same shell-free image and preserves fixed arguments', () => {
+  const { calls, run } = fixture({ status: 0, stderr: '\nSTOCKSENSE_GENERATOR_PEAK=123\n' });
+  run(profile.consumers.find(consumer => consumer.generator === 'openapi-typescript'), repoRoot);
+  const args = calls.find(call => call.args.includes('--entrypoint=/nodejs/bin/node')).args;
+  assert.ok(args.includes('/opt/contracts/src/container-tool-launcher.mjs'));
+  assert.ok(args.includes('/opt/contracts/node_modules/openapi-typescript/bin/cli.js'));
+  assert.ok(args.includes('--network=none'));
+  assert.ok(args.includes('--memory=2147483648'));
+  assert.ok(args.includes('--memory-swap=2147483648'));
+  assert.equal(args.includes('/bin/sh'), false);
+});
+
+test('Node launcher forwards the exact command without a shell and requires cgroup peak', async () => {
+  const started = [];
+  const chunks = [];
+  const start = (executable, args, options) => {
+    started.push({ executable, args, options });
+    const child = new EventEmitter();
+    Promise.resolve().then(() => child.emit('exit', 0, null));
+    return child;
+  };
+  assert.equal(await launchTool(['/opt/contracts/tool.mjs', '--fixed'], {
+    start, peak: async () => '123\n', output: { write: value => chunks.push(value) }
+  }), 0);
+  assert.deepEqual(started[0].args, ['/opt/contracts/tool.mjs', '--fixed']);
+  assert.equal(started[0].options.shell, false);
+  assert.equal(started[0].options.stdio[0], 'ignore');
+  assert.deepEqual(chunks, ['\nSTOCKSENSE_GENERATOR_PEAK=123\n']);
+  assert.equal(await launchTool(['/opt/contracts/tool.mjs'], {
+    start, peak: async () => { throw new Error('no cgroup'); }, output: { write: () => assert.fail() }
+  }), 125);
+  assert.equal(await launchTool(['/opt/contracts/tool.mjs'], {
+    start, peak: async () => 'not-a-number', output: { write: () => assert.fail() }
+  }), 125);
+  for (const [code, signal, expected] of [[2, null, 2], [null, 'SIGKILL', 137]]) {
+    const exiting = () => {
+      const child = new EventEmitter();
+      Promise.resolve().then(() => child.emit('exit', code, signal));
+      return child;
+    };
+    assert.equal(await launchTool(['/opt/contracts/tool.mjs'], {
+      start: exiting, peak: async () => '123', output: { write: () => {} }
+    }), expected);
+  }
 });
 
 test('chiseled Kiota uses the net10 launcher while preserving peak and cgroup limits', () => {

@@ -68,6 +68,7 @@ test('a PR cannot change the scanner, its dependency inputs or exception authori
     'security/image-exceptions.json',
     'tools/contracts/scripts/build-candidate-bundle.mjs', 'tools/contracts/scripts/image-evidence.mjs',
     'tools/contracts/src/ci-policy.mjs', 'tools/contracts/src/bounded-generators.mjs',
+    'tools/contracts/src/container-tool-launcher.mjs',
     'tools/contracts/src/evidence.mjs', 'tools/contracts/src/generators.mjs',
     'tools/contracts/src/candidate-provenance.mjs', 'tools/contracts/src/image-evidence.mjs',
     'tools/contracts/src/image-ledger.mjs', 'tools/contracts/src/source-digest.mjs',
