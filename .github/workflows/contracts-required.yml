@@ -28,8 +28,8 @@ permissions:
 jobs:
   contracts:
     name: U1 contracts
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     permissions:
       contents: read
     steps:
@@ -58,6 +58,57 @@ jobs:
           node-version: 24.19.0
           cache: pnpm
           cache-dependency-path: tools/contracts/pnpm-lock.yaml
+
+      # The image bakes in a copy of tools/contracts/src and its dependency
+      # manifests, and the build is not bit-reproducible, so no image ID can be
+      # committed: this job builds its own and the runner refuses any image
+      # whose recorded digest does not match this checkout.
+      - name: Build the pinned standards image
+        id: standards-image
+        working-directory: tools/contracts
+        run: |
+          id="$(node scripts/build-standards-image.mjs | grep -oE '^sha256:[0-9a-f]{64}$')"
+          test -n "$id"
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
+      - name: Build the pinned Kiota image
+        id: kiota-image
+        working-directory: tools/contracts
+        run: |
+          id="$(node scripts/build-kiota-image.mjs | grep -oE '^sha256:[0-9a-f]{64}$')"
+          test -n "$id"
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
+      - name: Inventory and scan the exact built images
+        env:
+          STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
+          STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
+        run: node tools/contracts/scripts/image-evidence.mjs build
+
+      - name: Retain image inventories and current vulnerability findings
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: image-evidence-${{ github.sha }}
+          path: tools/contracts/dist/image-evidence/*.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Verify current findings against protected main ledger
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
+          STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
+        run: node tools/contracts/scripts/image-evidence.mjs verify
+
+      - name: Retain ledger and scan binding
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: image-ledger-verification-${{ github.sha }}
+          path: tools/contracts/dist/image-evidence/ledger-verification.json
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Install from the frozen lockfile
         run: pnpm --dir tools/contracts install --frozen-lockfile
@@ -113,26 +164,8 @@ jobs:
       - name: Type-check
         run: pnpm --dir tools/contracts type-check
 
-      - name: Secret scan
-        run: pnpm --dir tools/contracts scan:secrets
-
-      # The image bakes in a copy of tools/contracts/src and its dependency
-      # manifests, and the build is not bit-reproducible, so no image ID can be
-      # committed: this job builds its own and the runner refuses any image
-      # whose recorded digest does not match this checkout.
-      - name: Build the pinned standards image
-        id: standards-image
-        run: |
-          id="$(pnpm --dir tools/contracts --silent build:standards-image | grep -oE '^sha256:[0-9a-f]{64}$')"
-          test -n "$id"
-          echo "id=$id" >> "$GITHUB_OUTPUT"
-
-      - name: Build the pinned Kiota image
-        id: kiota-image
-        run: |
-          id="$(pnpm --dir tools/contracts --silent build:kiota-image | grep -oE '^sha256:[0-9a-f]{64}$')"
-          test -n "$id"
-          echo "id=$id" >> "$GITHUB_OUTPUT"
+      # The dedicated required scan job retains both reports, including red
+      # results. Tests here stay focused on the contract implementation.
 
       - name: Unit tests
         run: pnpm --dir tools/contracts test:unit
@@ -161,13 +194,11 @@ jobs:
           STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
           STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
 
-  # Its own job so a supply-chain finding is visible as itself rather than
-  # hidden behind a test failure. BR6.2 requires a failed required check to
-  # block the integration decision, so this is expected to be red until the
-  # residual @asyncapi/generator advisories carry an owner disposition.
+  # Its own required job retains the secret and vulnerability findings even
+  # when their gate fails, making current disposition reviewable.
   vulnerability-scan:
     name: Vulnerability scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
       contents: read
@@ -199,5 +230,21 @@ jobs:
       - name: Install from the frozen lockfile
         run: pnpm --dir tools/contracts install --frozen-lockfile
 
-      - name: Audit the locked dependency tree
-        run: pnpm --dir tools/contracts scan:vuln
+      - name: Produce sanitized secret scan report
+        run: node tools/contracts/scripts/security-reports.mjs secret-scan
+
+      - name: Produce vulnerability scan report
+        if: always()
+        run: node tools/contracts/scripts/security-reports.mjs vulnerability-scan
+
+      - name: Retain exact scan report bytes
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: security-reports-${{ github.sha }}
+          path: tools/contracts/dist/security-reports/*.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Require current clean or approved finding-specific scans
+        run: node tools/contracts/scripts/security-reports.mjs verify
