@@ -1,0 +1,5 @@
+# Contract identities and validator-image digests are byte-bound. Keep these
+# tracked text files identical on Windows, Linux, and macOS checkouts.
+/.gitattributes text eol=lf
+contracts/** text eol=lf
+tools/contracts/** text eol=lf
