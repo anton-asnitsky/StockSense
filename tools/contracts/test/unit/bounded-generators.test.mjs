@@ -120,7 +120,7 @@ test('Node launcher forwards the exact command without a shell and requires cgro
   }
 });
 
-test('chiseled Kiota uses the net10 launcher while preserving peak and cgroup limits', () => {
+test('minimal Kiota uses the net10 launcher while preserving peak and cgroup limits', () => {
   const { calls, run } = fixture({ status: 0, stderr: '\nSTOCKSENSE_GENERATOR_PEAK=123\n' });
   run(profile.consumers.find(consumer => consumer.generator === 'kiota'), repoRoot);
   const args = calls.find(call => call.args.includes('--entrypoint=/usr/share/dotnet/dotnet')).args;
@@ -166,12 +166,12 @@ test('wrong final-image package digest and failed copy both fail closed after cl
   }
 });
 
-test('all Kiota Dockerfile RUN instructions use exec form and pin the chiseled runtime', async () => {
+test('all Kiota Dockerfile RUN instructions use exec form and pin the minimal runtime', async () => {
   const dockerfile = await readFile(new URL('../../Dockerfile.generator-kiota', import.meta.url), 'utf8');
   const runs = dockerfile.split(/\r?\n/).filter(line => line.startsWith('RUN '));
   assert.ok(runs.length > 0);
   for (const line of runs) assert.ok(Array.isArray(JSON.parse(line.slice(4))), line);
-  assert.match(dockerfile, /runtime@sha256:e5316053d31edfd98aa5742dd24987f315ba1265b4c838afc9799ce6a3602be8/);
+  assert.match(dockerfile, /dotnet-runtime:latest@sha256:e09b08bbe55a530fa08c5131a22c62a2ab35da8c7ab93791115d6d3ce8b804a6/);
   assert.match(dockerfile, /<TargetFramework>net10\.0<\/TargetFramework>/);
   assert.match(dockerfile, /COPY --from=build \/opt\/kiota-probe \/opt\/kiota-probe/);
 });
