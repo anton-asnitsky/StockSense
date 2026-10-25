@@ -1,5 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assessCatalogueAgainstBaseline } from '../../src/baseline-compatibility.mjs';
 
@@ -71,6 +75,67 @@ test('required compatibility refuses a changed non-OpenAPI document without appr
       assert.equal(error.ruleId, 'BR4.4');
       return true;
     });
+});
+
+test('changed AsyncAPI and JSON Schema revisions need exact predecessor-bound overlap approvals', async () => {
+  // A disposable repository keeps both revisions available after this story
+  // is squash-merged; no branch-local commit becomes a permanent test input.
+  const fixtureRoot = await mkdtemp(join(tmpdir(), 'stocksense-compatibility-'));
+  try {
+    const sourceRoot = join(fixtureRoot, 'contracts', 'source');
+    const catalogueRoot = join(fixtureRoot, 'contracts', 'catalogue', 'v1');
+    await cp(join(repoRoot, 'contracts', 'source'), sourceRoot, { recursive: true });
+    await mkdir(catalogueRoot, { recursive: true });
+    await cp(join(repoRoot, 'contracts', 'catalogue', 'v1', 'boundary-sources.json'),
+      join(catalogueRoot, 'boundary-sources.json'));
+    const git = (...args) => execFileSync('git', ['-C', fixtureRoot,
+      '-c', 'core.autocrlf=false', '-c', 'commit.gpgsign=false',
+      '-c', 'user.name=StockSense Fixture', '-c', 'user.email=fixture@example.invalid',
+      ...args], { encoding: 'utf8' }).trim();
+    git('init', '--quiet');
+    const changedPaths = [
+      join(sourceRoot, 'common', 'v1', 'contract-package.shared-schema.yaml'),
+      join(sourceRoot, 'messaging-platform', 'v1', 'transport-conformance.asyncapi.yaml')
+    ];
+    const originals = await Promise.all(changedPaths.map(path => readFile(path)));
+    for (let i = 0; i < changedPaths.length; i++) {
+      await writeFile(changedPaths[i], Buffer.concat([originals[i], Buffer.from('\n# synthetic baseline revision\n')]));
+    }
+    git('add', 'contracts');
+    git('commit', '--quiet', '-m', 'Synthetic baseline');
+    const commit = git('rev-parse', 'HEAD');
+    for (let i = 0; i < changedPaths.length; i++) await writeFile(changedPaths[i], originals[i]);
+    git('add', 'contracts');
+    git('commit', '--quiet', '-m', 'Synthetic candidate');
+
+    const exploratory = await assessCatalogueAgainstBaseline(fixtureRoot, commit);
+    const changed = exploratory.undiffable;
+    assert.deepEqual(changed.map(row => row.artifactKind).sort(), ['asyncapi', 'schema']);
+    const approvals = Object.fromEntries(changed.map(row => [row.logicalId, {
+      predecessorRevisionId: row.predecessorRevisionId,
+      approvedBy: 'synthetic-integration-fixture',
+      overlapUntil: '2099-12-31'
+    }]));
+    const accepted = await assessCatalogueAgainstBaseline(fixtureRoot, commit,
+      { requirePinnedDiffer: true, approvals });
+    assert.deepEqual(accepted.undiffable, []);
+    assert.equal(accepted.assessments.length, 40);
+    for (const row of changed) {
+      const result = accepted.assessments.find(item => item.logicalId === row.logicalId);
+      assert.equal(result?.outcome, 'change-approved', row.document);
+      assert.equal(result.predecessorRevisionId, row.predecessorRevisionId);
+      assert.equal(result.approvedBy, 'synthetic-integration-fixture');
+      assert.equal(result.overlapUntil, '2099-12-31');
+    }
+    const wrong = { ...approvals, [changed[0].logicalId]: {
+      ...approvals[changed[0].logicalId], predecessorRevisionId: `sha256:${'0'.repeat(64)}`
+    } };
+    await assert.rejects(assessCatalogueAgainstBaseline(fixtureRoot, commit,
+      { requirePinnedDiffer: true, approvals: wrong }), error =>
+      error.code === 'NON_OPENAPI_CHANGE_UNAPPROVED' && error.ruleId === 'BR4.4');
+  } finally {
+    await rm(fixtureRoot, { recursive: true, force: true });
+  }
 });
 
 test('required compatibility passes the current immutable integration base with explicit import first releases', async () => {
