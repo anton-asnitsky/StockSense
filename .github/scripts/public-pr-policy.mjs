@@ -135,3 +135,4 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     process.exitCode = 1;
   }
 }
+// Disposable protected-path policy probe; close this PR without merging.
