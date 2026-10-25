@@ -3,6 +3,38 @@ import { fileURLToPath } from 'node:url';
 
 const SHA = /^[0-9a-f]{40}$/;
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+const BASES = new Set(['main']);
+// These bytes define or configure the required scan verdict. A candidate PR
+// may supply files to scan, but may not supply the scanner, its dependency tree
+// or the exception evaluator that decides whether its own findings pass.
+const SCAN_AUTHORITY = new Set([
+  'security/image-exceptions.json',
+  'tools/contracts/scripts/security-reports.mjs',
+  'tools/contracts/scripts/check-ci-policy.mjs',
+  'tools/contracts/scripts/build-sbom.mjs',
+  'tools/contracts/scripts/build-standards-image.mjs',
+  'tools/contracts/scripts/build-kiota-image.mjs',
+  'tools/contracts/scripts/build-candidate-bundle.mjs',
+  'tools/contracts/scripts/image-evidence.mjs',
+  'tools/contracts/src/ci-policy.mjs',
+  'tools/contracts/src/bounded-generators.mjs',
+  'tools/contracts/src/container-tool-launcher.mjs',
+  'tools/contracts/src/candidate-provenance.mjs',
+  'tools/contracts/src/evidence.mjs',
+  'tools/contracts/src/generators.mjs',
+  'tools/contracts/src/image-evidence.mjs',
+  'tools/contracts/src/image-ledger.mjs',
+  'tools/contracts/src/source-digest.mjs',
+  'tools/contracts/src/package-loader.mjs',
+  'tools/contracts/src/preflight.mjs',
+  'tools/contracts/src/sbom.mjs',
+  'tools/contracts/package.json',
+  'tools/contracts/pnpm-lock.yaml',
+  'tools/contracts/dockerfile.validator',
+  'tools/contracts/dockerfile.generator-kiota',
+  'pnpm-workspace.yaml', 'tools/contracts/pnpm-workspace.yaml', '.npmrc', '.pnpmfile.cjs',
+  'tools/contracts/.npmrc', 'tools/contracts/.pnpmfile.cjs'
+]);
 const requireValue = (condition, message) => {
   if (!condition) throw new Error(message);
 };
@@ -23,9 +55,9 @@ function treeEntries(tree) {
 /** Decide from two immutable trees, never from a live paginated PR file list. */
 export function evaluatePublicPr({ event, repository, baseSha, pull, baseTree, headTree }) {
   requireValue(event?.pull_request && Number.isInteger(event.number), 'Missing pull-request event');
-  requireValue(event.pull_request.base?.ref === 'main' &&
+  requireValue(BASES.has(event.pull_request.base?.ref) &&
     event.pull_request.base.repo?.full_name === repository &&
-    pull?.base?.ref === 'main' && pull.base.repo?.full_name === repository,
+    pull?.base?.ref === event.pull_request.base.ref && pull.base.repo?.full_name === repository,
   'The pull request must target this repository\'s protected main branch');
   requireValue(SHA.test(baseSha) && event.pull_request.base.sha === baseSha &&
     pull.base.sha === baseSha, 'The protected base revision changed during the check');
@@ -38,8 +70,13 @@ export function evaluatePublicPr({ event, repository, baseSha, pull, baseTree, h
     .filter(path => before.get(path) !== after.get(path));
   // Protect workflows, local actions and this policy itself. A rename is a
   // deletion plus an addition here, so both sides are checked.
-  const denied = changed.filter(path => path.toLowerCase() === '.github' ||
-    path.toLowerCase().startsWith('.github/'));
+  const denied = changed.filter(path => {
+    const lower = path.toLowerCase();
+    return lower === '.github' || lower.startsWith('.github/') ||
+      SCAN_AUTHORITY.has(lower) ||
+      ['node_modules', 'tools/contracts/node_modules'].some(root =>
+        lower === root || lower.startsWith(`${root}/`));
+  });
   requireValue(!denied.length, `Protected CI paths changed: ${denied.join(', ')}`);
   return { baseSha, headSha: pull.head.sha, comparedPaths: changed.length };
 }

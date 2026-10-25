@@ -37,6 +37,31 @@ test('workflow edits, same-name job additions, local actions and renames are ref
     headTree: tree(entry('src/example.mjs', 'e'.repeat(40))) }), /Protected CI paths changed/);
 });
 
+test('a PR cannot change the scanner, its dependency inputs or exception authority', () => {
+  for (const path of ['tools/contracts/scripts/security-reports.mjs',
+    'tools/contracts/scripts/check-ci-policy.mjs', 'tools/contracts/scripts/build-sbom.mjs',
+    'tools/contracts/scripts/build-standards-image.mjs', 'tools/contracts/scripts/build-kiota-image.mjs',
+    'security/image-exceptions.json',
+    'tools/contracts/scripts/build-candidate-bundle.mjs', 'tools/contracts/scripts/image-evidence.mjs',
+    'tools/contracts/src/ci-policy.mjs', 'tools/contracts/src/bounded-generators.mjs',
+    'tools/contracts/src/container-tool-launcher.mjs',
+    'tools/contracts/src/evidence.mjs', 'tools/contracts/src/generators.mjs',
+    'tools/contracts/src/candidate-provenance.mjs', 'tools/contracts/src/image-evidence.mjs',
+    'tools/contracts/src/image-ledger.mjs', 'tools/contracts/src/source-digest.mjs',
+    'tools/contracts/src/package-loader.mjs', 'tools/contracts/src/preflight.mjs',
+    'tools/contracts/src/sbom.mjs',
+    'tools/contracts/package.json',
+    'tools/contracts/pnpm-lock.yaml', 'tools/contracts/pnpm-workspace.yaml',
+    'tools/contracts/Dockerfile.validator',
+    'tools/contracts/Dockerfile.generator-kiota', '.npmrc', 'tools/contracts/.pnpmfile.cjs',
+    'tools/contracts/node_modules/.bin/node', 'node_modules/.bin/node']) {
+    assert.throws(() => evaluatePublicPr({ ...input,
+      baseTree: tree(...baseTree.tree, entry(path, 'c'.repeat(40))),
+      headTree: tree(...headTree.tree, entry(path, 'f'.repeat(40))) }),
+    /Protected CI paths changed/, path);
+  }
+});
+
 test('stale revisions, wrong repository and truncated trees fail closed', () => {
   assert.throws(() => evaluatePublicPr({ ...input, baseSha: 'f'.repeat(40) }), /base revision changed/);
   assert.throws(() => evaluatePublicPr({ ...input,
