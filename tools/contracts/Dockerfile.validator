@@ -11,6 +11,12 @@ RUN corepack enable \
     && corepack prepare pnpm@11.25.0 --activate \
     && pnpm install --prod --frozen-lockfile --ignore-scripts \
     && node node_modules/@redocly/cli/bin/cli.js --version
+
+# @asyncapi/specs includes its own development bundler and nested uuid 8.x.
+# The validator uses the published specs, not this bundler. Fail if the pinned
+# package layout changes, then omit the unused tool from the runtime image.
+RUN test -f node_modules/.pnpm/@asyncapi+specs@5.1.0/node_modules/@asyncapi/specs/tools/bundler/node_modules/uuid/package.json \
+    && rm -rf node_modules/.pnpm/@asyncapi+specs@5.1.0/node_modules/@asyncapi/specs/tools/bundler
 COPY src ./src
 COPY Dockerfile.validator ./Dockerfile.validator
 RUN node --check src/container-schema-validator.mjs \
