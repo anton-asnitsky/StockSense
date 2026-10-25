@@ -117,15 +117,31 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      # The sbom gate. Deterministic by construction: the same lockfile always
-      # produces the same bytes and the same digest, which is what lets the
-      # digest be recorded as the gate's report rather than a timestamped blob.
+      - name: Verify current findings against protected main ledger
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
+          STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
+        run: node tools/contracts/scripts/image-evidence.mjs verify
+
+      - name: Retain ledger and scan binding
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: image-ledger-verification-${{ github.sha }}
+          path: tools/contracts/dist/image-evidence/ledger-verification.json
+          if-no-files-found: error
+          retention-days: 30
+
+      # The SBOM gate binds the locked toolchain to this run's exact image IDs,
+      # scans and protected-main disposition receipt. Identical inputs produce
+      # identical bytes; no timestamp is inserted into the document.
       - name: Build the CycloneDX SBOM
         id: sbom
         env:
           STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
           STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
           STOCKSENSE_IMAGE_EVIDENCE_DIR: tools/contracts/dist/image-evidence
+          STOCKSENSE_CANDIDATE_REVISION: ${{ github.sha }}
         run: |
           set -euo pipefail
           digest="$(pnpm --silent --dir tools/contracts build:sbom)"

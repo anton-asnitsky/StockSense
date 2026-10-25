@@ -4,13 +4,16 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import YAML from 'yaml';
 import { buildSbom, parsePackageKey } from '../../src/sbom.mjs';
 import { SCANNERS, readImageEvidence, sha256, verifyImageDispositions } from '../../src/image-evidence.mjs';
+import { sourceTreeDigest } from '../../src/source-digest.mjs';
 import { assertScanGates } from '../../src/evidence.mjs';
 
 const lockfile = fileURLToPath(new URL('../../pnpm-lock.yaml', import.meta.url));
 const subject = { name: 'stocksense-contracts', version: '1.0.0', generator: 'stocksense-contracts-sbom' };
 const expectCode = (promise, code) => assert.rejects(promise, error => error.code === code);
+const candidateRevision = 'c'.repeat(40);
 
 async function withLockfile(content, check) {
   const root = await mkdtemp(join(tmpdir(), 'stocksense-sbom-'));
@@ -63,6 +66,21 @@ test('the same lockfile always produces the same bytes', async () => {
   assert.ok(!JSON.stringify(first.document).includes('timestamp'));
 });
 
+test('release evidence verifies and retains the main ledger before building the SBOM', async () => {
+  const workflow = YAML.parse(await readFile(fileURLToPath(
+    new URL('../../../../.github/workflows/release-evidence.yml', import.meta.url)), 'utf8'));
+  const steps = workflow.jobs.evidence.steps;
+  const verify = steps.findIndex(step => step.run === 'node tools/contracts/scripts/image-evidence.mjs verify');
+  const retain = steps.findIndex(step => step.with?.path ===
+    'tools/contracts/dist/image-evidence/ledger-verification.json');
+  const sbom = steps.findIndex(step => step.name === 'Build the CycloneDX SBOM');
+  assert.ok(verify > steps.findIndex(step => step.run ===
+    'node tools/contracts/scripts/image-evidence.mjs build'));
+  assert.ok(retain > verify && sbom > retain);
+  assert.equal(steps[retain].with['if-no-files-found'], 'error');
+  assert.equal(steps[sbom].env.STOCKSENSE_CANDIDATE_REVISION, '${{ github.sha }}');
+});
+
 async function imageFixture(directory, name, imageId, findings = []) {
   const sbom = { bomFormat: 'CycloneDX', specVersion: '1.6',
     metadata: { properties: [{ name: 'stocksense:imageId', value: imageId }] },
@@ -78,14 +96,28 @@ async function imageFixture(directory, name, imageId, findings = []) {
   }) + '\n');
 }
 
+async function imageReceipt(directory, ids) {
+  const { records } = await readImageEvidence(directory, ids, { requireClean: false });
+  const receipt = { schema: 'stocksense-image-ledger-verification-v1', candidateRevision,
+    candidateGitTreeSha: 'd'.repeat(40), candidateTreeDigest: 'sha256:' + 'e'.repeat(64),
+    sourceDigest: await sourceTreeDigest(), mainSha: 'f'.repeat(40),
+    ledgerBlobSha: 'a'.repeat(40), images: records.map(record => ({
+      image: record.name, imageId: record.imageId, sbomDigest: record.sbomDigest,
+      scanDigest: record.scanDigest, findings: record.findings, disposed: record.findings
+    })) };
+  await writeFile(join(directory, 'ledger-verification.json'), JSON.stringify(receipt) + '\n');
+  return receipt;
+}
+
 test('built image packages enter the SBOM with exact image IDs and scanned inventories', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'stocksense-images-'));
   const image = 'sha256:' + 'a'.repeat(64);
   try {
     await imageFixture(directory, 'validator', image);
     await imageFixture(directory, 'kiota', image);
+    await imageReceipt(directory, { validator: image, kiota: image });
     const { document } = await buildSbom(lockfile, { ...subject, validatorImageDigest: image,
-      kiotaImageDigest: image, imageEvidenceDirectory: directory });
+      kiotaImageDigest: image, imageEvidenceDirectory: directory, candidateRevision });
     for (const name of ['validator-image', 'kiota-image']) {
       assert.equal(document.components.find(item => item.name === name).hashes[0].content, image.slice(7));
     }
@@ -97,6 +129,48 @@ test('built image packages enter the SBOM with exact image IDs and scanned inven
     assert.ok(document.components.some(item => item.name === 'syft-image-scanner'));
   } finally { await rm(directory, { recursive: true, force: true }); }
   await expectCode(buildSbom(lockfile, { ...subject, validatorImageDigest: 'latest' }), 'SBOM_TOOL_PIN');
+});
+
+test('SBOM accepts a disposed finding only with the matching retained ledger receipt', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'stocksense-sbom-ledger-'));
+  const image = 'sha256:' + 'a'.repeat(64);
+  const ids = { validator: image, kiota: image };
+  const input = { ...subject, validatorImageDigest: image, kiotaImageDigest: image,
+    imageEvidenceDirectory: directory, candidateRevision };
+  const finding = { id: 'CVE-2026-12345', severity: 'Medium', package: 'yaml',
+    version: '1.0.0', type: 'npm', purl: 'pkg:npm/yaml@1.0.0',
+    fixState: 'not-fixed', fixVersions: [] };
+  try {
+    await imageFixture(directory, 'validator', image, [finding]);
+    await imageFixture(directory, 'kiota', image);
+    await expectCode(buildSbom(lockfile, input), 'IMAGE_LEDGER');
+    const receipt = await imageReceipt(directory, ids);
+    const { document } = await buildSbom(lockfile, input);
+    assert.ok(document.metadata.properties.some(item =>
+      item.name === 'stocksense:validator:imageScanDigest' && item.value === receipt.images[0].scanDigest));
+    assert.ok(document.metadata.properties.some(item =>
+      item.name === 'stocksense:imageLedgerBlobSha' && item.value === receipt.ledgerBlobSha));
+    const receiptPath = join(directory, 'ledger-verification.json');
+    const rejectReceipt = async changed => {
+      await writeFile(receiptPath, JSON.stringify(changed) + '\n');
+      await expectCode(buildSbom(lockfile, input), 'IMAGE_LEDGER');
+    };
+    await rejectReceipt({ ...receipt, candidateRevision: 'b'.repeat(40) });
+    await rejectReceipt({ ...receipt, sourceDigest: 'sha256:' + 'b'.repeat(64) });
+    await rejectReceipt({ ...receipt, images: [receipt.images[1], receipt.images[0]] });
+    await rejectReceipt({ ...receipt, images: receipt.images.map((row, index) =>
+      index ? row : { ...row, disposed: 0 }) });
+    await rejectReceipt({ ...receipt, images: receipt.images.map((row, index) =>
+      index ? row : { ...row, scanDigest: 'sha256:' + 'b'.repeat(64) }) });
+    await rejectReceipt({ ...receipt, images: receipt.images.map((row, index) =>
+      index ? row : { ...row, sbomDigest: 'sha256:' + 'b'.repeat(64) }) });
+    await writeFile(receiptPath, JSON.stringify(receipt) + '\n');
+    await imageFixture(directory, 'validator', image, []);
+    await expectCode(buildSbom(lockfile, input), 'IMAGE_LEDGER');
+    await imageFixture(directory, 'validator', image, [finding]);
+    await expectCode(buildSbom(lockfile, { ...input, validatorImageDigest: 'sha256:' + 'b'.repeat(64) }),
+      'IMAGE_STALE');
+  } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
 test('missing, stale, malformed and vulnerable image evidence fails closed', async () => {

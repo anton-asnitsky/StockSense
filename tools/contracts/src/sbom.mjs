@@ -1,10 +1,11 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
 import { ContractError, canonicalJson } from './package-loader.mjs';
-import { readImageEvidence, SCANNERS } from './image-evidence.mjs';
+import { IMAGE_NAMES, readImageEvidence, SCANNERS } from './image-evidence.mjs';
+import { sourceTreeDigest } from './source-digest.mjs';
 
 // A CycloneDX 1.6 SBOM built from the pnpm lockfile and pinned tool recipes.
 //
@@ -22,6 +23,47 @@ import { readImageEvidence, SCANNERS } from './image-evidence.mjs';
 const fail = (code, rule, message) => { throw new ContractError(code, rule, message); };
 const NAME_AT_VERSION = /^(?<name>(?:@[^/@]+\/)?[^@/][^@]*)@(?<version>[0-9]+\.[0-9]+\.[0-9]+[^@]*)$/;
 const INTEGRITY = /^sha(256|512)-([A-Za-z0-9+/]+={0,2})$/;
+const DIGEST = /^sha256:[0-9a-f]{64}$/;
+const COMMIT = /^[0-9a-f]{40}$/;
+const exactFields = (value, fields) => value && typeof value === 'object' &&
+  !Array.isArray(value) && Object.keys(value).length === fields.length &&
+  fields.every(field => Object.hasOwn(value, field));
+
+/** The receipt is produced by the protected-main verifier in this same CI job. */
+async function verifyImageLedgerReceipt(directory, candidateRevision, records) {
+  if (!COMMIT.test(candidateRevision ?? '')) {
+    fail('IMAGE_LEDGER', 'BR6.5', 'Candidate revision is required for image evidence');
+  }
+  let receipt;
+  try {
+    receipt = JSON.parse(await readFile(join(directory, 'ledger-verification.json'), 'utf8'));
+  } catch {
+    fail('IMAGE_LEDGER', 'BR6.5', 'Successful image ledger verification is missing or malformed');
+  }
+  if (!exactFields(receipt, ['schema', 'candidateRevision', 'candidateGitTreeSha',
+    'candidateTreeDigest', 'sourceDigest', 'mainSha', 'ledgerBlobSha', 'images']) ||
+    receipt.schema !== 'stocksense-image-ledger-verification-v1' ||
+    receipt.candidateRevision !== candidateRevision ||
+    !COMMIT.test(receipt.candidateGitTreeSha) || !DIGEST.test(receipt.candidateTreeDigest) ||
+    !DIGEST.test(receipt.sourceDigest) || !COMMIT.test(receipt.mainSha) ||
+    !COMMIT.test(receipt.ledgerBlobSha) ||
+    receipt.sourceDigest !== await sourceTreeDigest() ||
+    !Array.isArray(receipt.images) || receipt.images.length !== IMAGE_NAMES.length) {
+    fail('IMAGE_LEDGER', 'BR6.5', 'Image ledger receipt is stale or incomplete');
+  }
+  for (const [index, name] of IMAGE_NAMES.entries()) {
+    const row = receipt.images[index];
+    const record = records[index];
+    if (!exactFields(row, ['image', 'imageId', 'sbomDigest', 'scanDigest', 'findings', 'disposed']) ||
+      row.image !== name || record.name !== name || row.imageId !== record.imageId ||
+      row.sbomDigest !== record.sbomDigest || row.scanDigest !== record.scanDigest ||
+      !Number.isSafeInteger(row.findings) || row.findings < 0 ||
+      row.findings !== record.findings || row.disposed !== row.findings) {
+      fail('IMAGE_LEDGER', 'BR6.5', `${name} image evidence lacks a matching successful ledger verification`);
+    }
+  }
+  return receipt;
+}
 
 /** CycloneDX wants hex; npm integrity is base64. */
 function hashOf(integrity) {
@@ -46,7 +88,7 @@ const purl = (name, version) =>
 
 /**
  * @param {string} lockfilePath
- * @param {{ name: string, version: string, generator: string, validatorImageDigest?: string, kiotaImageDigest?: string, imageEvidenceDirectory?: string }} subject
+ * @param {{ name: string, version: string, generator: string, validatorImageDigest?: string, kiotaImageDigest?: string, imageEvidenceDirectory?: string, candidateRevision?: string }} subject
  * @returns {Promise<{ document: object, bytes: Buffer, digest: string, components: number }>}
  */
 export async function buildSbom(lockfilePath, subject) {
@@ -66,6 +108,7 @@ export async function buildSbom(lockfilePath, subject) {
   /** @type {any[]} */
   const components = [];
   let imageRecords = [];
+  let imageLedgerReceipt;
   let withoutHash = 0;
   for (const [key, value] of Object.entries(lock.packages).sort(([a], [b]) => (a < b ? -1 : 1))) {
     const { name, version } = parsePackageKey(key);
@@ -124,7 +167,9 @@ export async function buildSbom(lockfilePath, subject) {
     if (!subject.imageEvidenceDirectory) fail('IMAGE_MISSING', 'Built image inventory and scan directory is required');
     const images = await readImageEvidence(subject.imageEvidenceDirectory, {
       validator: subject.validatorImageDigest, kiota: subject.kiotaImageDigest
-    });
+    }, { requireClean: false });
+    imageLedgerReceipt = await verifyImageLedgerReceipt(
+      subject.imageEvidenceDirectory, subject.candidateRevision, images.records);
     imageRecords = images.records;
     components.push(...images.components);
     add('container', 'syft-image-scanner', 'v1.54.1', SCANNERS.syft.split('@sha256:')[1], 'image-evidence.mjs');
@@ -160,6 +205,12 @@ export async function buildSbom(lockfilePath, subject) {
         { name: 'stocksense:lockfileVersion', value: String(lock.lockfileVersion) },
         { name: 'stocksense:pnpmComponentsWithoutHash', value: String(withoutHash) },
         { name: 'stocksense:componentsWithoutHash', value: String(components.filter(item => !item.hashes?.length).length) },
+        ...(imageLedgerReceipt ? [
+          { name: 'stocksense:imageLedgerMainSha', value: imageLedgerReceipt.mainSha },
+          { name: 'stocksense:imageLedgerBlobSha', value: imageLedgerReceipt.ledgerBlobSha },
+          { name: 'stocksense:imageLedgerCandidateRevision', value: imageLedgerReceipt.candidateRevision },
+          { name: 'stocksense:imageLedgerCandidateTreeDigest', value: imageLedgerReceipt.candidateTreeDigest }
+        ] : []),
         ...imageRecords.flatMap(record => [
           { name: `stocksense:${record.name}:imageId`, value: record.imageId },
           { name: `stocksense:${record.name}:imageSbomDigest`, value: record.sbomDigest },
