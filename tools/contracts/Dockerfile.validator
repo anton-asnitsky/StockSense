@@ -25,13 +25,15 @@ RUN node --check src/container-schema-validator.mjs \
     && node --check src/container-tool-launcher.mjs \
     && node src/source-digest.mjs > source-digest.txt
 
-# Official linux/amd64 manifest, Node 24.22.1. No shell or cat is available.
+# Official linux/amd64 manifest. Its Node binary is replaced by the reviewed
+# 24.19.0 binary from the immutable build image; no shell or cat is available.
 FROM --platform=linux/amd64 gcr.io/distroless/nodejs24-debian13:nonroot@sha256:4d0e659ef1f628c75d9940766cb444fa9605cc190b13676b9e62e1fa567c5cf4
 ENV NODE_ENV=production \
     NO_UPDATE_NOTIFIER=1 \
     SUPPRESS_NO_CONFIG_WARNING=1 \
     HOME=/tmp
 WORKDIR /opt/contracts
+COPY --from=dependencies /usr/local/bin/node /nodejs/bin/node
 COPY --from=dependencies /opt/contracts/package.json /opt/contracts/pnpm-lock.yaml ./
 COPY --from=dependencies /opt/contracts/node_modules ./node_modules
 COPY --from=dependencies /opt/contracts/src ./src
