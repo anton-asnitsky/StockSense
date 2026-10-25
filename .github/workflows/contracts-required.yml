@@ -26,6 +26,66 @@ permissions:
   contents: read
 
 jobs:
+  # Disposable combined-image evidence only. This independent read-only job exercises
+  # the candidate image even while the required image-disposition gate stays red.
+  # Remove this job before adopting the image into the story branch.
+  image-functional-probe:
+    if: github.event_name == 'pull_request' && github.head_ref == 'chore/us8-7-combined-image-probe'
+    name: U1 image functional probe
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the pull-request merge revision
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Pin pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.25.0
+      - name: Pin Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.19.0
+          cache: pnpm
+          cache-dependency-path: tools/contracts/pnpm-lock.yaml
+      - name: Install from the frozen lockfile
+        run: pnpm --dir tools/contracts install --frozen-lockfile
+      - name: Set up the pinned differ
+        run: pnpm --dir tools/contracts setup:oasdiff
+      - name: Build the candidate validator image
+        id: standards-image
+        working-directory: tools/contracts
+        run: |
+          id="$(node scripts/build-standards-image.mjs | grep -oE '^sha256:[0-9a-f]{64}$')"
+          test -n "$id"
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+      - name: Build the pinned Kiota image
+        id: kiota-image
+        working-directory: tools/contracts
+        run: |
+          id="$(node scripts/build-kiota-image.mjs | grep -oE '^sha256:[0-9a-f]{64}$')"
+          test -n "$id"
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+      - name: Run bounded integration tests
+        run: pnpm --dir tools/contracts test:integration
+        env:
+          STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
+          STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
+      - name: Enforce the 80% line coverage floor
+        working-directory: tools/contracts
+        run: >
+          node --experimental-test-coverage --test
+          --test-concurrency=1
+          --test-coverage-include='src/**/*.mjs'
+          --test-coverage-lines=80
+          test/unit/*.test.mjs test/integration/*.test.mjs
+        env:
+          STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
+          STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
   contracts:
     name: U1 contracts
     runs-on: ubuntu-24.04
