@@ -5,13 +5,21 @@ identity-audit envelope schemas. These are canonical source documents for the
 contract package. Their `additionalProperties: false` boundaries keep tenant
 and global messages separate.
 
-`source/` also contains draft canonical documents for every required C01-C27
+`source/` contains 40 canonical documents covering every required C01-C27
 artifact kind. The C08 inventory port uses a closed in-process dialect; C16 and
 C20 identity profiles and C22/C23 messaging profiles use JSON Schema 2020-12.
 The C23 AsyncAPI source names distinct tenant and global identity routes.
+Retail Data's import AsyncAPI defines requested, completed, and failed job
+messages; its separate audit AsyncAPI defines the authoritative import event.
 `profiles/messaging-platform/` holds governed C22/C23 profile **candidates**
-that validate against those schemas. These drafts are not yet bound into a
-complete, revision-stamped package with fixtures and release evidence.
+that validate against those schemas.
+
+`node tools/contracts/scripts/build-full-package.mjs` assembles the C01-C27
+candidate from the canonical sources and checks its revision-bound example
+fixtures. The current catalogue binds 38 example targets and records 10
+explicit exemptions. The result remains a candidate with `releaseReady: false`:
+consumer-output provenance, current security disposition, provider behavior,
+and the full C01 release gate require separate evidence.
 
 `catalogue/v1/boundary-sources.json` is the checked C01-C27 source-to-boundary
 map. After committing canonical source edits, run
