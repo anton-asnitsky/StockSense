@@ -15,7 +15,7 @@ const SHA = /^sha256:[0-9a-f]{64}$/;
 const CONTAINER_ID = /^[0-9a-f]{64}$/;
 
 function run(args, label, timeout = 120_000) {
-  const result = spawnSync(docker, args, { encoding: 'utf8', shell: false, windowsHide: true,
+  const result = spawnSync(docker, args, { cwd: contractsRoot, encoding: 'utf8', shell: false, windowsHide: true,
     timeout, maxBuffer: 16 * 1_048_576, stdio: ['ignore', 'pipe', 'inherit'] });
   if (result.error || result.status !== 0) throw new Error(`${label} failed`);
   return String(result.stdout ?? '').trim();
@@ -24,7 +24,7 @@ function run(args, label, timeout = 120_000) {
 try {
   const expected = Buffer.from(await sourceTreeDigest() + '\n');
   run(['build', '--platform=linux/amd64', '--file', 'Dockerfile.validator', '--tag', tag,
-    contractsRoot], 'docker build', 12 * 60_000);
+    '.'], 'docker build', 12 * 60_000);
   const id = run(['image', 'inspect', tag, '--format', '{{.Id}}'], 'docker image inspect');
   if (!SHA.test(id)) throw new Error('Unexpected image ID');
   if (run(['image', 'inspect', id, '--format', '{{.Architecture}}'], 'image architecture') !== 'amd64') {
