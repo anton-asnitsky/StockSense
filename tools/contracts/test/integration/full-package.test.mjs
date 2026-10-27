@@ -433,11 +433,11 @@ test('named OpenAPI examples fail if a canonical payload or approved finding cha
   const entry = { artifactKind: 'openapi', document: documentPath, revisionId: 'immutable-test-revision',
     boundaryIds: ['C07'] };
   assert.equal(namedOpenApiFixtures(entry, source, new Map()).length, 8);
-  const changed = structuredClone(source);
+  const changed = JSON.parse(JSON.stringify(source));
   changed['x-contract-fixtures'][1].value.forecastRunId = '00000000-0000-4000-8000-000000000103';
   assert.throws(() => namedOpenApiFixtures(entry, changed, new Map()), error =>
     error.code === 'FIXTURE_ORACLE_MISMATCH' && error.ruleId === 'NFR8.13');
-  const wrongFailure = structuredClone(source);
+  const wrongFailure = JSON.parse(JSON.stringify(source));
   wrongFailure['x-contract-fixtures'][1].value.initialForecastAttemptId = 17;
   assert.throws(() => namedOpenApiFixtures(entry, wrongFailure, new Map()), error =>
     error.code === 'FIXTURE_ORACLE_MISMATCH' && error.ruleId === 'NFR8.13');
