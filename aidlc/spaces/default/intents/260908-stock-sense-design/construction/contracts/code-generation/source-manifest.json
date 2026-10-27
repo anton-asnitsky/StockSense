@@ -509,6 +509,42 @@
     },
     {
       "path": "tools/contracts/tsconfig.json"
+    },
+    {
+      "path": ".github/workflows/release-evidence.yml"
+    },
+    {
+      "path": "contracts/source/retail-data/v1/inventory-import-audit.asyncapi.yaml"
+    },
+    {
+      "path": "contracts/source/retail-data/v1/inventory-import.asyncapi.yaml"
+    },
+    {
+      "path": "security/image-exceptions.json"
+    },
+    {
+      "path": "tools/contracts/scripts/image-evidence.mjs"
+    },
+    {
+      "path": "tools/contracts/scripts/security-reports.mjs"
+    },
+    {
+      "path": "tools/contracts/src/ci-policy.mjs"
+    },
+    {
+      "path": "tools/contracts/src/container-tool-launcher.mjs"
+    },
+    {
+      "path": "tools/contracts/src/image-evidence.mjs"
+    },
+    {
+      "path": "tools/contracts/src/image-ledger.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/ci-policy.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/image-ledger.test.mjs"
     }
   ]
 }

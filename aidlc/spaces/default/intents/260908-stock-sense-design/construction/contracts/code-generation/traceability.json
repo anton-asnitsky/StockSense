@@ -1,7 +1,7 @@
 {
   "stage": "code-generation",
   "unit": "contracts",
-  "decision_basis": "U1 source matches protected main commit 581b70a1020e5ae36d631625a41392fddf30dbfb. Evidence: 2026-10-16 U1 bootstrap and required-check verification records, hosted runs 38876246986 and 38876247058, clean candidate-bundle attestation verification, protected-base PR probes #19/#20 and non-draft blocked PR #21, and source-bound tests. The owner's 2026-10-09 audit decision resolves OQ8 public-PR isolation for U1 only; state/backend and deployment-runner decisions remain U2/U13 work. OK means the complete named criterion is demonstrated and targets an implementation or test file; a validated C01-C27 candidate is not a C01 release or provider/runtime proof. GAP retains incomplete release, runtime, compatibility and downstream evidence obligations. No U1 acceptance or formal review outcome is inferred.",
+  "decision_basis": "U1's 181 declared source paths match merged Bolt 9885068ad4098c1a7a1999adb4dda86552383331, except security/image-exceptions.json, which matches protected main 8a415cfd6dfc124edbd7b84c9b7e22553e3064a2. The AI-DLC checkout is an uncommitted review mirror; committed-Bolt lint, type-check and unit tests passed locally, and PR #48's exact merged tree passed hosted U1 and Vulnerability checks. See verification/u1-source-snapshot-2026-10-27.md. The owner's 2026-10-09 audit decision resolves OQ8 public-PR isolation for U1 only; U2 protected-base policy and other downstream state/backend and deployment-runner obligations remain separate. OK means the complete named criterion is demonstrated and targets an implementation or test file; a validated C01-C27 candidate is not a C01 release or provider/runtime proof. GAP retains incomplete release, runtime, compatibility and downstream evidence obligations. R-14 through R-16, source-bound independent review and U1 acceptance remain open.",
   "upstream_ids": [
     "AC8.2.1",
     "AC8.2.2",
@@ -107,8 +107,8 @@
     },
     {
       "id": "AC8.2.2",
-      "status": "GAP",
-      "target": "The C01-C27 candidate validates all 12 declared AsyncAPI channel messages with revision-bound positive/negative fixtures (tools/contracts/test/integration/full-package.test.mjs), but the specifically required inventory-import requested/completed/failed representative messages are absent from canonical sources and tests."
+      "status": "OK",
+      "target": "contracts/source/retail-data/v1/inventory-import.asyncapi.yaml; contracts/source/retail-data/v1/inventory-import-audit.asyncapi.yaml; tools/contracts/test/integration/full-package.test.mjs (16 revision-bound AsyncAPI messages, including requested/completed/failed import and authoritative audit event, with exact positive/negative findings)"
     },
     {
       "id": "AC8.2.3",
@@ -118,7 +118,7 @@
     {
       "id": "AC8.2.4",
       "status": "GAP",
-      "target": "A complete C01-C27 candidate with 38 canonical sources, sidecars, 34 bound elements and 10 inventoried exemptions validates (tools/contracts/test/integration/full-package.test.mjs; hosted run 38876247058). Semantic security/idempotency cases and immutable-baseline compatibility across changed non-OpenAPI documents remain incomplete; candidate coverage is not an approved release catalogue."
+      "target": "The merged C01-C27 candidate has 40 canonical sources, 38 bound elements and 10 inventoried exemptions (tools/contracts/test/integration/full-package.test.mjs). Semantic security/idempotency cases and complete changed-catalogue baseline compatibility remain incomplete; candidate coverage is not an approved release catalogue."
     },
     {
       "id": "AC8.5.1",
@@ -193,7 +193,7 @@
     {
       "id": "AC10.2.4",
       "status": "GAP",
-      "target": "The 38-source C01-C27 candidate validates, but the machine-checkable all-delivered-story matrix and per-boundary authorization/audit/retry/runtime evidence required for final coverage are absent."
+      "target": "The 40-source C01-C27 candidate validates, but the machine-checkable all-delivered-story matrix and per-boundary authorization/audit/retry/runtime evidence required for final coverage are absent."
     },
     {
       "id": "AC10.2.5",
@@ -247,8 +247,8 @@
     },
     {
       "id": "BR2.2",
-      "status": "GAP",
-      "target": "The canonical AsyncAPI catalogue has 12 revision-bound message fixtures, but it does not declare the required inventory-import requested/completed/failed trio or an import-specific authoritative audit event (contracts/source/; tools/contracts/test/integration/full-package.test.mjs)."
+      "status": "OK",
+      "target": "contracts/source/retail-data/v1/inventory-import.asyncapi.yaml; contracts/source/retail-data/v1/inventory-import-audit.asyncapi.yaml; tools/contracts/test/integration/full-package.test.mjs; tools/contracts/src/policy.mjs (16 revision-bound message fixtures including the required import trio and distinct authoritative audit event)"
     },
     {
       "id": "BR2.3",
@@ -322,8 +322,8 @@
     },
     {
       "id": "BR5.1",
-      "status": "GAP",
-      "target": "The full candidate binds 12 AsyncAPI channel messages to exact fixtures and C15 envelope schemas, but the specified inventory-import job/outcome/audit distinction and full message-identity policy are not yet demonstrated by a canonical import flow."
+      "status": "OK",
+      "target": "contracts/source/retail-data/v1/inventory-import.asyncapi.yaml; contracts/source/retail-data/v1/inventory-import-audit.asyncapi.yaml; tools/contracts/test/integration/full-package.test.mjs; tools/contracts/src/policy.mjs (distinct requested job, terminal outcome events and authoritative audit message identities with C15 envelope validation)"
     },
     {
       "id": "BR5.2",
@@ -428,7 +428,7 @@
     {
       "id": "NFR7.2",
       "status": "GAP",
-      "target": "Six AsyncAPI 3.0.0 documents and 12 exact message fixture pairs validate in the C01-C27 candidate; operation/reliability policy and immutable-baseline diff coverage for changed async documents remain incomplete."
+      "target": "The C01-C27 candidate validates 16 revision-bound AsyncAPI message fixture pairs, including inventory import. Operation/reliability policy and complete changed-document baseline outcomes remain open."
     },
     {
       "id": "NFR7.3",
@@ -438,7 +438,7 @@
     {
       "id": "NFR7.4",
       "status": "GAP",
-      "target": "C22/C23 candidate reliability policies and fixtures exist; requested/terminal/audit inventory-import examples plus duplicate, exhausted-retry and replay runtime scenarios remain unproven."
+      "target": "C22/C23 candidate reliability policies and 16 revision-bound message fixtures now include requested, terminal and authoritative audit inventory-import examples. Duplicate, exhausted-retry and replay runtime scenarios remain unproven."
     },
     {
       "id": "NFR8.4",
@@ -463,7 +463,7 @@
     {
       "id": "NFR8.8",
       "status": "GAP",
-      "target": "Pinned oasdiff assesses immutable catalogue draft 20dc934 and rejects unsupported changed non-OpenAPI documents (tools/contracts/test/integration/baseline-compatibility.test.mjs); actual story/Bolt/release integration baselines and complete compatible outcomes are not verified."
+      "target": "tools/contracts/src/baseline-compatibility.mjs and tools/contracts/test/integration/baseline-compatibility.test.mjs now enumerate immutable baseline identities and fail closed on removal or an unapproved rename; pinned oasdiff covers changed OpenAPI and exact predecessor/overlap approval covers changed AsyncAPI and JSON Schema. Full story/Bolt/release integration baseline outcomes remain unverified."
     },
     {
       "id": "NFR8.9",
@@ -508,7 +508,7 @@
     {
       "id": "NFR8.17",
       "status": "GAP",
-      "target": "All 17 OpenAPI 3.1.2 documents pass pinned validation in the full candidate; seven documents have only operation-profile exemptions and changed-catalogue compatibility is not completely assessed. The required per-document example and compatibility checks are incomplete."
+      "target": "All 17 OpenAPI 3.1.2 documents pass pinned validation, and 17 named examples across heavy-work, forecasting and recovery are revision-bound with exact expected outcomes (tools/contracts/test/integration/full-package.test.mjs). Seven documents retain declared operation-profile exemptions; full changed-catalogue compatibility and release integration checks remain open."
     },
     {
       "id": "NFR10.1",
