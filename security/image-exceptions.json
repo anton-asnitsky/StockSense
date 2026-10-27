@@ -15,7 +15,7 @@
         "owner": "StockSense repository owner",
         "rationale": "Kiota 1.35.0 bundles affected MessagePack. The pinned generation path invokes only kiota generate; no route to untrusted MessagePack object deserialization was identified. This is a time-limited reachability assessment, not proof that the library is safe.",
         "compensatingControl": "Verify exact Kiota package SHA-256 5e75f6adf161717be8d9f39eb596f93d52535e7b8cbcc00cffdcef3d0d3c3486; fixed generate arguments; immutable image and source-bound scan; network-disabled, read-only, non-root container; 2 GiB memory and 120-second limits. Reassess on upstream fix or invocation change.",
-        "approvalReference": "AI-DLC audit aidlc/spaces/default/intents/260908-stock-sense-design/audit/anton-pc-e91d12f789b9.md QUESTION_ANSWERED 2026-10-27T15:49:13Z; exact proposal pr48-image-exception-questions.md",
+        "approvalReference": "AI-DLC QUESTION_ANSWERED 2026-10-27T16:06:09Z, after DECISION_RECORDED and HUMAN_TURN; immutable evidence https://github.com/anton-asnitsky/StockSense/blob/095bde6da61714289f8fd2e16a7305681927951b/aidlc/spaces/default/intents/260908-stock-sense-design/construction/contracts/code-generation/pr48-image-exception-reconfirmation-questions.md",
         "createdAt": "2026-10-27T15:49:37Z",
         "expiresAt": "2026-11-25T00:00:00Z"
       }
