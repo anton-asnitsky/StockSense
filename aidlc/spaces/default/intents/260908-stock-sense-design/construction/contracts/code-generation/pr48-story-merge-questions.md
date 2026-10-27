@@ -31,4 +31,4 @@ and remove the merged remote story branch? This does not merge the Bolt to
 - Approve PR #48 story merge into the U1 Bolt only
 - Request changes
 
-[Answer]:
+[Answer]: I authorize merging PR #48 into bolt/u1-candidate-ready only if its head is a2fd7bff83a713fe83fc015cb8158f25eaddfeb2 and the Bolt base is 8348810570612624149ff3fb03ac100611c46214. Record my answer through the pending pr48-story-merge-questions.md AI-DLC gate, verify the audit order and passing checks, mark the PR ready, merge while preserving its story commits, verify the Bolt, and remove the merged story branch. Do not merge the Bolt to main, accept U1, or release C01. Preserve unrelated work.
