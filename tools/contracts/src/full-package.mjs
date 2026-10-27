@@ -4,9 +4,9 @@ import YAML from 'yaml';
 import { ALL_BOUNDARIES, BOUNDARY_SIDECARS, CANONICAL_KINDS, FIXED_PATHS,
   ContractError, deriveIdentity, digest } from './package-loader.mjs';
 import { buildSourceInventory } from './catalogue.mjs';
-import { DIALECTS, createSchemaValidator } from './validators.mjs';
+import { DIALECTS, assertFixtureOracle, createSchemaValidator } from './validators.mjs';
 import { asyncApiFixtureSchema, asyncApiMessageElements, mapSchemaFindings,
-  openApiFixtureSchema, openApiInlineResponseElements } from './policy.mjs';
+  openApiFixtureSchema, openApiInlineResponseElements, openApiNamedExamples } from './policy.mjs';
 import { negativeCandidates, omitRequired, propertyPointer, synthesize } from './instance-synthesis.mjs';
 
 const TENANT_ENVELOPE_ID = 'https://contracts.stocksense.local/common/v1/message-envelope.schema.json';
@@ -207,6 +207,33 @@ export function fixturePair(entry, target, registry) {
   return { problem: null, fixtures };
 }
 
+/** Bind every named OpenAPI example to its canonical bytes and exact schema oracle. */
+export function namedOpenApiFixtures(entry, source, registry) {
+  const fixtures = [];
+  for (const example of openApiNamedExamples(source, entry.document)) {
+    const schema = openApiFixtureSchema(source, example.element);
+    const validate = createSchemaValidator(schema, registry, { openApiComponents: true });
+    const valid = validate(example.payload);
+    const findings = valid ? [] : mapSchemaFindings(validate.errors ?? [], {
+      revisionId: entry.revisionId, contractElementId: example.element
+    });
+    const fixture = {
+      fixtureId: `openapi-example-${digest(Buffer.from(`${entry.document}:${example.id}`)).slice(7, 31)}`,
+      canonicalExampleId: example.id,
+      boundaryIds: [...entry.boundaryIds],
+      contractElementId: example.element,
+      documentRevisionId: entry.revisionId,
+      scenarioType: example.expectedValid ? 'valid' : 'invalid',
+      expectedOutcome: example.expectedValid ? 'pass' : 'fail',
+      ...(example.expectedFailures === undefined ? {} : { expectedFailures: example.expectedFailures }),
+      payload: example.payload
+    };
+    assertFixtureOracle(fixture, findings, [entry]);
+    fixtures.push(fixture);
+  }
+  return fixtures;
+}
+
 /**
  * Assemble the full candidate package under `outRoot`.
  * @param {string} repoRoot
@@ -268,6 +295,13 @@ export async function buildFullPackage(repoRoot, outRoot, { allowIncomplete = fa
       }
       fixtures.push(...pair.fixtures);
       bound += 1;
+    }
+  }
+
+  for (const entry of entries.filter(item => item.artifactKind === 'openapi')) {
+    try { fixtures.push(...namedOpenApiFixtures(entry, sources.get(entry.document), registry)); }
+    catch (error) {
+      problems.push({ document: entry.document, reason: `${error.code ?? error.name}: ${error.message}` });
     }
   }
 

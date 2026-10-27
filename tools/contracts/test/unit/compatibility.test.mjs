@@ -43,6 +43,48 @@ test('BR4.2: a missing predecessor needs an explicit first-release reason', () =
   assert.equal(bindings[0].firstReleaseReason, 'New C10 surface in this Bolt');
 });
 
+test('BR4.1: a removed baseline identity cannot disappear behind a first-release candidate', () => {
+  const previous = entry('old', rev('1'), 'schema', 'old.schema.json');
+  const replacement = entry('new', rev('2'), 'schema', 'new.schema.json');
+  assert.throws(() => bindPredecessors([replacement], [previous],
+    { firstRelease: { new: 'Absent at baseline' } }), error =>
+    error.code === 'PREDECESSOR_UNACCOUNTED' && error.ruleId === 'BR4.1');
+  assert.throws(() => bindPredecessors([], [previous]), error =>
+    error.code === 'PREDECESSOR_UNACCOUNTED' && error.ruleId === 'BR4.1');
+});
+
+test('BR4.1: a renamed identity needs an exact, same-kind approved predecessor mapping', () => {
+  const previous = entry('old', rev('1'), 'asyncapi', 'old.asyncapi.yaml');
+  const replacement = entry('new', rev('2'), 'asyncapi', 'new.asyncapi.yaml');
+  const approval = { predecessorLogicalId: 'old', predecessorRevisionId: rev('1'),
+    approvedBy: 'synthetic-owner', overlapUntil: '2099-12-31' };
+  for (const invalid of [
+    { ...approval, predecessorRevisionId: rev('9') },
+    { ...approval, overlapUntil: 'not-a-date' },
+    { ...approval, approvedBy: '' }
+  ]) {
+    assert.throws(() => bindPredecessors([replacement], [previous],
+      { approvals: { new: invalid } }), error =>
+      error.code === 'PREDECESSOR_MAPPING_UNAPPROVED' && error.ruleId === 'BR4.1');
+  }
+  const [binding] = bindPredecessors([replacement], [previous], { approvals: { new: approval } });
+  assert.equal(binding.predecessorLogicalId, 'old');
+  assert.equal(binding.predecessorDocument, 'old.asyncapi.yaml');
+  assert.equal(binding.predecessorRevisionId, rev('1'));
+  assert.equal(binding.unchanged, false);
+  expectCode(() => bindPredecessors([entry('new', rev('2'), 'schema', 'new.schema.json')],
+    [previous], { approvals: { new: approval } }), 'PREDECESSOR_KIND');
+});
+
+test('BR4.1: unchanged predecessors and genuinely new identities remain safe', () => {
+  const unchanged = entry('existing', rev('1'), 'openapi', 'existing.openapi.yaml');
+  const added = entry('new', rev('2'), 'schema', 'new.schema.json');
+  const bindings = bindPredecessors([unchanged, added], [unchanged],
+    { firstRelease: { new: 'New schema at immutable baseline' } });
+  assert.deepEqual(bindings.map(item => [item.logicalId, item.unchanged, item.firstReleaseReason]),
+    [['existing', true, undefined], ['new', false, 'New schema at immutable baseline']]);
+});
+
 test('BR4.2: a predecessor of a different canonical kind is rejected', () => {
   expectCode(() => bindPredecessors([entry('L1', rev('1'), 'openapi')], [entry('L1', rev('9'), 'asyncapi')]), 'PREDECESSOR_KIND');
 });

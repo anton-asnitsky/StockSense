@@ -1,11 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assessCatalogueAgainstBaseline } from '../../src/baseline-compatibility.mjs';
+import { deriveIdentity, digest } from '../../src/package-loader.mjs';
 
 // The pinned differ had only ever been exercised on two hand-built fixtures,
 // one identical and one breaking. That proves the differ runs; it is not
@@ -24,6 +25,22 @@ const CURRENT_BOLT_BASE = 'e7079f1bf96a541c1b3e47ba72de905ba5547c88';
 // An earlier commit, before most canonical sources existed.
 const BEFORE_CATALOGUE = '3de357c7502f7ffffb653c7ff353a4930a7f96cd';
 const OUTCOMES = ['unchanged', 'first-release', 'compatible', 'breaking-approved', 'change-approved'];
+
+async function catalogueFixture() {
+  const root = await mkdtemp(join(tmpdir(), 'stocksense-baseline-coverage-'));
+  await cp(join(repoRoot, 'contracts', 'source'), join(root, 'contracts', 'source'), { recursive: true });
+  await mkdir(join(root, 'contracts', 'catalogue', 'v1'), { recursive: true });
+  const mapPath = join(root, 'contracts', 'catalogue', 'v1', 'boundary-sources.json');
+  await cp(join(repoRoot, 'contracts', 'catalogue', 'v1', 'boundary-sources.json'), mapPath);
+  const git = (...args) => execFileSync('git', ['-C', root,
+    '-c', 'core.autocrlf=false', '-c', 'commit.gpgsign=false',
+    '-c', 'user.name=StockSense Fixture', '-c', 'user.email=fixture@example.invalid',
+    ...args], { encoding: 'utf8' }).trim();
+  git('init', '--quiet');
+  git('add', 'contracts');
+  git('commit', '--quiet', '-m', 'Synthetic baseline');
+  return { root, mapPath, baseline: git('rev-parse', 'HEAD'), git };
+}
 
 test('the whole catalogue is assessed against an immutable baseline commit', async () => {
   const { baseline, candidateRevision, assessments, tally, undiffable } =
@@ -164,6 +181,63 @@ test('a document absent at the baseline is a recorded first release, not a silen
     // bindPredecessors refuses a missing predecessor without an explicit
     // reason, so an unexplained gap can never read as "nothing changed".
     assert.match(row.firstReleaseReason, new RegExp(`absent at baseline ${BEFORE_CATALOGUE}`));
+  }
+});
+
+test('a removed canonical source is detected from the immutable baseline tree', async () => {
+  const fixture = await catalogueFixture();
+  try {
+    const document = 'retail-data/v1/inventory-import.asyncapi.yaml';
+    const map = JSON.parse(await readFile(fixture.mapPath, 'utf8'));
+    map.C23 = map.C23.filter(path => path !== document);
+    await writeFile(fixture.mapPath, JSON.stringify(map, null, 2) + '\n');
+    await rm(join(fixture.root, 'contracts', 'source', document));
+    fixture.git('add', 'contracts');
+    fixture.git('commit', '--quiet', '-m', 'Remove canonical source');
+    await assert.rejects(assessCatalogueAgainstBaseline(fixture.root, fixture.baseline), error =>
+      error.code === 'PREDECESSOR_UNACCOUNTED' && error.ruleId === 'BR4.1');
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test('a renamed source is not a first release and requires exact predecessor approval', async () => {
+  const fixture = await catalogueFixture();
+  try {
+    const oldDocument = 'retail-data/v1/inventory-import.asyncapi.yaml';
+    const newDocument = 'retail-data/v1/inventory-import-renamed.asyncapi.yaml';
+    const sourceRoot = join(fixture.root, 'contracts', 'source');
+    const bytes = await readFile(join(sourceRoot, oldDocument));
+    const oldIdentity = deriveIdentity('asyncapi', 'U4 Retail Data', oldDocument, '1.0.0', digest(bytes));
+    const newIdentity = deriveIdentity('asyncapi', 'U4 Retail Data', newDocument, '1.0.0', digest(bytes));
+    const map = JSON.parse(await readFile(fixture.mapPath, 'utf8'));
+    map.C23 = map.C23.map(path => path === oldDocument ? newDocument : path);
+    await writeFile(fixture.mapPath, JSON.stringify(map, null, 2) + '\n');
+    await rename(join(sourceRoot, oldDocument), join(sourceRoot, newDocument));
+    fixture.git('add', 'contracts');
+    fixture.git('commit', '--quiet', '-m', 'Rename canonical source');
+
+    await assert.rejects(assessCatalogueAgainstBaseline(fixture.root, fixture.baseline), error =>
+      error.code === 'PREDECESSOR_UNACCOUNTED' && error.ruleId === 'BR4.1');
+    const approval = { predecessorLogicalId: oldIdentity.logicalId,
+      predecessorRevisionId: oldIdentity.revisionId,
+      approvedBy: 'synthetic-owner', overlapUntil: '2099-12-31' };
+    await assert.rejects(assessCatalogueAgainstBaseline(fixture.root, fixture.baseline,
+      { approvals: { [newIdentity.logicalId]: { ...approval, predecessorRevisionId: `sha256:${'0'.repeat(64)}` } } }),
+    error => error.code === 'PREDECESSOR_MAPPING_UNAPPROVED' && error.ruleId === 'BR4.1');
+
+    const result = await assessCatalogueAgainstBaseline(fixture.root, fixture.baseline,
+      { requirePinnedDiffer: true, approvals: { [newIdentity.logicalId]: approval } });
+    const replacement = result.assessments.find(row => row.logicalId === newIdentity.logicalId);
+    assert.equal(result.assessments.length, 40);
+    assert.deepEqual(result.undiffable, []);
+    assert.equal(result.tally.unchanged, 39);
+    assert.equal(replacement.outcome, 'change-approved');
+    assert.equal(replacement.predecessorLogicalId, oldIdentity.logicalId);
+    assert.equal(replacement.predecessorRevisionId, oldIdentity.revisionId);
+    assert.equal(replacement.predecessorDocument, oldDocument);
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
   }
 });
 
