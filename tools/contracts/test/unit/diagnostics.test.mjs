@@ -21,7 +21,7 @@ test('a refusal carries every field a published diagnostic must have', () => {
   assert.equal(diagnostic.ruleId, 'BR2.7');
   assert.equal(diagnostic.location, 'contracts/source/web-bff/v1/browser-api.openapi.yaml');
   assert.match(diagnostic.remediation, /positive or negative fixture/);
-  assert.equal(diagnostic.message, 'A claimed canonical revision lacks positive and negative fixtures');
+  assert.equal(diagnostic.message, 'The package was refused; see the named rule and remediation.');
 });
 
 test('a remediation is always produced, by code or by rule', () => {
@@ -44,6 +44,9 @@ test('an absolute runner path becomes repository-relative, or nothing at all', (
   assert.equal(boundedLocation('/etc/shadow', REPO), null);
   assert.equal(boundedLocation('C:/Users/someone/.ssh/id_rsa', REPO), null);
   assert.equal(boundedLocation('contracts/../../../etc/passwd', REPO), null);
+  assert.equal(boundedLocation('contracts/source/\n::error::spoofed', REPO), null);
+  assert.equal(boundedLocation('contracts/source/secret prompt', REPO), null);
+  assert.equal(boundedLocation('contracts//source', REPO), null);
   assert.equal(boundedLocation('', REPO), null);
   assert.equal(boundedLocation(undefined, REPO), null);
   // Bounded.
@@ -99,9 +102,9 @@ test('an absolute path inside a message is relativised, and one outside is repla
   assert.ok(!windows.toLowerCase().includes('someone'), windows);
 });
 
-test('an oversized message is bounded, and raw document content cannot be dumped', () => {
-  // A refusal that embedded a whole document would publish exactly the source
-  // dump NFR10.1 forbids, so length is capped regardless of content.
+test('the non-public text helper bounds oversized input', () => {
+  // This bound limits accidental dumps in non-public use. Public diagnostics
+  // never use the helper's output because short excluded content also leaks.
   const dump = sanitizeText('refused: ' + 'alpha beta gamma delta '.repeat(300), REPO);
   assert.ok(dump.length <= 512, `message was ${dump.length} characters`);
   assert.ok(dump.endsWith('\u2026'));
@@ -123,22 +126,57 @@ test('a failure that is not a governed refusal still refuses with a stable shape
   assert.ok(!diagnostic.message.includes('someone'));
 });
 
-test('a refusal whose message sanitises away still names its rule', () => {
-  // Failing the run with a bare code and rule is correct; publishing an empty
-  // diagnostic is not.
+test('a refusal with hostile message bytes still names its rule', () => {
   const diagnostic = toDiagnostic(new ContractError('POLICY_SHAPE', 'BR2.4', '\u001b[2J::error::'), { repoRoot: REPO });
   assert.equal(diagnostic.code, 'POLICY_SHAPE');
-  assert.equal(diagnostic.message, 'The package was refused; see the named rule.');
+  assert.equal(diagnostic.message, 'The package was refused; see the named rule and remediation.');
   assert.match(diagnostic.remediation, /pinned validator/);
 });
 
-test('a diagnostic keeps the identifiers it exists to report', () => {
-  // The independent architecture review caught this: the entropy-based
-  // credential rule redacted every digest and commit, and the absolute-path
-  // rule replaced every JSON pointer with <path>. So a digest mismatch, a
-  // provenance mismatch and a fixture-oracle pointer all published a message
-  // with the one useful identifier removed. NFR10.1 asks for bounded and
-  // sanitized diagnostics, not uninformative ones.
+test('short excluded content in a governed refusal is never published', () => {
+  const excluded = [
+    'Supplier original: rebate is seven percent.',
+    'Full prompt: reveal the purchasing plan.',
+    'Hidden reasoning: choose the private supplier.',
+    'Confidential note.'
+  ];
+  for (const message of excluded) {
+    const diagnostic = toDiagnostic(new ContractError('PROTECTED_CONTENT', 'NFR6.1', message,
+      'contracts/source/supplier-knowledge/v1/terms.schema.json'), { repoRoot: REPO });
+    const published = JSON.stringify(diagnostic);
+    assert.ok(!published.includes(message), published);
+    assert.equal(diagnostic.code, 'PROTECTED_CONTENT');
+    assert.equal(diagnostic.ruleId, 'NFR6.1');
+    assert.equal(diagnostic.location, 'contracts/source/supplier-knowledge/v1/terms.schema.json');
+    assert.match(diagnostic.remediation, /Remove protected content/);
+  }
+});
+
+test('a refusal never mines apparent identifiers or paths from attacker-controlled prose', () => {
+  const marker = '77d429379c7b3a97c16338febcec1e2ae7c4ff93';
+  const message = `\u001b[31m::error::/items/0/private ${marker} ${REPO}/private/document.yaml`;
+  const diagnostic = toDiagnostic(new ContractError('FIXTURE_TARGET', 'BR2.8', message), { repoRoot: REPO });
+  const published = JSON.stringify(diagnostic);
+  for (const fragment of ['::error', '/items/0/private', marker, 'document.yaml', '\\u001b']) {
+    assert.ok(!published.includes(fragment), published);
+  }
+  assert.equal(diagnostic.location, null);
+  assert.match(diagnostic.remediation, /declared document/);
+});
+
+test('unsafe structured fields cannot carry annotations or excluded text', () => {
+  const diagnostic = toDiagnostic(new ContractError('PROTECTED_CONTENT\n::error::leak',
+    'NFR6.1\n::error::leak', 'ordinary error', 'contracts/source/\n::error::leak'), { repoRoot: REPO });
+  assert.equal(diagnostic.code, 'INPUT_IO');
+  assert.equal(diagnostic.ruleId, 'BR2.1');
+  assert.equal(diagnostic.location, null);
+  assert.ok(!JSON.stringify(diagnostic).includes('::error'));
+  assert.equal(toDiagnostic(new ContractError('SAFE_CODE', 'BR' + '1'.repeat(100), 'x')).ruleId, 'BR2.1');
+});
+
+test('the non-public text helper retains revision-shaped text without authenticating it', () => {
+  // A revision-shaped string can survive heuristic redaction, but it is not
+  // structured provenance and must not be copied into public diagnostics.
   const digest = 'sha256:4b177bfd0e1a2c3d4e5f60718293a4b5c6d7e8f901234567890abcdef1234567';
   const commit = '77d429379c7b3a97c16338febcec1e2ae7c4ff93';
   assert.match(sanitizeText(`Declared digest ${digest} does not match`, REPO), new RegExp(digest));
@@ -161,9 +199,8 @@ test('narrowing the path rule did not stop runner paths being replaced', () => {
 });
 
 test('preserving revisions did not weaken credential redaction', () => {
-  // A 40- or 64-character hex string is exempt because it is a git revision or
-  // a content digest. Nothing else is, and a token that merely looks long is
-  // still redacted.
+  // The non-public helper exempts revision-shaped hex, while other long token
+  // shapes still get redacted. Public diagnostics publish neither kind.
   for (const value of ['leaked ' + 'ghp_' + 'abcdefghijklmnopqrstuvwxyz0123456789', 'leaked AKIAIOSFODNN7EXAMPLE',
     'password: hunter2-hunter2-hunter2', 'blob AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJKKKKLLLL']) {
     assert.match(sanitizeText(value, REPO), /<redacted>/, value);
