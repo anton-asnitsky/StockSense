@@ -4,17 +4,19 @@ import { ContractError } from './package-loader.mjs';
 //
 // NFR10.1 requires a published diagnostic to retain the rule, a
 // repository-relative path, a bounded location, a severity and a remediation
-// summary - and to strip tokens, credential-like strings, raw document or
-// prompt content, absolute runner paths, terminal controls and annotation
-// syntax. A refusal message is composed here, not by a tool, but it can still
-// quote a path or a value that came from the package under inspection, so every
-// message passes through the same sanitiser.
+// summary - and to suppress tokens, raw document or prompt content, hidden
+// reasoning, runner paths, terminal controls and annotation syntax. Refusal
+// messages can contain arbitrary input, even when wrapped in ContractError;
+// redaction by shape cannot establish that a short message is safe to publish.
 //
 // If no safe, actionable diagnostic can be produced the run still fails: the
 // code and rule are always emitted, because those are ours.
 
 const MESSAGE_LIMIT = 512;
 const LOCATION_LIMIT = 256;
+const SAFE_CODE = /^[A-Z][A-Z0-9_]{0,63}$/;
+const SAFE_RULE = /^[A-Z][A-Z0-9]*\d+(?:\.\d+)*$/;
+const SAFE_LOCATION_SEGMENT = /^[A-Za-z0-9_.-]+$/;
 
 // Remediation is keyed by rule, so a new finding code inherits a useful summary
 // instead of silently emitting none. A code-specific entry wins where the rule
@@ -78,9 +80,8 @@ const WINDOWS_PATH = /[A-Za-z]:[\\/][^\s"'`]*/g;
 const POSIX_PATH = /(?:^|(?<=[\s"'`(]))\/(?:home|Users|root|tmp|var|etc|opt|mnt|private|workspace|github|runner)\/[^\s"'`]*/g;
 
 /**
- * A git revision or content digest, which must survive redaction: it is the
- * identifier a digest-mismatch or provenance diagnostic exists to report, and
- * it is not a secret. The entropy rule below cannot tell one from a token.
+ * A revision-shaped value for the non-public text helper. Shape alone does not
+ * authenticate provenance, so this exemption is never used by toDiagnostic.
  */
 const REVISION_LIKE = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
 const CREDENTIAL = [
@@ -98,18 +99,23 @@ const CREDENTIAL = [
  */
 export function boundedLocation(value, repoRoot) {
   if (typeof value !== 'string' || !value.trim()) return null;
-  let path = value.replace(CONTROL, '').replace(ESCAPE, '').replace(/\\/g, '/').trim();
+  // Do not repair control-bearing paths: removing bytes could turn an attack
+  // into a plausible artifact name or workflow annotation.
+  if (/[\u0000-\u001f\u007f-\u009f]/.test(value)) return null;
+  let path = value.replace(/\\/g, '/');
   const root = typeof repoRoot === 'string' ? repoRoot.replace(/\\/g, '/').replace(/\/+$/, '') : '';
   if (root && path.toLowerCase().startsWith(root.toLowerCase() + '/')) path = path.slice(root.length + 1);
   // An absolute path that is not inside the repository, or one that climbs out
   // of it, says nothing useful and discloses the runner's layout.
-  if (/^([A-Za-z]:)?\//.test(path) || path.split('/').includes('..')) return null;
-  if (!path) return null;
+  if (/^([A-Za-z]:)?\//.test(path)) return null;
+  const segments = path.split('/');
+  if (segments.some(segment => !SAFE_LOCATION_SEGMENT.test(segment) || segment === '.' || segment === '..')) return null;
   return path.length > LOCATION_LIMIT ? path.slice(0, LOCATION_LIMIT - 1) + '…' : path;
 }
 
 /**
- * Strip everything NFR10.1 forbids from a message, then bound its length.
+ * Best-effort text redaction for non-public use. This cannot prove that an
+ * arbitrary short document or prompt is safe; toDiagnostic never publishes it.
  * @param {unknown} value
  * @param {string} [repoRoot]
  */
@@ -141,12 +147,14 @@ export function sanitizeText(value, repoRoot) {
  */
 export function toDiagnostic(error, { repoRoot } = {}) {
   const contract = error instanceof ContractError;
-  // An unexpected failure must still refuse with a stable shape; its own text
-  // is discarded because nothing here composed it.
-  const code = contract && typeof error.code === 'string' ? error.code : 'INPUT_IO';
-  const ruleId = contract && typeof error.ruleId === 'string' ? error.ruleId : 'BR2.1';
+  // Only the structured, bounded identifiers are publishable. Neither a
+  // ContractError's message nor text parsed from it authenticates provenance.
+  const code = contract && typeof error.code === 'string' && SAFE_CODE.test(error.code)
+    ? error.code : 'INPUT_IO';
+  const ruleId = contract && typeof error.ruleId === 'string' && error.ruleId.length <= 32 && SAFE_RULE.test(error.ruleId)
+    ? error.ruleId : 'BR2.1';
   const message = contract
-    ? sanitizeText(error.message, repoRoot) || 'The package was refused; see the named rule.'
+    ? 'The package was refused; see the named rule and remediation.'
     : 'Package input could not be read safely.';
   return {
     severity: 'error',
