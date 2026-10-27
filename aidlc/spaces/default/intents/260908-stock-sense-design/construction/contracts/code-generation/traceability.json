@@ -533,7 +533,7 @@
     {
       "id": "NFR13.2",
       "status": "GAP",
-      "target": "Hosted run 38876247058 built a CycloneDX SBOM and passed secret/vulnerability scans, but full validator/generator dependency coverage including Kiota and retained finding-specific exception evidence has not been demonstrated."
+      "target": "PR #48 hosted rerun 40550767567 attempt 2 retained validator and Kiota CycloneDX image inventories and scans; validator had zero findings and Kiota had one Medium MessagePack finding. PR #50 placed the owner-approved, finding-specific exception for exact candidate digest sha256:ce87da745fe33c5300bff56d107282fe9ea177a6a6b4b30437ff8bca67df470b on protected main, and U1 passed ledger verification, tests and coverage. Complete released-revision dependency and gate proof remain open (verification/pr50-bootstrap-merge-2026-10-27.md)."
     },
     {
       "id": "NFR13.3",
@@ -548,7 +548,7 @@
     {
       "id": "NFR13.5",
       "status": "GAP",
-      "target": "Run 38876247058 produced and uploaded a CycloneDX SBOM and passed secret/vulnerability scans on main; complete dependency coverage, retained scanner/exception review and a released package gate remain unverified."
+      "target": "PR #48 hosted rerun 40550767567 attempt 2 retained current image SBOMs/scans; protected-main exception matching, lint, type-check, unit/integration tests and the 80% line-coverage gate passed. The separate secret/dependency Vulnerability scan passed. Complete released-package supply-chain and gate evidence remain open (verification/pr50-bootstrap-merge-2026-10-27.md)."
     },
     {
       "id": "NFR15.1",
@@ -558,7 +558,7 @@
     {
       "id": "NFR15.2",
       "status": "GAP",
-      "target": "The candidate vulnerability scan is green, and basic exact-finding/expiry exception logic has unit tests. The full required exception fields, current-finding CI match and retained approval record are not demonstrated."
+      "target": "The owner-approved Kiota MessagePack 2.5.302 exception is bound to PR #48 candidate digest sha256:ce87da745fe33c5300bff56d107282fe9ea177a6a6b4b30437ff8bca67df470b, expires 2026-11-25, and was merged to protected main by PR #50. PR #48 hosted rerun 40550767567 attempt 2 passed exact current-finding/expiry ledger verification. Independent source-bound U1 candidate review remains open before this requirement can be marked complete (verification/pr50-bootstrap-merge-2026-10-27.md)."
     },
     {
       "id": "NFR15.3",
