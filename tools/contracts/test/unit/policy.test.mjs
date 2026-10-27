@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { ALL_BOUNDARIES, BOUNDARY_SIDECARS, CANONICAL_KINDS, FIXED_PATHS, digest, loadPackage } from '../../src/package-loader.mjs';
 import { omitRequired, synthesize } from '../../src/instance-synthesis.mjs';
 import { assertDeclaredPolicy, mapSchemaFindings, openApiFixtureSchema,
-  openApiInlineResponseElements, runFixtureOracle } from '../../src/policy.mjs';
+  openApiInlineResponseElements, openApiNamedExamples, runFixtureOracle } from '../../src/policy.mjs';
 import { createSchemaValidator } from '../../src/validators.mjs';
 
 test('inline JSON response with required fields has an exact oracle element', () => {
@@ -53,6 +53,70 @@ test('composed and optional inline JSON responses cannot gain a fixture exemptio
   assert.equal(validate.errors[0].keyword, 'required');
   assert.deepEqual(openApiFixtureSchema(document, 'response:getOptional:200:application-json')
     .$defs['response:getOptional:200:application-json'].properties.label, { type: 'string' });
+});
+
+test('named JSON and problem responses bind their distinct schema and media identities', () => {
+  const document = { openapi: '3.1.2', paths: { '/items': { get: { operationId: 'getItem', responses: {
+    '200': { content: { 'application/json': { schema: { $ref: '#/components/schemas/Item' },
+      examples: { found: { value: { id: 'item-1' } } } } } },
+    '409': { content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/Problem' },
+      examples: { conflict: { value: { code: 'CONFLICT' } } } } } }
+  } } } }, components: { schemas: {
+    Item: { type: 'object', required: ['id'], properties: { id: { type: 'string' } } },
+    Problem: { type: 'object', required: ['code'], properties: { code: { const: 'CONFLICT' } } }
+  } } };
+  const examples = openApiNamedExamples(document, 'items/v1/items.openapi.yaml');
+  assert.deepEqual(examples.map(example => example.id), [
+    'response:getItem:200:application-json:found',
+    'response:getItem:409:application-problem-json:conflict'
+  ]);
+  assert.deepEqual(examples.map(example => example.element), [
+    'response:getItem:200:application-json', 'Problem'
+  ]);
+  for (const example of examples) {
+    const schema = openApiFixtureSchema(document, example.element);
+    assert.equal(createSchemaValidator(schema, new Map(), { openApiComponents: true })(example.payload), true);
+  }
+  expectCode(() => openApiFixtureSchema(document, 'response:getItem:409:application-json'), 'FIXTURE_TARGET');
+  document.paths['/items'].get.responses['409'].content['application/problem+json'].schema = { type: 'object' };
+  expectCode(() => openApiNamedExamples(document, 'items/v1/items.openapi.yaml'), 'FIXTURE_TARGET');
+});
+
+test('named examples reject unsupported media and external example values', () => {
+  const response = { schema: { type: 'object' }, examples: { named: { value: {} } } };
+  const document = { openapi: '3.1.2', paths: { '/items': { get: { operationId: 'getItems',
+    responses: { '200': { content: { 'text/plain': response } } } } } } };
+  expectCode(() => openApiNamedExamples(document, 'items/v1/items.openapi.yaml'), 'FIXTURE_TARGET');
+  document.paths['/items'].get.responses['200'].content = { 'application/json': response };
+  response.examples.named = { externalValue: 'https://example.invalid/item' };
+  expectCode(() => openApiNamedExamples(document, 'items/v1/items.openapi.yaml'), 'FIXTURE_EXAMPLE_SHAPE');
+});
+
+test('named examples reject ambiguous operations and malformed payloads', () => {
+  const response = { content: { 'application/json': { schema: { type: 'object' },
+    examples: { named: { value: {} } } } } };
+  const document = { openapi: '3.1.2', paths: { '/one': { get: { operationId: 'getItem',
+    responses: { '200': response } } }, '/two': { get: { operationId: 'getItem',
+    responses: { '200': response } } } } };
+  expectCode(() => openApiNamedExamples(document, 'items/v1/items.openapi.yaml'), 'FIXTURE_TARGET_AMBIGUOUS');
+  delete document.paths['/two'];
+  response.content['application/json'].examples.named.value = 'not an object';
+  expectCode(() => openApiNamedExamples(document, 'items/v1/items.openapi.yaml'), 'FIXTURE_EXAMPLE_SHAPE');
+});
+
+test('named example count is bounded per OpenAPI document', () => {
+  const named = Object.fromEntries(Array.from({ length: 129 }, (_, index) => [`example${index}`, { value: {} }]));
+  const document = { openapi: '3.1.2', paths: { '/items': { get: { operationId: 'getItems',
+    responses: { '200': { content: { 'application/json': { schema: { type: 'object' }, examples: named } } } }
+  } } } };
+  expectCode(() => openApiNamedExamples(document, 'items/v1/items.openapi.yaml'), 'FIXTURE_EXAMPLE_LIMIT');
+});
+
+test('invalid embedded examples require a preapproved exact finding', () => {
+  const document = { openapi: '3.1.2', components: { schemas: { Item: { type: 'object' } } },
+    'x-contract-fixtures': [{ name: 'missing-id-invalid', schemaRef: '#/components/schemas/Item',
+      expectedValid: false, value: {} }] };
+  expectCode(() => openApiNamedExamples(document, 'items/v1/items.openapi.yaml'), 'FIXTURE_EXAMPLE_EXPECTATION');
 });
 
 const sampleRoot = fileURLToPath(new URL('../../../../contracts/samples/walking-skeleton/', import.meta.url));

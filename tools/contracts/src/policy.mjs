@@ -1,9 +1,11 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import YAML from 'yaml';
 import { ALL_BOUNDARIES, BOUNDARY_SIDECARS, CANONICAL_KINDS, FIXED_PATHS, ContractError, digest } from './package-loader.mjs';
 import { C07_PORT_PATH, C08_PORT_PATH, DIALECTS, DOCUMENT_FIXTURE_KINDS, SUPPLIER_HEAD_PATH, assertFixtureOracle, createSchemaValidator } from './validators.mjs';
 
+/** @returns {never} */
 const fail = (code, rule, message) => { throw new ContractError(code, rule, message); };
 const object = value => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
@@ -17,6 +19,27 @@ const FINDING_CODES = Object.freeze({
 
 const findingCode = keyword =>
   FINDING_CODES[keyword] ?? 'SCHEMA_' + String(keyword).replace(/([A-Z])/g, '_$1').toUpperCase();
+const RESPONSE_MEDIA = Object.freeze({
+  'application/json': 'application-json',
+  'application/problem+json': 'application-problem-json'
+});
+const MAX_OPENAPI_EXAMPLES = 128;
+const HEAVY_WORK_PATH = 'model-lifecycle/v1/heavy-work.openapi.yaml';
+const HEAVY_WORK_FAILURES = Object.freeze({
+  'pin-admission-missing-run-invalid': [{ code: 'SCHEMA_REQUIRED', ruleId: 'BR2.4', path: '/forecastRunId' }],
+  'batch-lease-missing-attempt-invalid': [
+    { code: 'SCHEMA_REQUIRED', ruleId: 'BR2.4', path: '/forecastAttemptId' },
+    { code: 'SCHEMA_IF', ruleId: 'BR2.4', path: '' }
+  ],
+  'nonbatch-lease-with-attempt-invalid': [
+    { code: 'SCHEMA_NOT', ruleId: 'BR2.4', path: '' },
+    { code: 'SCHEMA_IF', ruleId: 'BR2.4', path: '' }
+  ],
+  'embedding-lease-missing-fence-invalid': [
+    { code: 'SCHEMA_REQUIRED', ruleId: 'BR2.4', path: '/localFenceGeneration' },
+    { code: 'SCHEMA_IF', ruleId: 'BR2.4', path: '' }
+  ]
+});
 const pointerPart = value => String(value).replace(/~/g, '~0').replace(/\//g, '~1');
 // Every keyword that scopes its violation to a property reports instancePath on
 // the *containing* object and names the property in params. Left at the
@@ -135,6 +158,85 @@ export function openApiInlineResponseElements(document) {
   return elements;
 }
 
+/** Enumerate the bounded named examples that the canonical OpenAPI source actually declares. */
+export function openApiNamedExamples(document, documentPath) {
+  if (document?.openapi !== '3.1.2') fail('FIXTURE_TARGET', 'BR2.8', 'OpenAPI example source has an unsupported dialect');
+  const examples = [];
+  const identities = new Set();
+  const add = (id, element, value, expectedValid, expectedFailures) => {
+    if (identities.has(id)) fail('FIXTURE_TARGET_AMBIGUOUS', 'BR2.8', 'OpenAPI example identity is duplicated');
+    if (!object(value) || typeof expectedValid !== 'boolean') {
+      fail('FIXTURE_EXAMPLE_SHAPE', 'BR2.7', 'OpenAPI example requires an object value and declared outcome');
+    }
+    if (examples.length >= MAX_OPENAPI_EXAMPLES) fail('FIXTURE_EXAMPLE_LIMIT', 'BR2.7', 'OpenAPI example count exceeds its bound');
+    identities.add(id);
+    examples.push({ id, element, payload: value, expectedValid,
+      ...(expectedFailures === undefined ? {} : { expectedFailures }) });
+  };
+  const embedded = document['x-contract-fixtures'];
+  if (embedded !== undefined && !Array.isArray(embedded)) {
+    fail('FIXTURE_EXAMPLE_SHAPE', 'BR2.7', 'OpenAPI contract fixtures must be an array');
+  }
+  for (const fixture of embedded ?? []) {
+    const match = typeof fixture?.schemaRef === 'string' &&
+      /^#\/components\/schemas\/([A-Za-z][A-Za-z0-9_.-]*)$/.exec(fixture.schemaRef);
+    if (!/^[a-z][a-z0-9-]{0,95}$/.test(fixture?.name ?? '') || !match ||
+        !Object.hasOwn(document.components?.schemas ?? {}, match[1])) {
+      fail('FIXTURE_TARGET', 'BR2.8', 'OpenAPI contract fixture has no named local component');
+    }
+    const expectedFailures = fixture.expectedValid === false && documentPath === HEAVY_WORK_PATH
+      ? HEAVY_WORK_FAILURES[fixture.name] : undefined;
+    if (fixture.expectedValid === false && !expectedFailures) {
+      fail('FIXTURE_EXAMPLE_EXPECTATION', 'BR2.3', 'Invalid OpenAPI example has no approved exact finding');
+    }
+    add(`x:${fixture.name}`, match[1], fixture.value, fixture.expectedValid, expectedFailures);
+  }
+  for (const pathItem of Object.values(document.paths ?? {})) {
+    if (!object(pathItem)) continue;
+    for (const operation of Object.values(pathItem)) {
+      if (!object(operation) || !object(operation.responses)) continue;
+      for (const [status, response] of Object.entries(operation.responses)) {
+        for (const [mediaType, media] of Object.entries(response?.content ?? {})) {
+          if (!object(media) || (media.examples === undefined && media.example === undefined)) continue;
+          const mediaSlug = RESPONSE_MEDIA[mediaType];
+          if (!/^[A-Za-z][A-Za-z0-9]{0,96}$/.test(operation.operationId ?? '') ||
+              !/^[1-5][0-9]{2}$/.test(status) || !mediaSlug || !object(media.schema) ||
+              (media.examples !== undefined && media.example !== undefined)) {
+            fail('FIXTURE_TARGET', 'BR2.8', 'OpenAPI response example has no supported operation, status, media type or schema');
+          }
+          const element = `response:${operation.operationId}:${status}:${mediaSlug}`;
+          // The image worker's result contract accepts component names and
+          // application-json response elements. Problem responses in this
+          // catalogue point to a local component, so use that schema target
+          // while the canonical example ID retains status and media identity.
+          let fixtureElement = element;
+          if (mediaType === 'application/problem+json') {
+            const match = typeof media.schema.$ref === 'string' &&
+              /^#\/components\/schemas\/([A-Za-z][A-Za-z0-9_.-]*)$/.exec(media.schema.$ref);
+            if (!match || Object.keys(media.schema).length !== 1 ||
+                !Object.hasOwn(document.components?.schemas ?? {}, match[1])) {
+              fail('FIXTURE_TARGET', 'BR2.8', 'Problem response example must bind one local component');
+            }
+            fixtureElement = match[1];
+          }
+          const named = media.examples ?? { default: { value: media.example } };
+          if (!object(named) || !Object.keys(named).length) {
+            fail('FIXTURE_EXAMPLE_SHAPE', 'BR2.7', 'OpenAPI response examples must be a nonempty map');
+          }
+          for (const [name, example] of Object.entries(named)) {
+            if (!/^[A-Za-z][A-Za-z0-9_.-]{0,95}$/.test(name) || !object(example) ||
+                !Object.hasOwn(example, 'value') || Object.hasOwn(example, 'externalValue')) {
+              fail('FIXTURE_EXAMPLE_SHAPE', 'BR2.7', 'OpenAPI response example must have a named inline value');
+            }
+            add(`${element}:${name}`, fixtureElement, example.value, true);
+          }
+        }
+      }
+    }
+  }
+  return examples;
+}
+
 function fixtureBindable(entry, schemas, documents = new Map()) {
   if (entry.artifactKind === 'openapi') {
     const document = documents.get(entry.document);
@@ -232,13 +334,20 @@ export function openApiFixtureSchema(document, element) {
   const components = document.components?.schemas ?? {};
   let inlineResponse;
   if (!Object.hasOwn(components, element)) {
-    const match = /^response:([A-Za-z][A-Za-z0-9]*):([1-5][0-9]{2}):application-json$/.exec(element);
-    if (match && openApiInlineResponseElements(document).includes(element)) {
+    const match = /^response:([A-Za-z][A-Za-z0-9]{0,96}):([1-5][0-9]{2}):(application-json|application-problem-json)$/.exec(element);
+    if (match) {
+      const mediaType = Object.keys(RESPONSE_MEDIA).find(type => RESPONSE_MEDIA[type] === match[3]);
+      if (mediaType === undefined) {
+        fail('FIXTURE_TARGET', 'BR2.8', 'OpenAPI response element has no supported media type');
+      }
       for (const pathItem of Object.values(document.paths ?? {})) {
         if (!object(pathItem)) continue;
         for (const operation of Object.values(pathItem)) {
           if (object(operation) && operation.operationId === match[1]) {
-            inlineResponse = operation.responses?.[match[2]]?.content?.['application/json']?.schema;
+            if (inlineResponse !== undefined) {
+              fail('FIXTURE_TARGET_AMBIGUOUS', 'BR2.8', 'Two OpenAPI operations share one response element');
+            }
+            inlineResponse = operation.responses?.[match[2]]?.content?.[mediaType]?.schema;
           }
         }
       }
@@ -279,6 +388,9 @@ export function openApiFixtureSchema(document, element) {
   };
   while (pending.length) {
     const name = pending.pop();
+    if (name === undefined) {
+      fail('FIXTURE_TARGET', 'BR2.8', 'OpenAPI fixture target traversal is empty');
+    }
     if (Object.hasOwn(definitions, name)) continue;
     definitions[name] = rewrite(name === element && inlineResponse ? inlineResponse : components[name], new Set());
   }
@@ -441,6 +553,26 @@ export async function runFixtureOracle(root, loaded) {
           }
         }
       }
+    }
+  }
+  const allFixtures = sidecars.flatMap(sidecar => sidecar.fixtures);
+  for (const entry of loaded.entries.filter(item => item.artifactKind === 'openapi')) {
+    for (const example of openApiNamedExamples(documents.get(entry.document), entry.document)) {
+      const matches = allFixtures.filter(fixture => fixture?.canonicalExampleId === example.id &&
+        fixture?.documentRevisionId === entry.revisionId && fixture?.contractElementId === example.element);
+      if (matches.length !== 1 || !isDeepStrictEqual(matches[0].payload, example.payload) ||
+          matches[0].expectedOutcome !== (example.expectedValid ? 'pass' : 'fail') ||
+          (example.expectedFailures !== undefined && !isDeepStrictEqual(matches[0].expectedFailures, example.expectedFailures))) {
+        fail('FIXTURE_EXAMPLE_COVERAGE', 'BR2.7', 'A canonical OpenAPI example lacks its exact revision-bound fixture');
+      }
+    }
+  }
+  for (const fixture of allFixtures.filter(item => item?.canonicalExampleId !== undefined)) {
+    const target = resolveFixtureTarget(fixture, loaded, schemas);
+    if (target?.artifactKind !== 'openapi' ||
+        !openApiNamedExamples(documents.get(target.document), target.document)
+          .some(example => example.id === fixture.canonicalExampleId && example.element === fixture.contractElementId)) {
+      fail('FIXTURE_EXAMPLE_COVERAGE', 'BR2.7', 'A fixture claims an absent canonical OpenAPI example');
     }
   }
   const results = [];

@@ -6,10 +6,11 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
-import { ALL_BOUNDARIES, loadPackage } from '../../src/package-loader.mjs';
+import { ALL_BOUNDARIES, digest, loadPackage } from '../../src/package-loader.mjs';
 import { DIALECTS, createSchemaValidator } from '../../src/validators.mjs';
-import { asyncApiFixtureSchema, asyncApiMessageElements, mapSchemaFindings, runFixtureOracle } from '../../src/policy.mjs';
-import { buildFullPackage, fixturePair } from '../../src/full-package.mjs';
+import { asyncApiFixtureSchema, asyncApiMessageElements, mapSchemaFindings,
+  openApiNamedExamples, runFixtureOracle } from '../../src/policy.mjs';
+import { buildFullPackage, fixturePair, namedOpenApiFixtures } from '../../src/full-package.mjs';
 import { buildPackageBundle, verifyPackageBundle } from '../../src/package-bundle.mjs';
 
 // Only the thin C01/C18 walking skeleton had ever been packaged, so every rule
@@ -196,8 +197,9 @@ test('each bound element contributes a positive, a required negative, and the mu
   try {
     const sidecar = JSON.parse(await readFile(join(out, 'governance/example-fixture.json'), 'utf8'));
     assert.equal(sidecar.syntheticOnly, true);
-    const positives = sidecar.fixtures.filter(fixture => fixture.scenarioType === 'valid');
-    const negatives = sidecar.fixtures.filter(fixture => fixture.scenarioType === 'invalid');
+    const generated = sidecar.fixtures.filter(fixture => fixture.canonicalExampleId === undefined);
+    const positives = generated.filter(fixture => fixture.scenarioType === 'valid');
+    const negatives = generated.filter(fixture => fixture.scenarioType === 'invalid');
     assert.equal(positives.length, built.bound);
     // One generic required omission per bound element, every required tenant
     // envelope omission, and the non-required mutations each element admits.
@@ -369,5 +371,98 @@ test('inline identity responses bind exact positive and negative fixtures to the
       assert.deepEqual(results.filter(item => item.revisionId === entry.revisionId).slice(0, 2)
         .map(item => item.observed), ['pass', 'fail']);
     }
+  } finally { await clean(); }
+});
+
+test('all named OpenAPI examples bind exact immutable revisions and expected findings', async () => {
+  const YAML = (await import('yaml')).default;
+  const expected = {
+    'model-lifecycle/v1/heavy-work.openapi.yaml': [
+      'x:pin-admission-valid', 'x:pin-admission-missing-run-invalid',
+      'x:batch-lease-valid', 'x:batch-lease-missing-attempt-invalid',
+      'x:nonbatch-lease-valid', 'x:nonbatch-lease-with-attempt-invalid',
+      'x:embedding-lease-valid', 'x:embedding-lease-missing-fence-invalid'
+    ],
+    'forecasting/v1/planning-forecasts.openapi.yaml': [
+      'response:getForecastRun:200:application-json:succeeded',
+      'response:getForecastRun:200:application-json:staleFailed'
+    ],
+    'recovery-coordination/v1/bootstrap-participant.openapi.yaml': [
+      'response:applyRecoveryBootstrapCommand:200:application-json:prepared',
+      'response:applyRecoveryBootstrapCommand:200:application-json:closed',
+      'response:applyRecoveryBootstrapCommand:200:application-json:abortBeforeLatePrepare',
+      'response:applyRecoveryBootstrapCommand:401:application-problem-json:invalidToken',
+      'response:applyRecoveryBootstrapCommand:409:application-problem-json:staleGeneration',
+      'response:applyRecoveryBootstrapCommand:503:application-problem-json:persistenceUnavailable',
+      'response:attestRestoredBootstrapState:200:application-json:identityVerified'
+    ]
+  };
+  const { out, clean } = await assembled();
+  try {
+    const loaded = await loadPackage(out);
+    const fixtures = JSON.parse(await readFile(join(out, 'governance/example-fixture.json'), 'utf8')).fixtures;
+    const results = await runFixtureOracle(out, loaded);
+    const named = fixtures.filter(fixture => fixture.canonicalExampleId !== undefined);
+    assert.equal(named.length, 17);
+    for (const [documentPath, ids] of Object.entries(expected)) {
+      const source = YAML.parse(await readFile(join(out, documentPath), 'utf8'));
+      const examples = openApiNamedExamples(source, documentPath);
+      assert.deepEqual(examples.map(example => example.id), ids);
+      const entry = loaded.entries.find(item => item.document === documentPath);
+      const bound = named.filter(fixture => fixture.documentRevisionId === entry.revisionId);
+      assert.deepEqual(bound.map(fixture => fixture.canonicalExampleId), ids);
+      for (const fixture of bound) {
+        const example = examples.find(item => item.id === fixture.canonicalExampleId);
+        assert.equal(fixture.contractElementId, example.element);
+        assert.deepEqual(fixture.payload, example.payload);
+        assert.deepEqual(fixture.expectedFailures, example.expectedFailures);
+        assert.equal(results.find(row => row.fixtureId === fixture.fixtureId)?.observed,
+          example.expectedValid ? 'pass' : 'fail');
+      }
+    }
+    assert.equal(named.filter(fixture => fixture.expectedOutcome === 'fail').length, 4);
+    assert.ok(named.filter(fixture => fixture.expectedOutcome === 'fail').every(fixture =>
+      fixture.expectedFailures?.every(finding => finding.ruleId === 'BR2.4')));
+  } finally { await clean(); }
+});
+
+test('named OpenAPI examples fail if a canonical payload or approved finding changes', async () => {
+  const YAML = (await import('yaml')).default;
+  const documentPath = 'model-lifecycle/v1/heavy-work.openapi.yaml';
+  const source = YAML.parse(await readFile(join(repoRoot, 'contracts/source', documentPath), 'utf8'));
+  const entry = { artifactKind: 'openapi', document: documentPath, revisionId: 'immutable-test-revision',
+    boundaryIds: ['C07'] };
+  assert.equal(namedOpenApiFixtures(entry, source, new Map()).length, 8);
+  const changed = JSON.parse(JSON.stringify(source));
+  changed['x-contract-fixtures'][1].value.forecastRunId = '00000000-0000-4000-8000-000000000103';
+  assert.throws(() => namedOpenApiFixtures(entry, changed, new Map()), error =>
+    error.code === 'FIXTURE_ORACLE_MISMATCH' && error.ruleId === 'NFR8.13');
+  const wrongFailure = JSON.parse(JSON.stringify(source));
+  wrongFailure['x-contract-fixtures'][1].value.initialForecastAttemptId = 17;
+  assert.throws(() => namedOpenApiFixtures(entry, wrongFailure, new Map()), error =>
+    error.code === 'FIXTURE_ORACLE_MISMATCH' && error.ruleId === 'NFR8.13');
+});
+
+test('the oracle refuses a missing or mismatched named example despite other valid document fixtures', async () => {
+  const { out, clean } = await assembled();
+  try {
+    const loaded = await loadPackage(out);
+    const path = join(out, 'governance/example-fixture.json');
+    const sidecar = JSON.parse(await readFile(path, 'utf8'));
+    const example = sidecar.fixtures.find(fixture => fixture.canonicalExampleId ===
+      'response:getForecastRun:200:application-json:succeeded');
+    assert.ok(example);
+    const check = async fixtures => {
+      const bytes = JSON.stringify({ ...sidecar, fixtures });
+      await (await import('node:fs/promises')).writeFile(path, bytes);
+      const entries = loaded.entries.map(entry => entry.document === 'governance/example-fixture.json'
+        ? { ...entry, contentDigest: digest(Buffer.from(bytes)) } : entry);
+      await assert.rejects(runFixtureOracle(out, { ...loaded, entries }), error =>
+        error.code === 'FIXTURE_EXAMPLE_COVERAGE' && error.ruleId === 'BR2.7');
+    };
+    await check(sidecar.fixtures.filter(fixture => fixture.fixtureId !== example.fixtureId));
+    await check(sidecar.fixtures.map(fixture => fixture.fixtureId === example.fixtureId
+      ? { ...fixture, payload: { ...fixture.payload, retailerId: '00000000-0000-4000-8000-000000000999' } }
+      : fixture));
   } finally { await clean(); }
 });

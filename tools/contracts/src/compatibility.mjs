@@ -56,29 +56,66 @@ export function assertPackageMajor(candidateVersion, baselineVersion) {
 /**
  * Bind every diffable candidate entry to its same-kind predecessor in the
  * baseline. A missing predecessor is allowed only with an explicit first-release
- * reason, so an unexplained gap can never be read as "nothing changed".
+ * reason. Every baseline identity must also be consumed, so an unexplained
+ * removal cannot be read as "nothing changed" or as a first release.
  */
-export function bindPredecessors(candidateEntries, baselineEntries, { firstRelease = {} } = {}) {
+export function bindPredecessors(candidateEntries, baselineEntries, { firstRelease = {}, approvals = {} } = {}) {
   if (!Array.isArray(candidateEntries) || !Array.isArray(baselineEntries)) {
     fail('COMPATIBILITY_INPUT', 'BR4.2', 'Candidate and baseline entries are required');
   }
   const bindings = [];
+  const candidateIds = new Set();
+  const baselineById = new Map();
+  const consumedBaselineIds = new Set();
+  for (const entry of baselineEntries) {
+    if (!DIFFABLE.has(entry.artifactKind)) continue;
+    if (baselineById.has(entry.logicalId)) {
+      fail('PREDECESSOR_AMBIGUOUS', 'BR4.2', 'A canonical logical identity must have one immutable predecessor');
+    }
+    baselineById.set(entry.logicalId, entry);
+  }
   for (const entry of candidateEntries) {
     if (!DIFFABLE.has(entry.artifactKind)) continue;
-    const predecessor = baselineEntries.find(item => item.logicalId === entry.logicalId);
+    if (candidateIds.has(entry.logicalId)) {
+      fail('CANDIDATE_IDENTITY_AMBIGUOUS', 'BR4.2', 'A canonical logical identity must appear once in the candidate');
+    }
+    candidateIds.add(entry.logicalId);
+    const approval = approvals[entry.logicalId];
+    const predecessorLogicalId = object(approval) ? approval.predecessorLogicalId : undefined;
+    if (predecessorLogicalId !== undefined && (!string(predecessorLogicalId) ||
+        predecessorLogicalId === entry.logicalId)) {
+      fail('PREDECESSOR_MAPPING_INVALID', 'BR4.1', 'A replacement needs a distinct predecessor logical identity');
+    }
+    const predecessor = baselineById.get(predecessorLogicalId ?? entry.logicalId);
     if (predecessor) {
       if (predecessor.artifactKind !== entry.artifactKind) {
         fail('PREDECESSOR_KIND', 'BR4.2', 'A predecessor must have the same canonical kind');
       }
+      if (consumedBaselineIds.has(predecessor.logicalId)) {
+        fail('PREDECESSOR_REUSED', 'BR4.1', 'A baseline identity cannot be replaced by multiple candidates');
+      }
+      if (predecessorLogicalId && (approval.predecessorRevisionId !== predecessor.revisionId ||
+          !string(approval.approvedBy) || !approvedOverlap(approval.overlapUntil))) {
+        fail('PREDECESSOR_MAPPING_UNAPPROVED', 'BR4.1',
+          'A replacement needs approval bound to the exact predecessor revision and overlap');
+      }
+      consumedBaselineIds.add(predecessor.logicalId);
       bindings.push({
         logicalId: entry.logicalId,
         document: entry.document,
+        ...(predecessorLogicalId ? {
+          predecessorLogicalId,
+          predecessorDocument: predecessor.document
+        } : {}),
         artifactKind: entry.artifactKind,
         candidateRevisionId: entry.revisionId,
         predecessorRevisionId: predecessor.revisionId,
         unchanged: predecessor.revisionId === entry.revisionId
       });
       continue;
+    }
+    if (predecessorLogicalId) {
+      fail('PREDECESSOR_MAPPING_INVALID', 'BR4.1', 'The mapped predecessor is absent from the immutable baseline');
     }
     const reason = firstRelease[entry.logicalId];
     if (!string(reason)) {
@@ -93,6 +130,10 @@ export function bindPredecessors(candidateEntries, baselineEntries, { firstRelea
       firstReleaseReason: reason,
       unchanged: false
     });
+  }
+  if ([...baselineById.keys()].some(id => !consumedBaselineIds.has(id))) {
+    fail('PREDECESSOR_UNACCOUNTED', 'BR4.1',
+      'A canonical baseline identity was removed or renamed without a mapped successor');
   }
   return bindings;
 }
