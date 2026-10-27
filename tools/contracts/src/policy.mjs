@@ -5,6 +5,7 @@ import YAML from 'yaml';
 import { ALL_BOUNDARIES, BOUNDARY_SIDECARS, CANONICAL_KINDS, FIXED_PATHS, ContractError, digest } from './package-loader.mjs';
 import { C07_PORT_PATH, C08_PORT_PATH, DIALECTS, DOCUMENT_FIXTURE_KINDS, SUPPLIER_HEAD_PATH, assertFixtureOracle, createSchemaValidator } from './validators.mjs';
 
+/** @returns {never} */
 const fail = (code, rule, message) => { throw new ContractError(code, rule, message); };
 const object = value => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
@@ -336,6 +337,9 @@ export function openApiFixtureSchema(document, element) {
     const match = /^response:([A-Za-z][A-Za-z0-9]{0,96}):([1-5][0-9]{2}):(application-json|application-problem-json)$/.exec(element);
     if (match) {
       const mediaType = Object.keys(RESPONSE_MEDIA).find(type => RESPONSE_MEDIA[type] === match[3]);
+      if (mediaType === undefined) {
+        fail('FIXTURE_TARGET', 'BR2.8', 'OpenAPI response element has no supported media type');
+      }
       for (const pathItem of Object.values(document.paths ?? {})) {
         if (!object(pathItem)) continue;
         for (const operation of Object.values(pathItem)) {
@@ -384,6 +388,9 @@ export function openApiFixtureSchema(document, element) {
   };
   while (pending.length) {
     const name = pending.pop();
+    if (name === undefined) {
+      fail('FIXTURE_TARGET', 'BR2.8', 'OpenAPI fixture target traversal is empty');
+    }
     if (Object.hasOwn(definitions, name)) continue;
     definitions[name] = rewrite(name === element && inlineResponse ? inlineResponse : components[name], new Set());
   }
