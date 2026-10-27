@@ -148,12 +148,12 @@
     {
       "id": "AC8.7.2",
       "status": "OK",
-      "target": ".github/workflows/public-pr-policy.yml"
+      "target": "External U2-owned .github/workflows/public-pr-policy.yml at protected main 8a415cfd6dfc124edbd7b84c9b7e22553e3064a2; verification/u1-required-check-block-2026-10-16.md records non-draft PR #21 blocked by the required base-owned policy, and verification/pr50-bootstrap-merge-2026-10-27.md records U2 required-check restoration with app ID 15368. The owner's 2026-10-09 scoped OQ8 decision applies to U1 public-PR isolation. These external evidence files are deliberately outside U1's 181-path source fingerprint."
     },
     {
       "id": "AC8.7.3",
       "status": "OK",
-      "target": "tools/contracts/src/evidence.mjs"
+      "target": "tools/contracts/src/evidence.mjs; tools/contracts/test/integration/ci-policy.test.mjs; verification/u1-required-check-block-2026-10-16.md (U1 policy behavior plus external U2 protected-base enforcement and the owner's 2026-10-09 scoped OQ8 decision). The U2 workflow is not a U1-owned source-manifest path."
     },
     {
       "id": "AC9.11.1",
@@ -523,7 +523,7 @@
     {
       "id": "NFR11.3",
       "status": "GAP",
-      "target": "Hosted U1 run 38876246986 used frozen dependencies, pinned validator and Kiota images and passed integration/generation checks. The record does not show a complete clean-checkout regeneration and source/configuration/output digest plus elapsed evidence for every required C01-C27 consumer output."
+      "target": "The committed U1 Bolt at 9885068 passed 14/14 focused generation integration tests for pinned openapi-typescript, Kiota and Modelina, checking the declared three consumers and 107 output digests (verification/u1-candidate-evidence-prep-2026-10-27.md). A hosted combined candidate record with source, tool, configuration, output and elapsed evidence is still absent."
     },
     {
       "id": "NFR13.1",
@@ -533,7 +533,7 @@
     {
       "id": "NFR13.2",
       "status": "GAP",
-      "target": "PR #48 hosted rerun 40550767567 attempt 2 retained validator and Kiota CycloneDX image inventories and scans; validator had zero findings and Kiota had one Medium MessagePack finding. PR #50 placed the owner-approved, finding-specific exception for exact candidate digest sha256:ce87da745fe33c5300bff56d107282fe9ea177a6a6b4b30437ff8bca67df470b on protected main, and U1 passed ledger verification, tests and coverage. Complete released-revision dependency and gate proof remain open (verification/pr50-bootstrap-merge-2026-10-27.md)."
+      "target": "PR #48 hosted rerun 40550767567 attempt 2 retained validator and Kiota CycloneDX image inventories and scans; validator had zero findings and Kiota had one Medium MessagePack finding. PR #50 placed the owner-approved, finding-specific exception for exact candidate digest sha256:ce87da745fe33c5300bff56d107282fe9ea177a6a6b4b30437ff8bca67df470b on protected main. The committed Bolt plus those retained inputs produced a local 3,078-component candidate SBOM (verification/u1-candidate-evidence-prep-2026-10-27.md), but a hosted, attested combined SBOM for this candidate is absent. Complete released-revision dependency and gate proof remain open."
     },
     {
       "id": "NFR13.3",
@@ -548,7 +548,7 @@
     {
       "id": "NFR13.5",
       "status": "GAP",
-      "target": "PR #48 hosted rerun 40550767567 attempt 2 retained current image SBOMs/scans; protected-main exception matching, lint, type-check, unit/integration tests and the 80% line-coverage gate passed. The separate secret/dependency Vulnerability scan passed. Complete released-package supply-chain and gate evidence remain open (verification/pr50-bootstrap-merge-2026-10-27.md)."
+      "target": "PR #48 hosted rerun 40550767567 attempt 2 retained current image SBOMs/scans; protected-main exception matching, lint, type-check, unit/integration tests and the 80% line-coverage gate passed. The separate secret/dependency Vulnerability scan passed. A locally assembled candidate-specific combined SBOM exists (verification/u1-candidate-evidence-prep-2026-10-27.md), but it lacks hosted attestation; complete released-package supply-chain and gate evidence also remain open."
     },
     {
       "id": "NFR15.1",
