@@ -2,7 +2,7 @@
   "schema": "stocksense-image-exceptions-v1",
   "exceptions": [
     {
-      "candidateTreeDigest": "sha256:fb0212af3ec27ca3fd05909b4285b47060a8b7ed24af368bdbd8c11c43eaa496",
+      "candidateTreeDigest": "sha256:24e8749221f6a08f4c22d50bd20bed3ca5f393174c7fb18ae5b4a28e6ddcfed8",
       "finding": {
         "id": "GHSA-qhrr-8q5h-9q3h",
         "image": "kiota",
@@ -15,8 +15,8 @@
         "owner": "StockSense repository owner",
         "rationale": "Kiota 1.35.0 bundles affected MessagePack. The pinned generation path invokes only kiota generate; no route to untrusted MessagePack object deserialization was identified. This is a time-limited reachability assessment, not proof that the library is safe.",
         "compensatingControl": "Verify exact Kiota package SHA-256 5e75f6adf161717be8d9f39eb596f93d52535e7b8cbcc00cffdcef3d0d3c3486; fixed generate arguments; immutable image and source-bound scan; network-disabled, read-only, non-root container; 2 GiB memory and 120-second limits. Reassess on upstream fix or invocation change.",
-        "approvalReference": "AI-DLC audit aidlc/spaces/default/intents/260908-stock-sense-design/audit/anton-pc-e91d12f789b9.md QUESTION_ANSWERED 2026-10-25T15:01:33Z",
-        "createdAt": "2026-10-25T15:07:00Z",
+        "approvalReference": "AI-DLC audit aidlc/spaces/default/intents/260908-stock-sense-design/audit/anton-pc-e91d12f789b9.md QUESTION_ANSWERED 2026-10-27T08:41:14Z",
+        "createdAt": "2026-10-27T08:45:00Z",
         "expiresAt": "2026-11-25T00:00:00Z"
       }
     }
