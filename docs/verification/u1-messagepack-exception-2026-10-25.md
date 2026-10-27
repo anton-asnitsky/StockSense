@@ -1,6 +1,6 @@
-# U1 Kiota MessagePack exception evidence
+# Historical U1 Kiota MessagePack exception evidence (PR #24)
 
-This record supports one temporary row in the protected-main image-exception ledger. It is not U1 acceptance, C01 release, or approval to change branch protection or merge a pull request.
+This record supported the earlier PR #24 candidate-tree row in the protected-main image-exception ledger. Draft PR #46 proposes replacing that row for PR #45; its current finding and owner-decision evidence is in [u1-messagepack-exception-pr45-2026-10-27.md](u1-messagepack-exception-pr45-2026-10-27.md). This historical record is not U1 acceptance, C01 release, or approval to change branch protection or merge a pull request.
 
 The owner approved the exact finding and controls on 2026-10-25. The AI-DLC audit at `aidlc/spaces/default/intents/260908-stock-sense-design/audit/anton-pc-e91d12f789b9.md` records the question as `DECISION_RECORDED` at 13:22:56Z, the owner's `HUMAN_TURN` at 15:01:14Z, and `QUESTION_ANSWERED` at 15:01:33Z: “Approve this exact temporary exception (Recommended).” The answer did not authorize a merge or protection change.
 
