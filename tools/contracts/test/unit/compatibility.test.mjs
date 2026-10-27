@@ -77,12 +77,19 @@ test('BR4.4: changed AsyncAPI and schema require exact predecessor approval with
       bindings, runDiff: noDiffer,
       approvals: { L1: { predecessorRevisionId: rev('9'), approvedBy: 'owner', overlapUntil: 'unknown' } }
     }), 'NON_OPENAPI_CHANGE_UNAPPROVED');
+    for (const overlapUntil of ['2026-02-30', '2025-02-29T12:00:00Z']) {
+      await expectAsyncCode(assessCompatibility({
+        bindings, runDiff: noDiffer,
+        approvals: { L1: { predecessorRevisionId: rev('9'), approvedBy: 'owner', overlapUntil } }
+      }), 'NON_OPENAPI_CHANGE_UNAPPROVED');
+    }
     const result = await assessCompatibility({
       bindings, runDiff: noDiffer,
-      approvals: { L1: { predecessorRevisionId: rev('9'), approvedBy: 'owner', overlapUntil: '2099-12-31' } }
+      approvals: { L1: { predecessorRevisionId: rev('9'), approvedBy: 'owner', overlapUntil: '2028-02-29T12:00:00Z' } }
     });
     assert.equal(result[0].outcome, 'change-approved');
     assert.equal(result[0].predecessorRevisionId, rev('9'));
+    assert.equal(result[0].overlapUntil, '2028-02-29T12:00:00Z');
   }
 });
 
