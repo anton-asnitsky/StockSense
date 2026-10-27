@@ -11,6 +11,11 @@ C20 identity profiles and C22/C23 messaging profiles use JSON Schema 2020-12.
 The C23 AsyncAPI source names distinct tenant and global identity routes.
 Retail Data's import AsyncAPI defines requested, completed, and failed job
 messages; its separate audit AsyncAPI defines the authoritative import event.
+Retail Data (U4) owns these message schemas and business effects. The
+inventory-import source is listed under C23 to validate the shared transport
+profile for U4's bootstrap publisher; that catalogue placement does not make
+Messaging Platform (U14) the semantic owner of the messages. The import audit
+source is listed under C15 for the authoritative event.
 `profiles/messaging-platform/` holds governed C22/C23 profile **candidates**
 that validate against those schemas.
 

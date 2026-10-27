@@ -179,13 +179,12 @@ test('pinned C18 validator reports elapsed time and its own peak RSS below retai
   assert.equal(LIMITS.processBytes, 2_147_483_648);
 });
 
-test('full C01-C27 catalogue resource acceptance awaits real required canonical kinds', async t => {
+test('every C01-C27 boundary includes its required canonical kinds', () => {
   const missing = ALL_BOUNDARIES.filter(id => Object.entries(CANONICAL_KINDS).some(([kind, ids]) =>
     ids.split(' ').includes(id) && !sourcesByBoundary[id].some(path => kindOf(path) === kind)));
   assert.deepEqual(missing, [], 'canonical kind inventory must stay complete');
-  // Kind inventory alone cannot establish revision-bound fixtures or sidecars
-  // for all 27 boundaries; the measurement below is the part now covered.
-  t.todo('revision-bound fixtures and sidecars for all 27 boundaries remain required');
+  // This proves kind coverage only. Fixture, sidecar and release evidence have
+  // separate checks and cannot be inferred from the kind inventory.
 });
 
 test('every canonical source in the catalogue validates within the retained resource bounds', async t => {
