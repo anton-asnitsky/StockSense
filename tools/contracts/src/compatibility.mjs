@@ -63,9 +63,18 @@ export function bindPredecessors(candidateEntries, baselineEntries, { firstRelea
     fail('COMPATIBILITY_INPUT', 'BR4.2', 'Candidate and baseline entries are required');
   }
   const bindings = [];
+  const candidateIds = new Set();
   for (const entry of candidateEntries) {
     if (!DIFFABLE.has(entry.artifactKind)) continue;
-    const predecessor = baselineEntries.find(item => item.logicalId === entry.logicalId);
+    if (candidateIds.has(entry.logicalId)) {
+      fail('CANDIDATE_IDENTITY_AMBIGUOUS', 'BR4.2', 'A canonical logical identity must appear once in the candidate');
+    }
+    candidateIds.add(entry.logicalId);
+    const predecessors = baselineEntries.filter(item => item.logicalId === entry.logicalId);
+    if (predecessors.length > 1) {
+      fail('PREDECESSOR_AMBIGUOUS', 'BR4.2', 'A canonical logical identity must have one immutable predecessor');
+    }
+    const predecessor = predecessors[0];
     if (predecessor) {
       if (predecessor.artifactKind !== entry.artifactKind) {
         fail('PREDECESSOR_KIND', 'BR4.2', 'A predecessor must have the same canonical kind');

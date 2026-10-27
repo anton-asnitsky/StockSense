@@ -47,6 +47,18 @@ test('BR4.2: a predecessor of a different canonical kind is rejected', () => {
   expectCode(() => bindPredecessors([entry('L1', rev('1'), 'openapi')], [entry('L1', rev('9'), 'asyncapi')]), 'PREDECESSOR_KIND');
 });
 
+test('BR4.2: duplicate immutable identities cannot select a predecessor by array order', () => {
+  const candidate = entry('L1', rev('1'), 'schema', 'envelope.json');
+  const older = entry('L1', rev('8'), 'schema', 'envelope.json');
+  const newer = entry('L1', rev('9'), 'schema', 'envelope.json');
+  for (const baseline of [[older, newer], [newer, older]]) {
+    assert.throws(() => bindPredecessors([candidate], baseline), error =>
+      error.code === 'PREDECESSOR_AMBIGUOUS' && error.ruleId === 'BR4.2');
+  }
+  assert.throws(() => bindPredecessors([candidate, candidate], [older]), error =>
+    error.code === 'CANDIDATE_IDENTITY_AMBIGUOUS' && error.ruleId === 'BR4.2');
+});
+
 test('BR4.3: sidecars are not diffed and unchanged revisions short-circuit', async () => {
   const bindings = bindPredecessors(
     [entry('L1', rev('1')), entry('L2', rev('2'), 'sidecar', 'policy.json')],
