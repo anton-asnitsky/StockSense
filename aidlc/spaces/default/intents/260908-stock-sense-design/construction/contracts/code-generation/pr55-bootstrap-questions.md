@@ -37,4 +37,4 @@ This decision does not merge PR #53 or PR #51, accept U1, or release C01.
 - Approve PR #55 bootstrap and temporary U2 check change
 - Request changes
 
-[Answer]:
+[Answer]: Approve PR #55 bootstrap and temporary U2 check change
