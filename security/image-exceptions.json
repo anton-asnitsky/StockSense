@@ -15,7 +15,7 @@
         "owner": "StockSense repository owner",
         "rationale": "Kiota 1.35.0 bundles affected MessagePack. The pinned generation path invokes only kiota generate; no route to untrusted MessagePack object deserialization was identified. This is a time-limited reachability assessment, not proof that the library is safe.",
         "compensatingControl": "Verify exact Kiota package SHA-256 5e75f6adf161717be8d9f39eb596f93d52535e7b8cbcc00cffdcef3d0d3c3486; fixed generate arguments; immutable image and source-bound scan; network-disabled, read-only, non-root container; 2 GiB memory and 120-second limits. Reassess on upstream fix or invocation change.",
-        "approvalReference": "AI-DLC QUESTION_ANSWERED 2026-10-28T17:03:05Z, after DECISION_RECORDED 2026-10-28T16:53:23Z and HUMAN_TURN 2026-10-28T17:01:57Z; session 01a0806c-9cde-7650-ace6-22e718a794e2; aidlc/spaces/default/intents/260908-stock-sense-design/construction/contracts/code-generation/pr59-image-exception-questions.md; retained scan https://github.com/anton-asnitsky/StockSense/actions/runs/40727329170",
+        "approvalReference": "AI-DLC QUESTION_ANSWERED 2026-10-28T17:03:05Z, after DECISION_RECORDED 2026-10-28T16:53:23Z and HUMAN_TURN 2026-10-28T17:01:57Z; immutable decision https://github.com/anton-asnitsky/StockSense/blob/fdd9d1f837b65ab4a42f7344b69369dbaf52f8bb/aidlc/spaces/default/intents/260908-stock-sense-design/construction/contracts/code-generation/pr59-image-exception-questions.md; retained scan https://github.com/anton-asnitsky/StockSense/actions/runs/40727329170",
         "createdAt": "2026-10-28T17:10:06Z",
         "expiresAt": "2026-11-25T00:00:00Z"
       }
