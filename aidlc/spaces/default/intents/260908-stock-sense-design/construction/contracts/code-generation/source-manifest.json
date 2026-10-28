@@ -545,6 +545,21 @@
     },
     {
       "path": "tools/contracts/test/unit/image-ledger.test.mjs"
+    },
+    {
+      "path": "tools/contracts/scripts/build-candidate-evidence.mjs"
+    },
+    {
+      "path": "tools/contracts/scripts/verify-candidate-evidence.mjs"
+    },
+    {
+      "path": "tools/contracts/src/candidate-provenance.mjs"
+    },
+    {
+      "path": "tools/contracts/test/integration/cli.clean-consumer.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/candidate-evidence.test.mjs"
     }
   ]
 }

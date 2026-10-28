@@ -1,7 +1,7 @@
 {
   "stage": "code-generation",
   "unit": "contracts",
-  "decision_basis": "U1's 181 declared source paths match merged Bolt 9885068ad4098c1a7a1999adb4dda86552383331, except security/image-exceptions.json, which matches protected main 8a415cfd6dfc124edbd7b84c9b7e22553e3064a2. The AI-DLC checkout is an uncommitted review mirror; committed-Bolt lint, type-check and unit tests passed locally, and PR #48's exact merged tree passed hosted U1 and Vulnerability checks. See verification/u1-source-snapshot-2026-10-27.md. The owner's 2026-10-09 audit decision resolves OQ8 public-PR isolation for U1 only; U2 protected-base policy and other downstream state/backend and deployment-runner obligations remain separate. OK means the complete named criterion is demonstrated and targets an implementation or test file; a validated C01-C27 candidate is not a C01 release or provider/runtime proof. GAP retains incomplete release, runtime, compatibility and downstream evidence obligations. R-14 through R-16, source-bound independent review and U1 acceptance remain open.",
+  "decision_basis": "U1's 186 declared source paths are an inventory of merged Bolt Git object 7ff4c4c41d24146f25c4cc2dd3ef1074063e2408; its tree 61794b716eadc7484067d29a4e726a5789e991af exactly matches PR #51's hosted-tested head d4aa5a6ddc13cce94f1077288971cf05a104511c. The source manifest adds the five candidate-evidence source/test paths introduced by that story. This AI-DLC checkout is a divergent documentation mirror: those five paths are absent locally and seven existing declared paths have different bytes, so it is not a source-bound review snapshot. Protected main 36c54749790c6288553018e15989beca7418f5f9 carries the owner-approved, digest-specific Kiota exception through PR #56; PR #51 hosted run 40685726261 attempt 2 passed U1 and Vulnerability, including current image scans, lint, type-check, unit/integration tests and the 80% coverage floor. Main-push runs 40702747511 and 40702746980 passed on the prior main tree, but do not attest the newly merged Bolt candidate. See verification/u1-pr51-story-merge-2026-10-28.md and verification/pr56-bootstrap-merge-2026-10-28.md. OK means the complete named criterion is demonstrated and targets implementation or test evidence in the committed Bolt; a validated C01-C27 candidate is not a C01 release or provider/runtime proof. GAP retains incomplete release, runtime, compatibility and downstream evidence obligations. R-14 through R-16, a matching source checkout, source-bound independent candidate review and U1 acceptance remain open.",
   "upstream_ids": [
     "AC8.2.1",
     "AC8.2.2",
@@ -118,7 +118,7 @@
     {
       "id": "AC8.2.4",
       "status": "GAP",
-      "target": "The merged C01-C27 candidate has 40 canonical sources, 38 bound elements and 10 inventoried exemptions (tools/contracts/test/integration/full-package.test.mjs). Semantic security/idempotency cases and complete changed-catalogue baseline compatibility remain incomplete; candidate coverage is not an approved release catalogue."
+      "target": "The merged C01-C27 candidate has 40 canonical sources, 38 bound elements and 10 inventoried exemptions (tools/contracts/test/integration/full-package.test.mjs). PR #51 binds the full validation-result digest in tools/contracts/src/candidate-provenance.mjs and tools/contracts/test/integration/cli.catalogue.test.mjs. Semantic security/idempotency cases and complete changed-catalogue baseline compatibility remain incomplete; candidate coverage is not an approved release catalogue."
     },
     {
       "id": "AC8.5.1",
@@ -178,17 +178,17 @@
     {
       "id": "AC10.2.1",
       "status": "GAP",
-      "target": "The trusted main push produced an attested C01-C27 candidate and SBOM (run 38876247058), but no identified released revision has complete requirement-to-validation evidence links."
+      "target": "The trusted main push produced an attested C01-C27 candidate and SBOM (run 40702746980). PR #51 added source-bound validation-result evidence in tools/contracts/src/candidate-provenance.mjs and passed hosted run 40685726261 attempt 2, but its new candidate record has not been produced and attested by a trusted main push. No identified released revision has complete requirement-to-validation evidence links."
     },
     {
       "id": "AC10.2.2",
       "status": "GAP",
-      "target": "The candidate and SBOM exist (run 38876247058); model/data cards, rejected candidates, measured heavy-job profiles, recovery findings and separated OQ5 limitations are not in a released Reviewer evidence report."
+      "target": "The prior candidate and SBOM exist (main run 40702746980), and PR #51 implements a new source-bound candidate record. That record is not yet attested on trusted main; model/data cards, rejected candidates, measured heavy-job profiles, recovery findings and separated OQ5 limitations are not in a released Reviewer evidence report."
     },
     {
       "id": "AC10.2.3",
       "status": "GAP",
-      "target": "The main-push candidate is attested and clean-consumer verified, with releaseReady: false (verification/u1-bootstrap-2026-10-16.md). No owner-approved versioned release/tag/image or publication is evidenced."
+      "target": "The previous main-push candidate is attested and clean-consumer verified, with releaseReady: false (run 40702746980). PR #51's new candidate-record implementation remains on the U1 Bolt. No owner-approved versioned release/tag/image or publication is evidenced."
     },
     {
       "id": "AC10.2.4",
@@ -393,12 +393,12 @@
     {
       "id": "BR6.5",
       "status": "GAP",
-      "target": "Run 38876247058 produced an attested candidate and SBOM; model/data cards, rejected candidates, measured resource/recovery findings and Reviewer-readable distinct outcomes remain incomplete."
+      "target": "Main run 40702746980 produced an attested prior candidate and SBOM; PR #51 implements a source-bound candidate record and passed hosted U1/Vulnerability on run 40685726261 attempt 2, but no trusted main run has attested that new record. Model/data cards, rejected candidates, measured resource/recovery findings and Reviewer-readable distinct outcomes remain incomplete."
     },
     {
       "id": "BR6.6",
       "status": "GAP",
-      "target": "Clean verification bound the candidate bundle to main commit 581b70a and its trusted workflow, but releaseReady is false and no explicitly owner-approved versioned release/tag/package is published (verification/u1-bootstrap-2026-10-16.md)."
+      "target": "Clean verification bound the prior candidate bundle to protected main 36c5474 and its trusted release-evidence workflow (run 40702746980). PR #51 adds exact-subject and source-bound checks for the next candidate, but that new record has not been attested from main; releaseReady remains false and no explicitly owner-approved versioned release/tag/package is published."
     },
     {
       "id": "BR6.7",
@@ -523,7 +523,7 @@
     {
       "id": "NFR11.3",
       "status": "GAP",
-      "target": "The committed U1 Bolt at 9885068 passed 14/14 focused generation integration tests for pinned openapi-typescript, Kiota and Modelina, checking the declared three consumers and 107 output digests (verification/u1-candidate-evidence-prep-2026-10-27.md). A hosted combined candidate record with source, tool, configuration, output and elapsed evidence is still absent."
+      "target": "Merged U1 Bolt 7ff4c4c has the same tree as PR #51 head d4aa5a6, whose hosted run 40685726261 attempt 2 passed pinned generation integration and coverage checks for the three declared consumers and 107 outputs. tools/contracts/src/candidate-provenance.mjs binds source, configuration, output and validation digests; a hosted, trusted-main combined candidate record with required elapsed evidence is still absent."
     },
     {
       "id": "NFR13.1",
@@ -533,7 +533,7 @@
     {
       "id": "NFR13.2",
       "status": "GAP",
-      "target": "PR #48 hosted rerun 40550767567 attempt 2 retained validator and Kiota CycloneDX image inventories and scans; validator had zero findings and Kiota had one Medium MessagePack finding. PR #50 placed the owner-approved, finding-specific exception for exact candidate digest sha256:ce87da745fe33c5300bff56d107282fe9ea177a6a6b4b30437ff8bca67df470b on protected main. The committed Bolt plus those retained inputs produced a local 3,078-component candidate SBOM (verification/u1-candidate-evidence-prep-2026-10-27.md), but a hosted, attested combined SBOM for this candidate is absent. Complete released-revision dependency and gate proof remain open."
+      "target": "PR #51 hosted run 40685726261 attempt 2 retained current validator and Kiota CycloneDX image inventories and scans; validator had zero findings and Kiota had one Medium MessagePack finding. PR #56 placed the owner-approved, finding-specific exception for exact candidate digest sha256:ae449a9062ba7ecb8acc196fcad442a21b26daf25e4d5df915249fe3e5b28e76 on protected main. The prior main-push SBOM passed run 40702746980, but a hosted, attested combined SBOM for the new Bolt candidate is absent. Complete released-revision dependency and gate proof remain open."
     },
     {
       "id": "NFR13.3",
@@ -548,7 +548,7 @@
     {
       "id": "NFR13.5",
       "status": "GAP",
-      "target": "PR #48 hosted rerun 40550767567 attempt 2 retained current image SBOMs/scans; protected-main exception matching, lint, type-check, unit/integration tests and the 80% line-coverage gate passed. The separate secret/dependency Vulnerability scan passed. A locally assembled candidate-specific combined SBOM exists (verification/u1-candidate-evidence-prep-2026-10-27.md), but it lacks hosted attestation; complete released-package supply-chain and gate evidence also remain open."
+      "target": "PR #51 hosted run 40685726261 attempt 2 passed current image SBOM/scans, protected-main exception matching, lint, type-check, unit/integration tests, the 80% line-coverage floor and the separate Vulnerability scan. The prior main-push SBOM was attested in run 40702746980, but an attested combined SBOM for this new Bolt candidate and complete released-package supply-chain evidence remain open."
     },
     {
       "id": "NFR15.1",
@@ -558,17 +558,17 @@
     {
       "id": "NFR15.2",
       "status": "GAP",
-      "target": "The owner-approved Kiota MessagePack 2.5.302 exception is bound to PR #48 candidate digest sha256:ce87da745fe33c5300bff56d107282fe9ea177a6a6b4b30437ff8bca67df470b, expires 2026-11-25, and was merged to protected main by PR #50. PR #48 hosted rerun 40550767567 attempt 2 passed exact current-finding/expiry ledger verification. Independent source-bound U1 candidate review remains open before this requirement can be marked complete (verification/pr50-bootstrap-merge-2026-10-27.md)."
+      "target": "The owner-approved Kiota MessagePack 2.5.302 exception is bound to the PR #51 candidate digest sha256:ae449a9062ba7ecb8acc196fcad442a21b26daf25e4d5df915249fe3e5b28e76, expires 2026-11-25, and was merged to protected main by PR #56. PR #51 hosted run 40685726261 attempt 2 passed exact current-finding/expiry ledger verification. Independent source-bound U1 candidate review remains open before this requirement can be marked complete (verification/pr56-bootstrap-merge-2026-10-28.md)."
     },
     {
       "id": "NFR15.3",
       "status": "GAP",
-      "target": "The candidate bundle has checked SHA-256 entries and a verified manifest digest, but no release digest manifest binds all required tools, configurations, generated outputs, SBOM and validation result."
+      "target": "PR #51's tools/contracts/src/candidate-provenance.mjs implements a candidate record that binds 40 source digests, three consumer configurations and 107 outputs, the SBOM, image scans and full validation-result digest; hosted U1 passed on run 40685726261 attempt 2. The new record has not been attested on trusted main, and no release digest manifest binds all required tools, configurations, outputs, SBOM and validation result for a released C01 package."
     },
     {
       "id": "NFR15.4",
       "status": "GAP",
-      "target": "A clean checkout verified the candidate subject, signer workflow, main ref and commit with GitHub attestation; no released C01 package subject/manifest verification exists (verification/u1-bootstrap-2026-10-16.md)."
+      "target": "A clean checkout verified the prior main candidate subject, signer workflow, main ref and commit with GitHub attestation (run 40702746980). PR #51 adds clean-consumer verification of the new source-bound candidate record and passed hosted U1 run 40685726261 attempt 2, but the new record has not been attested on main and no released C01 package subject/manifest verification exists."
     },
     {
       "id": "NFR15.5",
