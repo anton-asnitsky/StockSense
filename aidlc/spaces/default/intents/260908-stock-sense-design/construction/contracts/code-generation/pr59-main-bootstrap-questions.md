@@ -72,4 +72,4 @@ required-check change and squash merge of head
 - Approve PR #59 bootstrap and temporary U1/U2 check change
 - Request changes
 
-[Answer]:
+[Answer]: Approve PR #59 bootstrap and temporary U1/U2 check change
