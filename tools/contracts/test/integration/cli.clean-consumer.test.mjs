@@ -44,7 +44,11 @@ test('all 107 declared outputs regenerate from a clean checkout with the pinned 
   { timeout: 300_000 }, async () => {
     const profile = JSON.parse(await readFile(profilePath, 'utf8'));
     const revision = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim();
-    const results = await regenerateFromCleanCheckout(root, revision, profile.consumers);
+    const images = process.env.STOCKSENSE_STANDARDS_IMAGE || process.env.STOCKSENSE_KIOTA_IMAGE
+      ? { validatorImageId: process.env.STOCKSENSE_STANDARDS_IMAGE,
+          kiotaImageId: process.env.STOCKSENSE_KIOTA_IMAGE }
+      : null;
+    const results = await regenerateFromCleanCheckout(root, revision, profile.consumers, images);
     assert.deepEqual(results.map(row => row.consumerId), profile.consumers.map(row => row.consumerId));
     assert.equal(results.reduce((count, row) => count + Object.keys(row.outputs).length, 0), 107);
   });
