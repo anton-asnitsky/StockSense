@@ -180,3 +180,36 @@ jobs:
           path: tools/contracts/dist/candidate.bundle.json
           if-no-files-found: error
           retention-days: 30
+
+      # A candidate verdict is possible only after these four hosted subjects
+      # have been attested. The protected source CLI rechecks current main's
+      # finding dispositions, then regenerates all declared consumer outputs
+      # from committed inputs. This does not publish a C01 release.
+      - name: Build and verify the U1 candidate evidence record
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
+          STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
+        run: |
+          set -euo pipefail
+          node tools/contracts/src/candidate-provenance.mjs build \
+            tools/contracts/dist/candidate.bundle.json tools/contracts/sbom.cdx.json \
+            tools/contracts/dist/image-evidence tools/contracts/dist/security-reports \
+            "$GITHUB_SHA" tools/contracts/dist/candidate-evidence.json
+          node tools/contracts/src/candidate-provenance.mjs verify \
+            tools/contracts/dist/candidate-evidence.json \
+            tools/contracts/dist/candidate.bundle.json tools/contracts/sbom.cdx.json \
+            tools/contracts/dist/image-evidence tools/contracts/dist/security-reports
+
+      - name: Attest the verified U1 candidate evidence record
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v2
+        with:
+          subject-path: tools/contracts/dist/candidate-evidence.json
+
+      - name: Retain the verified U1 candidate evidence record
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: candidate-evidence-${{ github.sha }}
+          path: tools/contracts/dist/candidate-evidence.json
+          if-no-files-found: error
+          retention-days: 30
