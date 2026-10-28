@@ -1,6 +1,5 @@
-# Build context: tools/contracts from a clean checkout.
-# The base manifest is fixed; the resulting validator image must be built,
-# smoke-tested, inspected, and supplied to the runner by its own sha256 digest.
+# Build context: tools/contracts from a clean checkout. Keep the approved,
+# immutable Node build image; the final Linux/amd64 runtime is distroless.
 FROM docker.io/library/node@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df AS dependencies
 
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
@@ -13,25 +12,33 @@ RUN corepack enable \
     && pnpm install --prod --frozen-lockfile --ignore-scripts \
     && node node_modules/@redocly/cli/bin/cli.js --version
 
-FROM docker.io/library/node@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df
+# @asyncapi/specs includes its own development bundler and nested uuid 8.x.
+# The validator uses the published specs, not this bundler. Fail if the pinned
+# package layout changes, then omit the unused tool from the runtime image.
+RUN test -f node_modules/.pnpm/@asyncapi+specs@5.1.0/node_modules/@asyncapi/specs/tools/bundler/node_modules/uuid/package.json \
+    && rm -rf node_modules/.pnpm/@asyncapi+specs@5.1.0/node_modules/@asyncapi/specs/tools/bundler
+COPY src ./src
+COPY Dockerfile.validator ./Dockerfile.validator
+RUN node --check src/container-schema-validator.mjs \
+    && node --check src/container-fixture-oracle.mjs \
+    && node --check src/container-asyncapi-validator.mjs \
+    && node --check src/container-tool-launcher.mjs \
+    && node src/source-digest.mjs > source-digest.txt
+
+# Pin the immutable Linux/amd64 Chainguard glibc runtime. It supplies the
+# dynamic C/C++ libraries without a shell; retain the reviewed Node 24.19.0
+# binary from the immutable build image and verify it in the image build step.
+FROM --platform=linux/amd64 cgr.dev/chainguard/glibc-dynamic@sha256:6169708f3c53a6fab9c8911bc6c91f7a8425c2f529d8a92b731c1a47e24f0e67
 ENV NODE_ENV=production \
     NO_UPDATE_NOTIFIER=1 \
     SUPPRESS_NO_CONFIG_WARNING=1 \
     HOME=/tmp
 WORKDIR /opt/contracts
+COPY --from=dependencies /usr/local/bin/node /nodejs/bin/node
 COPY --from=dependencies /opt/contracts/package.json /opt/contracts/pnpm-lock.yaml ./
 COPY --from=dependencies /opt/contracts/node_modules ./node_modules
-COPY src ./src
-RUN node --check /opt/contracts/src/container-schema-validator.mjs
-RUN node --check /opt/contracts/src/container-fixture-oracle.mjs
-RUN node --check /opt/contracts/src/container-asyncapi-validator.mjs
-# Record which tool sources this image carries. The runner compares this with
-# the tree it is being asked to speak for and refuses a mismatch, so a stale
-# image cannot silently report an old tool's verdict as the current one.
-RUN node /opt/contracts/src/source-digest.mjs > /opt/contracts/source-digest.txt \
-    && cat /opt/contracts/source-digest.txt
-RUN groupadd --gid 65532 stocksense \
-    && useradd --uid 65532 --gid 65532 --home-dir /tmp --no-create-home --shell /usr/sbin/nologin stocksense
+COPY --from=dependencies /opt/contracts/src ./src
+COPY --from=dependencies /opt/contracts/source-digest.txt ./source-digest.txt
 USER 65532:65532
-ENTRYPOINT ["/usr/local/bin/node"]
+ENTRYPOINT ["/nodejs/bin/node"]
 CMD ["--version"]

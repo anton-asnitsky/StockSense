@@ -5,20 +5,61 @@ identity-audit envelope schemas. These are canonical source documents for the
 contract package. Their `additionalProperties: false` boundaries keep tenant
 and global messages separate.
 
-`source/` also contains draft canonical documents for every required C01-C27
+`source/` contains 40 canonical documents covering every required C01-C27
 artifact kind. The C08 inventory port uses a closed in-process dialect; C16 and
 C20 identity profiles and C22/C23 messaging profiles use JSON Schema 2020-12.
 The C23 AsyncAPI source names distinct tenant and global identity routes.
+Retail Data's import AsyncAPI defines requested, completed, and failed job
+messages; its separate audit AsyncAPI defines the authoritative import event.
+Retail Data (U4) owns these message schemas and business effects. The
+inventory-import source is listed under C23 to validate the shared transport
+profile for U4's bootstrap publisher; that catalogue placement does not make
+Messaging Platform (U14) the semantic owner of the messages. The import audit
+source is listed under C15 for the authoritative event.
 `profiles/messaging-platform/` holds governed C22/C23 profile **candidates**
-that validate against those schemas. These drafts are not yet bound into a
-complete, revision-stamped package with fixtures and release evidence.
+that validate against those schemas.
+
+`node tools/contracts/scripts/build-full-package.mjs` assembles the C01-C27
+candidate from the canonical sources and checks its revision-bound example
+fixtures. The current catalogue binds 38 example targets and records 10
+explicit exemptions. The result remains a candidate with `releaseReady: false`:
+consumer-output provenance, current security disposition, provider behavior,
+and the full C01 release gate require separate evidence.
 
 `catalogue/v1/boundary-sources.json` is the checked C01-C27 source-to-boundary
 map. After committing canonical source edits, run
 `node tools/contracts/scripts/build-source-inventory.mjs` from the repository
 root. It inventories every canonical file, checks each required artifact kind,
-and verifies all 38 source digests against the Git `sourceRevision` it reports.
+and verifies all 40 source digests against the Git `sourceRevision` it reports.
 This is an input to package assembly, not a validated package or release claim.
+
+The candidate evidence command binds a validated C01-C27 bundle to its exact
+committed source revision, all 40 canonical source blobs and manifest, all three declared consumers and 107
+output hashes, the candidate CycloneDX SBOM, current secret/vulnerability
+reports, both built-image inventories/scans, and the protected-main image-ledger
+receipt. It verifies the bundle and SBOM attestations with `gh attestation
+verify` against the trusted main workflow and regenerates the consumer outputs
+from a temporary Git archive of the candidate commit. Run from the repository
+root after the hosted main-push evidence job has produced and retained those
+artifacts, with a read-only `GITHUB_TOKEN` for the current protected ledger and
+`STOCKSENSE_STANDARDS_IMAGE` and `STOCKSENSE_KIOTA_IMAGE` set to
+the exact image IDs recorded by that job:
+
+```text
+node tools/contracts/src/candidate-provenance.mjs build <candidate.bundle.json> <sbom.cdx.json> <image-evidence-dir> <security-reports-dir> <candidate-commit> <candidate-evidence.json>
+node tools/contracts/src/candidate-provenance.mjs verify <candidate-evidence.json> <candidate.bundle.json> <sbom.cdx.json> <image-evidence-dir> <security-reports-dir>
+```
+
+The verifier recomputes every binding, checks the current protected-main
+finding dispositions and all four hosted attestations, and refuses missing,
+stale, changed, or unverified inputs. The trusted `release-evidence` job runs
+this command only after a push to `main`; pull-request checks cannot claim its
+post-merge result. Candidate READY requires that successful hosted run and a
+source-bound review. The record always has `releaseReady: false`; it does not
+establish a C01 release or any provider runtime behavior.
+The matching `scripts/build-candidate-evidence.mjs` and
+`scripts/verify-candidate-evidence.mjs` wrappers are local convenience commands;
+the trusted hosted verdict invokes the source CLI above.
 
 Compatibility against an immutable Git baseline uses the pinned OpenAPI differ.
 An unchanged AsyncAPI or JSON Schema source passes by identical digest; a new

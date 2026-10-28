@@ -1,0 +1,105 @@
+asyncapi: 3.0.0
+info:
+  title: StockSense Inventory Import Job Events
+  version: 1.0.0
+  description: U4 owns the import state and outbox; this contract defines only the wire shapes.
+defaultContentType: application/json
+servers:
+  localRabbitMq:
+    host: rabbitmq.stocksense.svc.cluster.local:5672
+    protocol: amqp
+channels:
+  inventoryImportRequested:
+    address: stocksense.retail-data.inventory-import.requested.v1
+    messages:
+      inventoryImportRequested:
+        name: inventory-import.requested
+        payload:
+          schemaFormat: 'application/schema+json;version=draft-2020-12'
+          schema:
+            allOf:
+              - $ref: 'https://contracts.stocksense.local/common/v1/message-envelope.schema.json'
+              - type: object
+                properties:
+                  messageType: { const: inventory.import.requested }
+                  schemaVersion: { const: 1.0.0 }
+                  data:
+                    type: object
+                    required: [jobId, sourceDigest, importKind]
+                    properties:
+                      jobId: { type: string, format: uuid }
+                      sourceDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+                      importKind: { const: inventory }
+                    additionalProperties: false
+  inventoryImportCompleted:
+    address: stocksense.retail-data.inventory-import.completed.v1
+    messages:
+      inventoryImportCompleted:
+        name: inventory-import.completed
+        payload:
+          schemaFormat: 'application/schema+json;version=draft-2020-12'
+          schema:
+            allOf:
+              - $ref: 'https://contracts.stocksense.local/common/v1/message-envelope.schema.json'
+              - type: object
+                properties:
+                  messageType: { const: inventory.import.completed }
+                  schemaVersion: { const: 1.0.0 }
+                  data:
+                    type: object
+                    required: [jobId, sourceDigest, acceptedRows, rejectedRows, inventoryVersion]
+                    properties:
+                      jobId: { type: string, format: uuid }
+                      sourceDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+                      acceptedRows: { type: integer, minimum: 0 }
+                      rejectedRows: { type: integer, minimum: 0 }
+                      inventoryVersion: { type: string, minLength: 1 }
+                    additionalProperties: false
+  inventoryImportFailed:
+    address: stocksense.retail-data.inventory-import.failed.v1
+    messages:
+      inventoryImportFailed:
+        name: inventory-import.failed
+        payload:
+          schemaFormat: 'application/schema+json;version=draft-2020-12'
+          schema:
+            allOf:
+              - $ref: 'https://contracts.stocksense.local/common/v1/message-envelope.schema.json'
+              - type: object
+                properties:
+                  messageType: { const: inventory.import.failed }
+                  schemaVersion: { const: 1.0.0 }
+                  data:
+                    type: object
+                    required: [jobId, sourceDigest, reasonCode]
+                    properties:
+                      jobId: { type: string, format: uuid }
+                      sourceDigest: { type: string, pattern: '^sha256:[0-9a-f]{64}$' }
+                      reasonCode: { type: string, pattern: '^[A-Z][A-Z0-9_]{2,63}$' }
+                    additionalProperties: false
+operations:
+  publishInventoryImportRequested:
+    action: send
+    channel: { $ref: '#/channels/inventoryImportRequested' }
+  consumeInventoryImportRequested:
+    action: receive
+    channel: { $ref: '#/channels/inventoryImportRequested' }
+  publishInventoryImportCompleted:
+    action: send
+    channel: { $ref: '#/channels/inventoryImportCompleted' }
+  consumeInventoryImportCompleted:
+    action: receive
+    channel: { $ref: '#/channels/inventoryImportCompleted' }
+  publishInventoryImportFailed:
+    action: send
+    channel: { $ref: '#/channels/inventoryImportFailed' }
+  consumeInventoryImportFailed:
+    action: receive
+    channel: { $ref: '#/channels/inventoryImportFailed' }
+x-stocksense-import-lifecycle:
+  semanticOwner: retail-data
+  requestIdentity: [retailerId, data.jobId, idempotencyKey]
+  terminalOutcomes: exactly-one-of-completed-or-failed
+  terminalCorrelation: [retailerId, data.jobId, correlationId]
+  authoritativeAuditRoute: stocksense.audit.v1
+  payloadContent: digest-and-counts-only

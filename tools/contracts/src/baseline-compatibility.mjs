@@ -1,10 +1,11 @@
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { mkdir } from 'node:fs/promises';
-import { ContractError, deriveIdentity, digest } from './package-loader.mjs';
+import { ContractError, assertSafePath, deriveIdentity, digest } from './package-loader.mjs';
 import { readBlob } from './provenance.mjs';
-import { buildSourceInventory } from './catalogue.mjs';
+import { buildSourceInventory, OWNER_BY_AREA } from './catalogue.mjs';
 import { assertIntegrationBaseline, assessCompatibility, bindPredecessors } from './compatibility.mjs';
 
 // Compare the whole canonical catalogue against an immutable baseline commit.
@@ -16,25 +17,37 @@ import { assertIntegrationBaseline, assessCompatibility, bindPredecessors } from
 // canonical sources themselves: it is an exact commit, it is immutable, and the
 // comparison it yields is a real one over real documents.
 //
-// A document absent at the baseline is a first-release, recorded with that
-// reason rather than passed over, so a gap can never read as "nothing changed".
+// A genuinely new document is a recorded first release; every baseline
+// identity must still bind to a successor or have an approved mapping.
 
 /** @returns {never} */
 const fail = (code, rule, message) => { throw new ContractError(code, rule, message); };
 
-/** The identity-bearing entries for one revision of the catalogue. */
-function entriesAt(repoRoot, revision, documents) {
+/** Enumerate the immutable tree itself; candidate paths cannot reveal removals. */
+function entriesAt(repoRoot, revision) {
+  const tree = spawnSync('git', ['ls-tree', '-r', '-z', revision, '--', 'contracts/source/'],
+    { cwd: repoRoot, timeout: 60_000, maxBuffer: 8 * 1024 * 1024 });
+  if (tree.error || tree.status !== 0) {
+    fail('BASELINE_SOURCE_UNAVAILABLE', 'BR4.1', 'The immutable baseline source tree cannot be read');
+  }
   const entries = [];
-  const absent = [];
-  for (const { document, artifactKind, semanticOwner } of documents) {
-    let bytes;
-    try { bytes = readBlob(repoRoot, revision, `contracts/source/${document}`); }
-    catch (error) {
-      // A path the baseline does not carry is a first-release, not a failure.
-      if (error.code !== 'SOURCE_PATH_ABSENT') throw error;
-      absent.push(document);
-      continue;
+  for (const record of tree.stdout.toString('utf8').split('\0').filter(Boolean)) {
+    const tab = record.indexOf('\t');
+    const metadata = record.slice(0, tab).split(' ');
+    const sourcePath = record.slice(tab + 1);
+    if (tab < 0 || metadata.length !== 3 || !['100644', '100755'].includes(metadata[0]) ||
+        metadata[1] !== 'blob' || !sourcePath.startsWith('contracts/source/')) {
+      fail('BASELINE_SOURCE_INVALID', 'BR4.1', 'The baseline contains an invalid canonical source entry');
     }
+    const document = assertSafePath(sourcePath.slice('contracts/source/'.length));
+    const artifactKind = document.endsWith('.openapi.yaml') ? 'openapi' :
+      document.endsWith('.asyncapi.yaml') ? 'asyncapi' :
+      document.endsWith('.schema.json') || document.endsWith('.shared-schema.yaml') ? 'schema' : null;
+    const semanticOwner = OWNER_BY_AREA[document.split('/')[0]];
+    if (!artifactKind || !semanticOwner) {
+      fail('BASELINE_SOURCE_INVALID', 'BR4.1', 'The baseline contains an unknown canonical source');
+    }
+    const bytes = readBlob(repoRoot, revision, sourcePath);
     const contentDigest = digest(bytes);
     entries.push({
       document,
@@ -46,7 +59,7 @@ function entriesAt(repoRoot, revision, documents) {
       ...deriveIdentity(artifactKind, semanticOwner, document, '1.0.0', contentDigest)
     });
   }
-  return { entries, absent };
+  return entries;
 }
 
 /**
@@ -60,10 +73,6 @@ export async function assessCatalogueAgainstBaseline(repoRoot, baselineCommit,
   { requirePinnedDiffer = false, approvals = {} } = {}) {
   const baseline = assertIntegrationBaseline({ commit: baselineCommit });
   const inventory = await buildSourceInventory(repoRoot);
-  if (inventory.sourceRevision === baseline.commit) {
-    fail('BASELINE_IDENTICAL', 'BR4.2', 'The baseline commit is the candidate revision, so the comparison is empty');
-  }
-
   const candidate = inventory.entries.map(entry => ({
     document: entry.document,
     artifactKind: entry.artifactKind,
@@ -73,22 +82,28 @@ export async function assessCatalogueAgainstBaseline(repoRoot, baselineCommit,
     ...deriveIdentity(entry.artifactKind, entry.semanticOwner, entry.document, '1.0.0', entry.contentDigest)
   }));
 
-  const previous = entriesAt(repoRoot, baseline.commit, candidate);
+  const previous = entriesAt(repoRoot, baseline.commit);
+  if (inventory.sourceRevision === baseline.commit && candidate.length === previous.length &&
+      candidate.every(entry => previous.some(prior => prior.logicalId === entry.logicalId &&
+        prior.revisionId === entry.revisionId))) {
+    fail('BASELINE_IDENTICAL', 'BR4.2', 'The baseline commit is the candidate revision, so the comparison is empty');
+  }
+  const previousIds = new Set(previous.map(entry => entry.logicalId));
   const firstRelease = Object.fromEntries(candidate
-    .filter(entry => previous.absent.includes(entry.document))
+    .filter(entry => !previousIds.has(entry.logicalId))
     .map(entry => [entry.logicalId, `absent at baseline ${baseline.commit}`]));
-  const bindings = bindPredecessors(candidate, previous.entries, { firstRelease });
+  const bindings = bindPredecessors(candidate, previous, { firstRelease, approvals });
 
   // The pinned differ consumes immutable local files, so the baseline bytes are
   // materialised once into a scratch tree that is removed again. Nothing is
   // fetched and nothing is written inside the repository.
   const scratch = await mkdtemp(join(tmpdir(), 'stocksense-baseline-'));
-  const baselineBytes = new Map(previous.entries.map(entry => [entry.document, entry.bytes]));
+  const baselineBytes = new Map(previous.map(entry => [entry.document, entry.bytes]));
   try {
     const resolveSource = async binding => {
-      const bytes = baselineBytes.get(binding.document);
+      const bytes = baselineBytes.get(binding.predecessorDocument ?? binding.document);
       if (!bytes) fail('DIFF_SOURCE', 'BR4.3', 'The baseline bytes for a bound document are unavailable');
-      const predecessorPath = join(scratch, binding.document);
+      const predecessorPath = join(scratch, binding.predecessorDocument ?? binding.document);
       await mkdir(dirname(predecessorPath), { recursive: true });
       await writeFile(predecessorPath, bytes);
       return { predecessorPath, candidatePath: join(repoRoot, 'contracts/source', binding.document) };

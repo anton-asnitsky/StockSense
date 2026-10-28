@@ -43,8 +43,62 @@ test('BR4.2: a missing predecessor needs an explicit first-release reason', () =
   assert.equal(bindings[0].firstReleaseReason, 'New C10 surface in this Bolt');
 });
 
+test('BR4.1: a removed baseline identity cannot disappear behind a first-release candidate', () => {
+  const previous = entry('old', rev('1'), 'schema', 'old.schema.json');
+  const replacement = entry('new', rev('2'), 'schema', 'new.schema.json');
+  assert.throws(() => bindPredecessors([replacement], [previous],
+    { firstRelease: { new: 'Absent at baseline' } }), error =>
+    error.code === 'PREDECESSOR_UNACCOUNTED' && error.ruleId === 'BR4.1');
+  assert.throws(() => bindPredecessors([], [previous]), error =>
+    error.code === 'PREDECESSOR_UNACCOUNTED' && error.ruleId === 'BR4.1');
+});
+
+test('BR4.1: a renamed identity needs an exact, same-kind approved predecessor mapping', () => {
+  const previous = entry('old', rev('1'), 'asyncapi', 'old.asyncapi.yaml');
+  const replacement = entry('new', rev('2'), 'asyncapi', 'new.asyncapi.yaml');
+  const approval = { predecessorLogicalId: 'old', predecessorRevisionId: rev('1'),
+    approvedBy: 'synthetic-owner', overlapUntil: '2099-12-31' };
+  for (const invalid of [
+    { ...approval, predecessorRevisionId: rev('9') },
+    { ...approval, overlapUntil: 'not-a-date' },
+    { ...approval, approvedBy: '' }
+  ]) {
+    assert.throws(() => bindPredecessors([replacement], [previous],
+      { approvals: { new: invalid } }), error =>
+      error.code === 'PREDECESSOR_MAPPING_UNAPPROVED' && error.ruleId === 'BR4.1');
+  }
+  const [binding] = bindPredecessors([replacement], [previous], { approvals: { new: approval } });
+  assert.equal(binding.predecessorLogicalId, 'old');
+  assert.equal(binding.predecessorDocument, 'old.asyncapi.yaml');
+  assert.equal(binding.predecessorRevisionId, rev('1'));
+  assert.equal(binding.unchanged, false);
+  expectCode(() => bindPredecessors([entry('new', rev('2'), 'schema', 'new.schema.json')],
+    [previous], { approvals: { new: approval } }), 'PREDECESSOR_KIND');
+});
+
+test('BR4.1: unchanged predecessors and genuinely new identities remain safe', () => {
+  const unchanged = entry('existing', rev('1'), 'openapi', 'existing.openapi.yaml');
+  const added = entry('new', rev('2'), 'schema', 'new.schema.json');
+  const bindings = bindPredecessors([unchanged, added], [unchanged],
+    { firstRelease: { new: 'New schema at immutable baseline' } });
+  assert.deepEqual(bindings.map(item => [item.logicalId, item.unchanged, item.firstReleaseReason]),
+    [['existing', true, undefined], ['new', false, 'New schema at immutable baseline']]);
+});
+
 test('BR4.2: a predecessor of a different canonical kind is rejected', () => {
   expectCode(() => bindPredecessors([entry('L1', rev('1'), 'openapi')], [entry('L1', rev('9'), 'asyncapi')]), 'PREDECESSOR_KIND');
+});
+
+test('BR4.2: duplicate immutable identities cannot select a predecessor by array order', () => {
+  const candidate = entry('L1', rev('1'), 'schema', 'envelope.json');
+  const older = entry('L1', rev('8'), 'schema', 'envelope.json');
+  const newer = entry('L1', rev('9'), 'schema', 'envelope.json');
+  for (const baseline of [[older, newer], [newer, older]]) {
+    assert.throws(() => bindPredecessors([candidate], baseline), error =>
+      error.code === 'PREDECESSOR_AMBIGUOUS' && error.ruleId === 'BR4.2');
+  }
+  assert.throws(() => bindPredecessors([candidate, candidate], [older]), error =>
+    error.code === 'CANDIDATE_IDENTITY_AMBIGUOUS' && error.ruleId === 'BR4.2');
 });
 
 test('BR4.3: sidecars are not diffed and unchanged revisions short-circuit', async () => {
@@ -77,12 +131,19 @@ test('BR4.4: changed AsyncAPI and schema require exact predecessor approval with
       bindings, runDiff: noDiffer,
       approvals: { L1: { predecessorRevisionId: rev('9'), approvedBy: 'owner', overlapUntil: 'unknown' } }
     }), 'NON_OPENAPI_CHANGE_UNAPPROVED');
+    for (const overlapUntil of ['2026-02-30', '2025-02-29T12:00:00Z']) {
+      await expectAsyncCode(assessCompatibility({
+        bindings, runDiff: noDiffer,
+        approvals: { L1: { predecessorRevisionId: rev('9'), approvedBy: 'owner', overlapUntil } }
+      }), 'NON_OPENAPI_CHANGE_UNAPPROVED');
+    }
     const result = await assessCompatibility({
       bindings, runDiff: noDiffer,
-      approvals: { L1: { predecessorRevisionId: rev('9'), approvedBy: 'owner', overlapUntil: '2099-12-31' } }
+      approvals: { L1: { predecessorRevisionId: rev('9'), approvedBy: 'owner', overlapUntil: '2028-02-29T12:00:00Z' } }
     });
     assert.equal(result[0].outcome, 'change-approved');
     assert.equal(result[0].predecessorRevisionId, rev('9'));
+    assert.equal(result[0].overlapUntil, '2028-02-29T12:00:00Z');
   }
 });
 

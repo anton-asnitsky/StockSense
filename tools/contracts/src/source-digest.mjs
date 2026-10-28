@@ -37,7 +37,7 @@ export async function sourceTreeDigest(directory = fileURLToPath(new URL('.', im
   // digest stayed identical, so a stale image would still have been accepted.
   // Both files sit one level above this directory in the repository and in the
   // image alike.
-  for (const manifest of ['package.json', 'pnpm-lock.yaml']) {
+  for (const manifest of ['package.json', 'pnpm-lock.yaml', 'Dockerfile.validator']) {
     hash.update(manifest);
     hash.update('\0');
     hash.update(createHash('sha256').update(await readFile(join(directory, '..', manifest))).digest('hex'));
