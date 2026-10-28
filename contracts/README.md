@@ -33,6 +33,34 @@ root. It inventories every canonical file, checks each required artifact kind,
 and verifies all 40 source digests against the Git `sourceRevision` it reports.
 This is an input to package assembly, not a validated package or release claim.
 
+The candidate evidence command binds a validated C01-C27 bundle to its exact
+committed source revision, all 40 canonical source blobs and manifest, all three declared consumers and 107
+output hashes, the candidate CycloneDX SBOM, current secret/vulnerability
+reports, both built-image inventories/scans, and the protected-main image-ledger
+receipt. It verifies the bundle and SBOM attestations with `gh attestation
+verify` against the trusted main workflow and regenerates the consumer outputs
+from a temporary Git archive of the candidate commit. Run from the repository
+root after the hosted main-push evidence job has produced and retained those
+artifacts, with a read-only `GITHUB_TOKEN` for the current protected ledger and
+`STOCKSENSE_STANDARDS_IMAGE` and `STOCKSENSE_KIOTA_IMAGE` set to
+the exact image IDs recorded by that job:
+
+```text
+node tools/contracts/src/candidate-provenance.mjs build <candidate.bundle.json> <sbom.cdx.json> <image-evidence-dir> <security-reports-dir> <candidate-commit> <candidate-evidence.json>
+node tools/contracts/src/candidate-provenance.mjs verify <candidate-evidence.json> <candidate.bundle.json> <sbom.cdx.json> <image-evidence-dir> <security-reports-dir>
+```
+
+The verifier recomputes every binding, checks the current protected-main
+finding dispositions and all four hosted attestations, and refuses missing,
+stale, changed, or unverified inputs. The trusted `release-evidence` job runs
+this command only after a push to `main`; pull-request checks cannot claim its
+post-merge result. Candidate READY requires that successful hosted run and a
+source-bound review. The record always has `releaseReady: false`; it does not
+establish a C01 release or any provider runtime behavior.
+The matching `scripts/build-candidate-evidence.mjs` and
+`scripts/verify-candidate-evidence.mjs` wrappers are local convenience commands;
+the trusted hosted verdict invokes the source CLI above.
+
 Compatibility against an immutable Git baseline uses the pinned OpenAPI differ.
 An unchanged AsyncAPI or JSON Schema source passes by identical digest; a new
 document needs an explicit first-release reason. A changed existing AsyncAPI
