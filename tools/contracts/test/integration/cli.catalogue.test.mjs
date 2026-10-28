@@ -6,8 +6,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
-import { ALL_BOUNDARIES, digest } from '../../src/package-loader.mjs';
+import { ALL_BOUNDARIES, canonicalJson, digest } from '../../src/package-loader.mjs';
 import { buildFullPackage } from '../../src/full-package.mjs';
+import { buildPackageBundle, verifyPackageBundle } from '../../src/package-bundle.mjs';
+import { validateBundledCandidate } from '../../src/candidate-provenance.mjs';
 
 const repository = fileURLToPath(new URL('../../../../', import.meta.url));
 const cli = fileURLToPath(new URL('../../src/cli.mjs', import.meta.url));
@@ -44,6 +46,15 @@ test('source-bound C01-C27 catalogue validates through the CLI', async t => {
     assert.equal(accepted.body.validationLevel, 'candidate-canonical-and-fixture-validation');
     assert.equal(accepted.body.releaseReady, false);
 
+    const bundle = verifyPackageBundle(await buildPackageBundle(packageRoot));
+    const receipt = await validateBundledCandidate(bundle, repository,
+      process.env.STOCKSENSE_STANDARDS_IMAGE);
+    assert.equal(receipt.manifestDigest, accepted.body.manifestDigest);
+    assert.equal(receipt.canonicalDocuments, 40);
+    assert.equal(receipt.coveredBoundaries, 27);
+    assert.equal(receipt.fixtureCases, accepted.body.fixtureResults.length);
+    assert.equal(receipt.resultDigest, digest(Buffer.from(canonicalJson(accepted.body))));
+
     const canonical = [...manifest.openapi, ...manifest.asyncapi, ...manifest.schemas];
     assert.deepEqual(
       accepted.body.validatedCanonical.map(row => row.document).sort(),
@@ -73,5 +84,33 @@ test('CLI rejects a re-digested full-catalogue canonical source edit', async () 
     assert.equal(refused.status, 1, JSON.stringify(refused.body));
     assert.equal(refused.body.code, 'SOURCE_REVISION_MISMATCH');
     assert.equal(refused.body.ruleId, 'BR1.7');
+  });
+});
+
+test('CLI refuses a negative import fixture with the wrong expected failure', async () => {
+  await withFullPackage(async (packageRoot, manifest) => {
+    const fixturePath = join(packageRoot, 'governance/example-fixture.json');
+    const sidecar = JSON.parse(await readFile(fixturePath, 'utf8'));
+    const element = 'message:inventoryImportFailed:inventoryImportFailed';
+    const negative = sidecar.fixtures.find(item => item.contractElementId === element &&
+      item.fixtureId.endsWith('-negative'));
+    assert.ok(negative);
+    assert.equal(negative.expectedFailureCode, 'SCHEMA_REQUIRED');
+    // Keep the payload fixed. Only the declared oracle changes, so a refusal
+    // cannot be attributed to an unrelated payload or canonical error.
+    negative.expectedFailureCode = 'SCHEMA_TYPE';
+    const bytes = JSON.stringify(sidecar, null, 2) + '\n';
+    await writeFile(fixturePath, bytes);
+    const entry = manifest.governedArtifacts.find(item => item.document === 'governance/example-fixture.json');
+    assert.ok(entry);
+    entry.contentDigest = digest(bytes);
+    await writeFile(join(packageRoot, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
+
+    const refused = validateWithCli(packageRoot);
+    assert.equal(refused.status, 1, JSON.stringify(refused.body));
+    // The isolated worker intentionally exposes only a bounded validation
+    // failure across the container boundary; unit tests check its exact code.
+    assert.equal(refused.body.code, 'STANDARDS_VALIDATION');
+    assert.equal(refused.body.ruleId, 'BR2.7');
   });
 });

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { checkPublicPr, evaluatePublicPr } from './public-pr-policy.mjs';
 
@@ -21,6 +22,29 @@ const baseTree = tree(entry('.github/workflows/contracts-required.yml', 'c'.repe
 const headTree = tree(entry('.github/workflows/contracts-required.yml', 'c'.repeat(40)),
   entry('src/example.mjs', 'e'.repeat(40)));
 const input = { event, repository, baseSha, pull, baseTree, headTree };
+
+test('image disposition precedes candidate package installation and tests', () => {
+  const workflow = readFileSync(new URL('../workflows/contracts-required.yml', import.meta.url), 'utf8');
+  const position = name => {
+    const index = workflow.indexOf(`      - name: ${name}`);
+    assert.ok(index >= 0, `Missing required step: ${name}`);
+    return index;
+  };
+  const verified = position('Verify current findings against protected main ledger');
+  for (const name of ['Install from the frozen lockfile', 'Enforce the CI policy',
+    'Set up the pinned differ', 'Lint', 'Type-check', 'Unit tests',
+    'Integration tests', 'Coverage with the 80% line floor']) {
+    assert.ok(verified < position(name), `${name} executes before image disposition`);
+  }
+  assert.ok(position('Build the pinned standards image') < position('Inventory and scan the exact built images'));
+  assert.ok(position('Inventory and scan the exact built images') < verified);
+  const beforeVerification = workflow.slice(0, verified);
+  for (const name of ['build-standards-image', 'build-kiota-image']) {
+    assert.match(beforeVerification,
+      new RegExp(`working-directory: tools/contracts\\s+run: \\|\\s+id="\\$\\(node scripts/${name}\\.mjs`));
+  }
+  assert.doesNotMatch(beforeVerification, /pnpm --(?:dir|silent)/);
+});
 
 test('an ordinary PR compares exact immutable base and fork-head trees', () => {
   assert.deepEqual(evaluatePublicPr(input), { baseSha, headSha, comparedPaths: 1 });
@@ -60,6 +84,17 @@ test('a PR cannot change the scanner, its dependency inputs or exception authori
       headTree: tree(...headTree.tree, entry(path, 'f'.repeat(40))) }),
     /Protected CI paths changed/, path);
   }
+});
+
+test('the base-owned policy also checks U1 Bolt PRs', () => {
+  const boltBase = { ...event.pull_request.base, ref: 'bolt/u1-candidate-ready' };
+  const boltEvent = { ...event, pull_request: { ...event.pull_request, base: boltBase } };
+  const boltPull = { ...pull, base: boltBase };
+  assert.deepEqual(evaluatePublicPr({ ...input, event: boltEvent, pull: boltPull }),
+    { baseSha, headSha, comparedPaths: 1 });
+  assert.throws(() => evaluatePublicPr({ ...input, event: boltEvent, pull: boltPull,
+    headTree: tree(...headTree.tree, entry('tools/contracts/src/ci-policy.mjs', 'f'.repeat(40))) }),
+  /Protected CI paths changed/);
 });
 
 test('stale revisions, wrong repository and truncated trees fail closed', () => {

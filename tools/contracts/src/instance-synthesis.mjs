@@ -31,6 +31,7 @@ export const SAMPLES_BY_PATTERN = Object.freeze({
   '^1\\.[0-9]+\\.[0-9]+$': '1.0.0',
   '^C(0[1-9]|1[0-9]|2[0-7])$': 'C01',
   '^[A-Z0-9][A-Z0-9._-]{2,79}$': 'CHECK.ONE',
+  '^[A-Z][A-Z0-9_]{2,63}$': 'IMPORT_FAILED',
   '^stocksense\\.recovery\\.command\\.v1\\.[a-z][a-z0-9-]*$': 'stocksense.recovery.command.v1.retail-data',
   '^>=[1-9][0-9]*\\.[0-9]+\\.[0-9]+ <[1-9][0-9]*\\.[0-9]+\\.[0-9]+$': '>=1.0.0 <2.0.0',
   '^(?!/)(?!.*(^|/)\\.\\.(/|$))(?!.*:)[A-Za-z0-9._/-]+$': 'common/v1/message-envelope.schema.json'

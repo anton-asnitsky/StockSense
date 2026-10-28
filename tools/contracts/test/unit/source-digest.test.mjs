@@ -22,6 +22,7 @@ async function withTree(files, check) {
 const base = Object.freeze({
   'package.json': '{"name":"contracts","dependencies":{"@asyncapi/cli":"6.2.0"}}',
   'pnpm-lock.yaml': "lockfileVersion: '9.0'\n",
+  'Dockerfile.validator': 'FROM immutable-runtime@sha256:old\n',
   'src/policy.mjs': 'export const rule = 1;\n',
   'src/validate.mjs': 'export const check = 2;\n'
 });
@@ -53,6 +54,9 @@ test('the digest changes for a source edit and for a dependency pin change', asy
 
   // The resolved lockfile decides the transitive tree, so it counts too.
   await withTree({ ...base, 'pnpm-lock.yaml': "lockfileVersion: '9.0'\n# resolved differently\n" },
+    async src => assert.notEqual(await sourceTreeDigest(src), base64));
+
+  await withTree({ ...base, 'Dockerfile.validator': 'FROM immutable-runtime@sha256:new\n' },
     async src => assert.notEqual(await sourceTreeDigest(src), base64));
 });
 
