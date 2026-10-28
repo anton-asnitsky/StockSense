@@ -38,4 +38,4 @@ traceability reconciliation and R-14–R-16 work.
 - Approve PR #51 story merge into the U1 Bolt only
 - Request changes
 
-[Answer]:
+[Answer]: Approve PR #51 story merge into the U1 Bolt only
