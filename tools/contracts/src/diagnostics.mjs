@@ -39,6 +39,7 @@ const REMEDIATION_BY_RULE = Object.freeze({
   'BR4.2': 'Bind each candidate to its same-kind predecessor, or give an explicit first-release reason.',
   'BR4.3': 'Run the pinned OpenAPI differ or apply the approved non-OpenAPI compatibility policy.',
   'BR4.4': 'Record an approval naming the exact predecessor revision and its overlap.',
+  'BR6.5': 'Rebuild candidate evidence from the pinned bundle, validation result, scans and source revision; compare retained digests.',
   'BR6.7': 'Bring the workflow back within the CI policy: trusted triggers, pinned actions and least privilege.',
   'NFR6.1': 'Remove protected content from the generated output.',
   'NFR6.2': 'Rebuild the pinned standards image from this tree and pass its exact digest.',

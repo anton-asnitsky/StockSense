@@ -6,8 +6,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
-import { ALL_BOUNDARIES, digest } from '../../src/package-loader.mjs';
+import { ALL_BOUNDARIES, canonicalJson, digest } from '../../src/package-loader.mjs';
 import { buildFullPackage } from '../../src/full-package.mjs';
+import { buildPackageBundle, verifyPackageBundle } from '../../src/package-bundle.mjs';
+import { validateBundledCandidate } from '../../src/candidate-provenance.mjs';
 
 const repository = fileURLToPath(new URL('../../../../', import.meta.url));
 const cli = fileURLToPath(new URL('../../src/cli.mjs', import.meta.url));
@@ -43,6 +45,15 @@ test('source-bound C01-C27 catalogue validates through the CLI', async t => {
     assert.deepEqual(accepted.body.uncoveredBoundaries, []);
     assert.equal(accepted.body.validationLevel, 'candidate-canonical-and-fixture-validation');
     assert.equal(accepted.body.releaseReady, false);
+
+    const bundle = verifyPackageBundle(await buildPackageBundle(packageRoot));
+    const receipt = await validateBundledCandidate(bundle, repository,
+      process.env.STOCKSENSE_STANDARDS_IMAGE);
+    assert.equal(receipt.manifestDigest, accepted.body.manifestDigest);
+    assert.equal(receipt.canonicalDocuments, 40);
+    assert.equal(receipt.coveredBoundaries, 27);
+    assert.equal(receipt.fixtureCases, accepted.body.fixtureResults.length);
+    assert.equal(receipt.resultDigest, digest(Buffer.from(canonicalJson(accepted.body))));
 
     const canonical = [...manifest.openapi, ...manifest.asyncapi, ...manifest.schemas];
     assert.deepEqual(

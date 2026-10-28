@@ -34,6 +34,11 @@ test('a remediation is always produced, by code or by rule', () => {
   assert.equal(fallback.remediation, 'Resolve the named rule and retry.');
 });
 
+test('candidate evidence mismatches give a specific recovery action', () => {
+  const diagnostic = toDiagnostic(new ContractError('CANDIDATE_EVIDENCE_MISMATCH', 'BR6.5', 'stale'));
+  assert.match(diagnostic.remediation, /pinned bundle, validation result, scans and source revision/);
+});
+
 test('an absolute runner path becomes repository-relative, or nothing at all', () => {
   assert.equal(boundedLocation(`${REPO}/contracts/source/common/v1/x.schema.json`, REPO),
     'contracts/source/common/v1/x.schema.json');

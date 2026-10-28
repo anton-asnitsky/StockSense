@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { assertCandidateGenerationProfile, assertCandidateRecord, assertLedgerBinding,
+  validateBundledCandidate,
   verifyHostedSubject } from '../../src/candidate-provenance.mjs';
 
 const profilePath = fileURLToPath(new URL('../../../../contracts/samples/walking-skeleton/governance/generation-profile.json', import.meta.url));
@@ -20,6 +22,9 @@ function record() {
       ['messaging-platform/v1/transport-conformance.asyncapi.yaml', sha],
       ...Array.from({ length: 38 }, (_, index) => [`source-${index}.yaml`, sha])
     ]),
+    validation: { resultDigest: sha, manifestDigest: sha,
+      validationLevel: 'candidate-canonical-and-fixture-validation',
+      canonicalDocuments: 40, fixtureCases: 80, coveredBoundaries: 27 },
     consumers: profile.consumers.map(row => ({ consumerId: row.consumerId, generator: row.generator,
       generatorVersion: row.generatorVersion, sourceDocument: row.sourceDocument,
       configurationDigest: row.configurationDigest, outputs: { ...row.expectedOutputs } })),
@@ -65,6 +70,39 @@ test('candidate record is complete and cannot claim release readiness', () => {
   assert.equal(assertCandidateRecord(record()).releaseReady, false);
   const released = record(); released.releaseReady = true;
   assert.throws(() => assertCandidateRecord(released), { code: 'CANDIDATE_RECORD' });
+});
+
+test('candidate record refuses absent or malformed validation binding', () => {
+  const missing = record(); delete missing.validation;
+  assert.throws(() => assertCandidateRecord(missing), { code: 'CANDIDATE_RECORD' });
+  const mismatch = record(); mismatch.validation.manifestDigest = 'sha256:' + 'b'.repeat(64);
+  assert.throws(() => assertCandidateRecord(mismatch), { code: 'CANDIDATE_RECORD' });
+  const missingOutcome = record(); delete missingOutcome.validation.resultDigest;
+  assert.throws(() => assertCandidateRecord(missingOutcome), { code: 'CANDIDATE_RECORD' });
+});
+
+test('validation receipt binds complete outcomes from exact bundled bytes', async () => {
+  const bundle = { manifestDigest: sha, files: new Map([
+    ['manifest.json', Buffer.from('{"source":"candidate"}')],
+    ['nested/source.json', Buffer.from('{"value":1}')]
+  ]) };
+  const validate = async root => {
+    assert.equal((await readFile(join(root, 'nested/source.json'))).toString(), '{"value":1}');
+    return { manifestDigest: sha, sourceBinding: 'verified-canonical-package-outside-repository',
+      validationLevel: 'candidate-canonical-and-fixture-validation', releaseReady: false,
+      uncoveredBoundaries: [], coveredBoundaries: Array.from({ length: 27 }, (_, i) => `C${i + 1}`),
+      validatedCanonical: Array.from({ length: 40 }, (_, i) => ({ document: `doc-${i}` })),
+      fixtureResults: [{ fixtureId: 'fixture-1', observed: 'pass' }] };
+  };
+  const first = await validateBundledCandidate(bundle, '.', sha, validate);
+  assert.equal(first.canonicalDocuments, 40);
+  assert.equal(first.fixtureCases, 1);
+  const changed = await validateBundledCandidate(bundle, '.', sha, async root => ({
+    ...await validate(root), fixtureResults: [{ fixtureId: 'fixture-1', observed: 'fail' }] }));
+  assert.notEqual(changed.resultDigest, first.resultDigest);
+  await assert.rejects(validateBundledCandidate(bundle, '.', sha, async root => ({
+    ...await validate(root), manifestDigest: 'sha256:' + 'b'.repeat(64) })),
+  { code: 'CANDIDATE_VALIDATION' });
 });
 
 test('missing scan, changed subject, and missing output fail closed', () => {

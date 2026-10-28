@@ -16,6 +16,7 @@ import { assertEvidenceContentSafe } from './evidence.mjs';
 import { toDiagnostic } from './diagnostics.mjs';
 import { sourceTreeDigest } from './source-digest.mjs';
 import { LIMITS } from './preflight.mjs';
+import { validateCandidate } from './validate.mjs';
 
 const SHA = /^sha256:[0-9a-f]{64}$/;
 const COMMIT = /^[0-9a-f]{40}$/;
@@ -157,6 +158,33 @@ function checkSourceBindings(root, parsed, candidateRevision) {
   return sourceDigests;
 }
 
+/** Validate the exact authenticated bundle bytes, not a mutable package directory. */
+export async function validateBundledCandidate(bundle, repoRoot, standardsImage,
+  validate = validateCandidate) {
+  const packageRoot = await mkdtemp(join(tmpdir(), 'stocksense-candidate-validation-'));
+  try {
+    for (const [path, bytes] of bundle.files) {
+      const destination = join(packageRoot, path);
+      await mkdir(dirname(destination), { recursive: true });
+      await writeFile(destination, bytes, { flag: 'wx', mode: 0o600 });
+    }
+    const result = await validate(packageRoot, { repoRoot, standardsImage });
+    if (result?.manifestDigest !== bundle.manifestDigest ||
+        result?.validationLevel !== 'candidate-canonical-and-fixture-validation' ||
+        result?.sourceBinding !== 'verified-canonical-package-outside-repository' ||
+        result?.releaseReady !== false || result?.uncoveredBoundaries?.length !== 0 ||
+        result?.coveredBoundaries?.length !== ALL_BOUNDARIES.length ||
+        result?.validatedCanonical?.length !== 40 || !Array.isArray(result?.fixtureResults) ||
+        result.fixtureResults.length === 0) {
+      fail('CANDIDATE_VALIDATION', 'BR6.5', 'Bundled candidate validation is incomplete or mismatched');
+    }
+    return { resultDigest: digest(Buffer.from(canonicalJson(result))),
+      manifestDigest: result.manifestDigest, validationLevel: result.validationLevel,
+      canonicalDocuments: result.validatedCanonical.length,
+      fixtureCases: result.fixtureResults.length, coveredBoundaries: result.coveredBoundaries.length };
+  } finally { await rm(packageRoot, { recursive: true, force: true }); }
+}
+
 /** The pinned runner reads canonical files from a disposable checkout at the candidate commit. */
 /** @param {{ validatorImageId: string, kiotaImageId: string } | null} [images] */
 export async function regenerateFromCleanCheckout(root, revision, consumers, images = null) {
@@ -230,7 +258,7 @@ export async function regenerateFromCleanCheckout(root, revision, consumers, ima
 
 export function assertCandidateRecord(record) {
   if (!exact(record, ['schema', 'candidateRevision', 'sourceRevision', 'manifestDigest', 'bundleDigest',
-    'profileDigest', 'sourceDigests', 'consumers', 'sbomDigest', 'images', 'ledger', 'scans',
+    'profileDigest', 'sourceDigests', 'validation', 'consumers', 'sbomDigest', 'images', 'ledger', 'scans',
     'attestations', 'releaseReady']) || record.schema !== 'stocksense-candidate-evidence-v1' ||
       record.releaseReady !== false || !COMMIT.test(record.candidateRevision) ||
       !COMMIT.test(record.sourceRevision) || ![record.manifestDigest, record.bundleDigest,
@@ -239,6 +267,15 @@ export function assertCandidateRecord(record) {
   }
   if (!object(record.sourceDigests) || Object.keys(record.sourceDigests).length !== 40 ||
       Object.values(record.sourceDigests).some(value => !SHA.test(value)) ||
+      !exact(record.validation, ['resultDigest', 'manifestDigest', 'validationLevel',
+        'canonicalDocuments', 'fixtureCases', 'coveredBoundaries']) ||
+      !SHA.test(record.validation.resultDigest) ||
+      record.validation.manifestDigest !== record.manifestDigest ||
+      record.validation.validationLevel !== 'candidate-canonical-and-fixture-validation' ||
+      record.validation.canonicalDocuments !== 40 ||
+      !Number.isSafeInteger(record.validation.fixtureCases) ||
+      record.validation.fixtureCases < 1 || record.validation.fixtureCases > 1024 ||
+      record.validation.coveredBoundaries !== ALL_BOUNDARIES.length ||
       !Array.isArray(record.consumers) || record.consumers.length !== 3 ||
       record.consumers.reduce((n, row) => n + Object.keys(row?.outputs ?? {}).length, 0) !== 107 ||
       !Array.isArray(record.images) || record.images.length !== 2 ||
@@ -298,6 +335,7 @@ export async function buildCandidateEvidence({ repoRoot, bundlePath, sbomPath, i
   const sourceDigests = checkSourceBindings(repoRoot, parsed, candidateRevision);
   const head = run('git', ['rev-parse', 'HEAD'], repoRoot, 'CANDIDATE_REVISION');
   if (head !== candidateRevision) fail('CANDIDATE_REVISION', 'BR6.5', 'Candidate revision differs from checkout');
+  const validation = await validateBundledCandidate(parsed.bundle, repoRoot, validatorImageId);
   const consumers = await regenerate(repoRoot, candidateRevision, parsed.generation.profile.consumers,
     { validatorImageId, kiotaImageId });
   if (canonicalJson(consumers) !== canonicalJson(parsed.generation.profile.consumers.map(row => ({
@@ -366,7 +404,7 @@ export async function buildCandidateEvidence({ repoRoot, bundlePath, sbomPath, i
   const record = assertCandidateRecord({ schema: 'stocksense-candidate-evidence-v1', candidateRevision,
     sourceRevision: parsed.manifest.sourceRevision, manifestDigest: parsed.bundle.manifestDigest,
     bundleDigest: parsed.bundle.artifactDigest, profileDigest: parsed.generation.digest,
-    sourceDigests, consumers, sbomDigest: sbom.digest, images: image.records,
+    sourceDigests, validation, consumers, sbomDigest: sbom.digest, images: image.records,
     ledger: { digest: digest(ledgerBytes), mainSha: ledger.mainSha,
       ledgerBlobSha: ledger.ledgerBlobSha, candidateTreeDigest: ledger.candidateTreeDigest,
       sourceDigest }, scans, attestations, releaseReady: false });
