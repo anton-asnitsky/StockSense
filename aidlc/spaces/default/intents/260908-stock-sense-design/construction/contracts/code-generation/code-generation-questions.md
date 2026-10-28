@@ -26,4 +26,4 @@ Approve this exact `code-generation-plan.md` and
 - Approve Plan — proceed to code generation
 - Request Changes — revise the plan and instructions
 
-[Answer]:
+[Answer]: Approve Plan
