@@ -48,4 +48,4 @@ trusted main-push candidate receipt still need completion before U1 READY.
 - Approve exact PR #51 temporary exception
 - Request changes
 
-[Answer]:
+[Answer]: Approve exact PR #51 temporary exception
