@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { ContractError, ALL_BOUNDARIES, canonicalJson, digest } from './package-loader.mjs';
 import { verifyPackageBundle, MAX_ARTIFACT_BYTES } from './package-bundle.mjs';
 import { assertGenerationProfile, regenerateConsumer } from './generation.mjs';
+import { createBoundedGeneratorRunner } from './bounded-generators.mjs';
 import { createPinnedGeneratorRunner, DOTNET_HOST, GENERATORS, generatorConfigurationDigest } from './generators.mjs';
 import { buildSbom } from './sbom.mjs';
 import { readImageEvidence, IMAGE_NAMES } from './image-evidence.mjs';
@@ -157,7 +158,8 @@ function checkSourceBindings(root, parsed, candidateRevision) {
 }
 
 /** The pinned runner reads canonical files from a disposable checkout at the candidate commit. */
-export async function regenerateFromCleanCheckout(root, revision, consumers) {
+/** @param {{ validatorImageId: string, kiotaImageId: string } | null} [images] */
+export async function regenerateFromCleanCheckout(root, revision, consumers, images = null) {
   if (!COMMIT.test(revision)) fail('CANDIDATE_REVISION', 'BR6.5', 'Candidate commit is invalid');
   const parent = await mkdtemp(join(tmpdir(), 'stocksense-clean-consumer-'));
   const checkout = join(parent, 'checkout');
@@ -193,7 +195,9 @@ export async function regenerateFromCleanCheckout(root, revision, consumers) {
     const toolManifest = join(checkout, '.config/dotnet-tools.json');
     await rm(toolManifest);
     await writeFile(toolManifest, gitBlob(root, revision, '.config/dotnet-tools.json'));
-    const runner = createPinnedGeneratorRunner(checkout);
+    const runner = images ? createBoundedGeneratorRunner(checkout, {
+      standardsImage: images.validatorImageId, kiotaImage: images.kiotaImageId
+    }) : createPinnedGeneratorRunner(checkout);
     const localManifest = join(root, '.config/dotnet-tools.json');
     if (process.platform === 'win32' &&
         (await readFile(localManifest)).toString('utf8').replace(/\r\n/g, '\n') !==
@@ -205,7 +209,7 @@ export async function regenerateFromCleanCheckout(root, revision, consumers) {
       // Windows may attach Mark-of-the-Web to tar extraction. Kiota refuses
       // that manifest even when its bytes are valid; invoke the same pinned
       // args from the verified local manifest while reading archived sources.
-      const runGenerator = process.platform === 'win32' && consumer.generator === 'kiota'
+      const runGenerator = !images && process.platform === 'win32' && consumer.generator === 'kiota'
         ? (_consumer, workspace) => {
           const target = join(workspace, GENERATORS.kiota.outputPath);
           const source = join(checkout, 'contracts/source', consumer.sourceDocument);
@@ -294,7 +298,8 @@ export async function buildCandidateEvidence({ repoRoot, bundlePath, sbomPath, i
   const sourceDigests = checkSourceBindings(repoRoot, parsed, candidateRevision);
   const head = run('git', ['rev-parse', 'HEAD'], repoRoot, 'CANDIDATE_REVISION');
   if (head !== candidateRevision) fail('CANDIDATE_REVISION', 'BR6.5', 'Candidate revision differs from checkout');
-  const consumers = await regenerate(repoRoot, candidateRevision, parsed.generation.profile.consumers);
+  const consumers = await regenerate(repoRoot, candidateRevision, parsed.generation.profile.consumers,
+    { validatorImageId, kiotaImageId });
   if (canonicalJson(consumers) !== canonicalJson(parsed.generation.profile.consumers.map(row => ({
     consumerId: row.consumerId, generator: row.generator, generatorVersion: row.generatorVersion,
     sourceDocument: row.sourceDocument, configurationDigest: row.configurationDigest,
