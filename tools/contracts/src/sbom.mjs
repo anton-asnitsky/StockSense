@@ -149,7 +149,7 @@ export async function buildSbom(lockfilePath, subject) {
   const oasVersion = required(differ, /const version = '([0-9.]+)'/, 'oasdiff version')[1];
   const oasLinux = required(differ, /'linux-x64': \['linux_amd64', '([0-9a-f]{64})'\]/, 'oasdiff Linux archive')[1];
   const pkg = JSON.parse(manifest);
-  if (pkg.engines?.node !== '24.19.0' || pkg.packageManager !== 'pnpm@11.25.0') {
+  if (pkg.engines?.node !== '24.22.2' || pkg.packageManager !== 'pnpm@11.25.0') {
     fail('SBOM_TOOL_PIN', 'BR6.5', 'Node and pnpm must match the reviewed CI toolchain');
   }
   add('container', 'validator-node-image', pkg.engines.node, nodeDigest, 'Dockerfile.validator');

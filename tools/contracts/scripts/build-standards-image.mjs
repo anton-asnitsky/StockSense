@@ -52,7 +52,7 @@ try {
     '--security-opt=no-new-privileges=true', '--cap-drop=ALL', '--pids-limit=64',
     '--memory=2147483648', '--memory-swap=2147483648', '--user=65532:65532',
     '--entrypoint=/nodejs/bin/node', id, '--version'], 'runtime smoke');
-  if (version !== 'v24.19.0') throw new Error('Validator runtime Node version differs from the pin');
+  if (version !== 'v24.22.2') throw new Error('Validator runtime Node version differs from the pin');
   process.stderr.write(`tool sources ${expected.toString().trim()}\n`);
   process.stdout.write(id + '\n');
 } catch (error) {
