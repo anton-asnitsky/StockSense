@@ -8,7 +8,7 @@ import { ContractError, digest } from '../src/package-loader.mjs';
 // The byte pin prevents this command from crediting a changed metadata guard;
 // the separate protected-base job decides proposed .github changes.
 const METADATA_GUARD = 'public-pr-policy.yml';
-const METADATA_GUARD_DIGEST = 'sha256:806ba654a8e7e00187eef15f60ab7258d90815c193a64fb577942cb97152d064';
+const METADATA_GUARD_DIGEST = 'sha256:fc5bbd9b189de20393496af6c9fa83f189b9ecc319a39ae8e6a9316754f18b78';
 
 // Check U1's public-PR policy against the workflows actually present.
 //

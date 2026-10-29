@@ -61,7 +61,7 @@ export async function toolchainDigest(root) {
 
 export async function assertPinnedScanner(root) {
   const manifest = JSON.parse(await readFile(resolve(root, 'tools/contracts/package.json'), 'utf8'));
-  if (manifest.packageManager !== 'pnpm@11.25.0' || manifest.engines?.node !== '24.19.0' ||
+  if (manifest.packageManager !== 'pnpm@11.25.0' || manifest.engines?.node !== '24.22.2' ||
       manifest.devDependencies?.secretlint !== '13.0.6') {
     fail('SCAN_SCANNER', 'Scanner, package manager or Node pin has changed');
   }

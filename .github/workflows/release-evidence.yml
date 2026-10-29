@@ -53,7 +53,7 @@ jobs:
       - name: Pin Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: 24.19.0
+          node-version: 24.22.2
           cache: pnpm
           cache-dependency-path: tools/contracts/pnpm-lock.yaml
 
@@ -140,7 +140,8 @@ jobs:
         env:
           STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
           STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
-          STOCKSENSE_IMAGE_EVIDENCE_DIR: tools/contracts/dist/image-evidence
+          # pnpm --dir runs build:sbom with tools/contracts as its working directory.
+          STOCKSENSE_IMAGE_EVIDENCE_DIR: dist/image-evidence
           STOCKSENSE_CANDIDATE_REVISION: ${{ github.sha }}
         run: |
           set -euo pipefail
