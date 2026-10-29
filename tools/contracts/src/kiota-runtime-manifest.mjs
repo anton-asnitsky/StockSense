@@ -139,6 +139,13 @@ export function normalizeKiotaRuntimeManifest({ entries, config, sbom }) {
       target: safeLink(path, entry.target) };
     if (entry.kind === 'hardlink') return { ...common,
       target: canonicalPath(entry.target) };
+    if (entry.kind === 'character-device' || entry.kind === 'block-device') {
+      if (![entry.major, entry.minor].every(value => Number.isSafeInteger(value) && value >= 0)) {
+        bad('invalid device number');
+      }
+      return { ...common, major: entry.major, minor: entry.minor };
+    }
+    if (entry.kind === 'fifo') return common;
     if (entry.kind !== 'file' || !IMAGE_ID.test(entry.sha256 ?? '') ||
         !Number.isSafeInteger(entry.size) || entry.size < 0 || entry.size > MAX_FILE_BYTES) {
       bad('invalid regular file entry');

@@ -89,7 +89,9 @@ function headerInfo(header) {
     gid: octal(header.subarray(116, 124), 'gid'),
     size: octal(header.subarray(124, 136), 'size'),
     type,
-    link: textField(header.subarray(157, 257))
+    link: textField(header.subarray(157, 257)),
+    major: octal(header.subarray(329, 337), 'device major'),
+    minor: octal(header.subarray(337, 345), 'device minor')
   };
 }
 
@@ -167,7 +169,12 @@ export async function readContainerTarManifest(archive) {
         entries.push({ ...common, kind: 'symlink', target: link });
       } else if (meta.type === '1' && size === 0) {
         entries.push({ ...common, kind: 'hardlink', target: archivePath(link) });
-      } else bad('unsupported tar entry type');
+      } else if ((meta.type === '3' || meta.type === '4') && size === 0) {
+        entries.push({ ...common, kind: meta.type === '3' ? 'character-device' : 'block-device',
+          major: meta.major, minor: meta.minor });
+      } else if (meta.type === '6' && size === 0) {
+        entries.push({ ...common, kind: 'fifo' });
+      } else bad(`unsupported tar entry type ${JSON.stringify(meta.type)} at ${JSON.stringify(path)}`);
       local = {};
       longName = null;
       longLink = null;

@@ -69,6 +69,20 @@ test('file bytes, mode, executable, Config and package identities change digest'
   }
 });
 
+test('special filesystem entries contribute ownership and device identity', () => {
+  const base = normalizeKiotaRuntimeManifest({ entries: entries(), config: config(), sbom: sbom(id('a')) });
+  const withDevice = normalizeKiotaRuntimeManifest({ entries: [...entries(),
+    { path: 'rootfs/opt/console', kind: 'character-device', mode: 0o600,
+      uid: 0, gid: 5, major: 5, minor: 1 }], config: config(), sbom: sbom(id('a')) });
+  assert.notEqual(withDevice.digest, base.digest);
+  assert.notEqual(normalizeKiotaRuntimeManifest({ entries: entries().map(entry =>
+    entry.path === 'rootfs/opt/kiota/kiota' ? { ...entry, uid: 123 } : entry),
+  config: config(), sbom: sbom(id('a')) }).digest, base.digest);
+  assert.throws(() => normalizeKiotaRuntimeManifest({ entries: [...entries(),
+    { path: 'rootfs/opt/console', kind: 'character-device', mode: 0o600,
+      major: -1, minor: 1 }], config: config(), sbom: sbom(id('a')) }), /device number/);
+});
+
 test('malformed paths, missing parents, unsafe links and limits fail closed', () => {
   const good = { entries: entries(), config: config(), sbom: sbom(id('a')) };
   for (const badPath of ['rootfs/opt/kiota/../escape', 'rootfs/opt/kiota//file',
