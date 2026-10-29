@@ -1,6 +1,6 @@
 # U1 image-exception scope amendment — 2026-10-29
 
-Status: owner approved the **design scope** in [the answered question](../code-generation/u1-reusable-image-exception-questions.md), with `DECISION_RECORDED` at 21:00:36Z, `HUMAN_TURN` at 21:02:13Z and `QUESTION_ANSWERED` at 21:02:29Z. US8.7 implementation and two hosted image builds are now recorded in [the proof checkpoint](../../../verification/u1-reusable-image-proof-2026-10-30.md); the exact v2 finding is approved for draft PR #73 preparation. Protected-main ledger and story merges remain open. This additive amendment refines the earlier exact-candidate finding disposition; it does not rewrite its historical approval or declare U1 ready.
+Status: owner approved the **design scope** in [the answered question](../code-generation/u1-reusable-image-exception-questions.md), with `DECISION_RECORDED` at 21:00:36Z, `HUMAN_TURN` at 21:02:13Z and `QUESTION_ANSWERED` at 21:02:29Z. US8.7 implementation and two hosted image builds are recorded in [the proof checkpoint](../../../verification/u1-reusable-image-proof-2026-10-30.md); the exact v2 finding is approved for draft PR #73 preparation. Story PR #72 merged into the U1 Bolt as `402ace3`; protected-main ledger and Bolt-to-main merges remain open. This additive amendment refines the earlier exact-candidate finding disposition; it does not rewrite its historical approval or declare U1 ready.
 
 ## Security boundary
 
