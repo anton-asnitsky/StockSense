@@ -100,6 +100,19 @@ paths:
                     type: integer
                     minimum: 0
                 additionalProperties: false
+              examples:
+                redactedDeniedIdentityEvent:
+                  value:
+                    items:
+                      - messageId: 00000000-0000-4000-8000-000000000201
+                        occurredAt: '2026-09-28T10:00:00Z'
+                        action: identity.sign-in
+                        outcome: denied
+                        reasonCode: invalid-credentials
+                        correlationId: 00000000-0000-4000-8000-000000000202
+                    nextCursor: null
+                    hasMore: false
+                    projectionLagSeconds: 3
         "401":
           description: Missing, invalid, expired, wrong-client, wrong-audience, or non-human delegated token; RFC 9457 problem
         "403":

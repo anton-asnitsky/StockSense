@@ -158,6 +158,52 @@ jobs:
       - name: Set up the pinned differ
         run: pnpm --dir tools/contracts setup:oasdiff
 
+      # Compare this checkout with the exact integration commit, not a fixed
+      # historical fixture. A PR uses its target branch; a main push uses the
+      # commit that preceded the push. Changed non-OpenAPI sources fail closed
+      # until their predecessor-bound approval is available on the base.
+      - name: Assess canonical compatibility against the integration base
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = pull_request ]; then
+            baseline="$PR_BASE_SHA"
+          else
+            baseline="$PUSH_BEFORE_SHA"
+          fi
+          if [[ ! "$baseline" =~ ^[0-9a-f]{40}$ || "$baseline" =~ ^0+$ ]]; then
+            echo 'An exact integration-base commit is required' >&2
+            exit 1
+          fi
+          mkdir -p tools/contracts/dist
+          # Approval records come from the integration base. A PR cannot
+          # approve its own changed AsyncAPI or JSON Schema revision.
+          approval_path=contracts/compatibility/approvals.json
+          if git cat-file -e "$baseline:$approval_path" 2>/dev/null; then
+            git show "$baseline:$approval_path" > tools/contracts/dist/baseline-approvals.json
+            echo "approvals blob: $(git rev-parse "$baseline:$approval_path")" |
+              tee tools/contracts/dist/integration-compatibility.txt
+          else
+            printf '{}\n' > tools/contracts/dist/baseline-approvals.json
+            echo 'approvals blob: absent at integration base' |
+              tee tools/contracts/dist/integration-compatibility.txt
+          fi
+          node tools/contracts/scripts/assess-baseline.mjs "$baseline" --require-assessment \
+            --approvals-file tools/contracts/dist/baseline-approvals.json |
+            tee -a tools/contracts/dist/integration-compatibility.txt
+
+      - name: Retain integration compatibility result
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: integration-compatibility-${{ github.sha }}
+          path: tools/contracts/dist/integration-compatibility.txt
+          if-no-files-found: warn
+          retention-days: 30
+
       - name: Lint
         run: pnpm --dir tools/contracts lint
 

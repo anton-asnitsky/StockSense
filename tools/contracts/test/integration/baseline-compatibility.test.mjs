@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assessCatalogueAgainstBaseline } from '../../src/baseline-compatibility.mjs';
+import { assessCompatibility } from '../../src/compatibility.mjs';
 import { deriveIdentity, digest } from '../../src/package-loader.mjs';
 
 // The pinned differ had only ever been exercised on two hand-built fixtures,
@@ -22,6 +23,7 @@ const CATALOGUE_DRAFT = '20dc9345cf702848167ba6bb4ab5c4aabf756876';
 // The protected integration base for the two new import documents. Every
 // earlier canonical document is unchanged here; the additions are first releases.
 const CURRENT_BOLT_BASE = 'e7079f1bf96a541c1b3e47ba72de905ba5547c88';
+const STORY_BOLT_BASE = '402ace3b195c291a756ed230a24a73199ef8349a';
 // An earlier commit, before most canonical sources existed.
 const BEFORE_CATALOGUE = '3de357c7502f7ffffb653c7ff353a4930a7f96cd';
 const OUTCOMES = ['unchanged', 'first-release', 'compatible', 'breaking-approved', 'change-approved'];
@@ -161,7 +163,8 @@ test('required compatibility passes the current immutable integration base with 
   assert.equal(baseline.commit, CURRENT_BOLT_BASE);
   assert.deepEqual(undiffable, []);
   assert.equal(assessments.length, 40);
-  assert.equal(tally.unchanged, 38);
+  assert.equal(tally.unchanged, 24);
+  assert.equal(tally.compatible, 14);
   assert.equal(tally['first-release'], 2);
   for (const document of ['retail-data/v1/inventory-import.asyncapi.yaml',
     'retail-data/v1/inventory-import-audit.asyncapi.yaml']) {
@@ -170,6 +173,45 @@ test('required compatibility passes the current immutable integration base with 
     assert.equal(row?.predecessorRevisionId, null, document);
     assert.match(row.firstReleaseReason, new RegExp(`absent at baseline ${CURRENT_BOLT_BASE}`));
   }
+});
+
+test('required comparison resolves the local identity schema against the exact story Bolt base', async () => {
+  const { assessments, tally, undiffable } = await assessCatalogueAgainstBaseline(
+    repoRoot, STORY_BOLT_BASE, { requirePinnedDiffer: true });
+  assert.deepEqual(undiffable, []);
+  assert.deepEqual(tally, { unchanged: 26, compatible: 14 });
+  assert.equal(assessments.find(row => row.document ===
+    'identity-access/v1/identity-metadata.openapi.yaml')?.outcome, 'compatible');
+});
+
+test('a remote reference in a changed OpenAPI document is refused before the differ runs', async () => {
+  const fixture = await catalogueFixture();
+  try {
+    const path = join(fixture.root, 'contracts', 'source',
+      'identity-access', 'v1', 'identity-metadata.openapi.yaml');
+    const original = await readFile(path, 'utf8');
+    assert.match(original, /\$ref: \.\/platform-operator-grant\.schema\.json/);
+    await writeFile(path, original.replace('$ref: ./platform-operator-grant.schema.json',
+      '$ref: https://example.invalid/remote.schema.json'));
+    fixture.git('add', 'contracts');
+    fixture.git('commit', '--quiet', '-m', 'Introduce remote OpenAPI reference');
+    await assert.rejects(assessCatalogueAgainstBaseline(fixture.root, fixture.baseline,
+      { requirePinnedDiffer: true }), error =>
+      error.code === 'REFERENCE_POLICY' && error.ruleId === 'NFR6.2');
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test('a caller-supplied preflight flag cannot enable local reference loading in the general differ', async () => {
+  const document = 'identity-access/v1/identity-metadata.openapi.yaml';
+  const path = join(repoRoot, 'contracts', 'source', document);
+  await assert.rejects(assessCompatibility({
+    bindings: [{ document, logicalId: 'synthetic:identity-metadata', artifactKind: 'openapi',
+      predecessorRevisionId: 'sha256:old', candidateRevisionId: 'sha256:new', unchanged: false }],
+    resolveSource: async () => ({ predecessorPath: path, candidatePath: path,
+      localReferencesPreflighted: true })
+  }), error => error.code === 'DIFFER_UNAVAILABLE' && error.ruleId === 'BR4.3');
 });
 
 test('a document absent at the baseline is a recorded first release, not a silent gap', async () => {

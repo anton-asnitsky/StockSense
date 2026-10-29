@@ -59,3 +59,40 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+x-contract-operation-examples:
+  - operationId: requestManualReviewForAssistant
+    name: review-request-accepted
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101 }
+      headers: { Idempotency-Key: synthetic-review-request-0001 }
+    responseStatus: '202'
+  - operationId: requestManualReviewForAssistant
+    name: active-review-conflict
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101 }
+      headers: { Idempotency-Key: synthetic-review-request-0002 }
+    responseStatus: '409'
+  - operationId: requestManualReviewForAssistant
+    name: daily-review-quota-exhausted
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101 }
+      headers: { Idempotency-Key: synthetic-review-request-0003 }
+    responseStatus: '429'
+  - operationId: createPurchaseDraftForAssistant
+    name: governed-draft-created
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101 }
+      headers: { Idempotency-Key: synthetic-draft-request-0001 }
+    responseStatus: '201'
+  - operationId: createPurchaseDraftForAssistant
+    name: planner-authority-denied
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101 }
+      headers: { Idempotency-Key: synthetic-draft-request-0002 }
+    responseStatus: '403'
+  - operationId: createPurchaseDraftForAssistant
+    name: invalid-draft-evidence
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101 }
+      headers: { Idempotency-Key: synthetic-draft-request-0003 }
+    responseStatus: '422'

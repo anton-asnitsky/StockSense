@@ -1,6 +1,6 @@
 {
   "generationProfileVersion": "1.1.0",
-  "sourceRevision": "ff3e51ec34b26c633dea8cde42c305b856ad7323",
+  "sourceRevision": "2227acab9321b9184944d74692f61c67f03087ad",
   "consumers": [
     {
       "consumerId": "web-application",
@@ -122,7 +122,7 @@
         "dotnet-client/Models/SessionResponse.cs": "sha256:3e442536b24567388b23c0142b2330c0c1d8b2e8513889aed80ed71214aa7a46",
         "dotnet-client/Models/SessionResponse_retailers.cs": "sha256:e9b8d5bdb60f5a043d0b3f8b47dfd3f49eac0d94d80cd5384d2c863d513473a3",
         "dotnet-client/Models/SessionResponse_retailers_roles.cs": "sha256:b22bba2105509443a56e65988dbbd3a998ba3393ffae524e191041a5746ada3a",
-        "dotnet-client/kiota-lock.json": "sha256:77fc54997c17aaad31355451614502946593807edfe22f0e514b436c8385bdde"
+        "dotnet-client/kiota-lock.json": "sha256:4603f97eaf1142f295162632e576b4d80e476b3459e7e168caeb69cdf8e8bb88"
       }
     },
     {
