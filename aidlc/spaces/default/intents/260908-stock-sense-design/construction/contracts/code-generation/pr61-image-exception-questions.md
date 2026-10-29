@@ -60,4 +60,4 @@ exact candidate digest and retained scan evidence?
 - Approve exact PR #61 temporary exception
 - Request changes
 
-[Answer]:
+[Answer]: Approve exact PR #61 temporary exception

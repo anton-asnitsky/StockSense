@@ -87912,3 +87912,112 @@
 **Context**: verification > pr59-main-bootstrap-merge-2026-10-28.md
 
 ---
+
+## Human Turn
+**Timestamp**: 2026-10-28T19:46:02Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-28T19:47:27Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/contracts/code-generation/pr61-image-exception-questions.md
+**Context**: construction > contracts > code-generation > pr61-image-exception-questions.md
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-28T19:47:44Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Created
+**Timestamp**: 2026-10-28T19:50:57Z
+**Event**: ARTIFACT_CREATED
+**Tool**: Write
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/verification/pr61-sbom-forward-fix-readiness-2026-10-28.md
+**Context**: verification > pr61-sbom-forward-fix-readiness-2026-10-28.md
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-28T19:51:29Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: stocksense-security-identity-agent
+**Agent ID**: 01a1840c-343d-7fa1-b67c-643196b86983
+**Message**: **Assessment: supportable for owner consideration, with bounded residual risk.** I found no new security issue in PR #61’s three-line workflow change. At head `374f911`, the ledger-excluded digest ind
+
+---
+
+## Subagent Completed
+**Timestamp**: 2026-10-28T19:52:39Z
+**Event**: SUBAGENT_COMPLETED
+**Agent Type**: stocksense-aidlc-process-steward-agent
+**Agent ID**: 01a1840d-c5f6-7b11-bb74-c039947211dc
+**Message**: **Verdict: the PR #61 finding-specific exception can be put to the owner only with an explicit Major finding disclosed.** The exception question is accurately bounded: approval would permit preparing 
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-28T19:52:58Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/contracts/code-generation/pr61-image-exception-questions.md
+**Context**: construction > contracts > code-generation > pr61-image-exception-questions.md
+
+---
+
+## Decision Recorded
+**Timestamp**: 2026-10-28T19:55:12Z
+**Event**: DECISION_RECORDED
+**Stage**: code-generation
+**Decision**: Approve one temporary finding-specific image exception for PR #61 exact candidate digest sha256:9f9ab01d75178ac20df7eba78b697f2f3a7cf74b5cce372f402b4b54a7ff2259, retained hosted run 40756484537, expiry 2026-11-25T00:00:00Z; permits preparing a protected-main ledger PR only
+**Options**: Approve exact PR #61 temporary exception,Request changes
+**Unit**: contracts
+
+---
+
+## Session Resume
+**Timestamp**: 2026-10-29T07:59:55Z
+**Event**: SESSION_RESUMED
+**Source**: resume
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-29T08:00:00Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Human Turn
+**Timestamp**: 2026-10-29T08:00:28Z
+**Event**: HUMAN_TURN
+**Session**: 01a0806c-9cde-7650-ace6-22e718a794e2
+
+---
+
+## Artifact Updated
+**Timestamp**: 2026-10-29T08:00:46Z
+**Event**: ARTIFACT_UPDATED
+**Tool**: Edit
+**File**: <project-dir>/aidlc/spaces/default/intents/260908-stock-sense-design/construction/contracts/code-generation/pr61-image-exception-questions.md
+**Context**: construction > contracts > code-generation > pr61-image-exception-questions.md
+
+---
+
+## Question Answered
+**Timestamp**: 2026-10-29T08:01:32Z
+**Event**: QUESTION_ANSWERED
+**Stage**: code-generation
+**Details**: Approve exact PR #61 temporary exception
+**Unit**: contracts
+
+---
