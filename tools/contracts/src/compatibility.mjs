@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ContractError, digest } from './package-loader.mjs';
+import { ContractError, assertSafePath, digest } from './package-loader.mjs';
 import { preflightCanonicalReferences } from './reference-preflight.mjs';
 import { materializeOfflineReferences } from './validate.mjs';
 
@@ -200,6 +200,19 @@ async function runPinnedDiff(artifactKind, binding, resolveSource, localReferenc
  */
 export async function createPreflightedSnapshotDiffer({ predecessorRoot, predecessorEntries,
   candidateRoot, candidateEntries }) {
+  for (const entries of [predecessorEntries, candidateEntries]) {
+    if (!Array.isArray(entries) || entries.some(entry => {
+      const document = entry?.document;
+      if (typeof document !== 'string') return true;
+      assertSafePath(document);
+      const kind = document.endsWith('.openapi.yaml') ? 'openapi' :
+        document.endsWith('.asyncapi.yaml') ? 'asyncapi' :
+          document.endsWith('.schema.json') || document.endsWith('.shared-schema.yaml') ? 'schema' : null;
+      return !kind || entry.artifactKind !== kind;
+    })) {
+      fail('DIFF_SOURCE', 'BR4.3', 'Snapshot entries must be canonical sources with their declared kind');
+    }
+  }
   const scratch = await mkdtemp(join(tmpdir(), 'stocksense-diff-'));
   const beforeRoot = join(scratch, 'before');
   const afterRoot = join(scratch, 'after');
