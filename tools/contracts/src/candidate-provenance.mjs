@@ -10,7 +10,8 @@ import { createBoundedGeneratorRunner } from './bounded-generators.mjs';
 import { createPinnedGeneratorRunner, DOTNET_HOST, GENERATORS, generatorConfigurationDigest } from './generators.mjs';
 import { buildSbom } from './sbom.mjs';
 import { readImageEvidence, IMAGE_NAMES } from './image-evidence.mjs';
-import { candidateTreeDigestFromGit, fetchImageLedger, verifyBoundImageEvidence } from './image-ledger.mjs';
+import { candidateTreeDigestFromGit, executionFingerprintFromGit,
+  fetchImageLedger, readKiotaRuntimeEvidence, verifyBoundImageEvidence } from './image-ledger.mjs';
 import { verifySecurityReports } from './ci-policy.mjs';
 import { assertEvidenceContentSafe } from './evidence.mjs';
 import { toDiagnostic } from './diagnostics.mjs';
@@ -303,10 +304,20 @@ export function assertCandidateRecord(record) {
 }
 
 /** Bind the retained protected-main receipt to current source, tree and scans. */
-export function assertLedgerBinding(receipt, { candidateRevision, treeSha, treeDigest, sourceDigest, images }) {
-  if (!exact(receipt, ['schema', 'candidateRevision', 'candidateGitTreeSha',
-    'candidateTreeDigest', 'sourceDigest', 'mainSha', 'ledgerBlobSha', 'images']) ||
-      receipt.schema !== 'stocksense-image-ledger-verification-v1' ||
+export function assertLedgerBinding(receipt, { candidateRevision, treeSha, treeDigest, sourceDigest,
+  images, executionFingerprint = /** @type {string|null} */ (null),
+  runtimeManifestDigest = /** @type {string|null} */ (null) }) {
+  const v2 = receipt?.schema === 'stocksense-image-ledger-verification-v2';
+  const fields = ['schema', 'candidateRevision', 'candidateGitTreeSha',
+    'candidateTreeDigest', 'sourceDigest', 'mainSha', 'ledgerBlobSha', 'images',
+    ...(v2 ? ['executionFingerprint', 'runtimeManifestDigest', 'ledgerSchema'] : [])];
+  if (!exact(receipt, fields) ||
+      !['stocksense-image-ledger-verification-v1',
+        'stocksense-image-ledger-verification-v2'].includes(receipt.schema) ||
+      v2 && (receipt.ledgerSchema !== 'stocksense-image-exceptions-v2' ||
+        receipt.executionFingerprint !== executionFingerprint ||
+        receipt.runtimeManifestDigest !== runtimeManifestDigest ||
+        !SHA.test(receipt.executionFingerprint) || !SHA.test(receipt.runtimeManifestDigest)) ||
       receipt.candidateRevision !== candidateRevision || receipt.candidateGitTreeSha !== treeSha ||
       receipt.candidateTreeDigest !== treeDigest || receipt.sourceDigest !== sourceDigest ||
       !COMMIT.test(receipt.mainSha) || !COMMIT.test(receipt.ledgerBlobSha) ||
@@ -372,12 +383,17 @@ export async function buildCandidateEvidence({ repoRoot, bundlePath, sbomPath, i
   }
   const sourceDigest = await sourceTreeDigest();
   const treeDigest = candidateTreeDigestFromGit(listing.stdout);
+  const executionFingerprint = executionFingerprintFromGit(listing.stdout);
+  const runtimeManifestDigest = ledger.schema === 'stocksense-image-ledger-verification-v2'
+    ? await readKiotaRuntimeEvidence(imageDirectory, kiotaImageId) : null;
   assertLedgerBinding(ledger, { candidateRevision, treeSha: tree,
-    treeDigest, sourceDigest, images: image.records });
+    treeDigest, sourceDigest, images: image.records,
+    executionFingerprint, runtimeManifestDigest });
   const currentLedger = await fetchLedger({ repository: REPOSITORY, token: process.env.GITHUB_TOKEN,
     candidateRevision, candidateGitTreeSha: tree });
   const currentReceipt = await verifyImages({ directory: imageDirectory, imageIds, ledger: currentLedger,
-    expectedRevision: candidateRevision, actualRevision: head, candidateTreeDigest: treeDigest });
+    expectedRevision: candidateRevision, actualRevision: head, candidateTreeDigest: treeDigest,
+    executionFingerprint, runtimeManifestDigest });
   if (canonicalJson(currentReceipt) !== canonicalJson(ledger)) {
     fail('IMAGE_LEDGER', 'BR6.5', 'Retained receipt no longer matches protected main and current finding dispositions');
   }

@@ -3,7 +3,9 @@ import { chmod, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { IMAGE_NAMES, SCANNERS, inspectImageSbom, inspectImageScan, readImageEvidence, retainRawImageScan, sha256, verifyRawImageScan } from '../src/image-evidence.mjs';
-import { candidateTreeDigestFromGit, fetchImageLedger, verifyBoundImageEvidence } from '../src/image-ledger.mjs';
+import { candidateTreeDigestFromGit, executionFingerprintFromGit,
+  fetchImageLedger, readKiotaRuntimeEvidence, verifyBoundImageEvidence } from '../src/image-ledger.mjs';
+import { collectKiotaRuntimeManifest } from '../src/kiota-runtime-manifest.mjs';
 
 // Usage: image-evidence.mjs build|verify [output-directory]. Build scans the
 // exact local IDs supplied by the two image build steps. No tag is a subject.
@@ -53,6 +55,7 @@ if (command === 'verify') {
     throw new Error('Candidate immutable Git tree is unavailable');
   }
   const candidateTreeDigest = candidateTreeDigestFromGit(listing.stdout);
+  const executionFingerprint = executionFingerprintFromGit(listing.stdout);
   for (const name of IMAGE_NAMES) {
     const sbomDigest = sha256(await readFile(join(directory, `${name}.cdx.json`)));
     await verifyRawImageScan(directory, { name, imageId: imageIds[name], sbomDigest, revision });
@@ -61,9 +64,11 @@ if (command === 'verify') {
   const ledger = await fetchImageLedger({ repository: process.env.GITHUB_REPOSITORY,
     token: process.env.GITHUB_TOKEN, candidateRevision: process.env.GITHUB_SHA,
     candidateGitTreeSha: tree.stdout.trim() });
+  const runtimeManifestDigest = ledger.schema === 'stocksense-image-exceptions-v2'
+    ? await readKiotaRuntimeEvidence(directory, imageIds.kiota) : null;
   const result = await verifyBoundImageEvidence({ directory, imageIds, ledger,
     expectedRevision: process.env.GITHUB_SHA, actualRevision: revision,
-    candidateTreeDigest });
+    candidateTreeDigest, executionFingerprint, runtimeManifestDigest });
   await writeFile(join(directory, 'ledger-verification.json'), JSON.stringify(result, null, 2) + '\n');
   process.stdout.write(`Verified image scans against main ${result.mainSha}, ledger blob ${result.ledgerBlobSha}\n`);
 } else if (command === 'build') {
@@ -105,6 +110,11 @@ if (command === 'verify') {
       inspectImageSbom(sbom, name, imageId);
       const sbomBytes = Buffer.from(JSON.stringify(sbom, null, 2) + '\n');
       await writeFile(join(directory, `${name}.cdx.json`), sbomBytes);
+      if (name === 'kiota') {
+        const manifest = await collectKiotaRuntimeManifest({ imageId, sbom });
+        await writeFile(join(directory, 'kiota.runtime.json'),
+          JSON.stringify({ imageId, sbomDigest: sha256(sbomBytes), ...manifest }, null, 2) + '\n');
+      }
       // Grype reads precisely the retained SBOM bytes, not a fresh tag scan.
       const scanFile = join(scratch, `${name}.cdx.json`);
       await writeFile(scanFile, sbomBytes);
