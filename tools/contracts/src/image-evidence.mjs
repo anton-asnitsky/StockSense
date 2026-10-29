@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { ContractError } from './package-loader.mjs';
 
@@ -18,6 +18,57 @@ const EXCEPTION_FIELDS = new Set(['id', 'image', 'package', 'version', 'type', '
   'createdAt', 'expiresAt']);
 const digest = bytes => `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
 const fail = (code, message) => { throw new ContractError(code, 'BR6.5', message); };
+
+// Preserve the scanner's exact output before interpreting any finding. A
+// rejected finding must still be diagnosable from the retained CI artifact.
+export async function retainRawImageScan(directory, { name, imageId, sbomDigest,
+  revision, scanText, databaseText }) {
+  if (!IMAGE_NAMES.includes(name) || !HEX.test(imageId ?? '') ||
+      !HEX.test(sbomDigest ?? '') || !/^[0-9a-f]{40}$/.test(revision ?? '') ||
+      typeof scanText !== 'string' || typeof databaseText !== 'string') {
+    fail('IMAGE_RAW', 'Raw image scan binding is incomplete');
+  }
+  const scanBytes = Buffer.from(scanText, 'utf8');
+  const databaseBytes = Buffer.from(databaseText, 'utf8');
+  if (!scanBytes.length || scanBytes.length > 64 * 1024 * 1024 ||
+      !databaseBytes.length || databaseBytes.length > 1024 * 1024) {
+    fail('IMAGE_RAW', 'Raw image scan exceeds the evidence budget');
+  }
+  const receipt = { schema: 'stocksense-image-raw-v1', image: name, imageId,
+    sbomDigest, scanner: SCANNERS.grype, sourceRevision: revision,
+    scanDigest: digest(scanBytes), databaseDigest: digest(databaseBytes) };
+  await writeFile(join(directory, `${name}.grype-raw.json`), scanBytes);
+  await writeFile(join(directory, `${name}.grype-db-raw.json`), databaseBytes);
+  await writeFile(join(directory, `${name}.grype-raw-receipt.json`),
+    JSON.stringify(receipt, null, 2) + '\n');
+  return receipt;
+}
+
+export async function verifyRawImageScan(directory, { name, imageId, sbomDigest, revision }) {
+  if (!IMAGE_NAMES.includes(name) || !HEX.test(imageId ?? '') ||
+      !HEX.test(sbomDigest ?? '') || !/^[0-9a-f]{40}$/.test(revision ?? '')) {
+    fail('IMAGE_RAW', 'Raw image scan binding is incomplete');
+  }
+  let scanBytes, databaseBytes, receipt;
+  try {
+    [scanBytes, databaseBytes, receipt] = await Promise.all([
+      readFile(join(directory, `${name}.grype-raw.json`)),
+      readFile(join(directory, `${name}.grype-db-raw.json`)),
+      readFile(join(directory, `${name}.grype-raw-receipt.json`))
+        .then(bytes => JSON.parse(bytes.toString('utf8')))
+    ]);
+  } catch { fail('IMAGE_RAW', 'Raw image scan or receipt is missing or malformed'); }
+  if (receipt?.schema !== 'stocksense-image-raw-v1' || receipt.image !== name ||
+      receipt.imageId !== imageId || receipt.sbomDigest !== sbomDigest ||
+      receipt.scanner !== SCANNERS.grype || receipt.sourceRevision !== revision ||
+      receipt.scanDigest !== digest(scanBytes) ||
+      receipt.databaseDigest !== digest(databaseBytes) ||
+      !scanBytes.length || !databaseBytes.length ||
+      scanBytes.length > 64 * 1024 * 1024 || databaseBytes.length > 1024 * 1024) {
+    fail('IMAGE_RAW', 'Raw image scan does not match its source-bound receipt');
+  }
+  return receipt;
+}
 const exactText = (value, limit = 512) => typeof value === 'string' && value.length > 0 &&
   value.length <= limit && value === value.trim() && !/[\x00-\x1f\x7f*]/.test(value);
 const exactIdentityText = (value, limit) => exactText(value, limit) && !value.includes('?');

@@ -1,8 +1,8 @@
 import { spawnSync } from 'node:child_process';
-import { chmod, mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { IMAGE_NAMES, SCANNERS, inspectImageSbom, inspectImageScan, readImageEvidence, sha256 } from '../src/image-evidence.mjs';
+import { IMAGE_NAMES, SCANNERS, inspectImageSbom, inspectImageScan, readImageEvidence, retainRawImageScan, sha256, verifyRawImageScan } from '../src/image-evidence.mjs';
 import { candidateTreeDigestFromGit, fetchImageLedger, verifyBoundImageEvidence } from '../src/image-ledger.mjs';
 
 // Usage: image-evidence.mjs build|verify [output-directory]. Build scans the
@@ -17,11 +17,11 @@ const docker = process.platform === 'win32'
 // cannot be removed by an unprivileged runner and can mask the scan result.
 const scannerUser = typeof process.getuid === 'function' && typeof process.getgid === 'function'
   ? ['--user', `${process.getuid()}:${process.getgid()}`] : [];
-const run = (args, label, maxBuffer = 64 * 1024 * 1024) => {
+const run = (args, label, maxBuffer = 64 * 1024 * 1024, trimOutput = true) => {
   const result = spawnSync(docker, args, { encoding: 'utf8', windowsHide: true, shell: false,
     maxBuffer, timeout: 12 * 60 * 1000 });
   if (result.error || result.status !== 0) throw new Error(`${label} failed`);
-  return result.stdout.trim();
+  return trimOutput ? result.stdout.trim() : result.stdout;
 };
 const parse = (value, label) => {
   try { return JSON.parse(value); } catch { throw new Error(`${label} did not return JSON`); }
@@ -53,6 +53,10 @@ if (command === 'verify') {
     throw new Error('Candidate immutable Git tree is unavailable');
   }
   const candidateTreeDigest = candidateTreeDigestFromGit(listing.stdout);
+  for (const name of IMAGE_NAMES) {
+    const sbomDigest = sha256(await readFile(join(directory, `${name}.cdx.json`)));
+    await verifyRawImageScan(directory, { name, imageId: imageIds[name], sbomDigest, revision });
+  }
   process.stdout.write(`Candidate ${revision}, tree ${tree.stdout.trim()}, source manifest ${candidateTreeDigest}\n`);
   const ledger = await fetchImageLedger({ repository: process.env.GITHUB_REPOSITORY,
     token: process.env.GITHUB_TOKEN, candidateRevision: process.env.GITHUB_SHA,
@@ -64,6 +68,13 @@ if (command === 'verify') {
   process.stdout.write(`Verified image scans against main ${result.mainSha}, ledger blob ${result.ledgerBlobSha}\n`);
 } else if (command === 'build') {
   await mkdir(directory, { recursive: true });
+  const source = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8', shell: false,
+    windowsHide: true, timeout: 10_000 });
+  if (source.error || source.status !== 0 || !/^[0-9a-f]{40}$/.test(source.stdout.trim()) ||
+      process.env.GITHUB_SHA && process.env.GITHUB_SHA !== source.stdout.trim()) {
+    throw new Error('Candidate source revision is unavailable or differs from the checkout');
+  }
+  const revision = source.stdout.trim();
   const scratch = await mkdtemp(join(tmpdir(), 'stocksense-image-evidence-'));
   try {
     for (const part of ['tmp', 'syft-cache', 'grype-cache']) {
@@ -102,11 +113,17 @@ if (command === 'verify') {
       const common = ['run', '--rm', '--pull=never', '--platform', 'linux/amd64',
         ...scannerUser, '--cpus=1', '--memory=2g', '--read-only',
         ...env, ...mounts, SCANNERS.grype];
-      const raw = parse(run([...common, `sbom:/scan/${name}.cdx.json`, '-o', 'json'], 'Grype image scan'), 'Grype');
+      const rawText = run([...common, `sbom:/scan/${name}.cdx.json`, '-o', 'json'],
+        'Grype image scan', 64 * 1024 * 1024, false);
+      const databaseText = run([...common, 'db', 'status', '-o', 'json'],
+        'Grype database status', 1024 * 1024, false);
+      await retainRawImageScan(directory, { name, imageId, sbomDigest: sha256(sbomBytes),
+        revision, scanText: rawText, databaseText });
+      const raw = parse(rawText, 'Grype');
       if (!Array.isArray(raw.matches) || (raw.ignoredMatches?.length ?? 0) !== 0) {
         throw new Error('Grype scan returned incomplete or suppressed matches');
       }
-      const db = parse(run([...common, 'db', 'status', '-o', 'json'], 'Grype database status'), 'Grype DB');
+      const db = parse(databaseText, 'Grype DB');
       const report = { schema: 'stocksense-image-scan-v2', image: name, imageId,
         sbomDigest: sha256(sbomBytes), scanner: SCANNERS.grype, status: 'completed',
         // Grype v0.120.1 serializes ProviderStatus as `valid: boolean`.
