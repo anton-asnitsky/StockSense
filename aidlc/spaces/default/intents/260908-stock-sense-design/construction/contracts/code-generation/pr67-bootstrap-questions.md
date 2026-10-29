@@ -13,4 +13,4 @@ Approve this exact PR #67 bootstrap and temporary U2 required-check change?
 - Approve PR #67 bootstrap and temporary U2 check change
 - Request changes
 
-[Answer]: Pending
+[Answer]: Approve PR #67 bootstrap and temporary U2 check change
