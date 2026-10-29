@@ -1,7 +1,7 @@
 {
   "packageVersion": "1.0.0",
   "manifestStatus": "candidate",
-  "sourceRevision": "3ab04a5ed0763e5be6b258b1e1ccd734f3a8859d",
+  "sourceRevision": "2227acab9321b9184944d74692f61c67f03087ad",
   "openapi": [
     {
       "provider": "U11 Web BFF",
@@ -45,7 +45,7 @@
       "document": "governance/contract-package-policy.json",
       "semanticVersion": "1.0.0",
       "contentDigest": "sha256:7bd05065b012b25af6d38218a7212deab51095b980d5f7a947cc2894f1adb8b8",
-      "sourceRevision": "3ab04a5ed0763e5be6b258b1e1ccd734f3a8859d"
+      "sourceRevision": "2227acab9321b9184944d74692f61c67f03087ad"
     },
     {
       "kind": "example-fixture",
@@ -56,8 +56,8 @@
       ],
       "document": "governance/example-fixture.json",
       "semanticVersion": "1.0.0",
-      "contentDigest": "sha256:a181febdbcc2c0a6435fe5c26965022ffe99142020e436ef99b0333f5e8eee8c",
-      "sourceRevision": "3ab04a5ed0763e5be6b258b1e1ccd734f3a8859d"
+      "contentDigest": "sha256:fcbeb444e8c5be00fc7c8f6fb8c2eb0c0a75bc67eec2837c0dac2404f5139f9b",
+      "sourceRevision": "2227acab9321b9184944d74692f61c67f03087ad"
     },
     {
       "kind": "generation-profile",
@@ -68,8 +68,8 @@
       ],
       "document": "governance/generation-profile.json",
       "semanticVersion": "1.0.0",
-      "contentDigest": "sha256:906c168ac16e79019bd1f0c095b151926e751932e4e4150a7cee837e42aa28a3",
-      "sourceRevision": "3ab04a5ed0763e5be6b258b1e1ccd734f3a8859d"
+      "contentDigest": "sha256:239d83a39308a83b7cb82d40293233586b96da76caf0014dd14074487de7acd0",
+      "sourceRevision": "2227acab9321b9184944d74692f61c67f03087ad"
     }
   ],
   "boundaryCoverage": [

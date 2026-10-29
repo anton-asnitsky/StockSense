@@ -20,10 +20,10 @@ test('C18 package examples bind the OpenAPI revision and exact positive/negative
     'contracts/fixtures/web-bff/v1/example-fixture.json')));
   assert.equal(canonicalFixtures.syntheticOnly, true);
   assert.deepEqual(c18Fixtures, canonicalFixtures.fixtures);
-  assert.equal(c18Fixtures.length, 6);
+  assert.equal(c18Fixtures.length, 7);
   assert.ok(c18Fixtures.every(item => item.documentRevisionId === c18.revisionId));
   const rows = (await runFixtureOracle(sample, loaded)).filter(item => item.fixtureId.startsWith('c18-'));
-  assert.deepEqual(rows.map(item => item.observed), ['pass', 'fail', 'pass', 'fail', 'pass', 'fail']);
+  assert.deepEqual(rows.map(item => item.observed), ['pass', 'fail', 'pass', 'fail', 'pass', 'fail', 'pass']);
   await withCopy(async root => {
     const path = join(root, 'governance/example-fixture.json');
     const changed = JSON.parse(await readFile(path));
