@@ -1,7 +1,7 @@
 {
   "stage": "code-generation",
   "unit": "contracts",
-  "decision_basis": "U1's 186 declared source paths are an inventory of merged Bolt Git object 7ff4c4c41d24146f25c4cc2dd3ef1074063e2408; its tree 61794b716eadc7484067d29a4e726a5789e991af exactly matches PR #51's hosted-tested head d4aa5a6ddc13cce94f1077288971cf05a104511c. The source manifest adds the five candidate-evidence source/test paths introduced by that story. This AI-DLC checkout is a divergent documentation mirror: those five paths are absent locally and seven existing declared paths have different bytes, so it is not a source-bound review snapshot. Protected main 36c54749790c6288553018e15989beca7418f5f9 carries the owner-approved, digest-specific Kiota exception through PR #56; PR #51 hosted run 40685726261 attempt 2 passed U1 and Vulnerability, including current image scans, lint, type-check, unit/integration tests and the 80% coverage floor. Main-push runs 40702747511 and 40702746980 passed on the prior main tree, but do not attest the newly merged Bolt candidate. See verification/u1-pr51-story-merge-2026-10-28.md and verification/pr56-bootstrap-merge-2026-10-28.md. OK means the complete named criterion is demonstrated and targets implementation or test evidence in the committed Bolt; a validated C01-C27 candidate is not a C01 release or provider/runtime proof. GAP retains incomplete release, runtime, compatibility and downstream evidence obligations. R-14 through R-16, a matching source checkout, source-bound independent candidate review and U1 acceptance remain open.",
+  "decision_basis": "The 186-path source inventory and 95-ID mapping are historical PR #51 Bolt evidence; this checkout is a divergent documentation mirror and does not attest the current U1 source tree. Protected main 8cce4f8040ad0767fca1b1ab14a00bb067a66b76 has all three required checks and green main-push U1, Vulnerability and release-evidence runs. Ordinary docs-only PR #69 passed U2 and Vulnerability but failed U1 because the current exact-tree Kiota exception belongs to another candidate digest (verification/ordinary-pr-ci-smoke-2026-10-29.md). The owner approved a reusable execution-fingerprint design only; the replacement ledger, renewed source-bound plan approval, hosted proof, U1 candidate READY and C01 release remain open (construction/contracts/nfr-design/image-exception-scope-amendment-2026-10-29.md). R-14 through R-16 remain open and existing GAP rows remain GAP.",
   "upstream_ids": [
     "AC8.2.1",
     "AC8.2.2",
@@ -533,7 +533,7 @@
     {
       "id": "NFR13.2",
       "status": "GAP",
-      "target": "PR #51 hosted run 40685726261 attempt 2 retained current validator and Kiota CycloneDX image inventories and scans; validator had zero findings and Kiota had one Medium MessagePack finding. PR #56 placed the owner-approved, finding-specific exception for exact candidate digest sha256:ae449a9062ba7ecb8acc196fcad442a21b26daf25e4d5df915249fe3e5b28e76 on protected main. The prior main-push SBOM passed run 40702746980, but a hosted, attested combined SBOM for the new Bolt candidate is absent. Complete released-revision dependency and gate proof remain open."
+      "target": "Historical PR #51/56 scans and exact-candidate exception are recorded in verification/pr56-bootstrap-merge-2026-10-28.md. Current main 8cce4f8 passes U1 and Vulnerability on its own tree, but ordinary docs-only PR #69 passed U2/Vulnerability and failed U1 because the protected ledger is bound to another whole-candidate digest (verification/ordinary-pr-ci-smoke-2026-10-29.md). The owner approved a narrower reusable execution-fingerprint design, recorded in construction/contracts/nfr-design/image-exception-scope-amendment-2026-10-29.md; implementation, two-build runtime baseline, per-image hosted scan proof, ordinary-PR success and complete released-revision evidence remain open."
     },
     {
       "id": "NFR13.3",
@@ -558,7 +558,7 @@
     {
       "id": "NFR15.2",
       "status": "GAP",
-      "target": "The owner-approved Kiota MessagePack 2.5.302 exception is bound to the PR #51 candidate digest sha256:ae449a9062ba7ecb8acc196fcad442a21b26daf25e4d5df915249fe3e5b28e76, expires 2026-11-25, and was merged to protected main by PR #56. PR #51 hosted run 40685726261 attempt 2 passed exact current-finding/expiry ledger verification. Independent source-bound U1 candidate review remains open before this requirement can be marked complete (verification/pr56-bootstrap-merge-2026-10-28.md)."
+      "target": "Historical PR #51/56 exact-candidate exception and its 2026-11-25 expiry are recorded in verification/pr56-bootstrap-merge-2026-10-28.md. Current main has a later exact-tree Kiota MessagePack row from PR #67; docs-only PR #69 proved that row cannot cover ordinary future candidates. The owner approved only the design scope of a reusable execution-fingerprint exception in u1-reusable-image-exception-questions.md. The broader protected-main ledger record, complete path/runtime proof, renewed plan approval, hosted CI evidence and independent source-bound U1 candidate review remain open."
     },
     {
       "id": "NFR15.3",

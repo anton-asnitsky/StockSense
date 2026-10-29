@@ -1,46 +1,18 @@
-# U1 Contracts Code Generation Plan Approval — Node security amendment
+# U1 Contracts Code Generation Plan Approval — reusable image exception
 
-The exact `code-generation-plan.md` and `unit-test-instructions.md` retain
-test-after ordering, the Standard strategy, U1-scoped tests, at least 80%
-line coverage, and CI execution before merge. Their old source-bound Plan
-Approval no longer applies because this amendment changes the Node pin and
-security tests. The Testing Contract itself is unchanged.
+The owner approved the reusable Kiota exception design scope in `u1-reusable-image-exception-questions.md`. The revised `code-generation-plan.md` and `unit-test-instructions.md` add Steps 17–19: a protected complete-path execution fingerprint, a normalized final-runtime baseline proven by two independent hosted builds, per-run image scans and fail-closed negative tests. The exact-tree exception stays active until replacement proof and a separately approved protected-main rollout. The official Kiota 1.36.1 package still bundles MessagePack 2.5.302, so this plan retains pinned Kiota 1.35.0.
 
-[Draft PR #62's hosted run 40839795810](https://github.com/anton-asnitsky/StockSense/actions/runs/40839795810)
-and its unchanged rerun failed at the validator image scan. The retained
-validator SBOM and a checksum-verified Grype 0.120.1 reproduction identify
-eight fixed findings in Node 24.19.0: one Critical, three High, three Medium,
-one Low. The current scanner rejects their `binary` / `pkg:generic` shape,
-and the fixed High/Critical findings independently block acceptance. The
-[verification record](../../../verification/u1-node-security-scan-2026-10-29.md)
-contains the exact evidence and limits. Node's 24.22.1 security release fixes
-the listed CVEs; the proposed target is immutable Node 24.22.2 LTS.
+[PR #69](https://github.com/anton-asnitsky/StockSense/pull/69) changed only documentation. U2 and Vulnerability passed; U1 failed because the protected ledger row belongs to another whole-candidate digest. The [proof](../../../verification/ordinary-pr-ci-smoke-2026-10-29.md) and [NFR amendment](../nfr-design/image-exception-scope-amendment-2026-10-29.md) describe the gap and risk. The residual risk is denial of service if an unknown input path reaches vulnerable MessagePack deserialization. The proposed reusable exception expires no later than 2026-11-25 and requires reapproval for changed execution inputs, runtime content, or finding.
 
-The revised plan updates all four CI Node pins, the validator image and its
-version assertion, package engine, SBOM/CI policy assertions, and affected
-tests. It retains raw scan and database evidence before normalization, keeps
-the finding gate fail-closed, and requires exact Linux/amd64 image and
-main-push proof. An independent security and technical lead review found
-two Major plan gaps—protected-change integration sequencing and raw scan
-retention—which are now explicit in the revised plan and test instructions.
-
-Draft PR #61's workflow fix and draft PR #62's ledger row are **not** approved
-for merge by this decision. The earlier MessagePack exception is bound to
-PR #61's old candidate digest and cannot cover the upgraded tree. Any new
-finding-specific exception, each protected-main merge, and any temporary
-required-check change require separate owner decisions. R-14–R-16, the
-45 traceability gaps, stale U1 summary/traceability, candidate READY, and
-full C01 release remain open. This approval permits implementation and
-remediation under the revised plan only.
+The existing source-bound plan receipt is invalid after this plan/test amendment. Plan approval permits implementation and verification only. The protected-main ledger and policy merge, any temporary required-check change, U1 candidate acceptance and C01 release remain separate decisions. R-14–R-16 remain open.
 
 ## Plan Approval
 
-Do you approve this exact `code-generation-plan.md` and
-`unit-test-instructions.md` for continued U1 Contracts remediation?
+Do you approve this exact `code-generation-plan.md` and `unit-test-instructions.md` for continued U1 Contracts remediation?
 
-[Approval Fingerprint]: sha256:6705bd49bc11e014c4698466da0958b3c3dcfd7612aaf0affff908e321eaef0f
+[Approval Fingerprint]: sha256:71be9ce061ef26cfa02fa6fe235ee3c0f34045105da361ddf014b2210cb5f609
 
-- Approve Plan — proceed to code generation
-- Request Changes — revise the plan and instructions
+- Approve Plan
+- Request Changes
 
-[Answer]: Approve Plan
+[Answer]:
