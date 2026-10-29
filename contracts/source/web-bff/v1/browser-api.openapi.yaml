@@ -492,3 +492,36 @@ components:
       additionalProperties: false
 security:
   - bffSession: []
+x-contract-fixtures:
+  - name: dashboard-partial-unavailable-section
+    schemaRef: '#/components/schemas/AggregateResponse'
+    expectedValid: true
+    value:
+      metadata:
+        contractVersion: 1.0.0
+        responseSchema: AggregateResponse
+        generatedAt: '2026-09-28T10:00:00Z'
+        correlationId: 00000000-0000-4000-8000-000000000502
+      aggregateVersion: dashboard-v4
+      aggregateState: partial
+      sections:
+        - name: inventory
+          state: ready
+          observedAt: '2026-09-28T09:59:00Z'
+          sourceVersion: inventory-v3
+          data: { lowStockCount: 2 }
+          problem: null
+        - name: forecast
+          state: unavailable
+          observedAt: '2026-09-28T10:00:00Z'
+          sourceVersion: null
+          retryAfter: '2026-09-28T10:05:00Z'
+          data: null
+          problem:
+            type: about:blank
+            title: Dependency unavailable
+            status: 503
+            detail: Forecast data is temporarily unavailable.
+            instance: /api/v1/retailers/00000000-0000-4000-8000-000000000503/dashboard
+            code: DEPENDENCY_UNAVAILABLE
+            correlationId: 00000000-0000-4000-8000-000000000502
