@@ -1834,3 +1834,15 @@ components:
       additionalProperties: false
 servers:
   - url: /
+x-contract-fixtures:
+  - name: recovery-generation-conflict
+    schemaRef: '#/components/schemas/RecoveryProblemDetails'
+    expectedValid: true
+    value:
+      type: about:blank
+      title: Recovery generation conflict
+      status: 409
+      detail: The requested generation is no longer current.
+      instance: /api/v1/retailers/00000000-0000-4000-8000-000000000401/recovery-runs
+      code: RECOVERY_GENERATION_STALE
+      correlationId: 00000000-0000-4000-8000-000000000402

@@ -4,6 +4,8 @@ import { spawnSync } from 'node:child_process';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
+import Ajv2020 from 'ajv/dist/2020.js';
+import addFormats from 'ajv-formats';
 import YAML from 'yaml';
 import { deriveIdentity, digest } from '../../src/package-loader.mjs';
 import { openApiInlineResponseElements } from '../../src/policy.mjs';
@@ -18,8 +20,8 @@ const route = '/api/v1/retailers/{retailerId}';
 const cases = [
   {
     boundary: 'C03', owner: 'U4 Retail Data', document: 'retail-data/v1/supplier-reference.openapi.yaml',
-    contentDigest: 'sha256:521dbc27982f6e11670356d7916c769bbf25b1b7517736d77e074e8a1decc982',
-    revisionId: 'sha256:cd9231d2d10692e03568185a3ae795efdb73bda58f031a1b5059b3a8adc56c51',
+    contentDigest: 'sha256:c83f22253db60d193396c922cd367779b6c8f7b7bf7a6aafe747defbebebfc71',
+    revisionId: 'sha256:18e36511272611d96f34db2fff06d80902a54b025f081ed6c24c11868047e4f9',
     operations: [
       [`${route}/supplier-reference`, 'get', 'getSupplierReferenceData',
         ['path:retailerId!:string:uuid', 'query:productIds:array[200]<string:uuid>'], ['200', '403', '409']]
@@ -27,8 +29,8 @@ const cases = [
   },
   {
     boundary: 'C04', owner: 'U4 Retail Data', document: 'retail-data/v1/dataset-exports.openapi.yaml',
-    contentDigest: 'sha256:dd0c9020254f6d19e9796f72ee4415ba797f79c112675e43465262ea31f8c407',
-    revisionId: 'sha256:07d0237f23131f92f73e2488362a7280220078a3ca95725162162c1fce69df78',
+    contentDigest: 'sha256:4892ed672893f62b40b35c6d9d28d999a25d8e0e1675e129303e951e3865e604',
+    revisionId: 'sha256:53b9d0a0ee2ed385e249e80fcccb575689370a525bd7d1cefa52bf00ba52b4e6',
     operations: [
       [`${route}/dataset-exports`, 'post', 'requestRetailDatasetExport',
         ['header:Idempotency-Key!:string', 'path:retailerId!:string:uuid'], ['202', '409']],
@@ -38,8 +40,8 @@ const cases = [
   },
   {
     boundary: 'C06', owner: 'U4 Retail Data', document: 'retail-data/v1/forecast-inputs.openapi.yaml',
-    contentDigest: 'sha256:9168908416c8b73eabeec219ddb3c068e9014abc95847c2ecdb164d448b099ea',
-    revisionId: 'sha256:15898b059e259a235d0f4cb041709b960bb2546f07726343ab16beb173f2a531',
+    contentDigest: 'sha256:f34a5af2fa21105a80eec84e5d453cffa79686e939a2b02f5b010066471c7e29',
+    revisionId: 'sha256:74e1c0c261a8e60b5bdb57d742fb8feef509f41760dcff0bf5ea5563b9521b0f',
     operations: [
       [`${route}/forecast-inputs`, 'get', 'getForecastInputs',
         ['path:retailerId!:string:uuid', 'query:asOf!:string:date-time', 'query:sourceVersion!:string'],
@@ -48,8 +50,8 @@ const cases = [
   },
   {
     boundary: 'C11', owner: 'U4 Retail Data', document: 'retail-data/v1/assistant-inventory.openapi.yaml',
-    contentDigest: 'sha256:d7ebc0ad9fe59d60e07cbf9bc2eee882671b38b28a082210c70f0fdd9cb76635',
-    revisionId: 'sha256:fa714895b3641f5449f4c193f19598af36cdfc802c4fcfa2bfcd5cef9124ab7c',
+    contentDigest: 'sha256:860badc1b048703053ec7ce11023cb5f4ed4b114fcc399acba742ad97b40ca47',
+    revisionId: 'sha256:de69653425e0eb528d835741c38d565bf52b581428fac412c40da37f062bba52',
     operations: [
       [`${route}/assistant-tools/inventory-query`, 'post', 'queryInventoryForAssistant',
         ['path:retailerId!:string:uuid'], ['200', '403']],
@@ -59,8 +61,8 @@ const cases = [
   },
   {
     boundary: 'C12', owner: 'U5 Supplier Knowledge', document: 'supplier-knowledge/v1/assistant-retrieval.openapi.yaml',
-    contentDigest: 'sha256:e0f1679b135406f5be2d66a38ef9bceb5e5c12a08ed5364eebe4643efd9c3d33',
-    revisionId: 'sha256:341c1e0c19d8929e560701f52b6f87aee2c3f6abbcb93520751525c5f83c7316',
+    contentDigest: 'sha256:8300dbd99901f6d5b1df85d9667041b9ae36b45f301bb357cfdaf208d8865d90',
+    revisionId: 'sha256:8f00e36af95fc609c13122e322f861024e02c2bcc4a8b5ffb62ed21c9eb89588',
     operations: [
       [`${route}/assistant-tools/supplier-search`, 'post', 'searchSupplierEvidence',
         ['path:retailerId!:string:uuid'], ['200', '409']],
@@ -70,8 +72,8 @@ const cases = [
   },
   {
     boundary: 'C14', owner: 'U8 Planning Purchasing', document: 'planning-purchasing/v1/assistant-purchasing.openapi.yaml',
-    contentDigest: 'sha256:4cc1786896250b8b1dacbfa39c80a805ef5d3a0ce13e88c3a9487cf81aff7769',
-    revisionId: 'sha256:4b177bfd575041879ef75965c358a7def9e7b37afa681afad5b07039d3b1f4ea',
+    contentDigest: 'sha256:14e23d0f47961df9ee407dfe87296ab86e15a1f05c5aa7118281f1247655f429',
+    revisionId: 'sha256:b5fa775afdea7583ee44d9ad25d309befcd7b1291ef15dbf8e84d02883c59e8c',
     operations: [
       [`${route}/assistant-tools/reviews:request`, 'post', 'requestManualReviewForAssistant',
         ['header:Idempotency-Key!:string', 'path:retailerId!:string:uuid'], ['202', '409', '429']],
@@ -81,8 +83,8 @@ const cases = [
   },
   {
     boundary: 'C16', owner: 'U11 Web BFF', document: 'web-bff/v1/identity-session.openapi.yaml',
-    contentDigest: 'sha256:ade18a03e2b5dcfcec03e18ed233ffbd8f5a21d135440701883a377601719be9',
-    revisionId: 'sha256:93a8f1dcda28a408ce40dc6c2cfd3af3b376eebae118e856ed854603bbde0a0d',
+    contentDigest: 'sha256:4a0af856c4a74d1730e600296440eb7353950de056982b213edb1624dd8d4877',
+    revisionId: 'sha256:3d4b4944cfdc97c462b837288785173df5243dae7bc26f346cb11a56f28086fc',
     operations: [
       ['/auth/login', 'get', 'beginLogin', ['query:returnUrl:string:^/'], ['302']],
       ['/auth/callback', 'get', 'completeLogin', [], ['302', '400']],
@@ -116,6 +118,66 @@ function operationsOf(source) {
   return operations.sort((a, b) => `${a[0]}:${a[1]}`.localeCompare(`${b[0]}:${b[1]}`));
 }
 
+/** Check operation-only examples against the exact declared parameters and outcomes. */
+function verifyOperationExamples(source) {
+  const examples = source['x-contract-operation-examples'];
+  assert.ok(Array.isArray(examples) && examples.length > 0,
+    'an operation-only contract needs named request/status examples');
+  const operations = new Map();
+  for (const pathItem of Object.values(source.paths)) {
+    for (const operation of Object.values(pathItem)) {
+      if (operation?.operationId) {
+        assert.equal(operations.has(operation.operationId), false, 'operation IDs must be unique');
+        operations.set(operation.operationId, { operation, pathItem });
+      }
+    }
+  }
+  const ajv = new Ajv2020({ strict: false });
+  addFormats(ajv);
+  const names = new Set();
+  const covered = new Set();
+  for (const example of examples) {
+    assert.deepEqual(Object.keys(example).sort(),
+      ['name', 'operationId', 'request', 'responseStatus'].sort());
+    assert.match(example.name, /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/);
+    assert.equal(names.has(example.name), false, `duplicate example ${example.name}`);
+    names.add(example.name);
+    const match = operations.get(example.operationId);
+    assert.ok(match, `${example.name}: operation is absent`);
+    covered.add(example.operationId);
+    assert.equal(typeof example.responseStatus, 'string');
+    assert.ok(Object.hasOwn(match.operation.responses, example.responseStatus),
+      `${example.name}: response status is absent`);
+    assert.ok(example.request && typeof example.request === 'object' &&
+      !Array.isArray(example.request));
+    assert.ok(Object.keys(example.request).every(key => ['path', 'query', 'headers'].includes(key)));
+    const supplied = new Map();
+    for (const [location, values] of Object.entries(example.request)) {
+      assert.ok(values && typeof values === 'object' && !Array.isArray(values));
+      for (const [name, value] of Object.entries(values)) {
+        const key = `${location}:${name}`;
+        assert.equal(supplied.has(key), false);
+        supplied.set(key, value);
+      }
+    }
+    for (const parameter of [...(match.pathItem.parameters ?? []),
+      ...(match.operation.parameters ?? [])]) {
+      const location = parameter.in === 'header' ? 'headers' : parameter.in;
+      const key = `${location}:${parameter.name}`;
+      if (parameter.required) assert.ok(supplied.has(key), `${example.name}: missing ${key}`);
+      if (!supplied.has(key)) continue;
+      const validate = ajv.compile(parameter.schema);
+      assert.equal(validate(supplied.get(key)), true,
+        `${example.name}: ${key} fails its declared schema: ${ajv.errorsText(validate.errors)}`);
+      supplied.delete(key);
+    }
+    assert.deepEqual([...supplied.keys()], [], `${example.name}: undeclared parameter`);
+  }
+  assert.deepEqual([...covered].sort(), [...operations.keys()].sort(),
+    'every exempt operation needs a named request/status example');
+  return examples;
+}
+
 for (const spec of cases) {
   test(`${spec.boundary} pins the exempt OpenAPI operation contract to its immutable revision`, async () => {
     const bytes = await readFile(join(sourceRoot, spec.document));
@@ -127,6 +189,22 @@ for (const spec of cases) {
       spec.contentDigest).revisionId, spec.revisionId);
     assert.deepEqual(operationsOf(source), [...spec.operations].sort((a, b) =>
       `${a[0]}:${a[1]}`.localeCompare(`${b[0]}:${b[1]}`)));
+    verifyOperationExamples(source);
+    if (spec.boundary === 'C16') {
+      assert.deepEqual(source.security, [{ bffSession: [] }]);
+      assert.deepEqual(source.components.securitySchemes.bffSession,
+        { type: 'apiKey', in: 'cookie', name: '__Host-stocksense-session' });
+      for (const name of ['beginLogin', 'completeLogin', 'receiveRegisteredOidcRedirect',
+        'receiveRegisteredOidcLogoutCallback']) {
+        const operation = Object.values(source.paths).flatMap(pathItem => Object.values(pathItem))
+          .find(item => item?.operationId === name);
+        assert.deepEqual(operation.security, [], `${name} must permit the browser continuation`);
+      }
+    } else {
+      assert.deepEqual(source.security, [{ serviceToken: [] }]);
+      assert.deepEqual(source.components.securitySchemes.serviceToken,
+        { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' });
+    }
     assert.deepEqual(openApiInlineResponseElements(source), [], 'a JSON response needs fixture evidence');
     assert.equal(Object.keys(source.components?.schemas ?? {}).length, 0,
       'a component schema needs fixture evidence');
@@ -168,4 +246,17 @@ test('pinned Redocly rejects a C04 operation with no operationId under the exact
   } finally {
     await rm(scratch, { recursive: true, force: true });
   }
+});
+
+test('operation-only examples fail if a required parameter or declared status changes', async () => {
+  const document = 'retail-data/v1/dataset-exports.openapi.yaml';
+  const source = YAML.parse(await readFile(join(sourceRoot, document), 'utf8'));
+  const changed = JSON.parse(JSON.stringify(source));
+  delete changed.paths[`${route}/dataset-exports`].post.responses['409'];
+  assert.throws(() => verifyOperationExamples(changed));
+  const missingHeader = JSON.parse(JSON.stringify(source));
+  missingHeader.paths[`${route}/dataset-exports`].post.parameters =
+    missingHeader.paths[`${route}/dataset-exports`].post.parameters.filter(
+      parameter => parameter.name !== 'Idempotency-Key');
+  assert.throws(() => verifyOperationExamples(missingHeader));
 });
