@@ -91,11 +91,11 @@ export function evaluatePublicPr({ event, repository, baseSha, pull, baseTree, h
 }
 
 /** A PR author's body and labels cannot authorize changes to the guard itself. */
-export function ownerApproval(comments, repository, headSha) {
-  requireValue(Array.isArray(comments) && REPO.test(repository) && SHA.test(headSha),
+export function ownerApproval(comments, repository, baseSha, headSha) {
+  requireValue(Array.isArray(comments) && REPO.test(repository) && SHA.test(baseSha) && SHA.test(headSha),
     'Owner approval evidence is unavailable');
   const owner = repository.split('/')[0].toLowerCase();
-  const expected = `${APPROVAL_PREFIX}${headSha}`;
+  const expected = `${APPROVAL_PREFIX}${baseSha} ${headSha}`;
   return comments.find(comment => comment?.body?.trim() === expected &&
     comment.user?.login?.toLowerCase() === owner &&
     comment.user?.type === 'User' && comment.author_association === 'OWNER') ?? null;
@@ -156,7 +156,7 @@ export async function checkPublicPr({ event, repository, baseSha, token, request
   let approvedHead = null;
   if (protectedChanged) {
     const comments = await approvalComments(repository, event.number, token, request);
-    if (ownerApproval(comments, repository, latest.head.sha)) approvedHead = latest.head.sha;
+    if (ownerApproval(comments, repository, baseSha, latest.head.sha)) approvedHead = latest.head.sha;
     // A PR can move while comments are read. Never transfer an approval to a
     // later head or base revision just because a stale event is still running.
     const final = await request(path, token);
@@ -173,7 +173,9 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     const result = await checkPublicPr({
       event,
       repository: process.env.GITHUB_REPOSITORY,
-      baseSha: process.env.GITHUB_SHA,
+      // pull_request_target executes trusted code from the default branch,
+      // while a PR may target the U1 Bolt. Compare the PR's actual base tree.
+      baseSha: event?.pull_request?.base?.sha,
       token: process.env.GITHUB_TOKEN
     });
     process.stdout.write(`Protected base ${result.baseSha}, head ${result.headSha}, ${result.comparedPaths} changed paths compared, ${result.protectedPaths} protected paths${result.ownerApproved ? ' approved by repository owner for this exact head' : ''}\n`);
