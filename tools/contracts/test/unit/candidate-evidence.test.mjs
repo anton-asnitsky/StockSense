@@ -158,3 +158,28 @@ test('protected-main receipt binds exact source, tree, image inventories and sca
     assert.throws(() => assertLedgerBinding(changed, context), { code: 'IMAGE_LEDGER' });
   }
 });
+
+test('v2 protected-main receipt binds execution and runtime baselines', () => {
+  const images = ['validator', 'kiota'].map(name => ({ name, imageId: sha,
+    sbomDigest: sha, scanDigest: sha, findings: 0 }));
+  const fingerprint = 'sha256:' + 'a'.repeat(64);
+  const runtime = 'sha256:' + 'b'.repeat(64);
+  const receipt = { schema: 'stocksense-image-ledger-verification-v2',
+    candidateRevision: commit, candidateGitTreeSha: commit, candidateTreeDigest: sha,
+    sourceDigest: sha, mainSha: commit, ledgerBlobSha: commit,
+    images: images.map(row => ({ image: row.name, imageId: row.imageId,
+      sbomDigest: row.sbomDigest, scanDigest: row.scanDigest,
+      findings: 0, disposed: 0 })), executionFingerprint: fingerprint,
+    runtimeManifestDigest: runtime, ledgerSchema: 'stocksense-image-exceptions-v2' };
+  const context = { candidateRevision: commit, treeSha: commit, treeDigest: sha,
+    sourceDigest: sha, images, executionFingerprint: fingerprint, runtimeManifestDigest: runtime };
+  assert.equal(assertLedgerBinding(receipt, context), true);
+  for (const change of [
+    { executionFingerprint: 'sha256:' + 'c'.repeat(64) },
+    { runtimeManifestDigest: 'sha256:' + 'c'.repeat(64) },
+    { ledgerSchema: 'stocksense-image-exceptions-v1' }
+  ]) {
+    assert.throws(() => assertLedgerBinding({ ...receipt, ...change }, context),
+      { code: 'IMAGE_LEDGER' });
+  }
+});
