@@ -1,9 +1,9 @@
 import { spawnSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
-import { lstat, mkdtemp, open, readdir, readlink, rm } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, posix } from 'node:path';
-import { TextDecoder } from 'node:util';
+import { readContainerTarManifest } from './container-tar-manifest.mjs';
 
 const SCHEMA = 'stocksense-kiota-runtime-v1';
 const IMAGE_ID = /^sha256:[0-9a-f]{64}$/;
@@ -128,16 +128,24 @@ export function normalizeKiotaRuntimeManifest({ entries, config, sbom }) {
     if (seen.has(path)) bad('duplicate payload path');
     seen.add(path);
     if (!Number.isInteger(entry.mode) || entry.mode < 0 || entry.mode > 0o7777) bad('invalid mode');
-    if (entry.kind === 'directory') return { path, kind: 'directory', mode: entry.mode };
-    if (entry.kind === 'symlink') return { path, kind: 'symlink', mode: entry.mode,
+    const uid = entry.uid ?? 0;
+    const gid = entry.gid ?? 0;
+    if (![uid, gid].every(value => Number.isSafeInteger(value) && value >= 0)) {
+      bad('invalid payload ownership');
+    }
+    const common = { path, kind: entry.kind, mode: entry.mode, uid, gid };
+    if (entry.kind === 'directory') return common;
+    if (entry.kind === 'symlink') return { ...common,
       target: safeLink(path, entry.target) };
+    if (entry.kind === 'hardlink') return { ...common,
+      target: canonicalPath(entry.target) };
     if (entry.kind !== 'file' || !IMAGE_ID.test(entry.sha256 ?? '') ||
         !Number.isSafeInteger(entry.size) || entry.size < 0 || entry.size > MAX_FILE_BYTES) {
       bad('invalid regular file entry');
     }
     totalBytes += entry.size;
     if (totalBytes > MAX_BYTES) bad('payload byte limit exceeded');
-    return { path, kind: 'file', mode: entry.mode, size: entry.size, sha256: entry.sha256 };
+    return { ...common, size: entry.size, sha256: entry.sha256 };
   }).sort((a, b) => compare(a.path, b.path));
   for (const root of ROOTS) {
     if (!files.some(entry => entry.path === root && entry.kind === 'directory')) bad('missing payload root');
@@ -146,46 +154,12 @@ export function normalizeKiotaRuntimeManifest({ entries, config, sbom }) {
     if (ROOTS.includes(entry.path)) continue;
     const parent = posix.dirname(entry.path);
     if (!files.some(item => item.path === parent && item.kind === 'directory')) bad('missing payload parent');
+    if (entry.kind === 'hardlink' && !files.some(item => item.path === entry.target &&
+        item.kind === 'file')) bad('hardlink target is not a regular file');
   }
   const normalized = { schema: SCHEMA, entries: files, config: normalizedConfig(config),
     packages: normalizedPackages(sbom) };
   return { ...normalized, totalBytes, digest: hash(Buffer.from(JSON.stringify(normalized))) };
-}
-
-async function payloadEntries(scratch) {
-  const entries = [];
-  let bytes = 0;
-  const decoder = new TextDecoder('utf-8', { fatal: true });
-  async function visit(local, relative) {
-    canonicalPath(relative);
-    if (entries.length >= MAX_FILES) bad('payload file limit exceeded');
-    const stat = await lstat(local);
-    const mode = stat.mode & 0o7777;
-    if (stat.isSymbolicLink()) {
-      const target = await readlink(local);
-      entries.push({ path: relative, kind: 'symlink', mode, target: safeLink(relative, target) });
-    } else if (stat.isDirectory()) {
-      entries.push({ path: relative, kind: 'directory', mode });
-      const names = (await readdir(local, { encoding: 'buffer' }))
-        .map(name => decoder.decode(name)).sort(compare);
-      for (const name of names) {
-        if (!name || name === '.' || name === '..' || name.includes('/') || name.includes('\\')) {
-          bad('unsafe directory member');
-        }
-        await visit(join(local, name), `${relative}/${name}`);
-      }
-    } else if (stat.isFile()) {
-      if (stat.size > MAX_FILE_BYTES || bytes + stat.size > MAX_BYTES) bad('payload byte limit exceeded');
-      const handle = await open(local, 'r');
-      let data;
-      try { data = await handle.readFile(); } finally { await handle.close(); }
-      if (data.length !== stat.size) bad('payload changed during collection');
-      bytes += data.length;
-      entries.push({ path: relative, kind: 'file', mode, size: data.length, sha256: hash(data) });
-    } else bad('unsupported payload file type');
-  }
-  for (const root of ROOTS) await visit(join(scratch, root), root);
-  return entries;
 }
 
 /** Collect the complete final filesystem from an unstarted exact-image container. */
@@ -226,8 +200,9 @@ export async function collectKiotaRuntimeManifest({ imageId, sbom, spawn = spawn
     const containerImage = run(['container', 'inspect', name, '--format', '{{.Image}}'],
       'container inspect');
     if (containerImage !== imageId) bad('container image ID changed');
-    run(['cp', `${name}:/`, join(scratch, 'rootfs')], 'copy complete image filesystem');
-    manifest = { ...normalizeKiotaRuntimeManifest({ entries: await payloadEntries(scratch),
+    const archive = join(scratch, 'rootfs.tar');
+    run(['export', '--output', archive, name], 'export complete image filesystem');
+    manifest = { ...normalizeKiotaRuntimeManifest({ entries: await readContainerTarManifest(archive),
       config: inspect.Config, sbom }), imageId, sbomDigest };
   } catch (error) { failure = error; }
   const cleanup = [];
