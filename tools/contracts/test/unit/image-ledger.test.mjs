@@ -139,7 +139,8 @@ test('execution fingerprint permits ordinary sources but detects every protected
     'tools/contracts/Dockerfile.validator',
     '.github/workflows/new-gate.yml',
     'scripts/new-build-helper.ps1',
-    'security/scan-policy.json'
+    'security/scan-policy.json',
+    'node_modules/new-dependency/index.js'
   ]) {
     assert.notEqual(executionFingerprint,
       executionFingerprintFromGit(executionTree(`100644 blob ${'8'.repeat(40)}\t${path}`)), path);
@@ -249,8 +250,7 @@ test('retained runtime record must be canonical and bound to the exact SBOM and 
       purl: 'pkg:nuget/Microsoft.OpenApi.Kiota@1.35.0' }] };
   const sbomBytes = Buffer.from(JSON.stringify(sbom, null, 2) + '\n');
   const entries = [
-    { path: 'opt/kiota', kind: 'directory', mode: 0o755 },
-    { path: 'opt/kiota-probe', kind: 'directory', mode: 0o755 }
+    { path: 'rootfs', kind: 'directory', mode: 0o755 }
   ];
   const config = { Entrypoint: null, Cmd: null, Env: [], User: '65532', WorkingDir: '/' };
   const normalized = normalizeKiotaRuntimeManifest({ entries, config, sbom });
@@ -264,7 +264,7 @@ test('retained runtime record must be canonical and bound to the exact SBOM and 
     for (const changed of [
       { ...record, sbomDigest: 'sha256:' + 'd'.repeat(64) },
       { ...record, unreviewed: true },
-      { ...record, entries: [...record.entries, { path: 'opt/kiota/new-tool',
+      { ...record, entries: [...record.entries, { path: 'rootfs/new-tool',
         kind: 'file', mode: 0o755, size: 1, sha256: sha256(Buffer.from('x')) }] }
     ]) {
       await writeFile(join(directory, 'kiota.runtime.json'), JSON.stringify(changed, null, 2) + '\n');

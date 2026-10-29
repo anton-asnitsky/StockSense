@@ -7,11 +7,10 @@ import { TextDecoder } from 'node:util';
 
 const SCHEMA = 'stocksense-kiota-runtime-v1';
 const IMAGE_ID = /^sha256:[0-9a-f]{64}$/;
-const ROOTS = ['opt/kiota', 'opt/kiota-probe'];
-const MAX_FILES = 50_000;
-const MAX_BYTES = 512 * 1024 * 1024;
-const MAX_FILE_BYTES = 128 * 1024 * 1024;
-const MAX_ARCHIVE_BYTES = 640 * 1024 * 1024;
+const ROOTS = ['rootfs'];
+const MAX_FILES = 100_000;
+const MAX_BYTES = 1024 * 1024 * 1024;
+const MAX_FILE_BYTES = 512 * 1024 * 1024;
 const MAX_PATH_BYTES = 4096;
 const docker = process.platform === 'win32'
   ? 'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe' : '/usr/bin/docker';
@@ -33,15 +32,34 @@ function canonicalPath(path) {
 function safeLink(path, target) {
   if (typeof target !== 'string' || !target || Buffer.byteLength(target) > MAX_PATH_BYTES ||
       target !== target.normalize('NFC') || /[\\\x00-\x1f\x7f]/.test(target) ||
-      target.startsWith('/') || /^[A-Za-z]:/.test(target)) bad('unsafe symlink target');
-  const root = ROOTS.find(value => path === value || path.startsWith(`${value}/`));
-  const resolved = posix.normalize(posix.join(posix.dirname(path), target));
+      /^[A-Za-z]:/.test(target)) bad('unsafe symlink target');
+  const root = 'rootfs';
+  const resolved = target.startsWith('/')
+    ? posix.normalize(`${root}${target}`)
+    : posix.normalize(posix.join(posix.dirname(path), target));
   if (!root || resolved !== root && !resolved.startsWith(`${root}/`)) bad('symlink escapes payload root');
   return target;
 }
 
 function normalizedConfig(config) {
   if (!config || typeof config !== 'object' || Array.isArray(config)) bad('missing image Config');
+  const canonical = (value, depth = 0) => {
+    if (depth > 16) bad('image Config nesting limit exceeded');
+    if (value === null || typeof value === 'boolean') return value;
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string' && value.length <= 8192 && !value.includes('\0')) return value;
+    if (Array.isArray(value) && value.length <= 512) {
+      return value.map(item => canonical(item, depth + 1));
+    }
+    if (value && typeof value === 'object' && !Array.isArray(value) &&
+        Object.keys(value).length <= 512) {
+      return Object.fromEntries(Object.keys(value).sort(compare).map(key => {
+        if (!key || key.length > 256 || key.includes('\0')) bad('invalid image Config key');
+        return [key, canonical(value[key], depth + 1)];
+      }));
+    }
+    bad('invalid image Config value');
+  };
   const args = field => {
     const value = config[field];
     if (value === null) return null;
@@ -64,8 +82,11 @@ function normalizedConfig(config) {
       [config.User, config.WorkingDir].some(item => item.length > 8192 || item.includes('\0'))) {
     bad('invalid Config identity or working directory');
   }
-  return { Entrypoint: args('Entrypoint'), Cmd: args('Cmd'), Env: env,
-    User: config.User, WorkingDir: config.WorkingDir };
+  const complete = canonical(config);
+  complete.Entrypoint = args('Entrypoint');
+  complete.Cmd = args('Cmd');
+  complete.Env = env;
+  return canonical(complete);
 }
 
 function normalizedPackages(sbom) {
@@ -163,11 +184,11 @@ async function payloadEntries(scratch) {
       entries.push({ path: relative, kind: 'file', mode, size: data.length, sha256: hash(data) });
     } else bad('unsupported payload file type');
   }
-  for (const root of ROOTS) await visit(join(scratch, root.slice(4)), root);
+  for (const root of ROOTS) await visit(join(scratch, root), root);
   return entries;
 }
 
-/** Collect the two complete payload trees from an unstarted container of the exact built image ID. */
+/** Collect the complete final filesystem from an unstarted exact-image container. */
 export async function collectKiotaRuntimeManifest({ imageId, sbom, spawn = spawnSync }) {
   if (!IMAGE_ID.test(imageId ?? '') || typeof spawn !== 'function') bad('invalid image ID or spawn');
   if (process.platform !== 'linux' && spawn === spawnSync) {
@@ -190,17 +211,9 @@ export async function collectKiotaRuntimeManifest({ imageId, sbom, spawn = spawn
     }
     return result.stdout.trim();
   };
-  const archiveSize = root => {
-    const result = spawn(docker, ['cp', `${name}:/${root}`, '-'], { encoding: null,
-      shell: false, windowsHide: true, timeout: 5 * 60 * 1000,
-      maxBuffer: MAX_ARCHIVE_BYTES + 1 });
-    if (!result || result.error || result.status !== 0 ||
-        !Buffer.isBuffer(result.stdout) || result.stdout.length === 0 ||
-        result.stdout.length > MAX_ARCHIVE_BYTES) bad(`bounded copy of ${root} failed`);
-    return result.stdout.length;
-  };
   const inspect = JSON.parse(run(['image', 'inspect', imageId, '--format', '{{json .}}'], 'image inspect'));
-  if (inspect.Id !== imageId) bad('inspected image ID changed');
+  if (inspect.Id !== imageId || !Number.isSafeInteger(inspect.Size) ||
+      inspect.Size <= 0 || inspect.Size > MAX_BYTES) bad('inspected image ID or size is invalid');
   const name = `stocksense-kiota-runtime-${randomUUID()}`;
   const scratch = await mkdtemp(join(tmpdir(), 'stocksense-kiota-runtime-'));
   let attemptedCreate = false;
@@ -213,12 +226,7 @@ export async function collectKiotaRuntimeManifest({ imageId, sbom, spawn = spawn
     const containerImage = run(['container', 'inspect', name, '--format', '{{.Image}}'],
       'container inspect');
     if (containerImage !== imageId) bad('container image ID changed');
-    let archiveBytes = 0;
-    for (const root of ROOTS) {
-      archiveBytes += archiveSize(root);
-      if (archiveBytes > MAX_ARCHIVE_BYTES) bad('payload archive byte limit exceeded');
-      run(['cp', `${name}:/${root}`, join(scratch, root.slice(4))], `copy ${root}`);
-    }
+    run(['cp', `${name}:/`, join(scratch, 'rootfs')], 'copy complete image filesystem');
     manifest = { ...normalizeKiotaRuntimeManifest({ entries: await payloadEntries(scratch),
       config: inspect.Config, sbom }), imageId, sbomDigest };
   } catch (error) { failure = error; }

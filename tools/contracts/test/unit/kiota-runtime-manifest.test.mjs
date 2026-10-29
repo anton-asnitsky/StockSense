@@ -16,10 +16,12 @@ const sbom = imageId => ({ bomFormat: 'CycloneDX', specVersion: '1.6',
   components: [{ type: 'library', name: 'Microsoft.OpenApi.Kiota', version: '1.35.0',
     purl: 'pkg:nuget/Microsoft.OpenApi.Kiota@1.35.0' }] });
 const entries = () => [
-  { path: 'opt/kiota', kind: 'directory', mode: 0o755 },
-  { path: 'opt/kiota/kiota', kind: 'file', mode: 0o755, size: 5, sha256: hash('kiota') },
-  { path: 'opt/kiota-probe', kind: 'directory', mode: 0o755 },
-  { path: 'opt/kiota-probe/probe.dll', kind: 'file', mode: 0o644, size: 5, sha256: hash('probe') }
+  { path: 'rootfs', kind: 'directory', mode: 0o755 },
+  { path: 'rootfs/opt', kind: 'directory', mode: 0o755 },
+  { path: 'rootfs/opt/kiota', kind: 'directory', mode: 0o755 },
+  { path: 'rootfs/opt/kiota/kiota', kind: 'file', mode: 0o755, size: 5, sha256: hash('kiota') },
+  { path: 'rootfs/opt/kiota-probe', kind: 'directory', mode: 0o755 },
+  { path: 'rootfs/opt/kiota-probe/probe.dll', kind: 'file', mode: 0o644, size: 5, sha256: hash('probe') }
 ];
 
 test('canonical content digest is independent of image ID, order and timestamps', () => {
@@ -51,9 +53,10 @@ test('file bytes, mode, executable, Config and package identities change digest'
       ? { ...e, sha256: hash('other') } : e) },
     { entries: entries().map(e => e.path.endsWith('/kiota') && e.kind === 'file'
       ? { ...e, mode: 0o700 } : e) },
-    { entries: [...entries(), { path: 'opt/kiota/new-tool', kind: 'file', mode: 0o755,
+    { entries: [...entries(), { path: 'rootfs/opt/kiota/new-tool', kind: 'file', mode: 0o755,
       size: 3, sha256: hash('new') }] },
     { config: { ...config(), WorkingDir: '/elsewhere' } },
+    { config: { ...config(), Healthcheck: { Test: ['CMD', '/opt/kiota/kiota', '--version'] } } },
     { sbom: { ...sbom(id('a')), components: [{ ...sbom(id('a')).components[0],
       version: '1.35.1', purl: 'pkg:nuget/Microsoft.OpenApi.Kiota@1.35.1' }] } }
   ];
@@ -66,31 +69,35 @@ test('file bytes, mode, executable, Config and package identities change digest'
 
 test('malformed paths, missing parents, unsafe links and limits fail closed', () => {
   const good = { entries: entries(), config: config(), sbom: sbom(id('a')) };
-  for (const badPath of ['opt/kiota/../escape', 'opt/kiota//file', '/opt/kiota/file',
-    'opt/kiota\\file', 'opt/kiota/\u0000file', 'opt/other/file']) {
+  for (const badPath of ['rootfs/opt/kiota/../escape', 'rootfs/opt/kiota//file',
+    '/rootfs/opt/kiota/file', 'rootfs/opt/kiota\\file',
+    'rootfs/opt/kiota/\u0000file', 'outside/file']) {
     assert.throws(() => normalizeKiotaRuntimeManifest({ ...good,
       entries: [...entries(), { path: badPath, kind: 'file', mode: 0o644,
         size: 1, sha256: hash('x') }] }));
   }
   assert.throws(() => normalizeKiotaRuntimeManifest({ ...good,
-    entries: [...entries(), { path: 'opt/kiota/sub/file', kind: 'file', mode: 0o644,
+    entries: [...entries(), { path: 'rootfs/opt/kiota/sub/file', kind: 'file', mode: 0o644,
       size: 1, sha256: hash('x') }] }), /parent/);
-  for (const target of ['/etc/passwd', '../../outside', '../kiota-probe/probe.dll']) {
+  for (const target of ['../../../../outside', 'C:\\outside']) {
     assert.throws(() => normalizeKiotaRuntimeManifest({ ...good,
-      entries: [...entries(), { path: 'opt/kiota/link', kind: 'symlink', mode: 0o777,
+      entries: [...entries(), { path: 'rootfs/opt/kiota/link', kind: 'symlink', mode: 0o777,
         target }] }), /symlink/);
   }
+  assert.doesNotThrow(() => normalizeKiotaRuntimeManifest({ ...good,
+    entries: [...entries(), { path: 'rootfs/opt/kiota/link', kind: 'symlink', mode: 0o777,
+      target: '/opt/kiota/kiota' }] }));
   assert.throws(() => normalizeKiotaRuntimeManifest({ ...good,
-    entries: [...entries(), { path: 'opt/kiota/huge', kind: 'file', mode: 0o644,
-      size: 129 * 1024 * 1024, sha256: hash('x') }] }), /file entry/);
+    entries: [...entries(), { path: 'rootfs/opt/kiota/huge', kind: 'file', mode: 0o644,
+      size: 513 * 1024 * 1024, sha256: hash('x') }] }), /file entry/);
 });
 
 async function fixture() {
   const root = await mkdtemp(join(tmpdir(), 'stocksense-runtime-test-'));
-  mkdirSync(join(root, 'kiota'));
-  mkdirSync(join(root, 'kiota-probe'));
-  writeFileSync(join(root, 'kiota', 'kiota'), 'kiota');
-  writeFileSync(join(root, 'kiota-probe', 'probe.dll'), 'probe');
+  mkdirSync(join(root, 'opt', 'kiota'), { recursive: true });
+  mkdirSync(join(root, 'opt', 'kiota-probe'));
+  writeFileSync(join(root, 'opt', 'kiota', 'kiota'), 'kiota');
+  writeFileSync(join(root, 'opt', 'kiota-probe', 'probe.dll'), 'probe');
   return root;
 }
 
@@ -101,15 +108,14 @@ function fakeDocker(root, imageId, { failCopy = false, failCleanup = false,
   const spawn = (_command, args) => {
     calls.push(args);
     const result = stdout => ({ status: 0, stdout, error: null });
-    if (args[0] === 'image') return result(JSON.stringify({ Id: imageId, Config: config() }));
+    if (args[0] === 'image') return result(JSON.stringify({ Id: imageId, Size: 1000,
+      Config: config() }));
     if (args[0] === 'create') return result('c'.repeat(64));
     if (args[0] === 'container') return result(wrongImage ? id('f') : imageId);
     if (args[0] === 'cp') {
       if (failCopy) return { status: 1, stdout: '', error: null };
-      if (args[2] === '-') return result(Buffer.alloc(1024));
-      const from = args[1].endsWith('/kiota') ? 'kiota' : 'kiota-probe';
       destinations.push(args[2]);
-      cpSync(join(root, from), args[2], { recursive: true });
+      cpSync(root, args[2], { recursive: true });
       return result('');
     }
     if (args[0] === 'rm') return failCleanup
@@ -129,9 +135,10 @@ test('collector binds exact inspected and created image, copies both trees and c
     assert.equal(record.imageId, imageId);
     assert.equal(record.sbomDigest, hash(JSON.stringify(sbom(imageId), null, 2) + '\n'));
     assert.deepEqual(record.entries.map(e => e.path),
-      ['opt/kiota', 'opt/kiota-probe', 'opt/kiota-probe/probe.dll', 'opt/kiota/kiota']
+      ['rootfs', 'rootfs/opt', 'rootfs/opt/kiota', 'rootfs/opt/kiota/kiota',
+        'rootfs/opt/kiota-probe', 'rootfs/opt/kiota-probe/probe.dll']
         .sort((a, b) => Buffer.compare(Buffer.from(a), Buffer.from(b))));
-    assert.equal(docker.calls.filter(args => args[0] === 'cp').length, 4);
+    assert.equal(docker.calls.filter(args => args[0] === 'cp').length, 1);
     assert.equal(docker.calls.at(-1)[0], 'rm');
     assert.ok(docker.destinations.every(path => !existsSync(path)));
   } finally { await rm(root, { recursive: true, force: true }); }
@@ -145,12 +152,13 @@ test('two image IDs have the same collected content digest; an added unreported 
     const b = await collectKiotaRuntimeManifest({ imageId: id('b'), sbom: sbom(id('b')),
       spawn: fakeDocker(root, id('b')).spawn });
     assert.equal(a.digest, b.digest);
-    writeFileSync(join(root, 'kiota', 'unreported-tool'), 'new');
-    chmodSync(join(root, 'kiota', 'unreported-tool'), 0o755);
+    mkdirSync(join(root, 'tmp'));
+    writeFileSync(join(root, 'tmp', 'unreported-tool'), 'new');
+    chmodSync(join(root, 'tmp', 'unreported-tool'), 0o755);
     const changed = await collectKiotaRuntimeManifest({ imageId: id('b'), sbom: sbom(id('b')),
       spawn: fakeDocker(root, id('b')).spawn });
     assert.notEqual(changed.digest, b.digest);
-    assert.ok(changed.entries.some(entry => entry.path === 'opt/kiota/unreported-tool'));
+    assert.ok(changed.entries.some(entry => entry.path === 'rootfs/tmp/unreported-tool'));
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 
