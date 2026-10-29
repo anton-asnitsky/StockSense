@@ -16,6 +16,12 @@
       "path": "contracts/catalogue/v1/boundary-sources.json"
     },
     {
+      "path": "contracts/compatibility/README.md"
+    },
+    {
+      "path": "contracts/compatibility/approvals.json"
+    },
+    {
       "path": "contracts/fixtures/common/v1/example-fixture.json"
     },
     {

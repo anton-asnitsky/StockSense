@@ -508,7 +508,7 @@
     {
       "id": "NFR8.17",
       "status": "GAP",
-      "target": "All 17 OpenAPI 3.1.2 documents pass pinned validation, and 17 named examples across heavy-work, forecasting and recovery are revision-bound with exact expected outcomes (tools/contracts/test/integration/full-package.test.mjs). Seven documents retain declared operation-profile exemptions; full changed-catalogue compatibility and release integration checks remain open."
+      "target": "All 17 OpenAPI 3.1.2 documents pass pinned validation. PR #74 adds 24 revision-bound named payload examples across 10 documents with exact expected outcomes (tools/contracts/test/integration/full-package.test.mjs), plus 33 named operation cases across the seven operation-only documents (tools/contracts/test/integration/catalogue-openapi-exempt.test.mjs). The operation cases check declared parameters and statuses; they do not prove provider runtime behavior or exact negative findings. Protected-main hosted compatibility, final-tree evidence and release integration remain open."
     },
     {
       "id": "NFR10.1",
