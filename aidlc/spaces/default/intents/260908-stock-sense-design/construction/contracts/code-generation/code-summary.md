@@ -2,7 +2,11 @@
 
 This is an in-progress Construction record, not an implementation acceptance or release claim. The current Plan Approval verifies at fingerprint `sha256:6705bd49bc11e014c4698466da0958b3c3dcfd7612aaf0affff908e321eaef0f`: `approved`, `contractValid`, `fingerprintValid`, and `receiptValid` are all true. It permits the Node security remediation under the revised plan and test instructions. The newest checkpoint below supersedes earlier implementation snapshots retained as history; no record below accepts U1, releases C01, or authorizes a Bolt-to-main merge.
 
-## 2026-10-29 post-ledger exact-tree proof checkpoint (in progress)
+## 2026-10-29 PR #61 protected-main merge checkpoint
+
+The owner-approved PR #61 bootstrap question was answered and audited in order: `DECISION_RECORDED`, `HUMAN_TURN`, `QUESTION_ANSWERED`. PR #61 exact head `44d439060606878c9b3a4ff014279e0437d88147` was squash-merged into `main` as `bffd780237455ff2ba03f65e4fb624d330c90c88`. The temporary removal of U1 and U2 required checks was limited to the merge window; both were restored with their original app bindings. The full branch-protection snapshot matched afterward. Protected-main [U1 run 40897291131](https://github.com/anton-asnitsky/StockSense/actions/runs/40897291131) and [release-evidence run 40897291060](https://github.com/anton-asnitsky/StockSense/actions/runs/40897291060) both succeeded on the merge commit. The exact evidence is in `verification/pr61-node-main-bootstrap-merge-2026-10-29.md`. Proof PR #64 remains unmerged. U1 candidate READY, R-14–R-16, source/traceability reconciliation, and C01 release remain open.
+
+## Earlier 2026-10-29 post-ledger exact-tree proof checkpoint (historical)
 
 Protected `main` is `6fb5b64b710a95e8f41749d1654e203d95fcb8c9` after the separately owner-approved PR #65 ledger bootstrap. Draft [PR #61](https://github.com/anton-asnitsky/StockSense/pull/61) is at head `44d439060606878c9b3a4ff014279e0437d88147`, with Git tree `7804a5b10f7b13fe07a3ec6054d3efe195680b40` and ledger-excluded digest `sha256:edaa5c022e7f69492ac68c237419e122aa2eee92b0cbd1ba086216e3f38c2a69`. The protected ledger binds exactly that digest to one temporary Medium Kiota MessagePack finding through 2026-11-25. The current PR #61 hosted run `40888120625` passed image scanning, protected-ledger binding and Vulnerability, then failed U1's policy because the PR changes protected workflows; U2 also failed. Neither red check is treated as passing.
 
