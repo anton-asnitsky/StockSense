@@ -43,3 +43,24 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+x-contract-operation-examples:
+  - operationId: queryInventoryForAssistant
+    name: authorized-inventory-facts
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101 }
+    responseStatus: '200'
+  - operationId: queryInventoryForAssistant
+    name: inventory-authority-denied
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101 }
+    responseStatus: '403'
+  - operationId: queryDemandForAssistant
+    name: bounded-demand-facts
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101 }
+    responseStatus: '200'
+  - operationId: queryDemandForAssistant
+    name: unsupported-demand-scope
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101 }
+    responseStatus: '422'

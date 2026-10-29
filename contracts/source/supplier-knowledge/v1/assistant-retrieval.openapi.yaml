@@ -43,3 +43,24 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+x-contract-operation-examples:
+  - operationId: searchSupplierEvidence
+    name: authorized-cited-search
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101 }
+    responseStatus: '200'
+  - operationId: searchSupplierEvidence
+    name: stale-retrieval-index
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101 }
+    responseStatus: '409'
+  - operationId: compareAcceptedSupplierTerms
+    name: accepted-terms-comparison
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101 }
+    responseStatus: '200'
+  - operationId: compareAcceptedSupplierTerms
+    name: incomplete-comparable-terms
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101 }
+    responseStatus: '422'
