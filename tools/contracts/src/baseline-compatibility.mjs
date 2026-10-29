@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -6,9 +6,8 @@ import { mkdir } from 'node:fs/promises';
 import { ContractError, assertSafePath, deriveIdentity, digest } from './package-loader.mjs';
 import { readBlob } from './provenance.mjs';
 import { buildSourceInventory, OWNER_BY_AREA } from './catalogue.mjs';
-import { assertIntegrationBaseline, assessCompatibility, bindPredecessors } from './compatibility.mjs';
-import { preflightCanonicalReferences } from './reference-preflight.mjs';
-import { materializeOfflineReferences } from './validate.mjs';
+import { assertIntegrationBaseline, assessCompatibility, bindPredecessors,
+  createPreflightedSnapshotDiffer } from './compatibility.mjs';
 
 // Compare the whole canonical catalogue against an immutable baseline commit.
 //
@@ -101,43 +100,16 @@ export async function assessCatalogueAgainstBaseline(repoRoot, baselineCommit,
   // fetched and nothing is written inside the repository.
   const scratch = await mkdtemp(join(tmpdir(), 'stocksense-baseline-'));
   const baselineRoot = join(scratch, 'baseline');
-  const candidateRoot = join(scratch, 'candidate');
   try {
-    // The differ needs local sibling schemas for OpenAPI $ref resolution. First
-    // validate both complete, digest-bound reference graphs offline; this
-    // rejects remote, traversal, missing and unpinned references before the
-    // differ is allowed to follow any local reference. Compare snapshots so a
-    // working-tree edit cannot race the differ after inventory collection.
-    const baselineReferences = [];
-    const candidateReferences = [];
     for (const entry of previous) {
       const path = join(baselineRoot, entry.document);
       await mkdir(dirname(path), { recursive: true });
       await writeFile(path, entry.bytes);
     }
-    await preflightCanonicalReferences(baselineRoot, previous, { offlineReferences: baselineReferences });
-    await preflightCanonicalReferences(join(repoRoot, 'contracts/source'), inventory.entries,
-      { offlineReferences: candidateReferences });
-    for (const entry of inventory.entries) {
-      const bytes = await readFile(join(repoRoot, 'contracts/source', entry.document));
-      if (digest(bytes) !== entry.contentDigest) {
-        fail('DIFF_SOURCE_CHANGED', 'BR4.3', 'Candidate source changed after reference preflight');
-      }
-      const path = join(candidateRoot, entry.document);
-      await mkdir(dirname(path), { recursive: true });
-      await writeFile(path, materializeOfflineReferences(bytes, entry.document, candidateReferences));
-    }
-    for (const entry of previous) {
-      const path = join(baselineRoot, entry.document);
-      await writeFile(path, materializeOfflineReferences(entry.bytes, entry.document, baselineReferences));
-    }
-    const resolveSource = async binding => {
-      return {
-        predecessorPath: join(baselineRoot, binding.predecessorDocument ?? binding.document),
-        candidatePath: join(candidateRoot, binding.document),
-        localReferencesPreflighted: true
-      };
-    };
+    const snapshot = await createPreflightedSnapshotDiffer({
+      predecessorRoot: baselineRoot, predecessorEntries: previous,
+      candidateRoot: join(repoRoot, 'contracts/source'), candidateEntries: inventory.entries
+    });
 
     // oasdiff judges OpenAPI only. Changed AsyncAPI and schema documents are
     // assessed only under explicit predecessor-bound approval. An exploratory
@@ -147,7 +119,12 @@ export async function assessCatalogueAgainstBaseline(repoRoot, baselineCommit,
       Object.hasOwn(approvals, binding.logicalId));
     const undiffable = bindings.filter(binding => !diffable.includes(binding));
 
-    const assessments = await assessCompatibility({ bindings: diffable, approvals, resolveSource });
+    let assessments;
+    try {
+      assessments = await assessCompatibility({ bindings: diffable, approvals, runDiff: snapshot.runDiff });
+    } finally {
+      await snapshot.cleanup();
+    }
     /** @type {Record<string, number>} */
     const tally = {};
     for (const assessment of assessments) tally[assessment.outcome] = (tally[assessment.outcome] ?? 0) + 1;

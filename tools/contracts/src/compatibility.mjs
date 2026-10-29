@@ -1,8 +1,12 @@
 import { spawnSync } from 'node:child_process';
 import { realpathSync, statSync } from 'node:fs';
-import { isAbsolute, resolve } from 'node:path';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ContractError } from './package-loader.mjs';
+import { ContractError, digest } from './package-loader.mjs';
+import { preflightCanonicalReferences } from './reference-preflight.mjs';
+import { materializeOfflineReferences } from './validate.mjs';
 
 /** @returns {never} */
 const fail = (code, rule, message) => { throw new ContractError(code, rule, message); };
@@ -147,7 +151,7 @@ export function bindPredecessors(candidateEntries, baselineEntries, { firstRelea
  * @param {Function} resolveSource
  * @returns {Promise<{breakingChanges: Array<{id:string,level:number,operation:string|null,path:string}>}>}
  */
-async function runPinnedDiff(artifactKind, binding, resolveSource) {
+async function runPinnedDiff(artifactKind, binding, resolveSource, localReferencesVerified = false) {
   if (artifactKind !== 'openapi' || typeof resolveSource !== 'function') {
     fail('DIFFER_UNAVAILABLE', 'BR4.3', 'A pinned differ and immutable local source resolver are required');
   }
@@ -167,10 +171,8 @@ async function runPinnedDiff(artifactKind, binding, resolveSource) {
   const base = localFile(paths?.predecessorPath);
   const candidate = localFile(paths?.candidatePath);
   const result = spawnSync(oasdiff,
-    // Only the catalogue assessor preflights complete immutable graphs and
-    // materializes approved absolute identities into local snapshot refs.
     ['breaking', base, candidate,
-      `--allow-external-refs=${paths?.localReferencesPreflighted === true}`,
+      `--allow-external-refs=${localReferencesVerified}`,
       '--format', 'json', '--config', oasdiffConfig],
     { cwd: repoRoot, encoding: 'utf8', timeout: 60_000, maxBuffer: 1024 * 1024, windowsHide: true });
   if (result.error || result.status !== 0) {
@@ -189,6 +191,52 @@ async function runPinnedDiff(artifactKind, binding, resolveSource) {
     operation: typeof change.operation === 'string' ? change.operation : null,
     path: change.path
   })) };
+}
+
+/**
+ * Build a differ for two complete, private source snapshots. Both graphs are
+ * verified here, inside the same closure that enables local reference loading;
+ * a caller of assessCompatibility cannot enable it with an untrusted flag.
+ */
+export async function createPreflightedSnapshotDiffer({ predecessorRoot, predecessorEntries,
+  candidateRoot, candidateEntries }) {
+  const scratch = await mkdtemp(join(tmpdir(), 'stocksense-diff-'));
+  const beforeRoot = join(scratch, 'before');
+  const afterRoot = join(scratch, 'after');
+  try {
+    for (const [sourceRoot, entries, targetRoot] of [
+      [predecessorRoot, predecessorEntries, beforeRoot],
+      [candidateRoot, candidateEntries, afterRoot]
+    ]) {
+      const offlineReferences = [];
+      await preflightCanonicalReferences(sourceRoot, entries, { offlineReferences });
+      for (const entry of entries) {
+        const bytes = await readFile(join(sourceRoot, entry.document));
+        if (digest(bytes) !== entry.contentDigest) {
+          fail('DIFF_SOURCE_CHANGED', 'BR4.3', 'Source changed after reference preflight');
+        }
+        const target = join(targetRoot, entry.document);
+        await mkdir(dirname(target), { recursive: true });
+        await writeFile(target, materializeOfflineReferences(bytes, entry.document, offlineReferences));
+      }
+    }
+  } catch (error) {
+    await rm(scratch, { recursive: true, force: true });
+    throw error;
+  }
+  const before = new Set(predecessorEntries.map(entry => entry.document));
+  const after = new Set(candidateEntries.map(entry => entry.document));
+  const runDiff = (artifactKind, binding) => {
+    const predecessorDocument = binding.predecessorDocument ?? binding.document;
+    if (!before.has(predecessorDocument) || !after.has(binding.document)) {
+      fail('DIFF_SOURCE', 'BR4.3', 'Diff pair is absent from the verified source snapshots');
+    }
+    return runPinnedDiff(artifactKind, binding, async () => ({
+      predecessorPath: join(beforeRoot, predecessorDocument),
+      candidatePath: join(afterRoot, binding.document)
+    }), true);
+  };
+  return { runDiff, cleanup: () => rm(scratch, { recursive: true, force: true }) };
 }
 
 /**

@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assessCatalogueAgainstBaseline } from '../../src/baseline-compatibility.mjs';
+import { assessCompatibility } from '../../src/compatibility.mjs';
 import { deriveIdentity, digest } from '../../src/package-loader.mjs';
 
 // The pinned differ had only ever been exercised on two hand-built fixtures,
@@ -200,6 +201,17 @@ test('a remote reference in a changed OpenAPI document is refused before the dif
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }
+});
+
+test('a caller-supplied preflight flag cannot enable local reference loading in the general differ', async () => {
+  const document = 'identity-access/v1/identity-metadata.openapi.yaml';
+  const path = join(repoRoot, 'contracts', 'source', document);
+  await assert.rejects(assessCompatibility({
+    bindings: [{ document, logicalId: 'synthetic:identity-metadata', artifactKind: 'openapi',
+      predecessorRevisionId: 'sha256:old', candidateRevisionId: 'sha256:new', unchanged: false }],
+    resolveSource: async () => ({ predecessorPath: path, candidatePath: path,
+      localReferencesPreflighted: true })
+  }), error => error.code === 'DIFFER_UNAVAILABLE' && error.ruleId === 'BR4.3');
 });
 
 test('a document absent at the baseline is a recorded first release, not a silent gap', async () => {
