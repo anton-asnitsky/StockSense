@@ -96,15 +96,17 @@ async function imageFixture(directory, name, imageId, findings = []) {
   }) + '\n');
 }
 
-async function imageReceipt(directory, ids) {
+async function imageReceipt(directory, ids, version = 'v1') {
   const { records } = await readImageEvidence(directory, ids, { requireClean: false });
-  const receipt = { schema: 'stocksense-image-ledger-verification-v1', candidateRevision,
+  const receipt = { schema: `stocksense-image-ledger-verification-${version}`, candidateRevision,
     candidateGitTreeSha: 'd'.repeat(40), candidateTreeDigest: 'sha256:' + 'e'.repeat(64),
     sourceDigest: await sourceTreeDigest(), mainSha: 'f'.repeat(40),
     ledgerBlobSha: 'a'.repeat(40), images: records.map(record => ({
       image: record.name, imageId: record.imageId, sbomDigest: record.sbomDigest,
       scanDigest: record.scanDigest, findings: record.findings, disposed: record.findings
-    })) };
+    })), ...(version === 'v2' ? { executionFingerprint: 'sha256:' + 'b'.repeat(64),
+      runtimeManifestDigest: 'sha256:' + 'c'.repeat(64),
+      ledgerSchema: 'stocksense-image-exceptions-v2' } : {}) };
   await writeFile(join(directory, 'ledger-verification.json'), JSON.stringify(receipt) + '\n');
   return receipt;
 }
@@ -170,6 +172,37 @@ test('SBOM accepts a disposed finding only with the matching retained ledger rec
     await imageFixture(directory, 'validator', image, [finding]);
     await expectCode(buildSbom(lockfile, { ...input, validatorImageDigest: 'sha256:' + 'b'.repeat(64) }),
       'IMAGE_STALE');
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('SBOM retains strict v2 image-ledger binding and rejects malformed v2 receipts', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'stocksense-sbom-v2-'));
+  const image = 'sha256:' + 'a'.repeat(64);
+  const ids = { validator: image, kiota: image };
+  const input = { ...subject, validatorImageDigest: image, kiotaImageDigest: image,
+    imageEvidenceDirectory: directory, candidateRevision };
+  try {
+    await imageFixture(directory, 'validator', image);
+    await imageFixture(directory, 'kiota', image);
+    const receipt = await imageReceipt(directory, ids, 'v2');
+    const { document } = await buildSbom(lockfile, input);
+    const properties = Object.fromEntries(document.metadata.properties.map(row => [row.name, row.value]));
+    assert.equal(properties['stocksense:imageLedgerExecutionFingerprint'], receipt.executionFingerprint);
+    assert.equal(properties['stocksense:imageLedgerRuntimeManifestDigest'], receipt.runtimeManifestDigest);
+    const path = join(directory, 'ledger-verification.json');
+    for (const changed of [
+      { ledgerSchema: 'stocksense-image-exceptions-v1' },
+      { executionFingerprint: 'invalid' },
+      { runtimeManifestDigest: 'sha256:' + '0'.repeat(63) },
+      { images: receipt.images.map((row, index) => index ? row : { ...row, disposed: 1 }) }
+    ]) {
+      await writeFile(path, JSON.stringify({ ...receipt, ...changed }) + '\n');
+      await expectCode(buildSbom(lockfile, input), 'IMAGE_LEDGER');
+    }
+    const missing = { ...receipt };
+    delete missing.runtimeManifestDigest;
+    await writeFile(path, JSON.stringify(missing) + '\n');
+    await expectCode(buildSbom(lockfile, input), 'IMAGE_LEDGER');
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
