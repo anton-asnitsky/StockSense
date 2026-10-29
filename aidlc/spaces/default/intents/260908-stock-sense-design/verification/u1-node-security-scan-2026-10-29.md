@@ -41,9 +41,42 @@ was published on 2026-10-28. The official Docker Hub
 `sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c`;
 the new binary and final image still require hosted smoke and scan proof.
 
-The existing AI-DLC plan/test instructions approve Node 24.19.0. Their
-proposed security amendment must receive a new source-bound Plan Approval
-before implementation. The approved PR #61 MessagePack exception is bound to
-the pre-upgrade candidate tree; any Node change requires a new exact scan and
-finding-specific decision. PR #61 and PR #62 remain draft and unmerged. U1
-candidate READY and C01 release remain unclaimed.
+That first investigation preceded the revised source-bound plan approval.
+
+## Approved patch and hosted follow-up
+
+The owner approved the revised U1 plan and test instructions at fingerprint
+`sha256:6705bd49bc11e014c4698466da0958b3c3dcfd7612aaf0affff908e321eaef0f`.
+The audit records the human turn before `PLAN_APPROVAL_RECORDED`; a subsequent
+`testing-posture verify --unit contracts` returned `approved: true` and
+`receiptValid: true`. Draft [PR #61](https://github.com/anton-asnitsky/StockSense/pull/61)
+head `4df61602acfa52ee722d9d5c828c7bbf44ca377c` pins Node 24.22.2,
+retains raw image scans and database status with image, SBOM, scanner and
+source-revision digests, and enforces the local 80% line-coverage floor.
+The five new raw-evidence unit tests and local type check passed. The full
+local unit suite had 317 passes, zero failures and two Windows environment
+skips; it was run before the final verifier-buffer initialization, which was
+then covered by the five focused tests and type check. Local Docker Desktop
+was unavailable, so final-image proof comes from hosted CI.
+
+[Hosted run 40849263065](https://github.com/anton-asnitsky/StockSense/actions/runs/40849263065)
+scanned the PR merge revision `8fa1c0be08576ea5bd635925e6af82170416e4b0`
+with source-manifest digest
+`sha256:c77932d01cec9d9dbd57177504f8c4dc416affb63ab2c48bf635835f05907d34`.
+The retained `image-evidence-8fa1c0be08576ea5bd635925e6af82170416e4b0`
+artifact contains both SBOMs, both normalized scans, both raw Grype scans,
+database-status outputs and checksum-bound receipts. Local SHA-256 checks
+matched each receipt's raw scan, database status and SBOM digest.
+
+| Image | Exact built image ID | Current findings | Evidence |
+| --- | --- | ---: | --- |
+| Validator | `sha256:1a31ad1c914b9e4d0f60771f8fd72951dab6322c5f3672d8168d6e4ea3920537` | 0 | SBOM lists Node 24.22.2 and no Node 24.19.0; database valid; raw scan digest `sha256:22ba5d9e396da2377de126470f98a25e80ced2a28260070710a6c371e66d109a` |
+| Kiota | `sha256:b76e62611cb7543b06e54ee6d172dd26020303fc1d88fcde28b37caedbe01a3c` | 1 | `GHSA-qhrr-8q5h-9q3h`, Medium, MessagePack 2.5.302, fixed; raw scan digest `sha256:a533347260262f810e2f1753b8933341f39a39b9819c8c644631d8b20223f074` |
+
+Vulnerability passed. U1 reached the protected-main ledger check and failed
+because the old ledger row belongs to the previous candidate tree. U2 rejected
+the protected workflow edits as designed. Thus PR #61 remains draft and is
+not merge-ready. The old-digest [draft PR #62](https://github.com/anton-asnitsky/StockSense/pull/62)
+was closed without merging. Any exception for the one current Kiota finding
+needs a fresh owner decision bound to the new digest; its ledger PR and each
+merge need separate approvals. U1 candidate READY and C01 release remain open.
