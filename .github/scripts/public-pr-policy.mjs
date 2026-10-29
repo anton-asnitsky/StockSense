@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 const SHA = /^[0-9a-f]{40}$/;
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const BASES = new Set(['main', 'bolt/u1-candidate-ready']);
+const APPROVAL_PREFIX = 'StockSense protected CI approval: ';
 // These bytes define or configure the required scan verdict. A candidate PR
 // may supply files to scan, but may not supply the scanner, its dependency tree
 // or the exception evaluator that decides whether its own findings pass.
@@ -52,8 +53,24 @@ function treeEntries(tree) {
   return entries;
 }
 
+function changesBetween(baseTree, headTree) {
+  const before = treeEntries(baseTree);
+  const after = treeEntries(headTree);
+  const changed = [...new Set([...before.keys(), ...after.keys()])]
+    .filter(path => before.get(path) !== after.get(path));
+  const protectedPaths = changed.filter(path => {
+    const lower = path.toLowerCase();
+    return lower === '.github' || lower.startsWith('.github/') ||
+      SCAN_AUTHORITY.has(lower) ||
+      ['node_modules', 'tools/contracts/node_modules'].some(root =>
+        lower === root || lower.startsWith(`${root}/`));
+  });
+  return { changed, protectedPaths };
+}
+
 /** Decide from two immutable trees, never from a live paginated PR file list. */
-export function evaluatePublicPr({ event, repository, baseSha, pull, baseTree, headTree }) {
+export function evaluatePublicPr({ event, repository, baseSha, pull, baseTree, headTree,
+  approvedHead = null }) {
   requireValue(event?.pull_request && Number.isInteger(event.number), 'Missing pull-request event');
   requireValue(BASES.has(event.pull_request.base?.ref) &&
     event.pull_request.base.repo?.full_name === repository &&
@@ -64,21 +81,37 @@ export function evaluatePublicPr({ event, repository, baseSha, pull, baseTree, h
   requireValue(SHA.test(event.pull_request.head?.sha) &&
     pull.head?.sha === event.pull_request.head.sha && REPO.test(pull.head.repo?.full_name),
   'The pull-request head changed or its repository is unavailable');
-  const before = treeEntries(baseTree);
-  const after = treeEntries(headTree);
-  const changed = [...new Set([...before.keys(), ...after.keys()])]
-    .filter(path => before.get(path) !== after.get(path));
   // Protect workflows, local actions and this policy itself. A rename is a
   // deletion plus an addition here, so both sides are checked.
-  const denied = changed.filter(path => {
-    const lower = path.toLowerCase();
-    return lower === '.github' || lower.startsWith('.github/') ||
-      SCAN_AUTHORITY.has(lower) ||
-      ['node_modules', 'tools/contracts/node_modules'].some(root =>
-        lower === root || lower.startsWith(`${root}/`));
-  });
-  requireValue(!denied.length, `Protected CI paths changed: ${denied.join(', ')}`);
-  return { baseSha, headSha: pull.head.sha, comparedPaths: changed.length };
+  const { changed, protectedPaths } = changesBetween(baseTree, headTree);
+  requireValue(!protectedPaths.length || approvedHead === pull.head.sha,
+    `Protected CI paths changed without exact-head owner approval: ${protectedPaths.join(', ')}`);
+  return { baseSha, headSha: pull.head.sha, comparedPaths: changed.length,
+    protectedPaths: protectedPaths.length, ownerApproved: protectedPaths.length > 0 };
+}
+
+/** A PR author's body and labels cannot authorize changes to the guard itself. */
+export function ownerApproval(comments, repository, headSha) {
+  requireValue(Array.isArray(comments) && REPO.test(repository) && SHA.test(headSha),
+    'Owner approval evidence is unavailable');
+  const owner = repository.split('/')[0].toLowerCase();
+  const expected = `${APPROVAL_PREFIX}${headSha}`;
+  return comments.find(comment => comment?.body?.trim() === expected &&
+    comment.user?.login?.toLowerCase() === owner &&
+    comment.user?.type === 'User' && comment.author_association === 'OWNER') ?? null;
+}
+
+async function approvalComments(repository, number, token, request) {
+  requireValue(Number.isInteger(number) && number > 0, 'Invalid pull-request number');
+  const comments = [];
+  for (let page = 1; page <= 10; page++) {
+    const batch = await request(`/repos/${repository}/issues/${number}/comments?per_page=100&page=${page}`, token);
+    requireValue(Array.isArray(batch) && batch.length <= 100,
+      'Owner approval comment listing is incomplete');
+    comments.push(...batch);
+    if (batch.length < 100) return comments;
+  }
+  throw new Error('Owner approval comment listing exceeds the review bound');
 }
 
 async function githubJson(path, token) {
@@ -117,7 +150,21 @@ export async function checkPublicPr({ event, repository, baseSha, token, request
   const latest = await request(path, token);
   requireValue(latest?.head?.sha === pull.head.sha && latest?.base?.sha === pull.base.sha,
     'The pull request changed while its immutable trees were read');
-  return evaluatePublicPr({ event, repository, baseSha, pull: latest, baseTree, headTree });
+  // Inspect the same immutable trees before reading approval evidence. Ordinary
+  // PRs keep the original no-comment path and do not depend on comment access.
+  const protectedChanged = changesBetween(baseTree, headTree).protectedPaths.length > 0;
+  let approvedHead = null;
+  if (protectedChanged) {
+    const comments = await approvalComments(repository, event.number, token, request);
+    if (ownerApproval(comments, repository, latest.head.sha)) approvedHead = latest.head.sha;
+    // A PR can move while comments are read. Never transfer an approval to a
+    // later head or base revision just because a stale event is still running.
+    const final = await request(path, token);
+    requireValue(final?.head?.sha === latest.head.sha && final?.base?.sha === latest.base.sha,
+      'The pull request changed while owner approval was read');
+  }
+  return evaluatePublicPr({ event, repository, baseSha, pull: latest, baseTree, headTree,
+    approvedHead });
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
@@ -129,7 +176,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
       baseSha: process.env.GITHUB_SHA,
       token: process.env.GITHUB_TOKEN
     });
-    process.stdout.write(`Protected base ${result.baseSha}, head ${result.headSha}, ${result.comparedPaths} changed paths compared\n`);
+    process.stdout.write(`Protected base ${result.baseSha}, head ${result.headSha}, ${result.comparedPaths} changed paths compared, ${result.protectedPaths} protected paths${result.ownerApproved ? ' approved by repository owner for this exact head' : ''}\n`);
   } catch (error) {
     process.stderr.write(`Public PR policy refused: ${error.message}\n`);
     process.exitCode = 1;
