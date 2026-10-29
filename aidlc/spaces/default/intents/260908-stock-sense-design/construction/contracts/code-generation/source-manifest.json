@@ -560,6 +560,21 @@
     },
     {
       "path": "tools/contracts/test/unit/candidate-evidence.test.mjs"
+    },
+    {
+      "path": ".github/scripts/public-pr-policy.mjs"
+    },
+    {
+      "path": ".github/scripts/public-pr-policy.test.mjs"
+    },
+    {
+      "path": "tools/contracts/src/container-tar-manifest.mjs"
+    },
+    {
+      "path": "tools/contracts/src/kiota-runtime-manifest.mjs"
+    },
+    {
+      "path": "tools/contracts/test/unit/kiota-runtime-manifest.test.mjs"
     }
   ]
 }
