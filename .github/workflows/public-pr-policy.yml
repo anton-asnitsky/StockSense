@@ -30,7 +30,7 @@ jobs:
       - name: Pin Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: 24.19.0
+          node-version: 24.22.2
       - name: Test the protected-base policy
         run: node --test .github/scripts/public-pr-policy.test.mjs
       - name: Check complete PR metadata without executing PR code
