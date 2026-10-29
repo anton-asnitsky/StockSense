@@ -11,4 +11,4 @@ May U1 use this narrowly bound, reusable Kiota finding exception so ordinary PRs
 - Approve reusable Kiota exception design
 - Request changes
 
-[Answer]:
+[Answer]: Approve reusable Kiota exception design
