@@ -29,4 +29,4 @@ Both U1 jobs stopped at the expected protected-main image-ledger check. The exis
 
 ## Open decisions
 
-The owner approved the reusable exception design and implementation plan. A specific v2 protected-main ledger row and its merge, any protection change, PR #72 merge, U1 acceptance, and C01 release each remain separate decisions. R-14 through R-16 and 95-ID reconciliation remain open.
+The owner approved the reusable exception design, implementation plan and the exact v2 finding for preparing a protected-main ledger PR; the ordered finding answer is recorded at 2026-10-29T22:12:23Z in [the question](../construction/contracts/code-generation/u1-v2-reusable-image-exception-questions.md). Draft [PR #73](https://github.com/anton-asnitsky/StockSense/pull/73) contains that single ledger replacement. Its merge, the exact U2 protected-path comment, any protection change, PR #72 merge, U1 acceptance and C01 release remain separate decisions. R-14 through R-16 and 95-ID reconciliation remain open.
