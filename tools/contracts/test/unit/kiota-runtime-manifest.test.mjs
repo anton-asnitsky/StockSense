@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { chmodSync, cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { collectKiotaRuntimeManifest, normalizeKiotaRuntimeManifest } from '../../src/kiota-runtime-manifest.mjs';
+import { readContainerTarManifest } from '../../src/container-tar-manifest.mjs';
 
 const id = letter => `sha256:${letter.repeat(64)}`;
 const hash = value => `sha256:${createHash('sha256').update(value).digest('hex')}`;
@@ -101,7 +103,7 @@ async function fixture() {
   return root;
 }
 
-function fakeDocker(root, imageId, { failCopy = false, failCleanup = false,
+function fakeDocker(root, imageId, { failExport = false, failCleanup = false,
   wrongImage = false } = {}) {
   const calls = [];
   const destinations = [];
@@ -112,10 +114,10 @@ function fakeDocker(root, imageId, { failCopy = false, failCleanup = false,
       Config: config() }));
     if (args[0] === 'create') return result('c'.repeat(64));
     if (args[0] === 'container') return result(wrongImage ? id('f') : imageId);
-    if (args[0] === 'cp') {
-      if (failCopy) return { status: 1, stdout: '', error: null };
+    if (args[0] === 'export') {
+      if (failExport) return { status: 1, stdout: '', error: null };
       destinations.push(args[2]);
-      cpSync(root, args[2], { recursive: true });
+      execFileSync('tar', ['-cf', args[2], '-C', root, '.']);
       return result('');
     }
     if (args[0] === 'rm') return failCleanup
@@ -125,7 +127,7 @@ function fakeDocker(root, imageId, { failCopy = false, failCleanup = false,
   return { spawn, calls, destinations };
 }
 
-test('collector binds exact inspected and created image, copies both trees and cleans up', async () => {
+test('collector binds exact inspected and created image, exports both trees and cleans up', async () => {
   const root = await fixture();
   try {
     const imageId = id('a');
@@ -138,7 +140,7 @@ test('collector binds exact inspected and created image, copies both trees and c
       ['rootfs', 'rootfs/opt', 'rootfs/opt/kiota', 'rootfs/opt/kiota/kiota',
         'rootfs/opt/kiota-probe', 'rootfs/opt/kiota-probe/probe.dll']
         .sort((a, b) => Buffer.compare(Buffer.from(a), Buffer.from(b))));
-    assert.equal(docker.calls.filter(args => args[0] === 'cp').length, 1);
+    assert.equal(docker.calls.filter(args => args[0] === 'export').length, 1);
     assert.equal(docker.calls.at(-1)[0], 'rm');
     assert.ok(docker.destinations.every(path => !existsSync(path)));
   } finally { await rm(root, { recursive: true, force: true }); }
@@ -162,10 +164,10 @@ test('two image IDs have the same collected content digest; an added unreported 
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 
-test('collector rejects image mismatch and copy failure, then cleans container and scratch', async () => {
+test('collector rejects image mismatch and export failure, then cleans container and scratch', async () => {
   const root = await fixture();
   try {
-    for (const option of [{ wrongImage: true }, { failCopy: true }]) {
+    for (const option of [{ wrongImage: true }, { failExport: true }]) {
       const docker = fakeDocker(root, id('a'), option);
       await assert.rejects(collectKiotaRuntimeManifest({ imageId: id('a'),
         sbom: sbom(id('a')), spawn: docker.spawn }), AggregateError);
@@ -183,5 +185,16 @@ test('cleanup failure rejects an otherwise valid manifest', async () => {
       sbom: sbom(id('a')), spawn: docker.spawn }), /cleanup failed/);
     assert.equal(docker.calls.at(-1)[0], 'rm');
     assert.ok(docker.destinations.every(path => !existsSync(path)));
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test('container archive rejects nonzero data after its end marker', async () => {
+  const root = await fixture();
+  const archive = join(root, 'outside.tar');
+  try {
+    execFileSync('tar', ['-cf', archive, '-C', root, 'opt']);
+    const data = readFileSync(archive);
+    writeFileSync(archive, Buffer.concat([data, Buffer.alloc(512, 1)]));
+    await assert.rejects(readContainerTarManifest(archive), /nonzero data follows tar end/);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
