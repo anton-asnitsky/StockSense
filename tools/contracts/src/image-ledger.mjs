@@ -12,7 +12,9 @@ const DIGEST = /^sha256:[0-9a-f]{64}$/;
 const REPOSITORY = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const PATH = 'security/image-exceptions.json';
 const MAX_BYTES = 1024 * 1024;
-const EXECUTION_ROOTS = Object.freeze(['.github/', 'tools/contracts/', 'scripts/', 'security/']);
+const EXECUTION_ROOTS = Object.freeze([
+  '.github/', 'tools/contracts/', 'scripts/', 'security/', 'node_modules/'
+]);
 const EXECUTION_FILES = new Set(['.npmrc', '.pnpmfile.cjs', 'pnpm-workspace.yaml']);
 const requireValue = (condition, message) => {
   if (!condition) throw new Error(`Image ledger refused: ${message}`);
