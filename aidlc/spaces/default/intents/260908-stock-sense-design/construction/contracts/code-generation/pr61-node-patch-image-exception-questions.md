@@ -49,4 +49,4 @@ Node-patched exact candidate digest and retained scan evidence?
 - Approve exact patched PR #61 temporary exception
 - Request changes
 
-[Answer]:
+[Answer]: Approve exact patched PR #61 temporary exception
