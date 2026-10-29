@@ -10,32 +10,20 @@ const APPROVAL_PREFIX = 'StockSense protected CI approval: ';
 // or the exception evaluator that decides whether its own findings pass.
 const SCAN_AUTHORITY = new Set([
   'security/image-exceptions.json',
-  'tools/contracts/scripts/security-reports.mjs',
-  'tools/contracts/scripts/check-ci-policy.mjs',
-  'tools/contracts/scripts/build-sbom.mjs',
-  'tools/contracts/scripts/build-standards-image.mjs',
-  'tools/contracts/scripts/build-kiota-image.mjs',
-  'tools/contracts/scripts/build-candidate-bundle.mjs',
-  'tools/contracts/scripts/image-evidence.mjs',
-  'tools/contracts/src/ci-policy.mjs',
-  'tools/contracts/src/bounded-generators.mjs',
-  'tools/contracts/src/container-tool-launcher.mjs',
-  'tools/contracts/src/candidate-provenance.mjs',
-  'tools/contracts/src/evidence.mjs',
-  'tools/contracts/src/generators.mjs',
-  'tools/contracts/src/image-evidence.mjs',
-  'tools/contracts/src/image-ledger.mjs',
-  'tools/contracts/src/source-digest.mjs',
-  'tools/contracts/src/package-loader.mjs',
-  'tools/contracts/src/preflight.mjs',
-  'tools/contracts/src/sbom.mjs',
-  'tools/contracts/package.json',
-  'tools/contracts/pnpm-lock.yaml',
-  'tools/contracts/dockerfile.validator',
-  'tools/contracts/dockerfile.generator-kiota',
   'pnpm-workspace.yaml', 'tools/contracts/pnpm-workspace.yaml', '.npmrc', '.pnpmfile.cjs',
   'tools/contracts/.npmrc', 'tools/contracts/.pnpmfile.cjs'
 ]);
+const PROTECTED_DIRECTORIES = [
+  '.github', 'node_modules', 'tools/contracts', 'scripts', 'security'
+];
+
+function isProtectedPath(path) {
+  const lower = path.toLowerCase();
+  // Protect complete authority roots. A newly named helper or build input is
+  // protected even before a manifest or known-file list mentions it.
+  return SCAN_AUTHORITY.has(lower) || PROTECTED_DIRECTORIES.some(root =>
+    lower === root || lower.startsWith(`${root}/`));
+}
 const requireValue = (condition, message) => {
   if (!condition) throw new Error(message);
 };
@@ -58,13 +46,7 @@ function changesBetween(baseTree, headTree) {
   const after = treeEntries(headTree);
   const changed = [...new Set([...before.keys(), ...after.keys()])]
     .filter(path => before.get(path) !== after.get(path));
-  const protectedPaths = changed.filter(path => {
-    const lower = path.toLowerCase();
-    return lower === '.github' || lower.startsWith('.github/') ||
-      SCAN_AUTHORITY.has(lower) ||
-      ['node_modules', 'tools/contracts/node_modules'].some(root =>
-        lower === root || lower.startsWith(`${root}/`));
-  });
+  const protectedPaths = changed.filter(isProtectedPath);
   return { changed, protectedPaths };
 }
 

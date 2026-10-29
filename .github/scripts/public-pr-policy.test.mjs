@@ -87,6 +87,52 @@ test('a PR cannot change the scanner, its dependency inputs or exception authori
   }
 });
 
+test('new contract helpers, build scripts and build inputs require owner review', () => {
+  for (const path of [
+    'tools/contracts/src/scan/new-helper.mjs',
+    'tools/contracts/scripts/build-new-image.mjs',
+    'tools/contracts/Dockerfile.generator-next',
+    'tools/contracts/package-lock.json',
+    'tools/contracts/build/Containerfile.scan',
+    'tools/contracts/build/nuget.config',
+    'tools/contracts/arbitrary/nested/new-executable',
+    'scripts/another-build-helper.ps1',
+    'security/new-evaluator.json'
+  ]) {
+    assert.throws(() => evaluatePublicPr({ ...input,
+      headTree: tree(...headTree.tree, entry(path, 'f'.repeat(40))) }),
+    /Protected CI paths changed without exact-head owner approval/, path);
+  }
+});
+
+test('changing an existing contract build script requires owner review', () => {
+  const path = 'tools/contracts/scripts/setup-oasdiff.mjs';
+  assert.throws(() => evaluatePublicPr({ ...input,
+    baseTree: tree(...baseTree.tree, entry(path, 'c'.repeat(40))),
+    headTree: tree(...headTree.tree, entry(path, 'f'.repeat(40))) }),
+  /Protected CI paths changed without exact-head owner approval/);
+});
+
+test('ordinary documentation changes still pass without approval', () => {
+  const docsBase = tree(entry('docs/guide.md', 'c'.repeat(40)));
+  const docsHead = tree(entry('docs/guide.md', 'f'.repeat(40)));
+  assert.deepEqual(evaluatePublicPr({ ...input, baseTree: docsBase, headTree: docsHead }),
+    { baseSha, headSha, comparedPaths: 1, protectedPaths: 0, ownerApproved: false });
+});
+
+test('a new contract helper passes with the exact base/head owner comment', () => {
+  const path = 'tools/contracts/src/scan/new-helper.mjs';
+  const protectedHead = tree(...headTree.tree, entry(path, 'f'.repeat(40)));
+  const comment = { body: `StockSense protected CI approval: ${baseSha} ${headSha}`,
+    user: { login: 'anton-asnitsky', type: 'User' }, author_association: 'OWNER' };
+  assert.equal(ownerApproval([comment], repository, baseSha, headSha), comment);
+  assert.deepEqual(evaluatePublicPr({ ...input, headTree: protectedHead,
+    approvedHead: headSha }), { baseSha, headSha, comparedPaths: 2,
+    protectedPaths: 1, ownerApproved: true });
+  assert.throws(() => evaluatePublicPr({ ...input, headTree: protectedHead,
+    approvedHead: 'f'.repeat(40) }), /without exact-head owner approval/);
+});
+
 test('the base-owned policy also checks U1 Bolt PRs', () => {
   const boltBaseSha = '3'.repeat(40);
   const boltBase = { ...event.pull_request.base, ref: 'bolt/u1-candidate-ready', sha: boltBaseSha };

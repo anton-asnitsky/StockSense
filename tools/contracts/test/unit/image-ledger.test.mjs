@@ -4,8 +4,10 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-import { candidateTreeDigestFromGit, fetchImageLedger, verifyBoundImageEvidence } from '../../src/image-ledger.mjs';
+import { candidateTreeDigestFromGit, executionFingerprintFromGit,
+  fetchImageLedger, readKiotaRuntimeEvidence, verifyBoundImageEvidence } from '../../src/image-ledger.mjs';
 import { SCANNERS, sha256 } from '../../src/image-evidence.mjs';
+import { normalizeKiotaRuntimeManifest } from '../../src/kiota-runtime-manifest.mjs';
 
 const repository = 'owner/StockSense';
 const mainSha = 'a'.repeat(40);
@@ -14,6 +16,16 @@ const treeSha = 'e'.repeat(40);
 const candidateTreeDigest = candidateTreeDigestFromGit(Buffer.from(
   `100644 blob ${'1'.repeat(40)}\tsecurity/image-exceptions.json\0` +
   `100644 blob ${'2'.repeat(40)}\ttools/contracts/src/example.mjs\0`));
+const executionTree = (...extra) => Buffer.from([
+  `100644 blob ${'1'.repeat(40)}\tsecurity/image-exceptions.json`,
+  `100644 blob ${'2'.repeat(40)}\ttools/contracts/src/image-ledger.mjs`,
+  `100644 blob ${'3'.repeat(40)}\ttools/contracts/scripts/image-evidence.mjs`,
+  `100644 blob ${'4'.repeat(40)}\ttools/contracts/Dockerfile.generator-kiota`,
+  `100644 blob ${'5'.repeat(40)}\t.github/workflows/contracts-required.yml`,
+  ...extra
+].join('\0') + '\0');
+const executionFingerprint = executionFingerprintFromGit(executionTree());
+const runtimeManifestDigest = 'sha256:' + '7'.repeat(64);
 const imageId = 'sha256:' + 'c'.repeat(64);
 const now = new Date();
 const finding = { id: 'CVE-2026-12345', severity: 'Medium', package: 'yaml',
@@ -53,7 +65,7 @@ test('ledger comes from main path and exact immutable blob, with main checked tw
   const ledger = await fetchImageLedger({ repository, token: 'read-only',
     candidateRevision: revision, candidateGitTreeSha: treeSha, request: api.request });
   assert.deepEqual(ledger, { mainSha, blobSha: api.blobSha, candidateGitTreeSha: treeSha,
-    exceptions: [] });
+    schema: 'stocksense-image-exceptions-v1', exceptions: [] });
   assert.equal(api.calls.filter(path => path.endsWith('/git/ref/heads/main')).length, 2);
   assert.ok(api.calls.some(path => path.includes(`?ref=${mainSha}`)));
   assert.ok(api.calls.every(path => !path.includes('/pulls/') && !path.includes('/heads/feat/')));
@@ -89,6 +101,9 @@ test('missing, moved, malformed and substituted main ledger fail closed', async 
     request: async path => path.includes('/contents/') ? null : good.request(path) }), /regular file/);
   await assert.rejects(fetchImageLedger({ ...args, candidateGitTreeSha: 'f'.repeat(40),
     request: good.request }), /GitHub commit metadata/);
+  const v2 = fakeGithub({ schema: 'stocksense-image-exceptions-v2', exceptions: [] });
+  assert.equal((await fetchImageLedger({ ...args, request: v2.request })).schema,
+    'stocksense-image-exceptions-v2');
 });
 
 test('whole candidate manifest changes on code edits but excludes only the ledger blob', () => {
@@ -111,6 +126,28 @@ test('whole candidate manifest changes on code edits but excludes only the ledge
     assert.notEqual(before, after, path);
   }
   assert.throws(() => candidateTreeDigestFromGit(Buffer.from('invalid\0')), /malformed/);
+});
+
+test('execution fingerprint permits ordinary sources but detects every protected addition', () => {
+  assert.equal(executionFingerprint,
+    executionFingerprintFromGit(executionTree(
+      `100644 blob ${'6'.repeat(40)}\tdocs/ordinary-change.md`,
+      `100644 blob ${'7'.repeat(40)}\tcontracts/openapi/c01.yaml`)));
+  for (const path of [
+    'tools/contracts/src/new-helper.mjs',
+    'tools/contracts/arbitrary/build-input',
+    'tools/contracts/Dockerfile.validator',
+    '.github/workflows/new-gate.yml',
+    'scripts/new-build-helper.ps1',
+    'security/scan-policy.json',
+    'node_modules/new-dependency/index.js'
+  ]) {
+    assert.notEqual(executionFingerprint,
+      executionFingerprintFromGit(executionTree(`100644 blob ${'8'.repeat(40)}\t${path}`)), path);
+  }
+  assert.notEqual(executionFingerprint, executionFingerprintFromGit(Buffer.from(
+    executionTree().toString('utf8').replace('2'.repeat(40), '9'.repeat(40)))));
+  assert.throws(() => executionFingerprintFromGit(Buffer.from('bad\0')), /malformed/);
 });
 
 async function evidenceFiles(directory, validatorFindings = [finding]) {
@@ -168,5 +205,71 @@ test('candidate revision, image IDs, retained scans and exact dispositions bind 
       exceptions: [{ candidateTreeDigest,
         finding: { ...exception, severity: 'High', fixState: 'fixed' } }] } }),
     error => error.code === 'IMAGE_FINDINGS');
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('v2 ledger binds execution and runtime baselines without binding unrelated source bytes', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'stocksense-ledger-v2-test-'));
+  const ids = { validator: imageId, kiota: imageId };
+  const ledger = { schema: 'stocksense-image-exceptions-v2', mainSha,
+    blobSha: 'd'.repeat(40), candidateGitTreeSha: treeSha,
+    exceptions: [{ executionFingerprint, runtimeManifestDigest, finding: exception }] };
+  const args = { directory, imageIds: ids, ledger, expectedRevision: revision,
+    actualRevision: revision, candidateTreeDigest, executionFingerprint,
+    runtimeManifestDigest, now };
+  try {
+    await evidenceFiles(directory);
+    const result = await verifyBoundImageEvidence(args);
+    assert.equal(result.images[0].disposed, 1);
+    assert.equal(result.executionFingerprint, executionFingerprint);
+    assert.equal(result.runtimeManifestDigest, runtimeManifestDigest);
+    assert.equal(result.ledgerSchema, 'stocksense-image-exceptions-v2');
+    const unrelatedTree = candidateTreeDigestFromGit(Buffer.from(
+      `100644 blob ${'8'.repeat(40)}\tdocs/ordinary-change.md\0` +
+      `100644 blob ${'2'.repeat(40)}\ttools/contracts/src/example.mjs\0`));
+    assert.notEqual(unrelatedTree, candidateTreeDigest);
+    await verifyBoundImageEvidence({ ...args, candidateTreeDigest: unrelatedTree });
+    await assert.rejects(verifyBoundImageEvidence({ ...args,
+      executionFingerprint: 'sha256:' + '8'.repeat(64) }), /execution baseline/);
+    await assert.rejects(verifyBoundImageEvidence({ ...args,
+      runtimeManifestDigest: 'sha256:' + '8'.repeat(64) }), /execution baseline/);
+    await assert.rejects(verifyBoundImageEvidence({ ...args,
+      runtimeManifestDigest: null }), /runtime manifest is missing/);
+    await assert.rejects(verifyBoundImageEvidence({ ...args, ledger: { ...ledger,
+      exceptions: [{ ...ledger.exceptions[0], unknown: true }] } }), /malformed/);
+    await evidenceFiles(directory, [{ ...finding, severity: 'High', fixState: 'fixed',
+      fixVersions: ['2.8.4'] }]);
+    await assert.rejects(verifyBoundImageEvidence(args), error => error.code === 'IMAGE_FINDINGS');
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('retained runtime record must be canonical and bound to the exact SBOM and image ID', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'stocksense-runtime-binding-test-'));
+  const sbom = { bomFormat: 'CycloneDX', specVersion: '1.6',
+    components: [{ type: 'library', name: 'Microsoft.OpenApi.Kiota', version: '1.35.0',
+      purl: 'pkg:nuget/Microsoft.OpenApi.Kiota@1.35.0' }] };
+  const sbomBytes = Buffer.from(JSON.stringify(sbom, null, 2) + '\n');
+  const entries = [
+    { path: 'rootfs', kind: 'directory', mode: 0o755 }
+  ];
+  const config = { Entrypoint: null, Cmd: null, Env: [], User: '65532', WorkingDir: '/' };
+  const normalized = normalizeKiotaRuntimeManifest({ entries, config, sbom });
+  const record = { imageId, sbomDigest: sha256(sbomBytes), ...normalized };
+  try {
+    await writeFile(join(directory, 'kiota.cdx.json'), sbomBytes);
+    await writeFile(join(directory, 'kiota.runtime.json'), JSON.stringify(record, null, 2) + '\n');
+    assert.equal(await readKiotaRuntimeEvidence(directory, imageId), normalized.digest);
+    await assert.rejects(readKiotaRuntimeEvidence(directory, 'sha256:' + 'd'.repeat(64)),
+      /disagrees with current image/);
+    for (const changed of [
+      { ...record, sbomDigest: 'sha256:' + 'd'.repeat(64) },
+      { ...record, unreviewed: true },
+      { ...record, entries: [...record.entries, { path: 'rootfs/new-tool',
+        kind: 'file', mode: 0o755, size: 1, sha256: sha256(Buffer.from('x')) }] }
+    ]) {
+      await writeFile(join(directory, 'kiota.runtime.json'), JSON.stringify(changed, null, 2) + '\n');
+      await assert.rejects(readKiotaRuntimeEvidence(directory, imageId),
+        /canonical|disagrees/);
+    }
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
