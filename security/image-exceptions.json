@@ -2,7 +2,7 @@
   "schema": "stocksense-image-exceptions-v1",
   "exceptions": [
     {
-      "candidateTreeDigest": "sha256:c77932d01cec9d9dbd57177504f8c4dc416affb63ab2c48bf635835f05907d34",
+      "candidateTreeDigest": "sha256:edaa5c022e7f69492ac68c237419e122aa2eee92b0cbd1ba086216e3f38c2a69",
       "finding": {
         "id": "GHSA-qhrr-8q5h-9q3h",
         "image": "kiota",
@@ -15,8 +15,8 @@
         "owner": "StockSense repository owner",
         "rationale": "Kiota 1.35.0 bundles affected MessagePack. The pinned generation path invokes only kiota generate; no route to untrusted MessagePack object deserialization was identified. This is a time-limited reachability assessment, not proof that the library is safe.",
         "compensatingControl": "Verify exact Kiota package SHA-256 5e75f6adf161717be8d9f39eb596f93d52535e7b8cbcc00cffdcef3d0d3c3486; fixed generate arguments; immutable image and source-bound scan; network-disabled, read-only, non-root container; 2 GiB memory and 120-second limits. Reassess on upstream fix or invocation change.",
-        "approvalReference": "AI-DLC QUESTION_ANSWERED 2026-10-29T09:49:20Z, after DECISION_RECORDED 2026-10-29T09:42:25Z and HUMAN_TURN 2026-10-29T09:48:12Z; immutable decision https://github.com/anton-asnitsky/StockSense/blob/c4630d24765469045550479c7cf31860a7e89d61/aidlc/spaces/default/intents/260908-stock-sense-design/construction/contracts/code-generation/pr61-node-patch-image-exception-questions.md; retained scan https://github.com/anton-asnitsky/StockSense/actions/runs/40849263065",
-        "createdAt": "2026-10-29T09:50:52Z",
+        "approvalReference": "AI-DLC QUESTION_ANSWERED 2026-10-29T11:25:16Z, after DECISION_RECORDED 2026-10-29T10:58:48Z and HUMAN_TURN 2026-10-29T11:24:25Z; immutable decision https://github.com/anton-asnitsky/StockSense/blob/75cf8442a25e85a834d1813610fa3e66d0839aa9/aidlc/spaces/default/intents/260908-stock-sense-design/construction/contracts/code-generation/pr61-guard-pin-image-exception-questions.md; retained scan https://github.com/anton-asnitsky/StockSense/actions/runs/40858865507",
+        "createdAt": "2026-10-29T11:27:55Z",
         "expiresAt": "2026-11-25T00:00:00Z"
       }
     }
