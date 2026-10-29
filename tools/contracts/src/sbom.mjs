@@ -40,9 +40,15 @@ async function verifyImageLedgerReceipt(directory, candidateRevision, records) {
   } catch {
     fail('IMAGE_LEDGER', 'BR6.5', 'Successful image ledger verification is missing or malformed');
   }
+  const v2 = receipt?.schema === 'stocksense-image-ledger-verification-v2';
   if (!exactFields(receipt, ['schema', 'candidateRevision', 'candidateGitTreeSha',
-    'candidateTreeDigest', 'sourceDigest', 'mainSha', 'ledgerBlobSha', 'images']) ||
-    receipt.schema !== 'stocksense-image-ledger-verification-v1' ||
+    'candidateTreeDigest', 'sourceDigest', 'mainSha', 'ledgerBlobSha', 'images',
+    ...(v2 ? ['executionFingerprint', 'runtimeManifestDigest', 'ledgerSchema'] : [])]) ||
+    !['stocksense-image-ledger-verification-v1',
+      'stocksense-image-ledger-verification-v2'].includes(receipt.schema) ||
+    v2 && (receipt.ledgerSchema !== 'stocksense-image-exceptions-v2' ||
+      !DIGEST.test(receipt.executionFingerprint) ||
+      !DIGEST.test(receipt.runtimeManifestDigest)) ||
     receipt.candidateRevision !== candidateRevision ||
     !COMMIT.test(receipt.candidateGitTreeSha) || !DIGEST.test(receipt.candidateTreeDigest) ||
     !DIGEST.test(receipt.sourceDigest) || !COMMIT.test(receipt.mainSha) ||
@@ -209,7 +215,11 @@ export async function buildSbom(lockfilePath, subject) {
           { name: 'stocksense:imageLedgerMainSha', value: imageLedgerReceipt.mainSha },
           { name: 'stocksense:imageLedgerBlobSha', value: imageLedgerReceipt.ledgerBlobSha },
           { name: 'stocksense:imageLedgerCandidateRevision', value: imageLedgerReceipt.candidateRevision },
-          { name: 'stocksense:imageLedgerCandidateTreeDigest', value: imageLedgerReceipt.candidateTreeDigest }
+          { name: 'stocksense:imageLedgerCandidateTreeDigest', value: imageLedgerReceipt.candidateTreeDigest },
+          ...(imageLedgerReceipt.schema === 'stocksense-image-ledger-verification-v2' ? [
+            { name: 'stocksense:imageLedgerExecutionFingerprint', value: imageLedgerReceipt.executionFingerprint },
+            { name: 'stocksense:imageLedgerRuntimeManifestDigest', value: imageLedgerReceipt.runtimeManifestDigest }
+          ] : [])
         ] : []),
         ...imageRecords.flatMap(record => [
           { name: `stocksense:${record.name}:imageId`, value: record.imageId },
