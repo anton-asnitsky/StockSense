@@ -1,7 +1,7 @@
 {
   "packageVersion": "1.0.0",
   "manifestStatus": "candidate",
-  "sourceRevision": "ff3e51ec34b26c633dea8cde42c305b856ad7323",
+  "sourceRevision": "3ab04a5ed0763e5be6b258b1e1ccd734f3a8859d",
   "openapi": [
     {
       "provider": "U11 Web BFF",
@@ -10,7 +10,7 @@
       ],
       "document": "web-bff/v1/browser-api.openapi.yaml",
       "semanticVersion": "1.0.0",
-      "contentDigest": "sha256:97825e225fcc1af01800dd101a57c9d828ddf1dfa4f3d6e65b2bbeb9a612be33"
+      "contentDigest": "sha256:6595f481a1b3dda9495077f267e49403144409b2d6e705ca51c0d0fdea71d30d"
     }
   ],
   "asyncapi": [],
@@ -45,7 +45,7 @@
       "document": "governance/contract-package-policy.json",
       "semanticVersion": "1.0.0",
       "contentDigest": "sha256:7bd05065b012b25af6d38218a7212deab51095b980d5f7a947cc2894f1adb8b8",
-      "sourceRevision": "ff3e51ec34b26c633dea8cde42c305b856ad7323"
+      "sourceRevision": "3ab04a5ed0763e5be6b258b1e1ccd734f3a8859d"
     },
     {
       "kind": "example-fixture",
@@ -56,8 +56,8 @@
       ],
       "document": "governance/example-fixture.json",
       "semanticVersion": "1.0.0",
-      "contentDigest": "sha256:dee3d592f160b8a7e459ebb99c390c39438acaaa40187616dc8c3794e7567a9f",
-      "sourceRevision": "ff3e51ec34b26c633dea8cde42c305b856ad7323"
+      "contentDigest": "sha256:a181febdbcc2c0a6435fe5c26965022ffe99142020e436ef99b0333f5e8eee8c",
+      "sourceRevision": "3ab04a5ed0763e5be6b258b1e1ccd734f3a8859d"
     },
     {
       "kind": "generation-profile",
@@ -68,8 +68,8 @@
       ],
       "document": "governance/generation-profile.json",
       "semanticVersion": "1.0.0",
-      "contentDigest": "sha256:243cf43bfc5dfb336ecdb535a3eb83242b17ddcc2982770b4890742dd8aa6f86",
-      "sourceRevision": "ff3e51ec34b26c633dea8cde42c305b856ad7323"
+      "contentDigest": "sha256:906c168ac16e79019bd1f0c095b151926e751932e4e4150a7cee837e42aa28a3",
+      "sourceRevision": "3ab04a5ed0763e5be6b258b1e1ccd734f3a8859d"
     }
   ],
   "boundaryCoverage": [

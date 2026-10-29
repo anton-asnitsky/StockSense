@@ -140,7 +140,7 @@
         "C18"
       ],
       "contractElementId": "ManualReviewRequest",
-      "documentRevisionId": "sha256:a82fcd75d567085c01b69b2132ebc4e9c291e07f34598fd6ea107f4e259d1d6c",
+      "documentRevisionId": "sha256:d17389efa04cd943c6c3c52a6d6594ef6276efb042607373747aeb00ae32597c",
       "scenarioType": "valid",
       "expectedOutcome": "pass",
       "payload": {
@@ -154,7 +154,7 @@
         "C18"
       ],
       "contractElementId": "ManualReviewRequest",
-      "documentRevisionId": "sha256:a82fcd75d567085c01b69b2132ebc4e9c291e07f34598fd6ea107f4e259d1d6c",
+      "documentRevisionId": "sha256:d17389efa04cd943c6c3c52a6d6594ef6276efb042607373747aeb00ae32597c",
       "scenarioType": "invalid",
       "expectedOutcome": "fail",
       "expectedFailureCode": "SCHEMA_REQUIRED",
@@ -170,7 +170,7 @@
         "C18"
       ],
       "contractElementId": "ReconciliationRequest",
-      "documentRevisionId": "sha256:a82fcd75d567085c01b69b2132ebc4e9c291e07f34598fd6ea107f4e259d1d6c",
+      "documentRevisionId": "sha256:d17389efa04cd943c6c3c52a6d6594ef6276efb042607373747aeb00ae32597c",
       "scenarioType": "valid",
       "expectedOutcome": "pass",
       "payload": {
@@ -184,7 +184,7 @@
         "C18"
       ],
       "contractElementId": "ReconciliationRequest",
-      "documentRevisionId": "sha256:a82fcd75d567085c01b69b2132ebc4e9c291e07f34598fd6ea107f4e259d1d6c",
+      "documentRevisionId": "sha256:d17389efa04cd943c6c3c52a6d6594ef6276efb042607373747aeb00ae32597c",
       "scenarioType": "invalid",
       "expectedOutcome": "fail",
       "expectedFailureCode": "SCHEMA_ENUM",
@@ -201,7 +201,7 @@
         "C18"
       ],
       "contractElementId": "AssistantTurnRequest",
-      "documentRevisionId": "sha256:a82fcd75d567085c01b69b2132ebc4e9c291e07f34598fd6ea107f4e259d1d6c",
+      "documentRevisionId": "sha256:d17389efa04cd943c6c3c52a6d6594ef6276efb042607373747aeb00ae32597c",
       "scenarioType": "valid",
       "expectedOutcome": "pass",
       "payload": {
@@ -215,7 +215,7 @@
         "C18"
       ],
       "contractElementId": "AssistantTurnRequest",
-      "documentRevisionId": "sha256:a82fcd75d567085c01b69b2132ebc4e9c291e07f34598fd6ea107f4e259d1d6c",
+      "documentRevisionId": "sha256:d17389efa04cd943c6c3c52a6d6594ef6276efb042607373747aeb00ae32597c",
       "scenarioType": "invalid",
       "expectedOutcome": "fail",
       "expectedFailureCode": "SCHEMA_MIN_LENGTH",
