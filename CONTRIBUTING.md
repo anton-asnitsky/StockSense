@@ -39,12 +39,13 @@ every merge requires the owner's explicit approval.
 - If a PR changes a protected CI workflow, policy script, scanner input, or
   exception ledger, the base-owned `U2 protected-base PR policy` check needs a
   separate exact-head approval. The repository owner must comment on the PR
-  with precisely `StockSense protected CI approval: <40-character head SHA>`.
+  with precisely `StockSense protected CI approval: <40-character base SHA> <40-character head SHA>`.
   Only a comment from the repository owner's account with GitHub's `OWNER`
   association is accepted. After commenting, rerun the check or edit the PR
-  description to trigger it. A changed head SHA needs a new comment. This CI
-  approval does not approve the PR's merge; the explicit merge rule above
-  still applies. Fork PRs are eligible for the same owner review.
+  description to trigger it. A changed base or head SHA needs a new comment.
+  This approves only U2's protected-path check. U1 may independently reject
+  workflow changes, and the explicit merge rule above still applies. Fork PRs
+  are eligible for the same owner review.
 - Story PRs may retain their individual commits while integrating into a Bolt.
   Squash-merge each completed, approved Bolt PR into `main` as one trunk commit,
   then delete its merged Bolt and story branches.

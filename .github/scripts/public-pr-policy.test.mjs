@@ -88,12 +88,15 @@ test('a PR cannot change the scanner, its dependency inputs or exception authori
 });
 
 test('the base-owned policy also checks U1 Bolt PRs', () => {
-  const boltBase = { ...event.pull_request.base, ref: 'bolt/u1-candidate-ready' };
+  const boltBaseSha = '3'.repeat(40);
+  const boltBase = { ...event.pull_request.base, ref: 'bolt/u1-candidate-ready', sha: boltBaseSha };
   const boltEvent = { ...event, pull_request: { ...event.pull_request, base: boltBase } };
   const boltPull = { ...pull, base: boltBase };
-  assert.deepEqual(evaluatePublicPr({ ...input, event: boltEvent, pull: boltPull }),
-    { baseSha, headSha, comparedPaths: 1, protectedPaths: 0, ownerApproved: false });
+  assert.deepEqual(evaluatePublicPr({ ...input, event: boltEvent, pull: boltPull,
+    baseSha: boltBaseSha }),
+    { baseSha: boltBaseSha, headSha, comparedPaths: 1, protectedPaths: 0, ownerApproved: false });
   assert.throws(() => evaluatePublicPr({ ...input, event: boltEvent, pull: boltPull,
+    baseSha: boltBaseSha,
     headTree: tree(...headTree.tree, entry('tools/contracts/src/ci-policy.mjs', 'f'.repeat(40))) }),
   /Protected CI paths changed/);
 });
@@ -101,16 +104,17 @@ test('the base-owned policy also checks U1 Bolt PRs', () => {
 test('only an exact-head repository-owner comment authorizes protected paths', () => {
   const protectedHead = tree(entry('.github/workflows/contracts-required.yml', 'f'.repeat(40)),
     entry('src/example.mjs', 'e'.repeat(40)));
-  const body = `StockSense protected CI approval: ${headSha}`;
+  const body = `StockSense protected CI approval: ${baseSha} ${headSha}`;
   const valid = { body, user: { login: 'anton-asnitsky', type: 'User' },
     author_association: 'OWNER' };
-  assert.equal(ownerApproval([valid], repository, headSha), valid);
+  assert.equal(ownerApproval([valid], repository, baseSha, headSha), valid);
   for (const comment of [
-    { ...valid, body: `StockSense protected CI approval: ${'f'.repeat(40)}` },
+    { ...valid, body: `StockSense protected CI approval: ${baseSha} ${'f'.repeat(40)}` },
+    { ...valid, body: `StockSense protected CI approval: ${'f'.repeat(40)} ${headSha}` },
     { ...valid, user: { login: 'contributor', type: 'User' } },
     { ...valid, author_association: 'CONTRIBUTOR' },
     { ...valid, user: { login: 'anton-asnitsky', type: 'Bot' } }
-  ]) assert.equal(ownerApproval([comment], repository, headSha), null);
+  ]) assert.equal(ownerApproval([comment], repository, baseSha, headSha), null);
   assert.throws(() => evaluatePublicPr({ ...input, headTree: protectedHead }),
     /without exact-head owner approval/);
   assert.deepEqual(evaluatePublicPr({ ...input, headTree: protectedHead,
@@ -132,7 +136,7 @@ test('the base-owned API reader checks owner comments and rechecks the PR', asyn
     if (path.includes(`/git/trees/${'1'.repeat(40)}`)) return baseTree;
     if (path.includes(`/git/trees/${'2'.repeat(40)}`)) return protectedHead;
     if (path.endsWith('/issues/42/comments?per_page=100&page=1')) return [
-      { body: `StockSense protected CI approval: ${headSha}`,
+      { body: `StockSense protected CI approval: ${baseSha} ${headSha}`,
         user: { login: 'anton-asnitsky', type: 'User' }, author_association: 'OWNER' }];
     throw new Error(`Unexpected request ${path}`);
   };
