@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { checkPublicPr, evaluatePublicPr } from './public-pr-policy.mjs';
+import { checkPublicPr, evaluatePublicPr, ownerApproval } from './public-pr-policy.mjs';
 
 const baseSha = 'a'.repeat(40);
 const headSha = 'b'.repeat(40);
@@ -47,7 +47,8 @@ test('image disposition precedes candidate package installation and tests', () =
 });
 
 test('an ordinary PR compares exact immutable base and fork-head trees', () => {
-  assert.deepEqual(evaluatePublicPr(input), { baseSha, headSha, comparedPaths: 1 });
+  assert.deepEqual(evaluatePublicPr(input), { baseSha, headSha, comparedPaths: 1,
+    protectedPaths: 0, ownerApproved: false });
 });
 
 test('workflow edits, same-name job additions, local actions and renames are refused', () => {
@@ -91,10 +92,62 @@ test('the base-owned policy also checks U1 Bolt PRs', () => {
   const boltEvent = { ...event, pull_request: { ...event.pull_request, base: boltBase } };
   const boltPull = { ...pull, base: boltBase };
   assert.deepEqual(evaluatePublicPr({ ...input, event: boltEvent, pull: boltPull }),
-    { baseSha, headSha, comparedPaths: 1 });
+    { baseSha, headSha, comparedPaths: 1, protectedPaths: 0, ownerApproved: false });
   assert.throws(() => evaluatePublicPr({ ...input, event: boltEvent, pull: boltPull,
     headTree: tree(...headTree.tree, entry('tools/contracts/src/ci-policy.mjs', 'f'.repeat(40))) }),
   /Protected CI paths changed/);
+});
+
+test('only an exact-head repository-owner comment authorizes protected paths', () => {
+  const protectedHead = tree(entry('.github/workflows/contracts-required.yml', 'f'.repeat(40)),
+    entry('src/example.mjs', 'e'.repeat(40)));
+  const body = `StockSense protected CI approval: ${headSha}`;
+  const valid = { body, user: { login: 'anton-asnitsky', type: 'User' },
+    author_association: 'OWNER' };
+  assert.equal(ownerApproval([valid], repository, headSha), valid);
+  for (const comment of [
+    { ...valid, body: `StockSense protected CI approval: ${'f'.repeat(40)}` },
+    { ...valid, user: { login: 'contributor', type: 'User' } },
+    { ...valid, author_association: 'CONTRIBUTOR' },
+    { ...valid, user: { login: 'anton-asnitsky', type: 'Bot' } }
+  ]) assert.equal(ownerApproval([comment], repository, headSha), null);
+  assert.throws(() => evaluatePublicPr({ ...input, headTree: protectedHead }),
+    /without exact-head owner approval/);
+  assert.deepEqual(evaluatePublicPr({ ...input, headTree: protectedHead,
+    approvedHead: headSha }), { baseSha, headSha, comparedPaths: 2,
+    protectedPaths: 1, ownerApproved: true });
+  assert.throws(() => evaluatePublicPr({ ...input, headTree: protectedHead,
+    approvedHead: 'f'.repeat(40) }), /without exact-head owner approval/);
+});
+
+test('the base-owned API reader checks owner comments and rechecks the PR', async () => {
+  const protectedHead = tree(entry('.github/workflows/contracts-required.yml', 'f'.repeat(40)),
+    entry('src/example.mjs', 'e'.repeat(40)));
+  const requests = [];
+  const request = async path => {
+    requests.push(path);
+    if (path.endsWith('/pulls/42')) return pull;
+    if (path.endsWith(`/git/commits/${baseSha}`)) return { tree: { sha: '1'.repeat(40) } };
+    if (path.endsWith(`/git/commits/${headSha}`)) return { tree: { sha: '2'.repeat(40) } };
+    if (path.includes(`/git/trees/${'1'.repeat(40)}`)) return baseTree;
+    if (path.includes(`/git/trees/${'2'.repeat(40)}`)) return protectedHead;
+    if (path.endsWith('/issues/42/comments?per_page=100&page=1')) return [
+      { body: `StockSense protected CI approval: ${headSha}`,
+        user: { login: 'anton-asnitsky', type: 'User' }, author_association: 'OWNER' }];
+    throw new Error(`Unexpected request ${path}`);
+  };
+  const result = await checkPublicPr({ event, repository, baseSha, token: 'test', request });
+  assert.equal(result.ownerApproved, true);
+  assert.equal(requests.filter(path => path.endsWith('/pulls/42')).length, 3);
+  assert.ok(requests.some(path => path.includes('/issues/42/comments?per_page=100&page=1')));
+  await assert.rejects(checkPublicPr({ event, repository, baseSha, token: 'test',
+    request: async path => path.includes('/issues/42/comments') ? [] : request(path) }),
+  /without exact-head owner approval/);
+  let pullReads = 0;
+  await assert.rejects(checkPublicPr({ event, repository, baseSha, token: 'test',
+    request: async path => path.endsWith('/pulls/42') && ++pullReads === 3 ?
+      { ...pull, head: { ...pull.head, sha: 'f'.repeat(40) } } : request(path) }),
+  /changed while owner approval was read/);
 });
 
 test('stale revisions, wrong repository and truncated trees fail closed', () => {
