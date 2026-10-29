@@ -49,7 +49,7 @@ export async function verifyRawImageScan(directory, { name, imageId, sbomDigest,
       !HEX.test(sbomDigest ?? '') || !/^[0-9a-f]{40}$/.test(revision ?? '')) {
     fail('IMAGE_RAW', 'Raw image scan binding is incomplete');
   }
-  let scanBytes, databaseBytes, receipt;
+  let scanBytes = Buffer.alloc(0), databaseBytes = Buffer.alloc(0), receipt;
   try {
     [scanBytes, databaseBytes, receipt] = await Promise.all([
       readFile(join(directory, `${name}.grype-raw.json`)),
