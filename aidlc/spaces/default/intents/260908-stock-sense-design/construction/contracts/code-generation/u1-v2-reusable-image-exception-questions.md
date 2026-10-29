@@ -24,4 +24,4 @@ Do you approve this one temporary v2 exception for the exact execution fingerpri
 - Approve exact v2 temporary exception
 - Request changes
 
-`[Answer]:`
+`[Answer]:` Approve exact v2 temporary exception
