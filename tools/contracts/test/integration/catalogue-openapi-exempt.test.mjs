@@ -251,10 +251,10 @@ test('pinned Redocly rejects a C04 operation with no operationId under the exact
 test('operation-only examples fail if a required parameter or declared status changes', async () => {
   const document = 'retail-data/v1/dataset-exports.openapi.yaml';
   const source = YAML.parse(await readFile(join(sourceRoot, document), 'utf8'));
-  const changed = structuredClone(source);
+  const changed = JSON.parse(JSON.stringify(source));
   delete changed.paths[`${route}/dataset-exports`].post.responses['409'];
   assert.throws(() => verifyOperationExamples(changed));
-  const missingHeader = structuredClone(source);
+  const missingHeader = JSON.parse(JSON.stringify(source));
   missingHeader.paths[`${route}/dataset-exports`].post.parameters =
     missingHeader.paths[`${route}/dataset-exports`].post.parameters.filter(
       parameter => parameter.name !== 'Idempotency-Key');

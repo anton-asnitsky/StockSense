@@ -167,7 +167,11 @@ async function runPinnedDiff(artifactKind, binding, resolveSource) {
   const base = localFile(paths?.predecessorPath);
   const candidate = localFile(paths?.candidatePath);
   const result = spawnSync(oasdiff,
-    ['breaking', base, candidate, '--allow-external-refs=false', '--format', 'json', '--config', oasdiffConfig],
+    // Only the catalogue assessor preflights complete immutable graphs and
+    // materializes approved absolute identities into local snapshot refs.
+    ['breaking', base, candidate,
+      `--allow-external-refs=${paths?.localReferencesPreflighted === true}`,
+      '--format', 'json', '--config', oasdiffConfig],
     { cwd: repoRoot, encoding: 'utf8', timeout: 60_000, maxBuffer: 1024 * 1024, windowsHide: true });
   if (result.error || result.status !== 0) {
     fail('DIFFER_UNAVAILABLE', 'BR4.3', 'Pinned OpenAPI differ failed; inspect the local tool setup');

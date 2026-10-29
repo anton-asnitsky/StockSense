@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -7,6 +7,8 @@ import { ContractError, assertSafePath, deriveIdentity, digest } from './package
 import { readBlob } from './provenance.mjs';
 import { buildSourceInventory, OWNER_BY_AREA } from './catalogue.mjs';
 import { assertIntegrationBaseline, assessCompatibility, bindPredecessors } from './compatibility.mjs';
+import { preflightCanonicalReferences } from './reference-preflight.mjs';
+import { materializeOfflineReferences } from './validate.mjs';
 
 // Compare the whole canonical catalogue against an immutable baseline commit.
 //
@@ -98,15 +100,43 @@ export async function assessCatalogueAgainstBaseline(repoRoot, baselineCommit,
   // materialised once into a scratch tree that is removed again. Nothing is
   // fetched and nothing is written inside the repository.
   const scratch = await mkdtemp(join(tmpdir(), 'stocksense-baseline-'));
-  const baselineBytes = new Map(previous.map(entry => [entry.document, entry.bytes]));
+  const baselineRoot = join(scratch, 'baseline');
+  const candidateRoot = join(scratch, 'candidate');
   try {
+    // The differ needs local sibling schemas for OpenAPI $ref resolution. First
+    // validate both complete, digest-bound reference graphs offline; this
+    // rejects remote, traversal, missing and unpinned references before the
+    // differ is allowed to follow any local reference. Compare snapshots so a
+    // working-tree edit cannot race the differ after inventory collection.
+    const baselineReferences = [];
+    const candidateReferences = [];
+    for (const entry of previous) {
+      const path = join(baselineRoot, entry.document);
+      await mkdir(dirname(path), { recursive: true });
+      await writeFile(path, entry.bytes);
+    }
+    await preflightCanonicalReferences(baselineRoot, previous, { offlineReferences: baselineReferences });
+    await preflightCanonicalReferences(join(repoRoot, 'contracts/source'), inventory.entries,
+      { offlineReferences: candidateReferences });
+    for (const entry of inventory.entries) {
+      const bytes = await readFile(join(repoRoot, 'contracts/source', entry.document));
+      if (digest(bytes) !== entry.contentDigest) {
+        fail('DIFF_SOURCE_CHANGED', 'BR4.3', 'Candidate source changed after reference preflight');
+      }
+      const path = join(candidateRoot, entry.document);
+      await mkdir(dirname(path), { recursive: true });
+      await writeFile(path, materializeOfflineReferences(bytes, entry.document, candidateReferences));
+    }
+    for (const entry of previous) {
+      const path = join(baselineRoot, entry.document);
+      await writeFile(path, materializeOfflineReferences(entry.bytes, entry.document, baselineReferences));
+    }
     const resolveSource = async binding => {
-      const bytes = baselineBytes.get(binding.predecessorDocument ?? binding.document);
-      if (!bytes) fail('DIFF_SOURCE', 'BR4.3', 'The baseline bytes for a bound document are unavailable');
-      const predecessorPath = join(scratch, binding.predecessorDocument ?? binding.document);
-      await mkdir(dirname(predecessorPath), { recursive: true });
-      await writeFile(predecessorPath, bytes);
-      return { predecessorPath, candidatePath: join(repoRoot, 'contracts/source', binding.document) };
+      return {
+        predecessorPath: join(baselineRoot, binding.predecessorDocument ?? binding.document),
+        candidatePath: join(candidateRoot, binding.document),
+        localReferencesPreflighted: true
+      };
     };
 
     // oasdiff judges OpenAPI only. Changed AsyncAPI and schema documents are

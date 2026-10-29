@@ -377,6 +377,27 @@ test('inline identity responses bind exact positive and negative fixtures to the
 test('all named OpenAPI examples bind exact immutable revisions and expected findings', async () => {
   const YAML = (await import('yaml')).default;
   const expected = {
+    'forecasting/v1/assistant-forecasts.openapi.yaml': [
+      'x:assistant-status-partial-coverage'
+    ],
+    'identity-access/v1/global-audit-read.openapi.yaml': [
+      'response:queryGlobalIdentityAudit:200:application-json:redactedDeniedIdentityEvent'
+    ],
+    'identity-access/v1/identity-metadata.openapi.yaml': [
+      'response:getOpenIdConfiguration:200:application-json:localIssuerDiscovery'
+    ],
+    'model-lifecycle/v1/supplier-policy-evaluations.openapi.yaml': [
+      'x:signed-supplier-selection-metadata'
+    ],
+    'recovery-coordination/v1/control-status.openapi.yaml': [
+      'x:recovery-generation-conflict'
+    ],
+    'supplier-knowledge/v1/accepted-terms.openapi.yaml': [
+      'x:sealed-accepted-terms-selection'
+    ],
+    'web-bff/v1/browser-api.openapi.yaml': [
+      'x:dashboard-partial-unavailable-section'
+    ],
     'model-lifecycle/v1/heavy-work.openapi.yaml': [
       'x:pin-admission-valid', 'x:pin-admission-missing-run-invalid',
       'x:batch-lease-valid', 'x:batch-lease-missing-attempt-invalid',
@@ -403,7 +424,8 @@ test('all named OpenAPI examples bind exact immutable revisions and expected fin
     const fixtures = JSON.parse(await readFile(join(out, 'governance/example-fixture.json'), 'utf8')).fixtures;
     const results = await runFixtureOracle(out, loaded);
     const named = fixtures.filter(fixture => fixture.canonicalExampleId !== undefined);
-    assert.equal(named.length, 17);
+    assert.equal(Object.keys(expected).length, 10);
+    assert.equal(named.length, 24);
     for (const [documentPath, ids] of Object.entries(expected)) {
       const source = YAML.parse(await readFile(join(out, documentPath), 'utf8'));
       const examples = openApiNamedExamples(source, documentPath);
