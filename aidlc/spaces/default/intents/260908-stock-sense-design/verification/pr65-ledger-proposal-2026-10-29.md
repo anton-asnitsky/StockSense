@@ -24,7 +24,8 @@ images`: old `main` still runs Node 24.19.0 and its validator scan has an
 incomplete generic finding (`IMAGE_SCAN/BR6.5`).
 [U2 run 40865934012](https://github.com/anton-asnitsky/StockSense/actions/runs/40865934012)
 failed because the PR changes the protected ledger path. Neither red result
-is credited as passing. `main` still requires a pull request and the three
+is credited as passing. Expect the interim `main` push's U1 check to remain
+red until the separately governed Node fix lands. `main` still requires a pull request and the three
 strict checks: Vulnerability scan (app 15368), U2 protected-base PR policy
 (app 15368), and U1 contracts (unbound app); admin enforcement is on and
 force pushes/deletions are off. No protection change has been made.

@@ -13,8 +13,9 @@ Hosted Vulnerability passed. U2 failed solely because it protects ledger
 edits. U1 failed while scanning old `main`'s Node 24.19.0 validator image:
 `IMAGE_SCAN/BR6.5`, incomplete generic finding. The new row cannot repair
 old Node; PR #61 carries the separately governed Node 24.22.2 patch and is
-not part of this merge. The interim `main` push may remain red until PR #61
-lands. Neither red PR check is treated as a pass.
+not part of this merge. Expect the interim `main` push's U1 check to remain
+red until the separately governed Node fix lands. Neither red PR check is
+treated as a pass.
 
 The proposed one-time sequence is:
 
@@ -24,7 +25,7 @@ The proposed one-time sequence is:
    `U2 protected-base PR policy` from required checks, keeping the required
    PR, `Vulnerability scan`, strict checks, admin enforcement, and force-push/
    deletion blocks. This temporary change affects every PR to `main` while
-   active.
+   active and does not retroactively validate either failed check.
 3. Squash-merge only PR #65. In a `finally` path, immediately restore U1
    with its original unbound app ID and U2 with app ID 15368, even if merging
    fails. Re-read all protection settings and require exact equality with the
