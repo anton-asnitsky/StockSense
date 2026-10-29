@@ -4,6 +4,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import { assertPinnedScanner, hashBytes, inputDigest, scannerFindings, toolchainDigest,
   verifyScanReport, verifySecurityReports } from '../../src/ci-policy.mjs';
 
@@ -26,6 +27,15 @@ const disposition = (finding = affected(), overrides = {}) => ({
   approvedBy: 'security owner', reason: 'tracked mitigation', compensatingControl: 'isolated parser',
   approvalReference: 'SEC-123', createdAt: '2026-01-01T00:00:00Z',
   expiresAt: '2099-01-01T00:00:00Z', ...overrides
+});
+
+test('repository CI policy accepts its reviewed metadata guard bytes', () => {
+  const root = fileURLToPath(new URL('../../../../', import.meta.url));
+  const run = spawnSync(process.execPath,
+    ['tools/contracts/scripts/check-ci-policy.mjs', '.github/workflows'],
+    { cwd: root, encoding: 'utf8' });
+  assert.equal(run.status, 0, `${run.stdout}\n${run.stderr}`);
+  assert.match(run.stdout, /public-pr-policy\.yml: accepted pinned protected-base metadata guard/);
 });
 
 test('current clean reports bind revision, toolchain, source and exact bytes', () => {
