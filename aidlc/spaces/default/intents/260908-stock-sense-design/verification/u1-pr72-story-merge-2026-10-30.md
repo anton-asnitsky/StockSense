@@ -1,0 +1,7 @@
+# US8.7 PR #72 story merge checkpoint
+
+- Owner approval: [answered PR #72 question](../construction/contracts/code-generation/pr72-story-merge-questions.md), `DECISION_RECORDED` 2026-10-29T22:22:55Z, actual `HUMAN_TURN` 22:26:28Z, `QUESTION_ANSWERED` 22:26:42Z.
+- Authorized base/head: U1 Bolt `ac0a2f5a8ddaa205b176bf2c4f4468a82dfe91e9`; PR #72 `3db2391c61198ed38df9e9ba28abc66cf5e0dcb4`. Both were rechecked immediately before merge.
+- The repository owner account posted the exact base/head comment on [PR #72](https://github.com/anton-asnitsky/StockSense/pull/72#issuecomment-6509805380). Rerun [40963521882](https://github.com/anton-asnitsky/StockSense/actions/runs/40963521882) passed the U2 protected-base policy. Vulnerability had passed on the same PR head. The owner explicitly accepted only this PR's transitional red U1 result, which rejects the old protected-main v1 exact-tree image ledger.
+- PR #72 was marked ready and merged with a merge commit, `402ace3b195c291a756ed230a24a73199ef8349a`. Its parents are the authorized base and head, and its tree `b97618c28f6540f0d767cf4a9cbfa85332a11948` equals the tested story/proof tree. The remote story branch was absent after merge.
+- `main` remained `8cce4f8040ad0767fca1b1ab14a00bb067a66b76`. Draft protected-main ledger PR #73 remains separate and unmerged. This checkpoint does not accept U1, release C01, or approve a Bolt-to-main merge.

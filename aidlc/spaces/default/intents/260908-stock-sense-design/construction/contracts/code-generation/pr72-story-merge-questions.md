@@ -24,4 +24,4 @@ Do you approve that exact PR #72 story merge and U2 comment, with the specified 
 - Approve PR #72 Bolt story merge
 - Request changes
 
-`[Answer]:`
+`[Answer]:` Approve PR #72 Bolt story merge
