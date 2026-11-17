@@ -39,7 +39,8 @@ if (command === 'verify') {
   if (source.error || source.status !== 0) throw new Error('Candidate Git revision is unavailable');
   const checkout = spawnSync('git', ['status', '--porcelain=v1', '--untracked-files=all', '--',
     'tools/contracts/src', 'tools/contracts/scripts', 'tools/contracts/Dockerfile.validator',
-    'tools/contracts/Dockerfile.generator-kiota', 'tools/contracts/package.json',
+    'tools/contracts/Dockerfile.generator-kiota', 'tools/contracts/kiota-runtime-inputs.json',
+    'tools/contracts/package.json',
     'tools/contracts/pnpm-lock.yaml', 'tools/contracts/pnpm-workspace.yaml',
     'tools/contracts/.npmrc', 'tools/contracts/.pnpmfile.cjs'],
   { encoding: 'utf8', shell: false, windowsHide: true, timeout: 10_000 });

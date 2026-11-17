@@ -128,10 +128,10 @@ export async function buildSbom(lockfilePath, subject) {
   // The pnpm graph is only one part of the toolchain. Read the actual build
   // recipes so a changed pin cannot leave a plausible but stale SBOM behind.
   const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  const [validator, kiota, differ, manifest, requiredWorkflow, releaseWorkflow] = await Promise.all([
+  const [validator, kiota, differ, manifest, requiredWorkflow, releaseWorkflow, runtimeRecipe, runtimeInputs] = await Promise.all([
     'Dockerfile.validator', 'Dockerfile.generator-kiota', 'scripts/setup-oasdiff.mjs',
     'package.json', '../../.github/workflows/contracts-required.yml',
-    '../../.github/workflows/release-evidence.yml'
+    '../../.github/workflows/release-evidence.yml', 'scripts/build-kiota-runtime.py', 'kiota-runtime-inputs.json'
   ].map(path => readFile(resolve(root, path), 'utf8')));
   const required = (text, pattern, label) => {
     const match = pattern.exec(text);
@@ -156,6 +156,38 @@ export async function buildSbom(lockfilePath, subject) {
   add('container', 'kiota-dotnet-sdk-image', 'sdk', sdkDigest, 'Dockerfile.generator-kiota');
   add('application', 'Microsoft.OpenApi.Kiota', kiotaPin[2], kiotaPin[1], 'Dockerfile.generator-kiota');
   add('application', 'oasdiff-linux-amd64-archive', oasVersion, oasLinux, 'scripts/setup-oasdiff.mjs');
+  const runtimeBuilderDigest = required(kiota,
+    /FROM --platform=linux\/amd64 python@sha256:([0-9a-f]{64}) AS runtime-build/, 'runtime builder image')[1];
+  const runtimePayloadDigest = required(kiota,
+    /FROM --platform=linux\/amd64 mcr\.microsoft\.com\/dotnet\/runtime@sha256:([0-9a-f]{64}) AS microsoft-payload/,
+    'Microsoft runtime payload image')[1];
+  let runtimeLock;
+  try { runtimeLock = JSON.parse(runtimeInputs); }
+  catch { fail('SBOM_TOOL_PIN', 'BR6.5', 'Kiota runtime input lock is malformed'); }
+  if (runtimeLock?.schemaVersion !== 1 || !/^[0-9]{8}T[0-9]{6}Z$/.test(runtimeLock.snapshot) ||
+      !exactFields(runtimeLock.tools, ['chisel', 'slices', 'wrapper'])) {
+    fail('SBOM_TOOL_PIN', 'BR6.5', 'Kiota runtime input lock must identify its snapshot and tools');
+  }
+  add('container', 'kiota-runtime-builder-image', 'runtime-build', runtimeBuilderDigest, 'Dockerfile.generator-kiota');
+  add('container', 'kiota-microsoft-runtime-payload-image', 'runtime-payload', runtimePayloadDigest, 'Dockerfile.generator-kiota');
+  add('file', 'kiota-runtime-build-recipe', '1', createHash('sha256').update(runtimeRecipe).digest('hex'), 'scripts/build-kiota-runtime.py');
+  add('file', 'kiota-runtime-input-lock', runtimeLock.snapshot, createHash('sha256').update(runtimeInputs).digest('hex'), 'kiota-runtime-inputs.json');
+  for (const [name, pin] of Object.entries(runtimeLock.tools)) {
+    const lengths = { sha256: 64, sha384: 96 };
+    if (!exactFields(pin, ['algorithm', 'url', 'digest']) || !Object.hasOwn(lengths, pin.algorithm) ||
+        typeof pin.digest !== 'string' || pin.digest.length !== lengths[pin.algorithm] ||
+        !/^[0-9a-f]+$/.test(pin.digest) || typeof pin.url !== 'string' ||
+        !/^https:\/\//.test(pin.url)) {
+      fail('SBOM_TOOL_PIN', 'BR6.5', 'Kiota runtime tooling requires immutable download hashes');
+    }
+    components.push({
+      type: 'application', 'bom-ref': `stocksense:tool:kiota-runtime-${name}:${pin.digest}`,
+      name: `kiota-runtime-${name}`, version: pin.digest,
+      hashes: [{ alg: pin.algorithm === 'sha384' ? 'SHA-384' : 'SHA-256', content: pin.digest }],
+      externalReferences: [{ type: 'distribution', url: pin.url }],
+      properties: [{ name: 'stocksense:pinSource', value: 'kiota-runtime-inputs.json' }]
+    });
+  }
   for (const [name, value] of [['validator-image', subject.validatorImageDigest],
     ['kiota-image', subject.kiotaImageDigest]]) {
     if (value !== undefined) {

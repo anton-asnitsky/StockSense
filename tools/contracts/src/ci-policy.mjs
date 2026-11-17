@@ -54,7 +54,8 @@ export async function inputDigest(root, paths = sourcePaths(root)) {
 export async function toolchainDigest(root) {
   const paths = ['tools/contracts/package.json', 'tools/contracts/pnpm-lock.yaml',
     'tools/contracts/Dockerfile.validator', 'tools/contracts/Dockerfile.generator-kiota',
-    'tools/contracts/scripts/setup-oasdiff.mjs', '.github/workflows/contracts-required.yml',
+    'tools/contracts/scripts/setup-oasdiff.mjs', 'tools/contracts/scripts/build-kiota-runtime.py',
+    'tools/contracts/kiota-runtime-inputs.json', '.github/workflows/contracts-required.yml',
     '.github/workflows/release-evidence.yml'];
   return inputDigest(root, paths);
 }

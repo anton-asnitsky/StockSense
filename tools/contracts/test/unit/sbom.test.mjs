@@ -395,3 +395,26 @@ test('a component without an integrity hash is counted rather than hidden', asyn
       assert.equal(property.value, '1');
     });
 });
+
+test('the SBOM binds the runtime recipe, snapshot lock and every downloaded tool', async () => {
+  const { document } = await buildSbom(lockfile, subject);
+  const component = name => {
+    const found = document.components.find(item => item.name === name);
+    assert.ok(found, `missing ${name}`);
+    return found;
+  };
+  const lockBytes = await readFile(new URL('../../kiota-runtime-inputs.json', import.meta.url));
+  const lock = JSON.parse(lockBytes);
+  const recipe = await readFile(new URL('../../scripts/build-kiota-runtime.py', import.meta.url));
+  assert.equal(component('kiota-runtime-input-lock').hashes[0].content, sha256(lockBytes).slice(7));
+  assert.equal(component('kiota-runtime-input-lock').version, lock.snapshot);
+  assert.equal(component('kiota-runtime-build-recipe').hashes[0].content, sha256(recipe).slice(7));
+  assert.match(component('kiota-runtime-builder-image').hashes[0].content, /^[0-9a-f]{64}$/);
+  assert.match(component('kiota-microsoft-runtime-payload-image').hashes[0].content, /^[0-9a-f]{64}$/);
+  for (const [name, pin] of Object.entries(lock.tools)) {
+    const found = component(`kiota-runtime-${name}`);
+    assert.equal(found.hashes[0].content, pin.digest);
+    assert.equal(found.hashes[0].alg, pin.algorithm === 'sha384' ? 'SHA-384' : 'SHA-256');
+    assert.equal(found.externalReferences[0].url, pin.url);
+  }
+});
