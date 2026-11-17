@@ -1,0 +1,393 @@
+{
+  "retrievedAtUtc": "2026-11-17T17:49:24.0205682Z",
+  "baseline": {
+    "run": "44114240502",
+    "revision": "02edae744f8e0de5fdfeb5617a273ae25161ef3d",
+    "kiotaImage": "sha256:3a32d0f244cf810c58f7346c2b073449a80fa4bc1f82c5967f6c031b73d248f9",
+    "kiotaSbom": "sha256:1a6b45803b05073c8d6d785351433ea6d85a17432b4cddfa23e63c600b5d18b6",
+    "scannerDatabase": "sha256:496b86aa16bf26139b3023ed51c4b975e84666e3bc7b663e0edc328b300ed2fc",
+    "source": "https://github.com/anton-asnitsky/StockSense/actions/runs/44114240502/artifacts/14342975713"
+  },
+  "notice": {
+    "id": "USN-9065-1",
+    "url": "https://ubuntu.com/security/notices/USN-9065-1.json",
+    "sha256": "0331db73fec5ad3012a68eeaf634cee48f45837e6ff94b59c44d0dcb7f363b30",
+    "sourceVersion": "2.39-0ubuntu8.12",
+    "libc6Version": "2.39-0ubuntu8.12"
+  },
+  "results": [
+    {
+      "id": "CVE-2016-20013",
+      "sourcePackage": "glibc",
+      "nobleStatus": "ignored",
+      "nobleFix": "",
+      "ubuntuPriority": "negligible",
+      "updatedAt": "2025-08-14T14:00:12.766380+00:00",
+      "url": "https://ubuntu.com/security/cves/CVE-2016-20013.json",
+      "sha256": "6cf54020ff23259cbfebae98244c25f5a56cf8028311f1100b5acbb168fbc8dc",
+      "baselineRows": [
+        {
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.9",
+          "severity": "Negligible",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "wont-fix",
+          "fixVersions": []
+        }
+      ]
+    },
+    {
+      "id": "CVE-2025-5222",
+      "sourcePackage": "icu",
+      "nobleStatus": "needed",
+      "nobleFix": "",
+      "ubuntuPriority": "low",
+      "updatedAt": "2026-11-09T05:52:05.825922+00:00",
+      "url": "https://ubuntu.com/security/cves/CVE-2025-5222.json",
+      "sha256": "302509e984895c88575def6ed73ee675fdec83c73a200d850a27e9ab64ae20f3",
+      "baselineRows": [
+        {
+          "package": "libicu74",
+          "version": "74.2-1ubuntu3.1",
+          "severity": "Low",
+          "purl": "pkg:deb/ubuntu/libicu74@74.2-1ubuntu3.1?arch=amd64&distro=ubuntu-24.04&upstream=icu",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        }
+      ]
+    },
+    {
+      "id": "CVE-2026-100290",
+      "sourcePackage": "glibc",
+      "nobleStatus": "needs-triage",
+      "nobleFix": "",
+      "ubuntuPriority": "medium",
+      "updatedAt": "2026-11-13T08:59:43.475205+00:00",
+      "url": "https://ubuntu.com/security/cves/CVE-2026-100290.json",
+      "sha256": "e270f5d548bfe8ddc2840fc3dddc6da8df4dc53bb772a66a3a69294402f181f8",
+      "baselineRows": [
+        {
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.9",
+          "severity": "Medium",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        }
+      ]
+    },
+    {
+      "id": "CVE-2026-107496",
+      "sourcePackage": "openssl",
+      "nobleStatus": "needs-triage",
+      "nobleFix": "",
+      "ubuntuPriority": "medium",
+      "updatedAt": "2026-11-12T20:47:57.048048+00:00",
+      "url": "https://ubuntu.com/security/cves/CVE-2026-107496.json",
+      "sha256": "28732b5918efbf6c057ac4d986147576966894098897e091a9a6ff3cd131dd98",
+      "baselineRows": [
+        {
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "severity": "Medium",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "severity": "Medium",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        }
+      ]
+    },
+    {
+      "id": "CVE-2026-115819",
+      "sourcePackage": "glibc",
+      "nobleStatus": "needs-triage",
+      "nobleFix": "",
+      "ubuntuPriority": "medium",
+      "updatedAt": "2026-11-13T08:53:17.908427+00:00",
+      "url": "https://ubuntu.com/security/cves/CVE-2026-115819.json",
+      "sha256": "d50b06c9907991bfe0b66d67ee2c6a84174ffa40bf4a3df3115f57c70cea1657",
+      "baselineRows": [
+        {
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.9",
+          "severity": "Medium",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        }
+      ]
+    },
+    {
+      "id": "CVE-2026-18374",
+      "sourcePackage": "glibc",
+      "nobleStatus": "released",
+      "nobleFix": "2.39-0ubuntu8.12",
+      "ubuntuPriority": "medium",
+      "updatedAt": "2026-11-12T21:27:10.277863+00:00",
+      "url": "https://ubuntu.com/security/cves/CVE-2026-18374.json",
+      "sha256": "b542e6629cae2777e450bbb6679a08f0550ad3ea1352ba259a6f0fc27693d375",
+      "baselineRows": [
+        {
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.9",
+          "severity": "Medium",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.39-0ubuntu8.12"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CVE-2026-84243",
+      "sourcePackage": "glibc",
+      "nobleStatus": "released",
+      "nobleFix": "2.39-0ubuntu8.12",
+      "ubuntuPriority": "medium",
+      "updatedAt": "2026-11-13T22:03:36.629584+00:00",
+      "url": "https://ubuntu.com/security/cves/CVE-2026-84243.json",
+      "sha256": "a338811b7c38a496bda7b157cf239f0f07a2ee09ee8557770e6905ae2b4536f7",
+      "baselineRows": [
+        {
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.9",
+          "severity": "Medium",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.39-0ubuntu8.12"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CVE-2026-8674",
+      "sourcePackage": "glibc",
+      "nobleStatus": "released",
+      "nobleFix": "2.39-0ubuntu8.12",
+      "ubuntuPriority": "medium",
+      "updatedAt": "2026-11-13T21:24:05.880211+00:00",
+      "url": "https://ubuntu.com/security/cves/CVE-2026-8674.json",
+      "sha256": "dbc0debbdf273a50862e22addf503bf6b8d53716bcd7d495fee08ae44eebd4c5",
+      "baselineRows": [
+        {
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.9",
+          "severity": "Medium",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.39-0ubuntu8.12"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CVE-2026-86805",
+      "sourcePackage": "glibc",
+      "nobleStatus": "released",
+      "nobleFix": "2.39-0ubuntu8.12",
+      "ubuntuPriority": "medium",
+      "updatedAt": "2026-11-13T21:30:41.396642+00:00",
+      "url": "https://ubuntu.com/security/cves/CVE-2026-86805.json",
+      "sha256": "6815b6ccb72f3917cdd7cfe45bd4f113e4ff10fde27ddf350390b7e0cc954e13",
+      "baselineRows": [
+        {
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.9",
+          "severity": "Medium",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.39-0ubuntu8.12"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CVE-2026-88822",
+      "sourcePackage": "openssl",
+      "nobleStatus": "needs-triage",
+      "nobleFix": "",
+      "ubuntuPriority": "medium",
+      "updatedAt": "2026-11-13T21:27:20.289318+00:00",
+      "url": "https://ubuntu.com/security/cves/CVE-2026-88822.json",
+      "sha256": "4752d7ee49b181833ecb2e049adc52d67bfd0c8a0dbc1b56ff17acce13534fbd",
+      "baselineRows": [
+        {
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "severity": "Medium",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "severity": "Medium",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        }
+      ]
+    },
+    {
+      "id": "CVE-2026-88823",
+      "sourcePackage": "openssl",
+      "nobleStatus": "needs-triage",
+      "nobleFix": "",
+      "ubuntuPriority": "medium",
+      "updatedAt": "2026-11-13T21:58:27.330523+00:00",
+      "url": "https://ubuntu.com/security/cves/CVE-2026-88823.json",
+      "sha256": "6365cf5e273f9c96d711447c7b2866ca88133aa28c6e3cb0822ae5464cf3689d",
+      "baselineRows": [
+        {
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "severity": "Medium",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "severity": "Medium",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        }
+      ]
+    },
+    {
+      "id": "CVE-2026-95691",
+      "sourcePackage": "openssl",
+      "nobleStatus": "needs-triage",
+      "nobleFix": "",
+      "ubuntuPriority": "medium",
+      "updatedAt": "2026-11-14T03:47:44.036091+00:00",
+      "url": "https://ubuntu.com/security/cves/CVE-2026-95691.json",
+      "sha256": "3a1dd412eb4a25f565c48faed94db48786eb958df1dafa0d03f7f3f7c46e0602",
+      "baselineRows": [
+        {
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "severity": "Medium",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "severity": "Medium",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        }
+      ]
+    },
+    {
+      "id": "CVE-2026-95692",
+      "sourcePackage": "openssl",
+      "nobleStatus": "needs-triage",
+      "nobleFix": "",
+      "ubuntuPriority": "medium",
+      "updatedAt": "2026-11-14T03:56:09.476853+00:00",
+      "url": "https://ubuntu.com/security/cves/CVE-2026-95692.json",
+      "sha256": "bf7eddc2d48eeba97ccb0c49b8a8c1cb850ee848be6e5245a33c9657bf9b4d7a",
+      "baselineRows": [
+        {
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "severity": "Medium",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "severity": "Medium",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        }
+      ]
+    },
+    {
+      "id": "CVE-2026-95818",
+      "sourcePackage": "glibc",
+      "nobleStatus": "released",
+      "nobleFix": "2.39-0ubuntu8.12",
+      "ubuntuPriority": "medium",
+      "updatedAt": "2026-11-14T06:29:45.459371+00:00",
+      "url": "https://ubuntu.com/security/cves/CVE-2026-95818.json",
+      "sha256": "fccd7d328e5bf191901d7fd9ef687a181a649d6b0c45bd41271f433e752051be",
+      "baselineRows": [
+        {
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.9",
+          "severity": "Medium",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.39-0ubuntu8.12"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CVE-2026-97399",
+      "sourcePackage": "glibc",
+      "nobleStatus": "released",
+      "nobleFix": "2.39-0ubuntu8.12",
+      "ubuntuPriority": "medium",
+      "updatedAt": "2026-11-14T06:21:38.925276+00:00",
+      "url": "https://ubuntu.com/security/cves/CVE-2026-97399.json",
+      "sha256": "49ba0a48fd27bd5910e6b2acb09d3535e0540b5f7f0b0718e407fe71566b2a8b",
+      "baselineRows": [
+        {
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.9",
+          "severity": "Medium",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.39-0ubuntu8.12"
+          ]
+        }
+      ]
+    }
+  ],
+  "interpretation": [
+    "Baseline has 20 matches across 15 CVEs. Baseline results describe the Ubuntu 24.04 amd64 image on PR #75.",
+    "The security notice confirms a release fixing six libc6 rows at 2.39-0ubuntu8.12. Verify the exact installed candidate package and authenticated snapshot before crediting the fix.",
+    "Of 14 other prior matches, 12 across seven CVEs have Ubuntu needs-triage, one ICU has needed, and one negligible glibc has ignored. None has an Ubuntu-published Noble fix in these records.",
+    "The review covers the prior findings. Future source package advisories, vendor/scanner disagreements, wider inventories and findings present in the assembled image require separate candidate-bound review.",
+    "Neither Grype fix state nor Canonical ignored/needs-triage status is an owner-approved disposition."
+  ],
+  "candidateAssessment": null,
+  "upstreamOpenSsl": {
+    "url": "https://openssl-library.org/news/secadv/20261110.txt",
+    "sha256": "31f4c88950cd9cd310794a218361b787d293a940d2568f9f82334915ac54a402",
+    "unaffected3_0": [
+      "CVE-2026-88822",
+      "CVE-2026-88823",
+      "CVE-2026-95691",
+      "CVE-2026-95692"
+    ],
+    "affected3_0": "CVE-2026-107496",
+    "upstreamFix": "3.0.24",
+    "interpretation": "Canonical Noble remains needs-triage. Resolve source/build applicability on the final candidate and retain scanner findings. The upstream statement alone grants no local ledger disposition."
+  }
+}

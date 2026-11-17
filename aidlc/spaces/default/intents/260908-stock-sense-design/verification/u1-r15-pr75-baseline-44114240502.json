@@ -1,0 +1,285 @@
+{
+  "run": "44114240502",
+  "revision": "02edae744f8e0de5fdfeb5617a273ae25161ef3d",
+  "imageRecords": [
+    {
+      "name": "validator",
+      "imageId": "sha256:a3db561fea52ed4997ca8837b58ce6290536be5051f003562281f3b5b89718f4",
+      "sbomDigest": "sha256:a7a5f6186fd877deb3165833f8bb07fc22b66f2bd61cb22f1cc8cb4140dea7a9",
+      "scanDigest": "sha256:d5346f009eca28867c5aaee75a9bd6e5774d027ac77540f36c78bcc5c6d88103",
+      "packages": 314,
+      "findings": 0
+    },
+    {
+      "name": "kiota",
+      "imageId": "sha256:3a32d0f244cf810c58f7346c2b073449a80fa4bc1f82c5967f6c031b73d248f9",
+      "sbomDigest": "sha256:1a6b45803b05073c8d6d785351433ea6d85a17432b4cddfa23e63c600b5d18b6",
+      "scanDigest": "sha256:c4a356a095faccfecd5a6ebc806ad68e61e0e2bec7cb54bc9b15367b78d3aa35",
+      "packages": 95,
+      "findings": 20
+    }
+  ],
+  "images": [
+    {
+      "name": "validator",
+      "imageId": "sha256:a3db561fea52ed4997ca8837b58ce6290536be5051f003562281f3b5b89718f4",
+      "sbomDigest": "sha256:a7a5f6186fd877deb3165833f8bb07fc22b66f2bd61cb22f1cc8cb4140dea7a9",
+      "components": 683,
+      "scanDigest": "sha256:73aeecda4763dff64a2551d7b5b9ef51eeaeac80fa2c60ff41fa9ea77a73bf6a",
+      "databaseDigest": "sha256:496b86aa16bf26139b3023ed51c4b975e84666e3bc7b663e0edc328b300ed2fc",
+      "databaseBuilt": "2026-11-17T06:20:58Z",
+      "findings": []
+    },
+    {
+      "name": "kiota",
+      "imageId": "sha256:3a32d0f244cf810c58f7346c2b073449a80fa4bc1f82c5967f6c031b73d248f9",
+      "sbomDigest": "sha256:1a6b45803b05073c8d6d785351433ea6d85a17432b4cddfa23e63c600b5d18b6",
+      "components": 420,
+      "scanDigest": "sha256:79f0fb97cf84324312a3b50e7a134a626b2c77db4437787803b512d66ab337e2",
+      "databaseDigest": "sha256:496b86aa16bf26139b3023ed51c4b975e84666e3bc7b663e0edc328b300ed2fc",
+      "databaseBuilt": "2026-11-17T06:20:58Z",
+      "findings": [
+        {
+          "id": "CVE-2026-100290",
+          "severity": "Medium",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.9",
+          "type": "deb",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-8674",
+          "severity": "Medium",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.9",
+          "type": "deb",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.39-0ubuntu8.12"
+          ]
+        },
+        {
+          "id": "CVE-2026-84243",
+          "severity": "Medium",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.9",
+          "type": "deb",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.39-0ubuntu8.12"
+          ]
+        },
+        {
+          "id": "CVE-2026-97399",
+          "severity": "Medium",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.9",
+          "type": "deb",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.39-0ubuntu8.12"
+          ]
+        },
+        {
+          "id": "CVE-2025-5222",
+          "severity": "Low",
+          "package": "libicu74",
+          "version": "74.2-1ubuntu3.1",
+          "type": "deb",
+          "purl": "pkg:deb/ubuntu/libicu74@74.2-1ubuntu3.1?arch=amd64&distro=ubuntu-24.04&upstream=icu",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-115819",
+          "severity": "Medium",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.9",
+          "type": "deb",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2016-20013",
+          "severity": "Negligible",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.9",
+          "type": "deb",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "wont-fix",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95692",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "type": "deb",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95692",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "type": "deb",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-88822",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "type": "deb",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95691",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "type": "deb",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-88822",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "type": "deb",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95691",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "type": "deb",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-18374",
+          "severity": "Medium",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.9",
+          "type": "deb",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.39-0ubuntu8.12"
+          ]
+        },
+        {
+          "id": "CVE-2026-88823",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "type": "deb",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-88823",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "type": "deb",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-107496",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "type": "deb",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-107496",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "type": "deb",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95818",
+          "severity": "Medium",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.9",
+          "type": "deb",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.39-0ubuntu8.12"
+          ]
+        },
+        {
+          "id": "CVE-2026-86805",
+          "severity": "Medium",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.9",
+          "type": "deb",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.39-0ubuntu8.12"
+          ]
+        }
+      ]
+    }
+  ],
+  "security": {
+    "secret-scan": {
+      "status": "passed",
+      "scanner": "secretlint@13.0.6",
+      "inputDigest": "sha256:b057d9e365ae6ed4a42de55aa37438863d7b1b0d4a91029413165c5f17740975",
+      "findings": []
+    },
+    "vulnerability-scan": {
+      "status": "passed",
+      "scanner": "pnpm-audit@11.25.0",
+      "inputDigest": "sha256:b057d9e365ae6ed4a42de55aa37438863d7b1b0d4a91029413165c5f17740975",
+      "findings": []
+    }
+  },
+  "head": "c5157d34845b33c863f6e2d1c3e8f81a25fb6b21",
+  "base": "402ace3b195c291a756ed230a24a73199ef8349a",
+  "artifacts": [
+    {
+      "kind": "images",
+      "digest": "sha256:637e3f025c83193ead0180ed2e5e70647f3f704a210dde52d7bccb4f818f1440",
+      "id": 14342975713
+    },
+    {
+      "kind": "security",
+      "digest": "sha256:e2f3c79bd0ef0e7d1944b12c5ceb1d6f33ef2f84c4bf200f97f17a3d51ad6fe9",
+      "id": 14340559753
+    }
+  ]
+}

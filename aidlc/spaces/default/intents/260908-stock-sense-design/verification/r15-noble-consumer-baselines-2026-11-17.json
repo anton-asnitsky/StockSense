@@ -1,0 +1,133 @@
+{
+  "hostNode": "24.22.1",
+  "baselines": [
+    {
+      "pr": 74,
+      "head": "e9f326cebc1ae7212d9a0597490029ffdde45b96",
+      "merge": "f895d25f07dc7525c76bebde1f2997edc5ec43c1",
+      "tree": "68bac8bcd446c59df63b67d5a3548141c2aa2af1",
+      "profileBlob": "f22ec1348160ea2f9fd4183b0fe7096dc8bdaeb5",
+      "profileSourceRevision": "2227acab9321b9184944d74692f61c67f03087ad",
+      "images": {
+        "validator": "sha256:7b75b19e5cda91ae1a32d8be56f46ec0e1dc9b65ffae44688ebe20763c6e3f42",
+        "kiota": "sha256:0a80cb99e9abc93cdc30118ecdcc39bbbb67456c627705cc3c82afdf7522d721"
+      },
+      "consumers": [
+        {
+          "id": "web-application",
+          "generator": "openapi-typescript",
+          "version": "7.13.0",
+          "source": "web-bff/v1/browser-api.openapi.yaml",
+          "configurationDigest": "sha256:1d430a591c40aa00247e32275fdb5bb29b1b1c6ce394789222f91c58009c47f3",
+          "outputCount": 1,
+          "outputMapSha256": "sha256:aa1b392bbeac43902c9163fddccbb4824887d8eafc4d9468808e26c3454fdef9"
+        },
+        {
+          "id": "dotnet-operations-client",
+          "generator": "kiota",
+          "version": "1.35.0",
+          "source": "web-bff/v1/browser-api.openapi.yaml",
+          "configurationDigest": "sha256:38e2b80003d2c7b5310f6510f43339b44af4af1e31b3eafefc020e9c937c3c98",
+          "outputCount": 104,
+          "outputMapSha256": "sha256:582f5a16549448a8f6d7e9561e725d6b7d4b579fc68ac7eb1abcead83c6bc683"
+        },
+        {
+          "id": "messaging-typescript",
+          "generator": "modelina",
+          "version": "5.10.1",
+          "source": "messaging-platform/v1/transport-conformance.asyncapi.yaml",
+          "configurationDigest": "sha256:56b482f9a4aa680c4e3f2dc62d0ef05ede059246141b74c8607975f8900f0250",
+          "outputCount": 2,
+          "outputMapSha256": "sha256:db613a78c4493ae856c25ac241a74d197aa5f22baa77bfe044d463ad0654ee9d"
+        }
+      ],
+      "compileFixture": "passed"
+    },
+    {
+      "pr": 75,
+      "head": "c5157d34845b33c863f6e2d1c3e8f81a25fb6b21",
+      "merge": "02edae744f8e0de5fdfeb5617a273ae25161ef3d",
+      "tree": "6b85761da1f352e663bdcd169a6212b5229a33ed",
+      "profileBlob": "1f29b7b4f8ee590bc199bcc590f439ed1251a5b7",
+      "profileSourceRevision": "1820225f36f578c45d29c0c2746dc9e3e9def187",
+      "images": {
+        "validator": "sha256:a3db561fea52ed4997ca8837b58ce6290536be5051f003562281f3b5b89718f4",
+        "kiota": "sha256:3a32d0f244cf810c58f7346c2b073449a80fa4bc1f82c5967f6c031b73d248f9"
+      },
+      "consumers": [
+        {
+          "id": "web-application",
+          "generator": "openapi-typescript",
+          "version": "7.13.0",
+          "source": "web-bff/v1/browser-api.openapi.yaml",
+          "configurationDigest": "sha256:1d430a591c40aa00247e32275fdb5bb29b1b1c6ce394789222f91c58009c47f3",
+          "outputCount": 1,
+          "outputMapSha256": "sha256:aa1b392bbeac43902c9163fddccbb4824887d8eafc4d9468808e26c3454fdef9"
+        },
+        {
+          "id": "dotnet-operations-client",
+          "generator": "kiota",
+          "version": "1.38.0",
+          "source": "web-bff/v1/browser-api.openapi.yaml",
+          "configurationDigest": "sha256:aba846323b7dadcde4b43e04af4854d178650d80d62f4f83475e6686fee110ee",
+          "outputCount": 104,
+          "outputMapSha256": "sha256:d8d7b1154a7e9e13c5e6f4b638afd8b92c6e330e9928bbf54cfcf26049bfe911"
+        },
+        {
+          "id": "messaging-typescript",
+          "generator": "modelina",
+          "version": "5.10.1",
+          "source": "messaging-platform/v1/transport-conformance.asyncapi.yaml",
+          "configurationDigest": "sha256:56b482f9a4aa680c4e3f2dc62d0ef05ede059246141b74c8607975f8900f0250",
+          "outputCount": 2,
+          "outputMapSha256": "sha256:db613a78c4493ae856c25ac241a74d197aa5f22baa77bfe044d463ad0654ee9d"
+        }
+      ],
+      "compileFixture": "passed"
+    },
+    {
+      "pr": 76,
+      "head": "e284f99d5629dfcbfcb2935b0005c48c40c3d2e9",
+      "merge": "46325b340caa23f203227eae0f92a97b2c818c9c",
+      "tree": "94814f601944a34e99b5c474545ee2ef719400bb",
+      "profileBlob": "9c66dabb2678000a586c4d5e2fb9c782b77b8458",
+      "profileSourceRevision": "b8be1e0bbc81cf43f1ab62cda02824ce03d70720",
+      "images": {
+        "validator": "sha256:4a957f7becf1cc690204c2874712eb111b282438ccdf8607b4470b3db7f2eaa8",
+        "kiota": "sha256:d2ba0acc0e2b5cef79c0607e8c17c5477d7b37894813b58da65bb0906062b222"
+      },
+      "consumers": [
+        {
+          "id": "web-application",
+          "generator": "openapi-typescript",
+          "version": "7.13.0",
+          "source": "web-bff/v1/browser-api.openapi.yaml",
+          "configurationDigest": "sha256:1d430a591c40aa00247e32275fdb5bb29b1b1c6ce394789222f91c58009c47f3",
+          "outputCount": 1,
+          "outputMapSha256": "sha256:aa1b392bbeac43902c9163fddccbb4824887d8eafc4d9468808e26c3454fdef9"
+        },
+        {
+          "id": "dotnet-operations-client",
+          "generator": "kiota",
+          "version": "1.38.0",
+          "source": "web-bff/v1/browser-api.openapi.yaml",
+          "configurationDigest": "sha256:aba846323b7dadcde4b43e04af4854d178650d80d62f4f83475e6686fee110ee",
+          "outputCount": 104,
+          "outputMapSha256": "sha256:6e6b46d4dec377ed7842db9ef2f19b0e78b05e35a1f408098b64138082cf1a1f"
+        },
+        {
+          "id": "messaging-typescript",
+          "generator": "modelina",
+          "version": "5.10.1",
+          "source": "messaging-platform/v1/transport-conformance.asyncapi.yaml",
+          "configurationDigest": "sha256:56b482f9a4aa680c4e3f2dc62d0ef05ede059246141b74c8607975f8900f0250",
+          "outputCount": 2,
+          "outputMapSha256": "sha256:db613a78c4493ae856c25ac241a74d197aa5f22baa77bfe044d463ad0654ee9d"
+        }
+      ],
+      "compileFixture": "passed"
+    }
+  ],
+  "method": "Two real pinned generator runs per head, exact normalized expectedOutputs comparison. Image IDs identify hosted raw scan receipts; generation in this evidence used pinned host tools. .NET client compile and synthetic request/response fixture used existing Microsoft.Kiota.Bundle 2.1.6 harness.",
+  "schema": "r15-consumer-baseline-v1"
+}
