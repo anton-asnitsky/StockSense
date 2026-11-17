@@ -1,0 +1,30 @@
+name: StockSense runner curl smoke
+on:
+  push:
+    branches: [chore/stocksense-runner-smoke-20261117-124838]
+    paths: [.github/workflows/stocksense-runner-smoke.yml]
+permissions: {}
+jobs:
+  curl:
+    name: curl on stocksense-runner-${{ matrix.slot }}
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        slot: [1, 2, 3]
+    runs-on: [self-hosted, stocksense-ci, "smoke-runner-${{ matrix.slot }}"]
+    timeout-minutes: 3
+    steps:
+      - name: Verify GitHub TLS and HTTP
+        shell: bash
+        env:
+          EXPECTED_RUNNER: stocksense-runner-${{ matrix.slot }}
+        run: |
+          set -euo pipefail
+          test "$RUNNER_NAME" = "$EXPECTED_RUNNER"
+          for url in https://api.github.com https://github.com; do
+            result=$(curl --disable --proto '=https' --silent --show-error --fail --max-time 20 --output /dev/null --write-out '%{http_code} %{ssl_verify_result}' "$url")
+            printf '%s %s HTTP/TLS %s\n' "$RUNNER_NAME" "$url" "$result"
+            test "$result" = '200 0'
+          done
+          sleep 10
