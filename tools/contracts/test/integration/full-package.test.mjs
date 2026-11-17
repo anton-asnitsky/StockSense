@@ -176,9 +176,9 @@ test('every canonical schema, OpenAPI target, and AsyncAPI message binds or has 
     assert.equal(bundled.fileCount, loaded.entries.length + 1);
     assert.deepEqual(bundleBytes, await buildPackageBundle(out), 'full-catalogue package bundle is deterministic');
     const fixtures = JSON.parse(await readFile(join(out, 'governance/example-fixture.json'), 'utf8')).fixtures;
-    const openApiExempt = loaded.entries.filter(entry => entry.artifactKind === 'openapi' &&
+    const unexercised = loaded.entries.filter(entry => entry.artifactKind === 'openapi' &&
       !fixtures.some(fixture => fixture.documentRevisionId === entry.revisionId));
-    assert.equal(openApiExempt.length, 7);
+    assert.deepEqual(unexercised, []);
     const YAML = (await import('yaml')).default;
     const closedSchemas = [];
     for (const entry of loaded.entries.filter(item => item.artifactKind === 'schema')) {
@@ -425,7 +425,16 @@ test('all named OpenAPI examples bind exact immutable revisions and expected fin
     const results = await runFixtureOracle(out, loaded);
     const named = fixtures.filter(fixture => fixture.canonicalExampleId !== undefined);
     assert.equal(Object.keys(expected).length, 10);
-    assert.equal(named.length, 24);
+    assert.equal(named.length, 57);
+    const operations = named.filter(fixture => fixture.canonicalExampleId.startsWith('operation:'));
+    assert.equal(operations.length, 33);
+    assert.equal(new Set(operations.map(fixture => fixture.documentRevisionId)).size, 7);
+    for (const fixture of operations) {
+      assert.deepEqual(results.find(result => result.fixtureId === fixture.fixtureId), {
+        fixtureId: fixture.fixtureId, revisionId: fixture.documentRevisionId,
+        contractElementId: fixture.contractElementId, scenarioType: 'valid', observed: 'pass'
+      });
+    }
     for (const [documentPath, ids] of Object.entries(expected)) {
       const source = YAML.parse(await readFile(join(out, documentPath), 'utf8'));
       const examples = openApiNamedExamples(source, documentPath);
@@ -483,8 +492,28 @@ test('the oracle refuses a missing or mismatched named example despite other val
         error.code === 'FIXTURE_EXAMPLE_COVERAGE' && error.ruleId === 'BR2.7');
     };
     await check(sidecar.fixtures.filter(fixture => fixture.fixtureId !== example.fixtureId));
+    const conflict = sidecar.fixtures.find(fixture => fixture.canonicalExampleId === 'operation:idempotency-payload-conflict');
+    assert.ok(conflict);
+    await check(sidecar.fixtures.filter(fixture => fixture.fixtureId !== conflict.fixtureId));
+    await check(sidecar.fixtures.map(fixture => fixture.fixtureId === conflict.fixtureId
+      ? { ...fixture, payload: { ...fixture.payload, responseStatus: '202' } } : fixture));
     await check(sidecar.fixtures.map(fixture => fixture.fixtureId === example.fixtureId
       ? { ...fixture, payload: { ...fixture.payload, retailerId: '00000000-0000-4000-8000-000000000999' } }
       : fixture));
   } finally { await clean(); }
+});
+
+test('package construction rejects a missing operation outcome and an invalid request parameter', async () => {
+  const YAML = (await import('yaml')).default;
+  const document = 'retail-data/v1/dataset-exports.openapi.yaml';
+  const source = YAML.parse(await readFile(join(repoRoot, 'contracts/source', document), 'utf8'));
+  const entry = { artifactKind: 'openapi', document, revisionId: 'immutable-test-revision', boundaryIds: ['C04'] };
+  const example = source['x-contract-operation-examples'].find(item => item.responseStatus === '409');
+  example.responseStatus = '202';
+  assert.throws(() => namedOpenApiFixtures(entry, source, new Map()), error =>
+    error.code === 'FIXTURE_EXAMPLE_COVERAGE' && error.ruleId === 'BR2.7');
+  example.responseStatus = '409';
+  example.request.path.retailerId = 'invalid-uuid';
+  assert.throws(() => namedOpenApiFixtures(entry, source, new Map()), error =>
+    error.code === 'FIXTURE_UNEXPECTED_FAILURE' && error.ruleId === 'BR2.3');
 });

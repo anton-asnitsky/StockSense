@@ -9,7 +9,7 @@ const SHA = /^sha256:[0-9a-f]{64}$/;
 const VERSION = /^[1-9][0-9]*\.[0-9]+\.[0-9]+$/;
 const KINDS = new Set(['schema', 'openapi', 'asyncapi', 'sidecar']);
 const CANONICAL = new Set(['schema', 'openapi', 'asyncapi']);
-const FIXTURE_ELEMENT = /^(?:[A-Za-z][A-Za-z0-9_.-]{0,127}|response:[A-Za-z][A-Za-z0-9]{0,96}:[1-5][0-9]{2}:application-json|message:[A-Za-z][A-Za-z0-9_.-]*(?::[A-Za-z][A-Za-z0-9_.-]*)?)$/;
+const FIXTURE_ELEMENT = /^(?:[A-Za-z][A-Za-z0-9_.-]{0,127}|operation:[A-Za-z][A-Za-z0-9]{0,96}:[1-5][0-9]{2}|response:[A-Za-z][A-Za-z0-9]{0,96}:[1-5][0-9]{2}:application-json|message:[A-Za-z][A-Za-z0-9_.-]*(?::[A-Za-z][A-Za-z0-9_.-]*)?)$/;
 const digest = bytes => 'sha256:' + createHash('sha256').update(bytes).digest('hex');
 class GraphError extends Error {}
 /** @returns {never} */
