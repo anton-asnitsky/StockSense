@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { chmod, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { IMAGE_NAMES, SCANNERS, inspectImageSbom, inspectImageScan, readImageEvidence, retainRawImageScan, sha256, verifyRawImageScan } from '../src/image-evidence.mjs';
+import { IMAGE_NAMES, SCANNERS, inspectImageSbom, inspectImageScan, normalizeImageScan, readImageEvidence, retainRawImageScan, sha256, verifyRawImageScan } from '../src/image-evidence.mjs';
 import { candidateTreeDigestFromGit, executionFingerprintFromGit,
   fetchImageLedger, readKiotaRuntimeEvidence, verifyBoundImageEvidence } from '../src/image-ledger.mjs';
 import { collectKiotaRuntimeManifest } from '../src/kiota-runtime-manifest.mjs';
@@ -130,20 +130,8 @@ if (command === 'verify') {
       await retainRawImageScan(directory, { name, imageId, sbomDigest: sha256(sbomBytes),
         revision, scanText: rawText, databaseText });
       const raw = parse(rawText, 'Grype');
-      if (!Array.isArray(raw.matches) || (raw.ignoredMatches?.length ?? 0) !== 0) {
-        throw new Error('Grype scan returned incomplete or suppressed matches');
-      }
       const db = parse(databaseText, 'Grype DB');
-      const report = { schema: 'stocksense-image-scan-v2', image: name, imageId,
-        sbomDigest: sha256(sbomBytes), scanner: SCANNERS.grype, status: 'completed',
-        // Grype v0.120.1 serializes ProviderStatus as `valid: boolean`.
-        database: { built: db.built, source: db.from, schemaVersion: db.schemaVersion,
-          status: db.valid === true && !db.error ? 'valid' : 'invalid' },
-        findings: raw.matches.map(match => ({ id: match.vulnerability?.id,
-          severity: match.vulnerability?.severity, package: match.artifact?.name,
-          version: match.artifact?.version, type: match.artifact?.type,
-          purl: match.artifact?.purl ?? null, fixState: match.vulnerability?.fix?.state,
-          fixVersions: match.vulnerability?.fix?.versions ?? [] })) };
+      const report = normalizeImageScan(raw, db, name, imageId, sha256(sbomBytes));
       inspectImageScan(report, name, imageId, report.sbomDigest);
       await writeFile(join(directory, `${name}.scan.json`), JSON.stringify(report, null, 2) + '\n');
       await rm(archive);
