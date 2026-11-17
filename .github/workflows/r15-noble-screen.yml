@@ -12,7 +12,7 @@ jobs:
       matrix:
         lane: [1, 2]
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 60
     env:
       CANDIDATE: 46325b340caa23f203227eae0f92a97b2c818c9c
       SDK: mcr.microsoft.com/dotnet/sdk@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa
@@ -61,6 +61,7 @@ jobs:
           docker cp "$cut:/proof/." proof/
           docker rm "$cut"
           cp context/Dockerfile proof/Kiota.Dockerfile
+          cp context/runtime.fragment proof/runtime.fragment
           docker build --platform linux/amd64 -t stocksense:screen-noble context
           img=$(docker image inspect stocksense:screen-noble --format '{{.Id}}')
           echo "IMG=$img" >> "$GITHUB_ENV"
@@ -96,6 +97,28 @@ jobs:
           CS
           docker run --rm --network none -v "$PWD/probe:/probe" -w /probe "$SDK" dotnet publish -c Release -o /probe/out -p:RestoreIgnoreFailedSources=true
           docker run "${guard[@]}" -v "$PWD/probe:/probe:ro" --entrypoint /usr/share/dotnet/dotnet "$IMG" /probe/out/Smoke.dll | tee proof/globalization.txt
+      - name: Verify all ELF dependencies with exact loader
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/noble"
+          c=$(docker create "$IMG")
+          docker export "$c" -o io/rootfs.tar
+          docker rm "$c"
+          mkdir io/rootfs
+          tar -xf io/rootfs.tar -C io/rootfs
+          docker run --rm --network none --read-only -v "$PWD/io/rootfs:/rootfs:ro" -v "$GITHUB_WORKSPACE/audit/.github/r15-noble:/checks:ro" python@sha256:2784af835b90070d9d37d3aa5aa01a3e825d88436b0d58f7776d2cdcb6780f9e python /checks/check_elf.py /rootfs > proof/elf.json
+          python3 - <<'PY'
+          import json,subprocess,os,pathlib
+          results=[]
+          for entry in json.loads(pathlib.Path('proof/elf.json').read_text())['elf']:
+              if not entry['needed']:
+                  continue
+              args=['docker','run','--rm','--network=none','--read-only','--cap-drop=ALL','--security-opt=no-new-privileges','--entrypoint','/lib64/ld-linux-x86-64.so.2',os.environ['IMG'],'--list',entry['path']]
+              r=subprocess.run(args,capture_output=True,text=True,timeout=30)
+              results.append({'path':entry['path'],'exitCode':r.returncode,'stdout':r.stdout,'stderr':r.stderr})
+          pathlib.Path('proof/elf-loader.json').write_text(json.dumps(results,indent=2))
+          assert results and all(r['exitCode']==0 for r in results), 'runtime loader closure failed'
+          PY
       - name: Inventory exact archived image and scan exact inventory bytes
         run: |
           set -euo pipefail
@@ -113,15 +136,13 @@ jobs:
           "${grype[@]}" --network none -e GRYPE_DB_AUTO_UPDATE=false "$GRYPE" sbom:/proof/kiota.cdx.json -o json > proof/grype-raw.json
           "${grype[@]}" --network none -e GRYPE_DB_AUTO_UPDATE=false "$GRYPE" sbom:/proof/kiota.cdx.json --distro ubuntu:24.04 -o json > proof/grype-noble-explicit.json
           jq -r '.matches[]|[.vulnerability.id,.vulnerability.severity,.artifact.name,.artifact.version,.vulnerability.fix.state, (.vulnerability.fix.versions|join(","))]|@tsv' proof/grype-raw.json > proof/findings.tsv
+          python3 "$GITHUB_WORKSPACE/audit/.github/r15-noble/check_packages.py" proof > proof/package-reconciliation.json
+          cat proof/package-reconciliation.json
           python3 - <<'PY'
-          import json, pathlib
-          doc=json.loads(pathlib.Path('proof/kiota.cdx.json').read_text())
-          src=json.loads(pathlib.Path('proof/snapshot-inputs.json').read_text())
-          assert any('libc6_2.39-0ubuntu8.12_amd64.deb' in k for k in src)
-          pkgs=[(c['name'],c['version']) for c in doc['components'] if c.get('purl','').startswith('pkg:deb/')]
-          assert ('libc6','2.39-0ubuntu8.12') in pkgs
-          assert any(c.get('purl')=='pkg:nuget/MessagePack@2.5.307' for c in doc['components'])
-          print(sorted(pkgs))
+          import json,pathlib
+          s=json.loads(pathlib.Path('proof/kiota.cdx.json').read_text())
+          assert any(c.get('purl')=='pkg:nuget/MessagePack@2.5.307' for c in s['components'])
+          assert any(c.get('name')=='libc6' and c.get('version')=='2.39-0ubuntu8.12' for c in s['components'])
           PY
           MOD="file://$GITHUB_WORKSPACE/candidate/tools/contracts/src/kiota-runtime-manifest.mjs" node --input-type=module -e "import fs from 'node:fs/promises'; const {collectKiotaRuntimeManifest}=await import(process.env.MOD); const sbom=JSON.parse(await fs.readFile('proof/kiota.cdx.json')); const m=await collectKiotaRuntimeManifest({imageId:process.env.IMG,sbom}); await fs.writeFile('proof/kiota.runtime.json',JSON.stringify(m,null,2));"
           jq '(.components[]|select(.name=="libc6" and (.purl|startswith("pkg:deb/ubuntu/libc6@"))))|=. + {version:"2.39-0ubuntu8.9",purl:(.purl|sub("2.39-0ubuntu8.12";"2.39-0ubuntu8.9"))}' proof/kiota.cdx.json > proof/control.cdx.json
@@ -130,6 +151,14 @@ jobs:
           cat proof/findings.tsv
           sha256sum proof/* > io/digests.txt
           cp io/digests.txt proof/
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 11.25.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24.22.2
+      - name: Verify all three consumer baselines and compile actual outputs
+        run: node audit/.github/r15-noble/consumer-proof.mjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: noble-kiota-image-${{ matrix.lane }}

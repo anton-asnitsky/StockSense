@@ -18,6 +18,13 @@ proof.mkdir(exist_ok=True)
 records = {}
 lock = threading.Lock()
 
+class SnapshotRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if not newurl.startswith(snapshot):
+            raise ValueError("redirect outside snapshot: " + newurl)
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+opener = urllib.request.build_opener(SnapshotRedirect())
 
 class SnapshotHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -29,7 +36,7 @@ class SnapshotHandler(BaseHTTPRequestHandler):
             return
         relative = path.path.removeprefix("/ubuntu/")
         try:
-            with urllib.request.urlopen(snapshot + relative, timeout=120) as res, tempfile.TemporaryFile() as f:
+            with opener.open(snapshot + relative, timeout=120) as res, tempfile.TemporaryFile() as f:
                 digest = hashlib.sha256()
                 while chunk := res.read(1024 * 1024):
                     digest.update(chunk)
@@ -43,6 +50,11 @@ class SnapshotHandler(BaseHTTPRequestHandler):
                     records[relative] = identity
                     if relative.endswith("/InRelease"):
                         (proof / relative.replace("/", "_")).write_bytes(f.read())
+                        f.seek(0)
+                    if relative.endswith(".deb"):
+                        control = subprocess.run(["dpkg-deb", "-f", "-"], input=f.read(),
+                                                 check=True, capture_output=True).stdout
+                        (proof / ("package-" + pathlib.PurePosixPath(relative).name + ".control")).write_bytes(control)
                         f.seek(0)
                 self.send_response(200)
                 self.send_header("Content-Length", str(size))
@@ -66,3 +78,7 @@ subprocess.run(["/usr/local/bin/chisel-wrapper", "--generate-dpkg-status", str(r
 assert all("dists/" + suite + "/InRelease" in records for suite in ("noble", "noble-security", "noble-updates"))
 assert any(name.endswith("libc6_2.39-0ubuntu8.12_amd64.deb") for name in records)
 (proof / "snapshot-inputs.json").write_text(json.dumps(records, sort_keys=True, indent=2) + "\n")
+shutil.copy("/usr/local/bin/chisel-wrapper", proof / "effective-chisel-wrapper")
+shutil.copy("/slices/chisel.yaml", proof / "effective-chisel.yaml")
+shutil.copy("/recipe/snapshot_cut.py", proof / "snapshot_cut.py")
+subprocess.run(["tar", "-cf", str(proof / "slices.tar"), "-C", "/slices", "."], check=True)
