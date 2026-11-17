@@ -37,7 +37,7 @@ test('Kiota outputs have portable newlines and a logical source location', async
     await writeFile(join(workspace, 'dotnet-client/Client.cs'), 'class Client {}\r\n');
     await writeFile(join(workspace, 'dotnet-client/kiota-lock.json'), JSON.stringify({
       descriptionLocation: 'C:/checkout/contracts/source/' + sourceDocument,
-      kiotaVersion: '1.35.0'
+      kiotaVersion: '1.38.0'
     }).replaceAll(',', ',\r\n'));
     await normalizeGeneratedConsumer(generated, workspace);
     assert.equal(await readFile(join(workspace, 'dotnet-client/Client.cs'), 'utf8'), 'class Client {}\n');

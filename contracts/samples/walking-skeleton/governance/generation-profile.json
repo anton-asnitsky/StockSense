@@ -1,6 +1,6 @@
 {
   "generationProfileVersion": "1.1.0",
-  "sourceRevision": "2227acab9321b9184944d74692f61c67f03087ad",
+  "sourceRevision": "b8be1e0bbc81cf43f1ab62cda02824ce03d70720",
   "consumers": [
     {
       "consumerId": "web-application",
@@ -15,9 +15,9 @@
     {
       "consumerId": "dotnet-operations-client",
       "generator": "kiota",
-      "generatorVersion": "1.35.0",
+      "generatorVersion": "1.38.0",
       "sourceDocument": "web-bff/v1/browser-api.openapi.yaml",
-      "configurationDigest": "sha256:38e2b80003d2c7b5310f6510f43339b44af4af1e31b3eafefc020e9c937c3c98",
+      "configurationDigest": "sha256:aba846323b7dadcde4b43e04af4854d178650d80d62f4f83475e6686fee110ee",
       "expectedOutputs": {
         "dotnet-client/Api/ApiRequestBuilder.cs": "sha256:074e2340aec391592edcb3bd89173aeb07348c08243f9bdda0e8492503c5a187",
         "dotnet-client/Api/V1/Platform/IdentityAudit/IdentityAuditRequestBuilder.cs": "sha256:ccb09b9c6697967a8101fd40b0e37a8a854e71a391a51d75a87ef4ac0f35f1e9",
@@ -122,7 +122,7 @@
         "dotnet-client/Models/SessionResponse.cs": "sha256:3e442536b24567388b23c0142b2330c0c1d8b2e8513889aed80ed71214aa7a46",
         "dotnet-client/Models/SessionResponse_retailers.cs": "sha256:e9b8d5bdb60f5a043d0b3f8b47dfd3f49eac0d94d80cd5384d2c863d513473a3",
         "dotnet-client/Models/SessionResponse_retailers_roles.cs": "sha256:b22bba2105509443a56e65988dbbd3a998ba3393ffae524e191041a5746ada3a",
-        "dotnet-client/kiota-lock.json": "sha256:4603f97eaf1142f295162632e576b4d80e476b3459e7e168caeb69cdf8e8bb88"
+        "dotnet-client/kiota-lock.json": "sha256:1b809cf386f2c95780a7c2e541f88f10639863f5c58fba3804cb27b91094dd14"
       }
     },
     {

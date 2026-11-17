@@ -6,7 +6,7 @@ import { verifyKiotaPackageImage } from '../src/bounded-generators.mjs';
 const contractsRoot = resolve(fileURLToPath(new URL('../', import.meta.url)));
 const docker = process.platform === 'win32'
   ? 'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe' : '/usr/bin/docker';
-const tag = process.env.STOCKSENSE_KIOTA_TAG ?? 'stocksense-kiota:1.35.0';
+const tag = process.env.STOCKSENSE_KIOTA_TAG ?? 'stocksense-kiota:1.38.0';
 const run = (args, label) => {
   const result = spawnSync(docker, args, { encoding: 'utf8', shell: false, windowsHide: true,
     maxBuffer: 16 * 1_048_576, stdio: ['ignore', 'pipe', 'inherit'] });
@@ -17,7 +17,10 @@ const run = (args, label) => {
   return String(result.stdout ?? '').trim();
 };
 
-run(['build', '--file', 'Dockerfile.generator-kiota', '--tag', tag, contractsRoot], 'Kiota image build');
+const caFile = process.env.STOCKSENSE_BUILD_CA_FILE;
+const caOptions = caFile ? ['--secret', `id=nuget_ca,src=${resolve(caFile)}`] : [];
+run(['build', '--platform=linux/amd64', '--file', 'Dockerfile.generator-kiota', '--tag', tag,
+  ...caOptions, contractsRoot], 'Kiota image build');
 const id = run(['image', 'inspect', tag, '--format', '{{.Id}}'], 'Kiota image inspect');
 if (!/^sha256:[0-9a-f]{64}$/.test(id)) {
   process.stderr.write('Kiota build did not yield an immutable image ID\n');
@@ -25,8 +28,8 @@ if (!/^sha256:[0-9a-f]{64}$/.test(id)) {
 }
 const version = run(['run', '--rm', '--pull=never', '--network=none', '--read-only',
   '--entrypoint=/opt/kiota/kiota', id, '--version'], 'Kiota version check');
-if (!/^1\.35\.0(?:\+[^\r\n]+)?$/.test(version)) {
-  process.stderr.write('Kiota image does not contain the approved 1.35.0 tool\n');
+if (!/^1\.38\.0(?:\+[^\r\n]+)?$/.test(version)) {
+  process.stderr.write('Kiota image does not contain the approved 1.38.0 tool\n');
   process.exit(1);
 }
 try { verifyKiotaPackageImage(id); }
