@@ -1,0 +1,112 @@
+name: R-15 isolated Azure Linux Kiota screening
+on:
+  push:
+    branches: [chore/r15-screen-azurelinux-836fd77]
+    paths: [.github/workflows/r15-azurelinux-screen.yml]
+permissions:
+  contents: read
+jobs:
+  screen:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CANDIDATE: 836fd77abbe0daec025d8c471385681c0dc20a3c
+      BASE: mcr.microsoft.com/dotnet/runtime@sha256:6e0a934295a333d91c72067da7f8ba49a22e8c7c5671e606df0e112a48247984
+      SDK: mcr.microsoft.com/dotnet/sdk@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa
+      SYFT: ghcr.io/anchore/syft@sha256:3eb5379ba7b409c3f4069b686110527af0c47df993fa5c10d13e7cf34f49b1aa
+      GRYPE: ghcr.io/anchore/grype@sha256:e4a44ef45d285b829ce6efe2642980329661bd2d18eab5fc539138d4adaebbbe
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: 836fd77abbe0daec025d8c471385681c0dc20a3c
+          persist-credentials: false
+      - name: Build single-substitution proof image in scratch
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE"
+          mkdir -p "$RUNNER_TEMP/azure"/{context,proof,io,db}
+          cd "$RUNNER_TEMP/azure"
+          python3 - <<'PY'
+          import os,pathlib
+          p=pathlib.Path(os.environ['GITHUB_WORKSPACE'])/'tools/contracts/Dockerfile.generator-kiota'
+          old='mcr.microsoft.com/dotnet/runtime@sha256:e7e90bfc3ce16f9efdf18c25c7e4876af4ffba7ea50582878f6ea05b1e04a7ec'
+          text=p.read_text()
+          assert text.count(old)==1
+          pathlib.Path('context/Dockerfile').write_text(text.replace(old,os.environ['BASE']))
+          PY
+          cp context/Dockerfile proof/Kiota.Dockerfile
+          docker build --platform linux/amd64 -t stocksense:screen-azure context
+          img=$(docker image inspect stocksense:screen-azure --format '{{.Id}}')
+          echo "IMG=$img" >> "$GITHUB_ENV"
+          docker image inspect "$img" | jq '.[0]|{Id,Architecture,Os,Config:{User:.Config.User,Entrypoint:.Config.Entrypoint,Cmd:.Config.Cmd,Env:.Config.Env}}' > proof/image.json
+          c=$(docker create "$img")
+          docker cp "$c:/var/lib/rpmmanifest/container-manifest-2" proof/rpmmanifest
+          docker cp -L "$c:/etc/os-release" proof/os-release
+          docker cp "$c:/opt/kiota/.store/microsoft.openapi.kiota/1.38.0/microsoft.openapi.kiota/1.38.0/microsoft.openapi.kiota.1.38.0.nupkg" io/tool.nupkg
+          docker rm "$c"
+          echo 'ec934c391c94e156543ce63cb497d6944180105b2b794b8b3a53a89b89cd4d82  io/tool.nupkg' | sha256sum -c -
+          docker save -o io/kiota.tar "$img"
+      - name: Exercise assembled runtime under offline limits
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/azure"
+          guard=(--rm --pull=never --network none --user 65532:65532 --read-only --cap-drop ALL --security-opt no-new-privileges --cpus=1 --memory=2g --memory-swap=2g --pids-limit=128)
+          docker run "${guard[@]}" "$IMG" --version | tee proof/kiota-version.txt
+          grep -E '^1\.38\.0(\+|$)' proof/kiota-version.txt
+          docker run "${guard[@]}" --entrypoint /usr/share/dotnet/dotnet "$IMG" /opt/kiota-probe/kiota-probe.dll --version 2>&1 | tee proof/probe.txt
+          grep -E '^STOCKSENSE_GENERATOR_PEAK=[1-9][0-9]+$' proof/probe.txt
+          docker run "${guard[@]}" --entrypoint /usr/share/dotnet/dotnet "$IMG" --list-runtimes | tee proof/net10.txt
+          mkdir probe
+          echo '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><UseAppHost>false</UseAppHost></PropertyGroup></Project>' > probe/Smoke.csproj
+          cat > probe/Program.cs <<'CS'
+          using System;
+          using System.Globalization;
+          var jan = new DateTime(2026,1,15,12,0,0,DateTimeKind.Utc);
+          var tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Jerusalem");
+          var month = jan.ToString("MMMM",CultureInfo.GetCultureInfo("fr-FR"));
+          if(month!="janvier" || tz.GetUtcOffset(jan).TotalHours!=2 || tz.GetUtcOffset(jan.AddMonths(6)).TotalHours!=3) return 1;
+          Console.WriteLine("fr-FR janvier; Jerusalem January +02, July +03"); return 0;
+          CS
+          docker run --rm --network none -v "$PWD/probe:/probe" -w /probe "$SDK" dotnet publish -c Release -o /probe/out -p:RestoreIgnoreFailedSources=true
+          docker run "${guard[@]}" -v "$PWD/probe:/probe:ro" --entrypoint /usr/share/dotnet/dotnet "$IMG" /probe/out/Smoke.dll | tee proof/globalization.txt
+      - name: Inventory exact archived image and scan exact inventory bytes
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/azure"
+          docker pull --platform linux/amd64 "$SYFT"
+          docker pull --platform linux/amd64 "$GRYPE"
+          docker run --rm --network none --read-only --cpus=1 --memory=2g -e SYFT_CHECK_FOR_APP_UPDATE=false -v "$PWD/io:/scan:ro" "$SYFT" docker-archive:/scan/kiota.tar -o cyclonedx-json@1.6 > io/syft.cdx.json
+          jq --arg id "$IMG" --arg scanner "$SYFT" '.metadata.properties += [{name:"stocksense:imageId",value:$id},{name:"stocksense:scanner",value:$scanner}]' io/syft.cdx.json > proof/kiota.cdx.json
+          grype=(docker run --rm --read-only --cpus=1 --memory=2g --tmpfs /tmp -e GRYPE_CHECK_FOR_APP_UPDATE=false -e GRYPE_DB_CACHE_DIR=/db -v "$PWD/db:/db" -v "$PWD/proof:/proof:ro")
+          chmod 777 db
+          "${grype[@]}" "$GRYPE" db update
+          "${grype[@]}" --network none -e GRYPE_DB_AUTO_UPDATE=false "$GRYPE" db status -o json > proof/grype-db.json
+          jq -e '.valid==true and (.error|not)' proof/grype-db.json
+          "${grype[@]}" --network none -e GRYPE_DB_AUTO_UPDATE=false "$GRYPE" sbom:/proof/kiota.cdx.json -o json > proof/grype-raw.json
+          jq -r '.matches[]|[.vulnerability.id,.vulnerability.severity,.artifact.name,.artifact.version,.vulnerability.fix.state, (.vulnerability.fix.versions|join(","))]|@tsv' proof/grype-raw.json > proof/findings.tsv
+          python3 - <<'PY' > proof/db-provider.txt
+          import pathlib,sqlite3
+          for p in pathlib.Path('db').rglob('*.db'):
+              print(p)
+              c=sqlite3.connect('file:'+str(p)+'?mode=ro',uri=True)
+              tables=[r[0] for r in c.execute("select name from sqlite_master where type='table'")]
+              print(tables)
+              for t in ('providers','operating_systems','affected_package_handles','vulnerability_handles','package_cpes','packages'):
+                  if t in tables:
+                      print(t,[r[1] for r in c.execute('pragma table_info('+t+')')])
+                      if t in ('providers','operating_systems'):
+                          for r in c.execute('select * from '+t):
+                              if any(('azurelinux' in str(x).lower() or 'mariner' in str(x).lower()) for x in r): print(r)
+              if 'affected_package_handles' in tables:
+                  print('AZL 3 package handles by provider', list(c.execute("select vh.provider_id, count(*) from affected_package_handles ah join operating_systems os on os.id=ah.operating_system_id join vulnerability_handles vh on vh.id=ah.vulnerability_id where lower(os.name) in ('azurelinux','mariner') and os.major_version='3' group by vh.provider_id")))
+          PY
+          cat proof/db-provider.txt
+          cat proof/findings.tsv
+          sha256sum proof/* > io/digests.txt
+          cp io/digests.txt proof/
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: azurelinux-kiota-screen
+          path: ${{ runner.temp }}/azure/proof/
+          retention-days: 30
