@@ -1,0 +1,103 @@
+name: R-14 integrated candidate evidence
+on:
+  push:
+    branches: [codex/r14-handoff-e9f326c]
+    paths: [.github/workflows/r14-proof.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: story
+            candidate: f895d25f07dc7525c76bebde1f2997edc5ec43c1
+            parent: e9f326cebc1ae7212d9a0597490029ffdde45b96
+          - name: integrated
+            candidate: 46325b340caa23f203227eae0f92a97b2c818c9c
+            parent: e284f99d5629dfcbfcb2935b0005c48c40c3d2e9
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      BASE: 402ace3b195c291a756ed230a24a73199ef8349a
+      STORY: e9f326cebc1ae7212d9a0597490029ffdde45b96
+      CANDIDATE: ${{ matrix.candidate }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ matrix.candidate }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify candidate and parent identities
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD)" = "$CANDIDATE"
+          test "$(git rev-parse HEAD^1)" = "$BASE"
+          test "$(git rev-parse HEAD^2)" = ${{ matrix.parent }}
+          git rev-parse 'HEAD^{tree}'
+          git diff --exit-code "$STORY" HEAD -- contracts tools/contracts/Dockerfile.validator tools/contracts/scripts/build-standards-image.mjs tools/contracts/src/policy.mjs tools/contracts/src/container-fixture-oracle.mjs tools/contracts/src/container-standards-runner.mjs tools/contracts/test/integration/full-package.test.mjs tools/contracts/test/integration/catalogue-openapi-exempt.test.mjs tools/contracts/test/unit/container-fixture-oracle.test.mjs tools/contracts/test/unit/container-standards-runner.test.mjs ':(exclude)contracts/README.md' ':(exclude)contracts/samples/walking-skeleton/governance/generation-profile.json' ':(exclude)contracts/samples/walking-skeleton/manifest.json'
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 11.25.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24.22.2
+      - name: Install locked dependencies and build exact validator
+        working-directory: tools/contracts
+        run: |
+          set -euo pipefail
+          pnpm install --frozen-lockfile
+          image=$(node scripts/build-standards-image.mjs)
+          [[ "$image" =~ ^sha256:[a-f0-9]{64}$ ]]
+          echo "STOCKSENSE_STANDARDS_IMAGE=$image" >> "$GITHUB_ENV"
+          echo "$image"
+      - name: Verify compatibility with immutable Bolt base
+        working-directory: tools/contracts
+        run: |
+          set -euo pipefail
+          pnpm setup:oasdiff
+          if git -C ../.. cat-file -e "$BASE:contracts/compatibility/approvals.json"; then
+            git -C ../.. show "$BASE:contracts/compatibility/approvals.json" > "$RUNNER_TEMP/approvals.json"
+          else
+            echo '{}' > "$RUNNER_TEMP/approvals.json"
+          fi
+          node scripts/assess-baseline.mjs "$BASE" --require-assessment --approvals-file "$RUNNER_TEMP/approvals.json" | tee "$RUNNER_TEMP/r14-baseline.txt"
+      - name: Validate integrated catalogue, fixtures, bundle and resource bounds
+        working-directory: tools/contracts
+        run: |
+          set -euo pipefail
+          node --test --test-concurrency=1 test/integration/full-package.test.mjs test/integration/catalogue-openapi-exempt.test.mjs test/integration/baseline-compatibility.test.mjs test/integration/cli.catalogue.test.mjs test/integration/catalogue-resource.test.mjs | tee "$RUNNER_TEMP/r14-tests.txt"
+      - name: Record pinned CLI result and exact bundle receipt
+        working-directory: tools/contracts
+        run: |
+          set -euo pipefail
+          export PKG=$(mktemp -d)
+          node --input-type=module -e "import {buildFullPackage} from './src/full-package.mjs'; const r=await buildFullPackage(process.env.GITHUB_WORKSPACE, process.env.PKG); if (!r.manifest || r.problems.length) throw Error(JSON.stringify(r.problems))"
+          node src/cli.mjs validate "$PKG" --repo-root ../.. > "$RUNNER_TEMP/r14-cli.json"
+          node --input-type=module <<'JS' | tee "$RUNNER_TEMP/r14-receipt.json"
+          import {readFile} from 'node:fs/promises';
+          import {execFileSync} from 'node:child_process';
+          import assert from 'node:assert/strict';
+          import {buildPackageBundle,verifyPackageBundle} from './src/package-bundle.mjs';
+          import {validateBundledCandidate} from './src/candidate-provenance.mjs';
+          import {sourceTreeDigest} from './src/source-digest.mjs';
+          import {digest,canonicalJson,ALL_BOUNDARIES} from './src/package-loader.mjs';
+          const {PKG,RUNNER_TEMP,GITHUB_WORKSPACE,STOCKSENSE_STANDARDS_IMAGE}=process.env;
+          const result=JSON.parse(await readFile(RUNNER_TEMP+'/r14-cli.json'));
+          const bundle=verifyPackageBundle(await buildPackageBundle(PKG));
+          const receipt=await validateBundledCandidate(bundle,GITHUB_WORKSPACE,STOCKSENSE_STANDARDS_IMAGE);
+          assert.equal(receipt.resultDigest,digest(Buffer.from(canonicalJson(result))));
+          assert.deepEqual(result.coveredBoundaries,ALL_BOUNDARIES);
+          assert.equal(result.releaseReady,false);
+          const fixtures=JSON.parse(bundle.files.get('governance/example-fixture.json')).fixtures;
+          assert.deepEqual(result.fixtureResults.map(f=>f.fixtureId).sort(),fixtures.map(f=>f.fixtureId).sort());
+          console.log(JSON.stringify({candidate:process.env.CANDIDATE,tree:execFileSync('git',['rev-parse','HEAD^{tree}'],{encoding:'utf8'}).trim(),base:process.env.BASE,image:STOCKSENSE_STANDARDS_IMAGE,sourceDigest:await sourceTreeDigest(),bundleDigest:bundle.artifactDigest,namedExamples:fixtures.filter(f=>f.canonicalExampleId).length,releaseReady:result.releaseReady,receipt},null,2));
+          JS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: r14-evidence-${{ matrix.name }}
+          path: ${{ runner.temp }}/r14-*
+          if-no-files-found: warn
+          retention-days: 30
