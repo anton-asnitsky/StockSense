@@ -89,6 +89,8 @@ jobs:
           cat > probe/Program.cs <<'CS'
           using System;
           using System.Globalization;
+          if(Environment.GetEnvironmentVariable("DOTNET_LTTng")!="0" || Environment.GetEnvironmentVariable("COMPlus_LTTng")!="0") return 2;
+          foreach(var line in System.IO.File.ReadLines("/proc/self/maps")) if(line.Contains("libcoreclrtraceptprovider") || line.Contains("liblttng-ust")) return 3;
           var jan = new DateTime(2026,1,15,12,0,0,DateTimeKind.Utc);
           var tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Jerusalem");
           var month = jan.ToString("MMMM",CultureInfo.GetCultureInfo("fr-FR"));
@@ -97,10 +99,13 @@ jobs:
           CS
           docker run --rm --network none -v "$PWD/probe:/probe" -w /probe "$SDK" dotnet publish -c Release -o /probe/out -p:RestoreIgnoreFailedSources=true
           docker run "${guard[@]}" -v "$PWD/probe:/probe:ro" --entrypoint /usr/share/dotnet/dotnet "$IMG" /probe/out/Smoke.dll | tee proof/globalization.txt
-      - name: Verify all ELF dependencies with exact loader
+      - name: Verify active ELF dependencies and disabled optional LTTng
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/noble"
+          jq -e '.Config.Env | index("DOTNET_LTTng=0")!=null and index("COMPlus_LTTng=0")!=null' proof/image.json
+          curl -fL https://raw.githubusercontent.com/dotnet/runtime/a3788b71495457354b64ca8040b6ded5ff6ca4f9/src/coreclr/pal/src/misc/tracepointprovider.cpp -o proof/tracepointprovider.cpp
+          echo '0961fc926da5e328500055f0e274cf92fb0b0a82bdcb902c799c01c2a6f06cc7  proof/tracepointprovider.cpp' | sha256sum -c -
           c=$(docker create "$IMG")
           docker export "$c" -o io/rootfs.tar
           docker rm "$c"
@@ -111,6 +116,8 @@ jobs:
           import json,subprocess,os,pathlib
           results=[]
           for entry in json.loads(pathlib.Path('proof/elf.json').read_text())['elf']:
+              if entry['disabledOptionalLttng']:
+                  continue
               if not entry['needed']:
                   continue
               args=['docker','run','--rm','--network=none','--read-only','--cap-drop=ALL','--security-opt=no-new-privileges','--entrypoint','/lib64/ld-linux-x86-64.so.2',os.environ['IMG'],'--list',entry['path']]

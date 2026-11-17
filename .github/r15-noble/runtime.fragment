@@ -11,4 +11,4 @@ COPY --from=cut /rootfs/ /
 COPY --from=microsoft_payload /usr/share/dotnet /usr/share/dotnet
 COPY --from=microsoft_payload /etc/passwd /etc/passwd
 COPY --from=microsoft_payload /etc/group /etc/group
-ENV APP_UID=1654 ASPNETCORE_HTTP_PORTS=8080 DOTNET_RUNNING_IN_CONTAINER=true DOTNET_VERSION=10.0.15
+ENV APP_UID=1654 ASPNETCORE_HTTP_PORTS=8080 DOTNET_RUNNING_IN_CONTAINER=true DOTNET_VERSION=10.0.15 DOTNET_LTTng=0 COMPlus_LTTng=0
