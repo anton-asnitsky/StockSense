@@ -1,0 +1,406 @@
+{
+  "run": "44114996835",
+  "revision": "836fd77abbe0daec025d8c471385681c0dc20a3c",
+  "head": "6638de5303c95c3a50fa66d550be33de4627c6a8",
+  "base": "402ace3b195c291a756ed230a24a73199ef8349a",
+  "attempts": [
+    {
+      "attempt": 1,
+      "artifacts": [
+        {
+          "id": 14343100718,
+          "name": "security-reports-836fd77abbe0daec025d8c471385681c0dc20a3c",
+          "digest": "sha256:9cc46e7c2d8adeab20463836dc58557d23e690be4dfd93dc4b3b351f5d08264e",
+          "created_at": "2026-11-17T15:30:20Z"
+        },
+        {
+          "id": 14341684674,
+          "name": "image-evidence-836fd77abbe0daec025d8c471385681c0dc20a3c",
+          "digest": "sha256:8aeace722d6dc3e8d8ea870f49e45090e33ec86ebadc02f6e19d5a5f3ef512cb",
+          "created_at": "2026-11-17T15:33:11Z"
+        }
+      ],
+      "normalizedRuntime": "sha256:d701920b3075f3b892078cdfd498abb25f731ec561c8c9ec1d07134cfcac9188",
+      "runtimeEntries": 1776,
+      "expatRuntimePathCount": 0,
+      "kiotaOsAndMessagePackPurls": [
+        "pkg:nuget/MessagePack@2.5.307",
+        "pkg:deb/ubuntu/base-files@13ubuntu10.5?arch=amd64&distro=ubuntu-24.04",
+        "pkg:deb/ubuntu/ca-certificates@20260816ubuntu0.24.04.2?arch=all&distro=ubuntu-24.04",
+        "pkg:deb/ubuntu/gcc-14@14.2.0-4ubuntu2~24.04.1?distro=ubuntu",
+        "pkg:deb/ubuntu/gcc-14-base@14.2.0-4ubuntu2~24.04.1?arch=amd64&distro=ubuntu-24.04&upstream=gcc-14",
+        "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+        "pkg:deb/ubuntu/libgcc-s1@14.2.0-4ubuntu2~24.04.1?arch=amd64&distro=ubuntu-24.04&upstream=gcc-14",
+        "pkg:deb/ubuntu/libicu74@74.2-1ubuntu3.1?arch=amd64&distro=ubuntu-24.04&upstream=icu",
+        "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "pkg:deb/ubuntu/libstdc%2B%2B6@14.2.0-4ubuntu2~24.04.1?arch=amd64&distro=ubuntu-24.04&upstream=gcc-14",
+        "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "pkg:deb/ubuntu/tzdata@2026e-0ubuntu0.24.04.1?arch=all&distro=ubuntu-24.04"
+      ],
+      "records": [
+        {
+          "name": "validator",
+          "imageId": "sha256:a75ed773c308d7d934ce6611b47c5a04ebe723a25c548e6ee1a92214ec1b033c",
+          "sbomDigest": "sha256:0c8fc82d91a25e687bb5973e27ce79066739ad82622179f70a63cc4bc8ceb160",
+          "scanDigest": "sha256:926465373a8b213e894bf7435f48f79a620736516e82ae39162603a8453f6956",
+          "packages": 314,
+          "findings": 0
+        },
+        {
+          "name": "kiota",
+          "imageId": "sha256:d644cee08e9476fcb0f827aac1d31f84d64ceae5b2c8799468ac2f6ca3540d50",
+          "sbomDigest": "sha256:e47590f36693b2006abb537993c3581e07fe3786f5eecb5efc6005eac2e8e178",
+          "scanDigest": "sha256:e564e232fc39cd1851cc9cd25c56efc1c84afb0de517f8625eef0da10fce5775",
+          "packages": 95,
+          "findings": 20
+        }
+      ],
+      "rawScans": [
+        {
+          "name": "validator",
+          "rawDigest": "sha256:912f4653356e48f6959a910ba1d2305a7cf6f521985c75fde096f64c5c10bb8e",
+          "databaseDigest": "sha256:496b86aa16bf26139b3023ed51c4b975e84666e3bc7b663e0edc328b300ed2fc",
+          "dbBuilt": "2026-11-17T06:20:58Z",
+          "components": 683
+        },
+        {
+          "name": "kiota",
+          "rawDigest": "sha256:3f5dd7c576cfc6a6c9ad3633b16e01db781c87cce0ff5703399142a237125f3f",
+          "databaseDigest": "sha256:496b86aa16bf26139b3023ed51c4b975e84666e3bc7b663e0edc328b300ed2fc",
+          "dbBuilt": "2026-11-17T06:20:58Z",
+          "components": 420
+        }
+      ],
+      "security": {
+        "secret-scan": {
+          "scanner": "secretlint@13.0.6",
+          "status": "passed",
+          "findings": [],
+          "failure": null,
+          "inputDigest": "sha256:593d9a44dec27ddb3b68a971c5650a05d829bdebc17ae1b69000231ed710cb42",
+          "toolchainDigest": "sha256:1745caf5d213d655a58e91c6b60546d40c60c8387ee52db4f9750671a2c4adbe"
+        },
+        "vulnerability-scan": {
+          "scanner": "pnpm-audit@11.25.0",
+          "status": "passed",
+          "findings": [],
+          "failure": null,
+          "inputDigest": "sha256:593d9a44dec27ddb3b68a971c5650a05d829bdebc17ae1b69000231ed710cb42",
+          "toolchainDigest": "sha256:1745caf5d213d655a58e91c6b60546d40c60c8387ee52db4f9750671a2c4adbe"
+        }
+      }
+    },
+    {
+      "attempt": 2,
+      "artifacts": [
+        {
+          "id": 14344140914,
+          "name": "image-evidence-836fd77abbe0daec025d8c471385681c0dc20a3c",
+          "digest": "sha256:861f2d30aaca5c1d94587d64d3245ce7389bdcffbeded2fc1b41b686c5639cc6",
+          "created_at": "2026-11-17T15:39:02Z"
+        },
+        {
+          "id": 14343656007,
+          "name": "security-reports-836fd77abbe0daec025d8c471385681c0dc20a3c",
+          "digest": "sha256:7d6285a3497fa6be9029c557d95b884d53ae2772722495e09a54597b5328b2c0",
+          "created_at": "2026-11-17T15:36:05Z"
+        }
+      ],
+      "normalizedRuntime": "sha256:d701920b3075f3b892078cdfd498abb25f731ec561c8c9ec1d07134cfcac9188",
+      "runtimeEntries": 1776,
+      "expatRuntimePathCount": 0,
+      "kiotaOsAndMessagePackPurls": [
+        "pkg:nuget/MessagePack@2.5.307",
+        "pkg:deb/ubuntu/base-files@13ubuntu10.5?arch=amd64&distro=ubuntu-24.04",
+        "pkg:deb/ubuntu/ca-certificates@20260816ubuntu0.24.04.2?arch=all&distro=ubuntu-24.04",
+        "pkg:deb/ubuntu/gcc-14@14.2.0-4ubuntu2~24.04.1?distro=ubuntu",
+        "pkg:deb/ubuntu/gcc-14-base@14.2.0-4ubuntu2~24.04.1?arch=amd64&distro=ubuntu-24.04&upstream=gcc-14",
+        "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+        "pkg:deb/ubuntu/libgcc-s1@14.2.0-4ubuntu2~24.04.1?arch=amd64&distro=ubuntu-24.04&upstream=gcc-14",
+        "pkg:deb/ubuntu/libicu74@74.2-1ubuntu3.1?arch=amd64&distro=ubuntu-24.04&upstream=icu",
+        "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "pkg:deb/ubuntu/libstdc%2B%2B6@14.2.0-4ubuntu2~24.04.1?arch=amd64&distro=ubuntu-24.04&upstream=gcc-14",
+        "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "pkg:deb/ubuntu/tzdata@2026e-0ubuntu0.24.04.1?arch=all&distro=ubuntu-24.04"
+      ],
+      "records": [
+        {
+          "name": "validator",
+          "imageId": "sha256:d5c18b1f09871344d3df0763fe94ca0796befef74546f4b07738113d3a4294dd",
+          "sbomDigest": "sha256:066d14a41b5f5f052ddf65020bbdd05c04ef3a3431bb172a9da10663c903d46f",
+          "scanDigest": "sha256:b256bbb7c6dfb9399a90d3259cf9a827de7eeee1b6eb31ffcd354fec7e4a16e2",
+          "packages": 314,
+          "findings": 0
+        },
+        {
+          "name": "kiota",
+          "imageId": "sha256:78b83326f9f8595841c353430e4c0013c6c0991d44ceaeb9261bb2b827981e59",
+          "sbomDigest": "sha256:acd0ffc6fa158759cd437327dae0ffdbe8930dc94e6228f48857945cb363d6ac",
+          "scanDigest": "sha256:c45801aafb6894cc0f0187c14410c0238c2548a15ca0062ff3e97a39b5cebb43",
+          "packages": 95,
+          "findings": 20
+        }
+      ],
+      "rawScans": [
+        {
+          "name": "validator",
+          "rawDigest": "sha256:a281746e15b8f2811592e0bd7801ca9d3afd4276ab06c29eb6137a59561790b8",
+          "databaseDigest": "sha256:496b86aa16bf26139b3023ed51c4b975e84666e3bc7b663e0edc328b300ed2fc",
+          "dbBuilt": "2026-11-17T06:20:58Z",
+          "components": 683
+        },
+        {
+          "name": "kiota",
+          "rawDigest": "sha256:8aefeaab3bde90414bd73d7b6d76cce0f37294522549bccb7ea7ab353ad36919",
+          "databaseDigest": "sha256:496b86aa16bf26139b3023ed51c4b975e84666e3bc7b663e0edc328b300ed2fc",
+          "dbBuilt": "2026-11-17T06:20:58Z",
+          "components": 420
+        }
+      ],
+      "security": {
+        "secret-scan": {
+          "scanner": "secretlint@13.0.6",
+          "status": "passed",
+          "findings": [],
+          "failure": null,
+          "inputDigest": "sha256:593d9a44dec27ddb3b68a971c5650a05d829bdebc17ae1b69000231ed710cb42",
+          "toolchainDigest": "sha256:1745caf5d213d655a58e91c6b60546d40c60c8387ee52db4f9750671a2c4adbe"
+        },
+        "vulnerability-scan": {
+          "scanner": "pnpm-audit@11.25.0",
+          "status": "passed",
+          "findings": [],
+          "failure": null,
+          "inputDigest": "sha256:593d9a44dec27ddb3b68a971c5650a05d829bdebc17ae1b69000231ed710cb42",
+          "toolchainDigest": "sha256:1745caf5d213d655a58e91c6b60546d40c60c8387ee52db4f9750671a2c4adbe"
+        }
+      }
+    }
+  ],
+  "commonKiotaFindings": [
+    {
+      "id": "CVE-2026-100290",
+      "severity": "Medium",
+      "package": "libc6",
+      "version": "2.39-0ubuntu8.9",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+      "fixState": "not-fixed",
+      "fixVersions": []
+    },
+    {
+      "id": "CVE-2026-8674",
+      "severity": "Medium",
+      "package": "libc6",
+      "version": "2.39-0ubuntu8.9",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+      "fixState": "fixed",
+      "fixVersions": [
+        "2.39-0ubuntu8.12"
+      ]
+    },
+    {
+      "id": "CVE-2026-84243",
+      "severity": "Medium",
+      "package": "libc6",
+      "version": "2.39-0ubuntu8.9",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+      "fixState": "fixed",
+      "fixVersions": [
+        "2.39-0ubuntu8.12"
+      ]
+    },
+    {
+      "id": "CVE-2026-97399",
+      "severity": "Medium",
+      "package": "libc6",
+      "version": "2.39-0ubuntu8.9",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+      "fixState": "fixed",
+      "fixVersions": [
+        "2.39-0ubuntu8.12"
+      ]
+    },
+    {
+      "id": "CVE-2025-5222",
+      "severity": "Low",
+      "package": "libicu74",
+      "version": "74.2-1ubuntu3.1",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libicu74@74.2-1ubuntu3.1?arch=amd64&distro=ubuntu-24.04&upstream=icu",
+      "fixState": "not-fixed",
+      "fixVersions": []
+    },
+    {
+      "id": "CVE-2026-115819",
+      "severity": "Medium",
+      "package": "libc6",
+      "version": "2.39-0ubuntu8.9",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+      "fixState": "not-fixed",
+      "fixVersions": []
+    },
+    {
+      "id": "CVE-2016-20013",
+      "severity": "Negligible",
+      "package": "libc6",
+      "version": "2.39-0ubuntu8.9",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+      "fixState": "wont-fix",
+      "fixVersions": []
+    },
+    {
+      "id": "CVE-2026-95692",
+      "severity": "Medium",
+      "package": "libssl3t64",
+      "version": "3.0.13-0ubuntu3.16",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+      "fixState": "not-fixed",
+      "fixVersions": []
+    },
+    {
+      "id": "CVE-2026-95692",
+      "severity": "Medium",
+      "package": "openssl",
+      "version": "3.0.13-0ubuntu3.16",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+      "fixState": "not-fixed",
+      "fixVersions": []
+    },
+    {
+      "id": "CVE-2026-88822",
+      "severity": "Medium",
+      "package": "libssl3t64",
+      "version": "3.0.13-0ubuntu3.16",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+      "fixState": "not-fixed",
+      "fixVersions": []
+    },
+    {
+      "id": "CVE-2026-95691",
+      "severity": "Medium",
+      "package": "libssl3t64",
+      "version": "3.0.13-0ubuntu3.16",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+      "fixState": "not-fixed",
+      "fixVersions": []
+    },
+    {
+      "id": "CVE-2026-88822",
+      "severity": "Medium",
+      "package": "openssl",
+      "version": "3.0.13-0ubuntu3.16",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+      "fixState": "not-fixed",
+      "fixVersions": []
+    },
+    {
+      "id": "CVE-2026-95691",
+      "severity": "Medium",
+      "package": "openssl",
+      "version": "3.0.13-0ubuntu3.16",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+      "fixState": "not-fixed",
+      "fixVersions": []
+    },
+    {
+      "id": "CVE-2026-18374",
+      "severity": "Medium",
+      "package": "libc6",
+      "version": "2.39-0ubuntu8.9",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+      "fixState": "fixed",
+      "fixVersions": [
+        "2.39-0ubuntu8.12"
+      ]
+    },
+    {
+      "id": "CVE-2026-88823",
+      "severity": "Medium",
+      "package": "libssl3t64",
+      "version": "3.0.13-0ubuntu3.16",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+      "fixState": "not-fixed",
+      "fixVersions": []
+    },
+    {
+      "id": "CVE-2026-88823",
+      "severity": "Medium",
+      "package": "openssl",
+      "version": "3.0.13-0ubuntu3.16",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+      "fixState": "not-fixed",
+      "fixVersions": []
+    },
+    {
+      "id": "CVE-2026-107496",
+      "severity": "Medium",
+      "package": "libssl3t64",
+      "version": "3.0.13-0ubuntu3.16",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+      "fixState": "not-fixed",
+      "fixVersions": []
+    },
+    {
+      "id": "CVE-2026-107496",
+      "severity": "Medium",
+      "package": "openssl",
+      "version": "3.0.13-0ubuntu3.16",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+      "fixState": "not-fixed",
+      "fixVersions": []
+    },
+    {
+      "id": "CVE-2026-95818",
+      "severity": "Medium",
+      "package": "libc6",
+      "version": "2.39-0ubuntu8.9",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+      "fixState": "fixed",
+      "fixVersions": [
+        "2.39-0ubuntu8.12"
+      ]
+    },
+    {
+      "id": "CVE-2026-86805",
+      "severity": "Medium",
+      "package": "libc6",
+      "version": "2.39-0ubuntu8.9",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.9?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+      "fixState": "fixed",
+      "fixVersions": [
+        "2.39-0ubuntu8.12"
+      ]
+    }
+  ],
+  "runtimeBaseFileList": {
+    "digest": "sha256:e7e90bfc3ce16f9efdf18c25c7e4876af4ffba7ea50582878f6ea05b1e04a7ec",
+    "entries": 1574,
+    "pathsContainingExpat": 0,
+    "present": [
+      "usr/lib/x86_64-linux-gnu/libc.so.6",
+      "usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+      "var/lib/chisel/manifest.wall"
+    ]
+  },
+  "disposition": "blocked",
+  "combinedSbomReceipt": null
+}

@@ -1,0 +1,215 @@
+{
+  "run": "44094830641",
+  "revision": "2ec5269eadd852a0badc3172278c00db4c41f2d8",
+  "imageRecords": [
+    {
+      "name": "validator",
+      "imageId": "sha256:cfaca299dee7454c43b9ea8486493d6c0874d9e7ddaa75485f32d65b9d852158",
+      "sbomDigest": "sha256:7d97a4416b5b1d6a29c68369af38def7ecaaa8f6fbb1eca6687a4414358ff00b",
+      "scanDigest": "sha256:a55b05c73983ddb7da3ce8fb2c5e0d1a2a4e9f1b056e3eef07bf25ddca7d44aa",
+      "packages": 314,
+      "findings": 0
+    },
+    {
+      "name": "kiota",
+      "imageId": "sha256:73f2eb058ea36d315a8df7fc6bd75bb54ddbe7a04c217a2b68a79e62fcbce6c3",
+      "sbomDigest": "sha256:261c9115ec7990cc5623c3856070ea4e0fccf9dfdcc8d3978c10231879450933",
+      "scanDigest": "sha256:11515bb9a8d41328ef543f99f67e9d3bf34477c01aec4cdda1edf178d0e4d3c9",
+      "packages": 118,
+      "findings": 13
+    }
+  ],
+  "images": [
+    {
+      "name": "validator",
+      "imageId": "sha256:cfaca299dee7454c43b9ea8486493d6c0874d9e7ddaa75485f32d65b9d852158",
+      "sbomDigest": "sha256:7d97a4416b5b1d6a29c68369af38def7ecaaa8f6fbb1eca6687a4414358ff00b",
+      "components": 683,
+      "scanDigest": "sha256:ac13634aca46740b45e477776a7c0a1794da1867bd86c1dae87fc3f001e857e8",
+      "databaseDigest": "sha256:496b86aa16bf26139b3023ed51c4b975e84666e3bc7b663e0edc328b300ed2fc",
+      "databaseBuilt": "2026-11-17T06:20:58Z",
+      "findings": []
+    },
+    {
+      "name": "kiota",
+      "imageId": "sha256:73f2eb058ea36d315a8df7fc6bd75bb54ddbe7a04c217a2b68a79e62fcbce6c3",
+      "sbomDigest": "sha256:261c9115ec7990cc5623c3856070ea4e0fccf9dfdcc8d3978c10231879450933",
+      "components": 1945,
+      "scanDigest": "sha256:65a2d154a24e64a6f605aa13f78037172f8bbddb1db3dc28027e2ba8290503fa",
+      "databaseDigest": "sha256:496b86aa16bf26139b3023ed51c4b975e84666e3bc7b663e0edc328b300ed2fc",
+      "databaseBuilt": "2026-11-17T06:20:58Z",
+      "findings": [
+        {
+          "id": "CVE-2026-113351",
+          "severity": "High",
+          "package": "libexpat1",
+          "version": "2.9.0-r0",
+          "type": "apk",
+          "purl": "pkg:apk/wolfi/libexpat1@2.9.0-r0?arch=x86_64&distro=wolfi-20230201&upstream=expat",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.10.0-r0"
+          ]
+        },
+        {
+          "id": "CVE-2026-115506",
+          "severity": "High",
+          "package": "libexpat1",
+          "version": "2.9.0-r0",
+          "type": "apk",
+          "purl": "pkg:apk/wolfi/libexpat1@2.9.0-r0?arch=x86_64&distro=wolfi-20230201&upstream=expat",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.10.0-r0"
+          ]
+        },
+        {
+          "id": "GHSA-qhrr-8q5h-9q3h",
+          "severity": "Medium",
+          "package": "MessagePack",
+          "version": "2.5.302",
+          "type": "dotnet",
+          "purl": "pkg:nuget/MessagePack@2.5.302",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.5.303"
+          ]
+        },
+        {
+          "id": "CVE-2026-84243",
+          "severity": "High",
+          "package": "glibc-2.44",
+          "version": "2.44-r9",
+          "type": "apk",
+          "purl": "pkg:apk/wolfi/glibc-2.44@2.44-r9?arch=x86_64&distro=wolfi-20230201",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.44-r16"
+          ]
+        },
+        {
+          "id": "CVE-2026-84243",
+          "severity": "High",
+          "package": "glibc-2.44-locale-posix",
+          "version": "2.44-r9",
+          "type": "apk",
+          "purl": "pkg:apk/wolfi/glibc-2.44-locale-posix@2.44-r9?arch=x86_64&distro=wolfi-20230201&upstream=glibc-2.44",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.44-r16"
+          ]
+        },
+        {
+          "id": "CVE-2026-84243",
+          "severity": "High",
+          "package": "ld-linux-2.44",
+          "version": "2.44-r9",
+          "type": "apk",
+          "purl": "pkg:apk/wolfi/ld-linux-2.44@2.44-r9?arch=x86_64&distro=wolfi-20230201&upstream=glibc-2.44",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.44-r16"
+          ]
+        },
+        {
+          "id": "CVE-2026-84243",
+          "severity": "High",
+          "package": "libcrypt1-2.44",
+          "version": "2.44-r9",
+          "type": "apk",
+          "purl": "pkg:apk/wolfi/libcrypt1-2.44@2.44-r9?arch=x86_64&distro=wolfi-20230201&upstream=glibc-2.44",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.44-r16"
+          ]
+        },
+        {
+          "id": "GHSA-8rvm-662m-jvqv",
+          "severity": "Unknown",
+          "package": "glibc-2.44",
+          "version": "2.44-r9",
+          "type": "apk",
+          "purl": "pkg:apk/wolfi/glibc-2.44@2.44-r9?arch=x86_64&distro=wolfi-20230201",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.44-r16"
+          ]
+        },
+        {
+          "id": "GHSA-8rvm-662m-jvqv",
+          "severity": "Unknown",
+          "package": "glibc-2.44-locale-posix",
+          "version": "2.44-r9",
+          "type": "apk",
+          "purl": "pkg:apk/wolfi/glibc-2.44-locale-posix@2.44-r9?arch=x86_64&distro=wolfi-20230201&upstream=glibc-2.44",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.44-r16"
+          ]
+        },
+        {
+          "id": "GHSA-8rvm-662m-jvqv",
+          "severity": "Unknown",
+          "package": "ld-linux-2.44",
+          "version": "2.44-r9",
+          "type": "apk",
+          "purl": "pkg:apk/wolfi/ld-linux-2.44@2.44-r9?arch=x86_64&distro=wolfi-20230201&upstream=glibc-2.44",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.44-r16"
+          ]
+        },
+        {
+          "id": "GHSA-8rvm-662m-jvqv",
+          "severity": "Unknown",
+          "package": "libcrypt1-2.44",
+          "version": "2.44-r9",
+          "type": "apk",
+          "purl": "pkg:apk/wolfi/libcrypt1-2.44@2.44-r9?arch=x86_64&distro=wolfi-20230201&upstream=glibc-2.44",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.44-r16"
+          ]
+        },
+        {
+          "id": "GHSA-6r6q-9jmv-gg3h",
+          "severity": "Unknown",
+          "package": "libexpat1",
+          "version": "2.9.0-r0",
+          "type": "apk",
+          "purl": "pkg:apk/wolfi/libexpat1@2.9.0-r0?arch=x86_64&distro=wolfi-20230201&upstream=expat",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.10.0-r0"
+          ]
+        },
+        {
+          "id": "GHSA-j83x-34mv-v962",
+          "severity": "Unknown",
+          "package": "libexpat1",
+          "version": "2.9.0-r0",
+          "type": "apk",
+          "purl": "pkg:apk/wolfi/libexpat1@2.9.0-r0?arch=x86_64&distro=wolfi-20230201&upstream=expat",
+          "fixState": "fixed",
+          "fixVersions": [
+            "2.10.0-r0"
+          ]
+        }
+      ]
+    }
+  ],
+  "security": {
+    "secret-scan": {
+      "status": "passed",
+      "scanner": "secretlint@13.0.6",
+      "inputDigest": "sha256:a9c7031ce8bea5c6564895b5960def9f227cf97d8b5df0271f74ddb23c7db24b",
+      "findings": []
+    },
+    "vulnerability-scan": {
+      "status": "passed",
+      "scanner": "pnpm-audit@11.25.0",
+      "inputDigest": "sha256:a9c7031ce8bea5c6564895b5960def9f227cf97d8b5df0271f74ddb23c7db24b",
+      "findings": []
+    }
+  }
+}
