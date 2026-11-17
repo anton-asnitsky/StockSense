@@ -70,7 +70,7 @@ proxy = f"http://127.0.0.1:{server.server_port}"
 root = pathlib.Path("/rootfs")
 (root / "var/lib/dpkg").mkdir(parents=True)
 slices = """base-files_base base-files_chisel base-files_release-info ca-certificates_data
-libc6_libs libgcc-s1_libs libicu74_libs libssl3t64_libs libstdc++6_libs
+libc6_libs libgcc-s1_libs libicu74_libs libssl3t64_libs libstdc++6_libs liblttng-ust1t64_libs
 tzdata-legacy_zoneinfo tzdata_zoneinfo""".split()
 subprocess.run(["/usr/local/bin/chisel-wrapper", "--generate-dpkg-status", str(root / "var/lib/dpkg/status"),
                 "--", "--release", "/slices", "--root", str(root), *slices], check=True,
