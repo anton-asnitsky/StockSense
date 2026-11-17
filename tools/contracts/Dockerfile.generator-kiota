@@ -7,18 +7,19 @@ ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1 \
     HOME=/tmp
 WORKDIR /repo
-RUN ["/bin/sh", "-c", "dotnet tool install Microsoft.OpenApi.Kiota --tool-path /opt/kiota --version 1.35.0 && /opt/kiota/kiota --version && echo '5e75f6adf161717be8d9f39eb596f93d52535e7b8cbcc00cffdcef3d0d3c3486  /opt/kiota/.store/microsoft.openapi.kiota/1.35.0/microsoft.openapi.kiota/1.35.0/microsoft.openapi.kiota.1.35.0.nupkg' | sha256sum -c -"]
+# Add the local HTTPS inspection CA only during NuGet restore.
+RUN --mount=type=secret,id=nuget_ca --mount=type=tmpfs,target=/run/nuget-trust ["/bin/sh", "-ec", "if [ -f /run/secrets/nuget_ca ]; then cat /etc/ssl/certs/ca-certificates.crt /run/secrets/nuget_ca > /run/nuget-trust/ca.pem; export SSL_CERT_FILE=/run/nuget-trust/ca.pem; fi; dotnet tool install Microsoft.OpenApi.Kiota --tool-path /opt/kiota --version 1.38.0 && /opt/kiota/kiota --version && echo 'ec934c391c94e156543ce63cb497d6944180105b2b794b8b3a53a89b89cd4d82  /opt/kiota/.store/microsoft.openapi.kiota/1.38.0/microsoft.openapi.kiota/1.38.0/microsoft.openapi.kiota.1.38.0.nupkg' | sha256sum -c -"]
 # This image has only a .NET 10 runtime; the SDK-installed tool also carries
 # net8.0 and net9.0 copies that cannot execute in the final stage. Keep the
 # verified nupkg and net10.0 payload, then prove the final CLI still runs.
-RUN ["/bin/sh", "-c", "test -d /opt/kiota/.store/microsoft.openapi.kiota/1.35.0/microsoft.openapi.kiota/1.35.0/tools/net10.0 && rm -rf /opt/kiota/.store/microsoft.openapi.kiota/1.35.0/microsoft.openapi.kiota/1.35.0/tools/net8.0 /opt/kiota/.store/microsoft.openapi.kiota/1.35.0/microsoft.openapi.kiota/1.35.0/tools/net9.0"]
+RUN ["/bin/sh", "-c", "test -d /opt/kiota/.store/microsoft.openapi.kiota/1.38.0/microsoft.openapi.kiota/1.38.0/tools/net10.0 && rm -rf /opt/kiota/.store/microsoft.openapi.kiota/1.38.0/microsoft.openapi.kiota/1.38.0/tools/net8.0 /opt/kiota/.store/microsoft.openapi.kiota/1.38.0/microsoft.openapi.kiota/1.38.0/tools/net9.0"]
 # A net10-only launcher retains the cgroup peak-memory proof without requiring
 # a shell or coreutils in the minimal runtime. It exits unsuccessfully if the
 # kernel measurement is unavailable. No third-party package is restored.
 RUN ["/bin/sh", "-c", "mkdir -p /opt/kiota-probe-src && printf '%s\n' '<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><UseAppHost>false</UseAppHost></PropertyGroup></Project>' > /opt/kiota-probe-src/kiota-probe.csproj && printf '%s\n' 'using System;' 'using System.Diagnostics;' 'using System.IO;' 'try {' '  var start = new ProcessStartInfo(\"/opt/kiota/kiota\") { UseShellExecute = false };' '  foreach (var arg in args) start.ArgumentList.Add(arg);' '  using var child = Process.Start(start);' '  if (child is null) return 125;' '  child.WaitForExit();' '  Console.Error.WriteLine(\"STOCKSENSE_GENERATOR_PEAK=\" + File.ReadAllText(\"/sys/fs/cgroup/memory.peak\").Trim());' '  return child.ExitCode;' '} catch { return 125; }' > /opt/kiota-probe-src/Program.cs && dotnet publish /opt/kiota-probe-src/kiota-probe.csproj -c Release -o /opt/kiota-probe -p:RestoreIgnoreFailedSources=true"]
 # Run the pinned Kiota tool without build-only SDK and PowerShell packages.
 # The final runtime image is smoke-tested and scanned as the exact CI subject.
-FROM --platform=linux/amd64 cgr.dev/chainguard/dotnet-runtime:latest@sha256:e09b08bbe55a530fa08c5131a22c62a2ab35da8c7ab93791115d6d3ce8b804a6
+FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/runtime@sha256:e7e90bfc3ce16f9efdf18c25c7e4876af4ffba7ea50582878f6ea05b1e04a7ec
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_NOLOGO=1 \
     HOME=/tmp

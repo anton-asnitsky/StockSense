@@ -1,7 +1,7 @@
 {
   "packageVersion": "1.0.0",
   "manifestStatus": "candidate",
-  "sourceRevision": "ff3e51ec34b26c633dea8cde42c305b856ad7323",
+  "sourceRevision": "1820225f36f578c45d29c0c2746dc9e3e9def187",
   "openapi": [
     {
       "provider": "U11 Web BFF",
@@ -45,7 +45,7 @@
       "document": "governance/contract-package-policy.json",
       "semanticVersion": "1.0.0",
       "contentDigest": "sha256:7bd05065b012b25af6d38218a7212deab51095b980d5f7a947cc2894f1adb8b8",
-      "sourceRevision": "ff3e51ec34b26c633dea8cde42c305b856ad7323"
+      "sourceRevision": "1820225f36f578c45d29c0c2746dc9e3e9def187"
     },
     {
       "kind": "example-fixture",
@@ -57,7 +57,7 @@
       "document": "governance/example-fixture.json",
       "semanticVersion": "1.0.0",
       "contentDigest": "sha256:dee3d592f160b8a7e459ebb99c390c39438acaaa40187616dc8c3794e7567a9f",
-      "sourceRevision": "ff3e51ec34b26c633dea8cde42c305b856ad7323"
+      "sourceRevision": "1820225f36f578c45d29c0c2746dc9e3e9def187"
     },
     {
       "kind": "generation-profile",
@@ -68,8 +68,8 @@
       ],
       "document": "governance/generation-profile.json",
       "semanticVersion": "1.0.0",
-      "contentDigest": "sha256:243cf43bfc5dfb336ecdb535a3eb83242b17ddcc2982770b4890742dd8aa6f86",
-      "sourceRevision": "ff3e51ec34b26c633dea8cde42c305b856ad7323"
+      "contentDigest": "sha256:77006a3092f1b7a9d343f36874c73502cd895ac81a0f736341ddb68e2dafd8d0",
+      "sourceRevision": "1820225f36f578c45d29c0c2746dc9e3e9def187"
     }
   ],
   "boundaryCoverage": [
