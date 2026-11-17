@@ -1,0 +1,204 @@
+{
+  "schemaVersion": 1,
+  "snapshot": "20261116T000000Z",
+  "tools": {
+    "chisel": {
+      "algorithm": "sha384",
+      "url": "https://github.com/canonical/chisel/releases/download/v1.5.0/chisel_v1.5.0_linux_amd64.tar.gz",
+      "digest": "f8ba3f3d04165b50d91aae7eb3bcaca2a714f1877d2af005989617937cf2e375ab30d4a50b1308263e61a61ecb79de5c"
+    },
+    "slices": {
+      "algorithm": "sha256",
+      "url": "https://codeload.github.com/canonical/chisel-releases/tar.gz/a84c5eb70f22c34212c6582f603467498061c978",
+      "digest": "99f546c8c331d5f41d2d18992e4dedf7ce6077f77a925e28e84fa796ecd4796d"
+    },
+    "wrapper": {
+      "algorithm": "sha256",
+      "url": "https://raw.githubusercontent.com/canonical/rocks-toolbox/06863a443519f644272eddfc45e013de8dbe0cb2/chisel-wrapper",
+      "digest": "94f97c7624fbaf84a747e7456726abaf1b5134e75197cfe6f39bd62406714de4"
+    }
+  },
+  "snapshotInputs": {
+    "dists/noble-security/InRelease": [
+      126127,
+      "b26a00fd20bcf0f31cb3e132702958eba8d50cd81d3b20bfe7433b77ebf7f775"
+    ],
+    "dists/noble-security/main/binary-amd64/by-hash/SHA256/a6b73edfe559ad9a4d6ec67eb4b2e337510fd8d09db08cdc5584112b5b3d03ec": [
+      1471005,
+      "a6b73edfe559ad9a4d6ec67eb4b2e337510fd8d09db08cdc5584112b5b3d03ec"
+    ],
+    "dists/noble-security/universe/binary-amd64/by-hash/SHA256/3a770bc8bc2a06adc5527e4efe7be7c975a8f4079279c2d649cb169277f4f944": [
+      1557175,
+      "3a770bc8bc2a06adc5527e4efe7be7c975a8f4079279c2d649cb169277f4f944"
+    ],
+    "dists/noble-updates/InRelease": [
+      126125,
+      "cc12944ff54a4dfde90014a9532b6c924139a888e53e5f0cb9e010b44f81c83f"
+    ],
+    "dists/noble-updates/main/binary-amd64/by-hash/SHA256/e1e0f535c34472b256112515578148225e5020c08cd771087a8eb11fdddc69d3": [
+      1791932,
+      "e1e0f535c34472b256112515578148225e5020c08cd771087a8eb11fdddc69d3"
+    ],
+    "dists/noble-updates/universe/binary-amd64/by-hash/SHA256/71ba85634fcf374c2269694bdf01cff094744f239614436a8d9814ba540869d3": [
+      2178787,
+      "71ba85634fcf374c2269694bdf01cff094744f239614436a8d9814ba540869d3"
+    ],
+    "dists/noble/InRelease": [
+      255850,
+      "cdb2f31d809f589719a53c6ad15f255b27569c4059542ada282aaa21b8e164b0"
+    ],
+    "dists/noble/main/binary-amd64/by-hash/SHA256/e0d7e4cbb09d2aa7f9e104a1488817417bc9d85f3e5d9a21156a52ec641ae531": [
+      1808488,
+      "e0d7e4cbb09d2aa7f9e104a1488817417bc9d85f3e5d9a21156a52ec641ae531"
+    ],
+    "dists/noble/universe/binary-amd64/by-hash/SHA256/ce57756edcce0a5f7993ceb89057e1510148e04e3b85a066d780e4bc00485c8a": [
+      19315644,
+      "ce57756edcce0a5f7993ceb89057e1510148e04e3b85a066d780e4bc00485c8a"
+    ],
+    "pool/main/b/base-files/base-files_13ubuntu10.5_amd64.deb": [
+      73220,
+      "87e8c41e62f61625fb78a982d0bc0a70f40ef8375bc313b154914d1b3759c823"
+    ],
+    "pool/main/c/ca-certificates/ca-certificates_20260816ubuntu0.24.04.2_all.deb": [
+      140064,
+      "f9fbacd417b515450b831032cc39d18059e9874e67525679a43c16071dabf9a0"
+    ],
+    "pool/main/g/gcc-14/gcc-14-base_14.2.0-4ubuntu2~24.04.1_amd64.deb": [
+      51014,
+      "b95c172411a7fdae70307cf33a9f5320ba5e056b556454543dd5b679d5ce1c4f"
+    ],
+    "pool/main/g/gcc-14/libgcc-s1_14.2.0-4ubuntu2~24.04.1_amd64.deb": [
+      78392,
+      "aa7fadbe33b78bcf99885318040601c550c208929565b179891d9a3cc2aa68cd"
+    ],
+    "pool/main/g/gcc-14/libstdc++6_14.2.0-4ubuntu2~24.04.1_amd64.deb": [
+      792064,
+      "a51f8de7829211db961a31f02158058ad1a95f92ac6d0a5dff6350e2821c54c0"
+    ],
+    "pool/main/g/glibc/libc6_2.39-0ubuntu8.12_amd64.deb": [
+      3264258,
+      "d821b41fc59cb4978ecd53bc83e5c964ac15d305c8d2ac4c8a35aebe55010fb9"
+    ],
+    "pool/main/i/icu/libicu74_74.2-1ubuntu3.1_amd64.deb": [
+      10860078,
+      "c9a70989678660eed9a1e904c74fa043da8bec8e2036856fc16e31ced79b04f8"
+    ],
+    "pool/main/o/openssl/libssl3t64_3.0.13-0ubuntu3.16_amd64.deb": [
+      1945300,
+      "219f43b1cd836a4da550938db5fda93160d269d39a4edcf1f1ce698a470db797"
+    ],
+    "pool/main/o/openssl/openssl_3.0.13-0ubuntu3.16_amd64.deb": [
+      1003702,
+      "675b84971ffd4467707008c25ef7520f90ea7c23ef27b7a76b0dccf1d7c4dc3f"
+    ],
+    "pool/main/t/tzdata/tzdata-legacy_2026e-0ubuntu0.24.04.1_all.deb": [
+      95356,
+      "da66b34322e7545f12bd97f2bd31c5f78406a9a9ec0ccfe284c3f3eb791647bf"
+    ],
+    "pool/main/t/tzdata/tzdata_2026e-0ubuntu0.24.04.1_all.deb": [
+      282136,
+      "2f6794a7f31753fc947d9ac02ff03ea46510f34864f9d132a93d7b105e3c4447"
+    ]
+  },
+  "packages": [
+    {
+      "package": "base-files",
+      "version": "13ubuntu10.5",
+      "architecture": "amd64",
+      "source": "base-files",
+      "path": "pool/main/b/base-files/base-files_13ubuntu10.5_amd64.deb",
+      "bytes": 73220,
+      "sha256": "87e8c41e62f61625fb78a982d0bc0a70f40ef8375bc313b154914d1b3759c823"
+    },
+    {
+      "package": "ca-certificates",
+      "version": "20260816ubuntu0.24.04.2",
+      "architecture": "all",
+      "source": "ca-certificates",
+      "path": "pool/main/c/ca-certificates/ca-certificates_20260816ubuntu0.24.04.2_all.deb",
+      "bytes": 140064,
+      "sha256": "f9fbacd417b515450b831032cc39d18059e9874e67525679a43c16071dabf9a0"
+    },
+    {
+      "package": "gcc-14-base",
+      "version": "14.2.0-4ubuntu2~24.04.1",
+      "architecture": "amd64",
+      "source": "gcc-14",
+      "path": "pool/main/g/gcc-14/gcc-14-base_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+      "bytes": 51014,
+      "sha256": "b95c172411a7fdae70307cf33a9f5320ba5e056b556454543dd5b679d5ce1c4f"
+    },
+    {
+      "package": "libc6",
+      "version": "2.39-0ubuntu8.12",
+      "architecture": "amd64",
+      "source": "glibc",
+      "path": "pool/main/g/glibc/libc6_2.39-0ubuntu8.12_amd64.deb",
+      "bytes": 3264258,
+      "sha256": "d821b41fc59cb4978ecd53bc83e5c964ac15d305c8d2ac4c8a35aebe55010fb9"
+    },
+    {
+      "package": "libgcc-s1",
+      "version": "14.2.0-4ubuntu2~24.04.1",
+      "architecture": "amd64",
+      "source": "gcc-14",
+      "path": "pool/main/g/gcc-14/libgcc-s1_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+      "bytes": 78392,
+      "sha256": "aa7fadbe33b78bcf99885318040601c550c208929565b179891d9a3cc2aa68cd"
+    },
+    {
+      "package": "libicu74",
+      "version": "74.2-1ubuntu3.1",
+      "architecture": "amd64",
+      "source": "icu",
+      "path": "pool/main/i/icu/libicu74_74.2-1ubuntu3.1_amd64.deb",
+      "bytes": 10860078,
+      "sha256": "c9a70989678660eed9a1e904c74fa043da8bec8e2036856fc16e31ced79b04f8"
+    },
+    {
+      "package": "libssl3t64",
+      "version": "3.0.13-0ubuntu3.16",
+      "architecture": "amd64",
+      "source": "openssl",
+      "path": "pool/main/o/openssl/libssl3t64_3.0.13-0ubuntu3.16_amd64.deb",
+      "bytes": 1945300,
+      "sha256": "219f43b1cd836a4da550938db5fda93160d269d39a4edcf1f1ce698a470db797"
+    },
+    {
+      "package": "libstdc++6",
+      "version": "14.2.0-4ubuntu2~24.04.1",
+      "architecture": "amd64",
+      "source": "gcc-14",
+      "path": "pool/main/g/gcc-14/libstdc++6_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+      "bytes": 792064,
+      "sha256": "a51f8de7829211db961a31f02158058ad1a95f92ac6d0a5dff6350e2821c54c0"
+    },
+    {
+      "package": "openssl",
+      "version": "3.0.13-0ubuntu3.16",
+      "architecture": "amd64",
+      "source": "openssl",
+      "path": "pool/main/o/openssl/openssl_3.0.13-0ubuntu3.16_amd64.deb",
+      "bytes": 1003702,
+      "sha256": "675b84971ffd4467707008c25ef7520f90ea7c23ef27b7a76b0dccf1d7c4dc3f"
+    },
+    {
+      "package": "tzdata",
+      "version": "2026e-0ubuntu0.24.04.1",
+      "architecture": "all",
+      "source": "tzdata",
+      "path": "pool/main/t/tzdata/tzdata_2026e-0ubuntu0.24.04.1_all.deb",
+      "bytes": 282136,
+      "sha256": "2f6794a7f31753fc947d9ac02ff03ea46510f34864f9d132a93d7b105e3c4447"
+    },
+    {
+      "package": "tzdata-legacy",
+      "version": "2026e-0ubuntu0.24.04.1",
+      "architecture": "all",
+      "source": "tzdata",
+      "path": "pool/main/t/tzdata/tzdata-legacy_2026e-0ubuntu0.24.04.1_all.deb",
+      "bytes": 95356,
+      "sha256": "da66b34322e7545f12bd97f2bd31c5f78406a9a9ec0ccfe284c3f3eb791647bf"
+    }
+  ]
+}
