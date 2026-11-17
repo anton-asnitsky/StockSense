@@ -59,7 +59,8 @@ jobs:
         working-directory: tools/contracts
         run: |
           node scripts/pin-generation.mjs
-          git diff --exit-code -- ../../contracts/samples/walking-skeleton/governance/generation-profile.json
+          node scripts/create-sample.mjs
+          git diff --exit-code -- ../../contracts/samples/walking-skeleton
           cp ../../contracts/samples/walking-skeleton/governance/generation-profile.json "$RUNNER_TEMP/r15-proof/"
           node --test --test-concurrency=1 test/integration/generation.test.mjs test/integration/bounded-generation.test.mjs | tee "$RUNNER_TEMP/r15-proof/generation-tests.txt"
           grep -Eq '(#|ℹ) skipped 0' "$RUNNER_TEMP/r15-proof/generation-tests.txt"
