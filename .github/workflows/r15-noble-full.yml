@@ -1,0 +1,101 @@
+name: R-15 patched Noble integrated full proof
+on:
+  push:
+    branches: [codex/r15-noble-snapshot-20261116]
+    paths: [.github/workflows/r15-noble-full.yml]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  full:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - lane: 1
+            artifact: 14356597052
+            archive: 14baae8a8d3d0f36839e8144bed1a62c0b3831aac0e6c6be17f8e095e5968aaf
+            image: sha256:887a09d647c642d8e40e25fbbbd402b4354b5677453df259331100f2123d1b8f
+          - lane: 2
+            artifact: 14356147623
+            archive: 0b41ba93363a7a9e064a9ff9a7b11c6ee736b232554410cc509980d8eaee62b2
+            image: sha256:edc392fce4df0a2eb94e6f8fd8b054b6834f5cb6535cc66bf7dacbc03b1d50a9
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ github.token }}
+      STOCKSENSE_KIOTA_IMAGE: ${{ matrix.image }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: 46325b340caa23f203227eae0f92a97b2c818c9c
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 11.25.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24.22.2
+      - name: Verify and import exact isolated image
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 46325b340caa23f203227eae0f92a97b2c818c9c
+          test "$(git rev-parse HEAD^1)" = 402ace3b195c291a756ed230a24a73199ef8349a
+          test "$(git rev-parse HEAD^2)" = e284f99d5629dfcbfcb2935b0005c48c40c3d2e9
+          mkdir "$RUNNER_TEMP/full"
+          gh api repos/anton-asnitsky/StockSense/actions/artifacts/${{ matrix.artifact }}/zip > "$RUNNER_TEMP/image.zip"
+          echo '${{ matrix.archive }}  '"$RUNNER_TEMP/image.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/image.zip" -d "$RUNNER_TEMP/image"
+          docker load -i "$RUNNER_TEMP/image/kiota.tar"
+          test "$(docker inspect "$STOCKSENSE_KIOTA_IMAGE" --format '{{.Id}}')" = "$STOCKSENSE_KIOTA_IMAGE"
+          docker image inspect "$STOCKSENSE_KIOTA_IMAGE" > "$RUNNER_TEMP/full/image.json"
+          git rev-parse HEAD HEAD^{tree} > "$RUNNER_TEMP/full/revision.txt"
+      - name: Install frozen tools and build source-bound validator
+        run: |
+          set -euo pipefail
+          pnpm --dir tools/contracts install --frozen-lockfile
+          dotnet tool restore
+          pnpm --dir tools/contracts setup:oasdiff
+          cd tools/contracts
+          validator=$(node scripts/build-standards-image.mjs)
+          [[ "$validator" =~ ^sha256:[a-f0-9]{64}$ ]]
+          echo "STOCKSENSE_STANDARDS_IMAGE=$validator" >> "$GITHUB_ENV"
+          echo "$validator" > "$RUNNER_TEMP/full/validator.txt"
+      - name: Lint and type-check
+        run: |
+          set -euo pipefail
+          pnpm --dir tools/contracts lint | tee "$RUNNER_TEMP/full/lint.txt"
+          pnpm --dir tools/contracts type-check | tee "$RUNNER_TEMP/full/types.txt"
+      - name: Full unit and integration suite with 80 percent floor
+        working-directory: tools/contracts
+        run: |
+          set -euo pipefail
+          node --experimental-test-coverage --test --test-concurrency=1 --test-coverage-include='src/**/*.mjs' --test-coverage-lines=80 test/unit/*.test.mjs test/integration/*.test.mjs 2>&1 | tee "$RUNNER_TEMP/full/coverage.txt"
+      - name: Validate explicit C01 through C27 package with pinned CLI
+        working-directory: tools/contracts
+        run: |
+          set -euo pipefail
+          export PKG=$(mktemp -d)
+          node --input-type=module -e "import {buildFullPackage} from './src/full-package.mjs'; const r=await buildFullPackage(process.env.GITHUB_WORKSPACE,process.env.PKG); if(!r.manifest||r.problems.length) throw Error(JSON.stringify(r.problems));"
+          node src/cli.mjs validate "$PKG" --repo-root ../.. > "$RUNNER_TEMP/full/canonical-cli.json"
+          node --input-type=module <<'JS'
+          import fs from 'node:fs/promises'; import assert from 'node:assert/strict';
+          import {ALL_BOUNDARIES,canonicalJson,digest} from './src/package-loader.mjs';
+          import {buildPackageBundle,verifyPackageBundle} from './src/package-bundle.mjs';
+          import {validateBundledCandidate} from './src/candidate-provenance.mjs';
+          const p=process.env.RUNNER_TEMP+'/full/';
+          const result=JSON.parse(await fs.readFile(p+'canonical-cli.json'));
+          assert.deepEqual(result.coveredBoundaries,ALL_BOUNDARIES);
+          assert.equal(result.releaseReady,false);
+          const bundle=verifyPackageBundle(await buildPackageBundle(process.env.PKG));
+          const receipt=await validateBundledCandidate(bundle,process.env.GITHUB_WORKSPACE,process.env.STOCKSENSE_STANDARDS_IMAGE);
+          assert.equal(receipt.resultDigest,digest(Buffer.from(canonicalJson(result))));
+          await fs.writeFile(p+'bundle-receipt.json',JSON.stringify({bundleDigest:bundle.artifactDigest,receipt},null,2));
+          JS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: noble-full-${{ matrix.lane }}
+          path: ${{ runner.temp }}/full/
+          retention-days: 30
