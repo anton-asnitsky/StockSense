@@ -14,16 +14,16 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
-      TARGET: 836fd77abbe0daec025d8c471385681c0dc20a3c
+      TARGET: 46325b340caa23f203227eae0f92a97b2c818c9c
       BASE: 402ace3b195c291a756ed230a24a73199ef8349a
-      HEAD: 6638de5303c95c3a50fa66d550be33de4627c6a8
+      HEAD: e284f99d5629dfcbfcb2935b0005c48c40c3d2e9
     defaults:
       run:
         shell: bash
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
-          ref: 836fd77abbe0daec025d8c471385681c0dc20a3c
+          ref: 46325b340caa23f203227eae0f92a97b2c818c9c
           fetch-depth: 0
           persist-credentials: false
       - name: Verify integrated candidate
@@ -77,6 +77,6 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: kiota-proof-${{ matrix.build }}-836fd77a
+          name: kiota-proof-${{ matrix.build }}-46325b34
           path: ${{ runner.temp }}/r15-proof/
           retention-days: 30
