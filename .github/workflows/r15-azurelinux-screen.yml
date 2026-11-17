@@ -75,7 +75,8 @@ jobs:
           cd "$RUNNER_TEMP/azure"
           docker pull --platform linux/amd64 "$SYFT"
           docker pull --platform linux/amd64 "$GRYPE"
-          docker run --rm --network none --read-only --cpus=1 --memory=2g -e SYFT_CHECK_FOR_APP_UPDATE=false -v "$PWD/io:/scan:ro" "$SYFT" docker-archive:/scan/kiota.tar -o cyclonedx-json@1.6 > io/syft.cdx.json
+          mkdir io/temp && chmod 777 io/temp
+          docker run --rm --network none --read-only --cpus=1 --memory=2g -v "$PWD/io/temp:/tmp" -e SYFT_CACHE_DIR=/tmp/cache -e SYFT_CHECK_FOR_APP_UPDATE=false -v "$PWD/io:/scan:ro" "$SYFT" docker-archive:/scan/kiota.tar -o cyclonedx-json@1.6 > io/syft.cdx.json
           jq --arg id "$IMG" --arg scanner "$SYFT" '.metadata.properties += [{name:"stocksense:imageId",value:$id},{name:"stocksense:scanner",value:$scanner}]' io/syft.cdx.json > proof/kiota.cdx.json
           grype=(docker run --rm --read-only --cpus=1 --memory=2g --tmpfs /tmp -e GRYPE_CHECK_FOR_APP_UPDATE=false -e GRYPE_DB_CACHE_DIR=/db -v "$PWD/db:/db" -v "$PWD/proof:/proof:ro")
           chmod 777 db
@@ -83,6 +84,7 @@ jobs:
           "${grype[@]}" --network none -e GRYPE_DB_AUTO_UPDATE=false "$GRYPE" db status -o json > proof/grype-db.json
           jq -e '.valid==true and (.error|not)' proof/grype-db.json
           "${grype[@]}" --network none -e GRYPE_DB_AUTO_UPDATE=false "$GRYPE" sbom:/proof/kiota.cdx.json -o json > proof/grype-raw.json
+          "${grype[@]}" --network none -e GRYPE_DB_AUTO_UPDATE=false "$GRYPE" sbom:/proof/kiota.cdx.json --distro azurelinux:3.0 -o json > proof/grype-azurelinux-explicit.json
           jq -r '.matches[]|[.vulnerability.id,.vulnerability.severity,.artifact.name,.artifact.version,.vulnerability.fix.state, (.vulnerability.fix.versions|join(","))]|@tsv' proof/grype-raw.json > proof/findings.tsv
           python3 - <<'PY' > proof/db-provider.txt
           import pathlib,sqlite3
