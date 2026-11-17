@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import { ContractError } from './package-loader.mjs';
 
 // Linux/amd64 is the hosted ubuntu-24.04 runner architecture. These are OCI
@@ -67,7 +68,32 @@ export async function verifyRawImageScan(directory, { name, imageId, sbomDigest,
       scanBytes.length > 64 * 1024 * 1024 || databaseBytes.length > 1024 * 1024) {
     fail('IMAGE_RAW', 'Raw image scan does not match its source-bound receipt');
   }
+  let normalized, raw, db;
+  try {
+    normalized = JSON.parse(await readFile(join(directory, `${name}.scan.json`), 'utf8'));
+    raw = JSON.parse(scanBytes.toString('utf8'));
+    db = JSON.parse(databaseBytes.toString('utf8'));
+  } catch { fail('IMAGE_RAW', 'Retained image scan reports are missing or malformed'); }
+  if (!isDeepStrictEqual(normalized, normalizeImageScan(raw, db, name, imageId, sbomDigest))) {
+    fail('IMAGE_RAW', 'Normalized image scan differs from the source-bound raw evidence');
+  }
   return receipt;
+}
+
+export function normalizeImageScan(raw, db, name, imageId, sbomDigest) {
+  if (!Array.isArray(raw?.matches) || (raw.ignoredMatches !== undefined &&
+      (!Array.isArray(raw.ignoredMatches) || raw.ignoredMatches.length !== 0))) {
+    fail('IMAGE_SCAN', 'Grype scan returned incomplete or suppressed matches');
+  }
+  return { schema: 'stocksense-image-scan-v2', image: name, imageId, sbomDigest,
+    scanner: SCANNERS.grype, status: 'completed',
+    database: { built: db.built, source: db.from, schemaVersion: db.schemaVersion,
+      status: db.valid === true && !db.error ? 'valid' : 'invalid' },
+    findings: raw.matches.map(match => ({ id: match.vulnerability?.id,
+      severity: match.vulnerability?.severity, package: match.artifact?.name,
+      version: match.artifact?.version, type: match.artifact?.type,
+      purl: match.artifact?.purl ?? null, fixState: match.vulnerability?.fix?.state,
+      fixVersions: match.vulnerability?.fix?.versions ?? [] })) };
 }
 const exactText = (value, limit = 512) => typeof value === 'string' && value.length > 0 &&
   value.length <= limit && value === value.trim() && !/[\x00-\x1f\x7f*]/.test(value);
@@ -81,7 +107,7 @@ function purlMatches(record) {
   const match = PURL.exec(record.purl);
   if (!match) return false;
   const [, type, path, qualifiers, subpath] = match;
-  if ({ deb: 'deb', npm: 'npm', dotnet: 'nuget' }[record.type] !== type) return false;
+  if ({ apk: 'apk', deb: 'deb', npm: 'npm', dotnet: 'nuget' }[record.type] !== type) return false;
   const versionAt = path.lastIndexOf('@');
   if (versionAt < 1 || versionAt === path.length - 1) return false;
   try {
@@ -95,6 +121,7 @@ function purlMatches(record) {
       ? segments.join('/') : (segments.at(-1) ?? '');
     if (type === 'npm' && segments.length !== (segments[0].startsWith('@') ? 2 : 1)) return false;
     if (type === 'nuget' && segments.length !== 1) return false;
+    if (type === 'apk' && segments.length !== 2) return false;
     const agrees = type === 'nuget'
       ? packageName.toLowerCase() === record.package.toLowerCase()
       : packageName === record.package;
@@ -237,6 +264,10 @@ export async function readImageEvidence(directory, imageIds, { requireClean = tr
     const packages = inspectImageSbom(sbom, name, imageId);
     const sbomDigest = digest(sbomBytes);
     const findings = inspectImageScan(scan, name, imageId, sbomDigest);
+    const inventory = new Set(packages.map(component => JSON.stringify([component.purl, component.version])));
+    if (findings.some(finding => !inventory.has(JSON.stringify([finding.purl, finding.version])))) {
+      fail('IMAGE_SBOM', `${name} finding is absent from its bound image inventory`);
+    }
     records.push({ name, imageId, sbomDigest, scanDigest: digest(scanBytes), packages: packages.length,
       findings: findings.length });
     for (const component of sbom.components) {

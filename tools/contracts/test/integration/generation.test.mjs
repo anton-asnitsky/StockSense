@@ -122,20 +122,20 @@ test('generated package hook manifest cannot be credited as a matching output', 
 
 
 test('the pinned Kiota generator produces a reproducible .NET client from the locked source', async t => {
-  // Kiota 1.35.0 is a pinned local dotnet tool. Where the .NET host or the
+  // Kiota 1.38.0 is a pinned local dotnet tool. Where the .NET host or the
   // restored tool is absent this skips rather than fails: an unavailable seam
   // must never read as a clean result.
   const probe = spawnSync(DOTNET_HOST, ['tool', 'run', 'kiota', '--', '--version'],
     { cwd: repoRoot, encoding: 'utf8', timeout: 120_000 });
-  if (probe.error || probe.status !== 0 || !String(probe.stdout).trimStart().startsWith('1.35.0')) {
-    t.skip('pinned Kiota 1.35.0 requires `dotnet tool restore` with the checked-in manifest');
+  if (probe.error || probe.status !== 0 || !String(probe.stdout).trimStart().startsWith('1.38.0')) {
+    t.skip('pinned Kiota 1.38.0 requires `dotnet tool restore` with the checked-in manifest');
     return;
   }
   const outputDirectory = 'dotnet-client';
   const consumer = {
     consumerId: 'dotnet-operations-client',
     generator: 'kiota',
-    generatorVersion: '1.35.0',
+    generatorVersion: '1.38.0',
     sourceDocument: 'web-bff/v1/browser-api.openapi.yaml',
     configurationDigest: generatorConfigurationDigest('kiota', outputDirectory),
     expectedOutputs: { [outputDirectory]: 'sha256:' + '0'.repeat(64) }
@@ -165,7 +165,7 @@ test('the pinned Kiota generator produces a reproducible .NET client from the lo
   // Two clean workspaces agree, so drift detection over this client would be
   // meaningful rather than reporting the generator's own nondeterminism.
   assert.deepEqual(second, first, 'two clean Kiota runs must produce identical bytes');
-  t.diagnostic(`kiota 1.35.0: ${paths.length} C# files, tree digest ${digest(Buffer.from(JSON.stringify(first)))}`);
+  t.diagnostic(`kiota 1.38.0: ${paths.length} C# files, tree digest ${digest(Buffer.from(JSON.stringify(first)))}`);
 });
 
 test('the pinned .NET client is compared against its declared output manifest', async t => {
@@ -176,13 +176,13 @@ test('the pinned .NET client is compared against its declared output manifest', 
   // assertNoDrift judges every generated file against the recorded digest.
   const probe = spawnSync(DOTNET_HOST, ['tool', 'run', 'kiota', '--', '--version'],
     { cwd: repoRoot, encoding: 'utf8', timeout: 120_000 });
-  if (probe.error || probe.status !== 0 || !String(probe.stdout).trimStart().startsWith('1.35.0')) {
-    t.skip('pinned Kiota 1.35.0 requires `dotnet tool restore` with the checked-in manifest');
+  if (probe.error || probe.status !== 0 || !String(probe.stdout).trimStart().startsWith('1.38.0')) {
+    t.skip('pinned Kiota 1.38.0 requires `dotnet tool restore` with the checked-in manifest');
     return;
   }
   const consumer = await consumerNamed('dotnet-operations-client');
   assert.equal(consumer.generator, 'kiota');
-  assert.equal(consumer.generatorVersion, '1.35.0');
+  assert.equal(consumer.generatorVersion, '1.38.0');
   assert.equal(consumer.sourceDocument, 'web-bff/v1/browser-api.openapi.yaml');
   const declared = Object.keys(consumer.expectedOutputs);
   assert.ok(declared.length > 50, `expected a full client manifest, got ${declared.length} entries`);
@@ -195,14 +195,14 @@ test('the pinned .NET client is compared against its declared output manifest', 
   const result = await regenerateConsumer(consumer, { runGenerator });
   assert.equal(result.consumerId, 'dotnet-operations-client');
   assert.deepEqual(result.outputs, consumer.expectedOutputs);
-  t.diagnostic(`kiota 1.35.0: ${declared.length} declared outputs verified with no drift`);
+  t.diagnostic(`kiota 1.38.0: ${declared.length} declared outputs verified with no drift`);
 });
 
 test('drift in any single file of the .NET client is reported', async t => {
   const probe = spawnSync(DOTNET_HOST, ['tool', 'run', 'kiota', '--', '--version'],
     { cwd: repoRoot, encoding: 'utf8', timeout: 120_000 });
-  if (probe.error || probe.status !== 0 || !String(probe.stdout).trimStart().startsWith('1.35.0')) {
-    t.skip('pinned Kiota 1.35.0 requires `dotnet tool restore` with the checked-in manifest');
+  if (probe.error || probe.status !== 0 || !String(probe.stdout).trimStart().startsWith('1.38.0')) {
+    t.skip('pinned Kiota 1.38.0 requires `dotnet tool restore` with the checked-in manifest');
     return;
   }
   const consumer = await consumerNamed('dotnet-operations-client');
