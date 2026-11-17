@@ -1,0 +1,35 @@
+# U1 R-15 independent runtime applicability review
+
+## Decision and scope
+
+Security specialist review, 2026-11-17: **ten of fourteen raw image rows have evidence supporting a narrowly scoped not-affected disposition; four rows remain unresolved risks.** This is technical applicability evidence, not risk acceptance, an approved exception, a green U1 claim, or permission to merge. Preserve all fourteen scanner rows and their original severity/fix status. No code or protected ledger was changed.
+
+Scope is the final Noble Kiota runtime digest `sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340`, not arbitrary Ubuntu/OpenSSL installations. Hosted reference: production run [44153396174](https://github.com/anton-asnitsky/StockSense/actions/runs/44153396174), lane 1 image `sha256:f85a75634ca0aaf663f3f5af108998c902b8ba30facee9109d33c8863cd11e52`. PR linkage remains in [final PR scan evidence](u1-r15-final-pr-scans-2026-11-17.json) and [PR76 attempt 2](u1-r15-final-pr76-attempt2-2026-11-17.json). Candidate heads: #74 `edeec8b54a4ee2d019349befbb005b944dce901d`; #75 `bd0241d3313a998039cce4a37059d188e502fda2`; #76 `0f5db4d25cc9364f825eb752dad05c037c7b9944`.
+
+## Findings and dispositions
+
+| Raw matches | Assessment | Evidence and remaining action |
+| --- | --- | --- |
+| Eight Medium/not-fixed rows: CVE-2026-88822, CVE-2026-88823, CVE-2026-95691, CVE-2026-95692; each against openssl and libssl3t64 3.0.13-0ubuntu3.16 | Supported not affected: vulnerable functionality absent | Upstream excludes 3.0. Exact Ubuntu source plus all 79 successfully applied patches contains no QUIC implementation/API or AES-GCM-SIV implementation/registration. Final libssl has no QUIC exports. Retain both package identities in any governed disposition. |
+| One Low/not-fixed row: CVE-2025-5222, libicu74 74.2-1ubuntu3.1 | Supported not affected in this image: affected genrb code absent | Exact ICU source restricts SRBRoot to seven files under tools/genrb. Its build links those objects into genrb, not ICU shared libraries. Three distro patches do not move this code. Final inventory has no genrb; all seven installed ICU libraries have no SRBRoot dynamic symbols. This includes libicutu and libicutest; their presence does not place genrb objects in them. |
+| One Negligible/wont-fix row: CVE-2016-20013, libc6 2.39-0ubuntu8.12 | Supported not affected for installed libc6: removed implementation | glibc 2.39 removed libcrypt. Exact Ubuntu distro patches do not restore it; the sole crypt build-rule hit is a development-package dependency substitution, not runtime implementation. Final inventory lacks libcrypt/libxcrypt and libc has no crypt, crypt_r, sha256_crypt or sha512_crypt dynamic symbols. Canonical ignored status alone is not the justification. |
+| Two Medium/not-fixed rows: CVE-2026-107496, openssl and libssl3t64 3.0.13-0ubuntu3.16 | Unresolved; do not classify not affected | OpenSSL3.0 is affected; CMS symbols remain in final libcrypto. No matching distro fix established. Absence of openssl CLI does not remove library exposure or the source-package row. Fix or separately governed residual-risk handling is required. |
+| Two Medium/not-fixed rows: CVE-2026-100290 and CVE-2026-115819, libc6 2.39-0ubuntu8.12 | Unresolved; do not classify not affected | Final libc exports regcomp/regexec and wide scanf entry points. No complete safe reachability proof or applicable fix established. Resource limits/read-only/no-network controls are mitigation, not code absence. |
+
+[OpenSSL advisory](https://openssl-library.org/news/secadv/20261110.txt), [Canonical ICU record](https://ubuntu.com/security/CVE-2025-5222), [Canonical SHA-crypt record](https://ubuntu.com/security/CVE-2016-20013), and [glibc 2.39 removal notice](https://raw.githubusercontent.com/bminor/glibc/glibc-2.39/NEWS) support these bounded assessments. The OpenSSL advisory schedules releases containing fixes for December 1; do not describe 3.0.24 as already released on November 17 merely because it is the named fixed version.
+
+## Verification evidence
+
+[Machine-readable source/binary results](u1-r15-runtime-applicability-review-2026-11-17.json) retain archive hashes, all 79 applied OpenSSL patch names, source membership results, inspected binary hashes and residual exported symbols. Independent inspection extracted regular libraries from local production image `sha256:89c9a4c01ac38da422858d0e504ce1bd6c4ac221cbfafa40c80c8aade1ce7453`; each of the ten relevant regular libc/OpenSSL/ICU library hashes matches hosted lane 1 `kiota.runtime.json`. Inspection used pinned Python image `sha256:2784af835b90070d9d37d3aa5aa01a3e825d88436b0d58f7776d2cdcb6780f9e`, no network, read-only container root, all capabilities dropped; ELF files were read, not executed.
+
+Exact Canonical sources came from Launchpad primary archive source-file URLs:
+
+- [OpenSSL 3.0.13-0ubuntu3.16 DSC](https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/openssl/3.0.13-0ubuntu3.16/openssl_3.0.13-0ubuntu3.16.dsc), publication 18805779. Both source/archive SHA256 values match its manifest. All 79 patches applied successfully. GCM-SIV text in CVE-2026-75803 backport prose/tests does not add that algorithm; actual backport modifies OCB/ChaCha and generic tests.
+- [ICU 74.2-1ubuntu3.1 DSC](https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/icu/74.2-1ubuntu3.1/icu_74.2-1ubuntu3.1.dsc). Original and Debian archive hashes match the DSC. Source archive was inspected directly, avoiding its known broken LICENSE symlink. genrb sources list includes reslist.cpp, wrtjava.cpp and wrtxml.cpp; ICU library build scope was checked against this source layout.
+- [glibc 2.39-0ubuntu8.12 DSC](https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/glibc/2.39-0ubuntu8.12/glibc_2.39-0ubuntu8.12.dsc). Debian patch archive hash matches DSC. Archive inspection avoids the irrelevant Hurd symlink that Windows extraction cannot create. Upstream glibc removal evidence is the 2.39 NEWS file; no full distro rebuild was attempted.
+
+## Limits and required follow-up
+
+This is source/build-membership and binary-symbol analysis, not a reproducible package rebuild, proof of every possible managed/native call path, or exploit test. Source DSCs were fetched over Canonical HTTPS and hashes reconciled; their OpenPGP signatures were not independently revalidated here. Signed snapshot/binary provenance remains the existing production evidence. ELF dynamic-symbol absence is corroboration, not standalone proof that stripped/private code is absent. `QUICK` in libicutest is an unrelated variable, not a QUIC protocol symbol.
+
+Any disposition must still pass the authoritative source-bound verifier and owner governance. No approval reference, owner acceptance or expiry was created. Revalidate these conclusions if the runtime, package versions, distro patchset, or candidate binding changes. Separate picomatch dependency findings, protected-main ledger repair, SBOM verification, R-16, U1 acceptance and C01 release are outside this review and remain independently gated.

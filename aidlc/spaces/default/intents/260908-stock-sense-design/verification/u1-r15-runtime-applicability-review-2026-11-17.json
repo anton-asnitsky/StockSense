@@ -1,0 +1,206 @@
+{
+  "opensslPatchCount": 79,
+  "opensslPatchesApplied": [
+    "debian-targets.patch",
+    "man-section.patch",
+    "no-symbolic.patch",
+    "pic.patch",
+    "c_rehash-compat.patch",
+    "Configure-allow-to-enable-ktls-if-target-does-not-start-w.patch",
+    "conf-Serialize-allocation-free-of-ssl_names.patch",
+    "Fix-tests-for-new-default-security-level.patch",
+    "tests-use-seclevel-1.patch",
+    "tls1.2-min-seclevel2.patch",
+    "skip_tls1.1_seclevel3_tests.patch",
+    "intel/0001-Dual-1536-2048-bit-exponentiation-optimization-for-I.patch",
+    "intel/0002-AES-GCM-enabled-with-AVX512-vAES-and-vPCLMULQDQ.patch",
+    "intel/002-vaes_gcm_avx512_fix.patch",
+    "fips/crypto-Add-kernel-FIPS-mode-detection.patch",
+    "fips/crypto-Automatically-use-the-FIPS-provider-when-the-kerne.patch",
+    "fips/apps-speed-Omit-unavailable-algorithms-in-FIPS-mode.patch",
+    "fips/apps-pass-propquery-arg-to-the-libctx-DRBG-fetches.patch",
+    "fips/test-Ensure-encoding-runs-with-the-correct-context-during.patch",
+    "openssl-pkcs1-implicit-rejection.patch",
+    "CVE-2024-2511.patch",
+    "CVE-2024-4603.patch",
+    "CVE-2024-4741.patch",
+    "CVE-2024-5535.patch",
+    "CVE-2024-6119.patch",
+    "CVE-2024-9143.patch",
+    "CVE-2024-13176.patch",
+    "CVE-2025-9230.patch",
+    "CVE-2025-15467-1.patch",
+    "CVE-2025-15467-2.patch",
+    "CVE-2025-15467-3.patch",
+    "CVE-2025-68160.patch",
+    "CVE-2025-69418.patch",
+    "CVE-2025-69419.patch",
+    "CVE-2025-69420.patch",
+    "CVE-2025-69421.patch",
+    "CVE-2026-2279x.patch",
+    "CVE-2026-28387.patch",
+    "CVE-2026-28388-1.patch",
+    "CVE-2026-28388-2.patch",
+    "CVE-2026-28389.patch",
+    "CVE-2026-28390.patch",
+    "CVE-2026-31789.patch",
+    "CVE-2026-31790-1.patch",
+    "CVE-2026-31790-2.patch",
+    "CVE-2026-34180.patch",
+    "CVE-2026-34182-1.patch",
+    "CVE-2026-34182-2.patch",
+    "CVE-2026-34182-3.patch",
+    "CVE-2026-42766.patch",
+    "CVE-2026-42770.patch",
+    "CVE-2026-45445.patch",
+    "CVE-2026-45446.patch",
+    "CVE-2026-45447-pre1.patch",
+    "CVE-2026-45447-1.patch",
+    "CVE-2026-45447-2.patch",
+    "CVE-2026-7383.patch",
+    "CVE-2026-9076.patch",
+    "CVE-2026-42767.patch",
+    "lp2161371.patch",
+    "regex_match_ecp_nistp521-ppc64.patch",
+    "CVE-2026-54874-1.patch",
+    "CVE-2026-54874-2.patch",
+    "CVE-2026-63072-1.patch",
+    "CVE-2026-63072-2.patch",
+    "CVE-2026-63074-1.patch",
+    "CVE-2026-63074-2.patch",
+    "CVE-2026-63076-1.patch",
+    "CVE-2026-63076-2.patch",
+    "CVE-2026-75803-1.patch",
+    "CVE-2026-75803-2.patch",
+    "CVE-2026-35189.patch",
+    "CVE-2026-54872-pre1.patch",
+    "CVE-2026-54872.patch",
+    "CVE-2026-75805-1.patch",
+    "CVE-2026-75805-2.patch",
+    "CVE-2026-75806.patch",
+    "CVE-2026-77696.patch",
+    "CVE-2026-84782.patch"
+  ],
+  "opensslAffectedFeatureSourceHits": [],
+  "libraries": {
+    "libc.so.6": {
+      "sha256": "755a371e86cc9f564ab54f66140747700fb0a103f698f659f2060f707897e09a",
+      "featureSymbols": [],
+      "residualSymbols": [
+        "350: 00000000000c9400   207 FUNC    GLOBAL DEFAULT   17 __isoc99_wscanf@@GLIBC_2.7",
+        "453: 000000000008fc70    30 FUNC    WEAK   DEFAULT   17 vscanf@@GLIBC_2.2.5",
+        "533: 00000000000c9310    14 FUNC    GLOBAL DEFAULT   17 __isoc99_vfwscanf@@GLIBC_2.7",
+        "638: 00000000000c9020    33 FUNC    GLOBAL DEFAULT   17 __isoc23_vwscanf@@GLIBC_2.38",
+        "660: 000000000010d7b0   279 FUNC    WEAK   DEFAULT   17 regcomp@@GLIBC_2.2.5",
+        "783: 000000000008a2b0   179 FUNC    GLOBAL DEFAULT   17 fwscanf@@GLIBC_2.2.5",
+        "874: 000000000005fc70    33 FUNC    GLOBAL DEFAULT   17 __isoc23_vscanf@@GLIBC_2.38",
+        "877: 00000000000c8e30   294 FUNC    GLOBAL DEFAULT   17 __isoc23_swscanf@@GLIBC_2.38",
+        "881: 00000000000c9320   176 FUNC    GLOBAL DEFAULT   17 __isoc99_vswscanf@@GLIBC_2.7",
+        "882: 000000000008a370    30 FUNC    GLOBAL DEFAULT   17 vwscanf@@GLIBC_2.2.5",
+        "1015: 00000000000c8f60    14 FUNC    GLOBAL DEFAULT   17 __isoc23_vfwscanf@@GLIBC_2.38",
+        "1143: 000000000008a4f0   291 FUNC    GLOBAL DEFAULT   17 swscanf@@GLIBC_2.2.5",
+        "1334: 00000000000c9120   184 FUNC    GLOBAL DEFAULT   17 __isoc99_fwscanf@@GLIBC_2.7",
+        "1351: 00000000000c8f70   176 FUNC    GLOBAL DEFAULT   17 __isoc23_vswscanf@@GLIBC_2.38",
+        "1416: 00000000000792c0    11 FUNC    WEAK   DEFAULT   17 vfwscanf@@GLIBC_2.2.5",
+        "1426: 000000000008a1e0   204 FUNC    GLOBAL DEFAULT   17 wscanf@@GLIBC_2.2.5",
+        "1434: 00000000000c93d0    33 FUNC    GLOBAL DEFAULT   17 __isoc99_vwscanf@@GLIBC_2.7",
+        "1691: 00000000000c91e0   294 FUNC    GLOBAL DEFAULT   17 __isoc99_swscanf@@GLIBC_2.7",
+        "1781: 000000000008a440   173 FUNC    WEAK   DEFAULT   17 vswscanf@@GLIBC_2.2.5",
+        "1879: 00000000000c9050   207 FUNC    GLOBAL DEFAULT   17 __isoc23_wscanf@@GLIBC_2.38",
+        "2487: 00000000000c8d70   184 FUNC    GLOBAL DEFAULT   17 __isoc23_fwscanf@@GLIBC_2.38",
+        "2492: 0000000000060020    33 FUNC    GLOBAL DEFAULT   17 __isoc99_vscanf@@GLIBC_2.7",
+        "2778: 000000000010db50   274 FUNC    GLOBAL DEFAULT   17 regexec@@GLIBC_2.3.4",
+        "2782: 0000000000187c90   220 FUNC    GLOBAL DEFAULT   17 regexec@GLIBC_2.2.5"
+      ]
+    },
+    "libcrypto.so.3": {
+      "sha256": "6866ed711dab8927e1bf82bf1cd30e828bdfc34f3cc1e83b1c9eb01ce6c37d9a",
+      "featureSymbols": [],
+      "residualSymbols": [
+        "568: 0000000000140d00   455 FUNC    GLOBAL DEFAULT   15 CMS_decrypt_set1_key@@OPENSSL_3.0.0",
+        "2333: 0000000000140920   962 FUNC    GLOBAL DEFAULT   15 CMS_decrypt_set1_pkey_and_peer@@OPENSSL_3.0.0",
+        "2602: 0000000000140cf0    11 FUNC    GLOBAL DEFAULT   15 CMS_decrypt_set1_pkey@@OPENSSL_3.0.0",
+        "4282: 0000000000140ed0   340 FUNC    GLOBAL DEFAULT   15 CMS_decrypt_set1_password@@OPENSSL_3.0.0",
+        "4453: 0000000000141030   573 FUNC    GLOBAL DEFAULT   15 CMS_decrypt@@OPENSSL_3.0.0"
+      ]
+    },
+    "libicudata.so.74.2": {
+      "sha256": "ddbb3718b8bd9cbd780e5ab08b4503c30a6c4fa0706ebe5d074ed6b596c1714e",
+      "featureSymbols": [],
+      "residualSymbols": []
+    },
+    "libicui18n.so.74.2": {
+      "sha256": "3550b194eb2cf2e6f798f033eb9ca279d498c21296b4a18790ce158d2023e47b",
+      "featureSymbols": [],
+      "residualSymbols": []
+    },
+    "libicuio.so.74.2": {
+      "sha256": "750b18b8bd63c4b60dd346de67fee24d08cc8da3dfc4cc3f709e514dc57a8493",
+      "featureSymbols": [],
+      "residualSymbols": []
+    },
+    "libicutest.so.74.2": {
+      "sha256": "549175dea22826a6d4c1a145d4e5796a6d38ccfd3b07f55be8e6250b5033c6e5",
+      "featureSymbols": [
+        "190: 0000000000013010     4 OBJECT  GLOBAL DEFAULT   25 QUICK"
+      ],
+      "residualSymbols": []
+    },
+    "libicutu.so.74.2": {
+      "sha256": "a93f8890099fe32aa569d5fe22e0537d632b144069da8b03a67d50401434b753",
+      "featureSymbols": [],
+      "residualSymbols": []
+    },
+    "libicuuc.so.74.2": {
+      "sha256": "7560aadde38e5f4237a47a1ddd5891f9b36768a77a60faae30beee003ac01901",
+      "featureSymbols": [],
+      "residualSymbols": []
+    },
+    "libssl.so.3": {
+      "sha256": "a40e7b67489bbd257e432c700ff8f6a1ad796425b5eccecdc2930127fdd86624",
+      "featureSymbols": [],
+      "residualSymbols": []
+    }
+  },
+  "icuSRBRootFiles": [
+    "icu/source/tools/genrb/reslist.h",
+    "icu/source/tools/genrb/wrtjava.cpp",
+    "icu/source/tools/genrb/reslist.cpp",
+    "icu/source/tools/genrb/wrtxml.cpp",
+    "icu/source/tools/genrb/genrb.cpp",
+    "icu/source/tools/genrb/parse.h",
+    "icu/source/tools/genrb/parse.cpp"
+  ],
+  "icuGenrbSources": [
+    "errmsg.c",
+    "filterrb.cpp",
+    "genrb.cpp",
+    "parse.cpp",
+    "prscmnts.cpp",
+    "rbutil.c",
+    "read.c",
+    "reslist.cpp",
+    "rle.c",
+    "ustr.c",
+    "wrtjava.cpp",
+    "wrtxml.cpp"
+  ],
+  "glibcDistroCryptSourceHits": [
+    [
+      "debian/rules.d/debhelper.mk",
+      171,
+      "\techo 'libcrypt-dev:Depends=libcrypt-dev' >> tmp.substvars"
+    ]
+  ],
+  "sourceArchives": {
+    "glibc_2.39-0ubuntu8.12.debian.tar.xz": "cc7cf38a3060a282011e83c946b6cec1aebe9b04e21e133449abe28340a710f6",
+    "glibc_2.39-0ubuntu8.12.dsc": "2dd63e1aef4623627bd67c1b8479baa585a68e98f27d2d4fe60d7cde57bcf7fc",
+    "icu_74.2-1ubuntu3.1.debian.tar.xz": "45c74f50709547b0bfe3de020fd77be92c44d55e7020e718b0a47a0d0382f074",
+    "icu_74.2-1ubuntu3.1.dsc": "6cbf2e7018b5d16d634994e32af96f4d60f4468c36674c57f897b68812bbd883",
+    "icu_74.2.orig.tar.gz": "5e4fb11d6a3e6b85afb55de8da8a71538f1d8fd64fce893986b37d60e5bb0091",
+    "icu_74.2.orig.tar.gz.asc": "1ca528b0017bae639fec7e89e3f988d0fa7def3e2436e5f7f5f9ec7dec2d9ece",
+    "openssl_3.0.13-0ubuntu3.16.debian.tar.xz": "77893129922c917792dd187c2853fb36ce1c98597c442b42d8190252959b7f6c",
+    "openssl_3.0.13-0ubuntu3.16.dsc": "7d1e552a6f519836c352407e521bafdda7552ec6d1ba242968c35fc0e17f47b6",
+    "openssl_3.0.13.orig.tar.gz": "88525753f79d3bec27d2fa7c66aa0b92b3aa9498dafd93d7cfa4b3780cdae313"
+  }
+}

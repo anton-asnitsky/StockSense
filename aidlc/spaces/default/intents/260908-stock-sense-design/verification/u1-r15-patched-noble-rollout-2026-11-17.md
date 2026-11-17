@@ -16,9 +16,9 @@ The final runtime preserves the Microsoft payload. Its optional LTTng provider r
 
 ## Remaining owner and security decisions
 
-- U1 failed at protected-main ledger verification on all three PRs. The fourteen exact runtime findings remain unapproved. The proposal retains uncertainty in the eight upstream not-affected cases and does not declare native paths unreachable. [Disposition proposal](u1-r15-noble-disposition-proposal-2026-11-17.md)
+- U1 failed at protected-main ledger verification on all three PRs. The fourteen exact runtime findings remain unapproved. Independent distro source and binary review now supports ten narrowly scoped not-affected rows; four Medium rows remain unresolved. See [applicability review](u1-r15-runtime-applicability-review-2026-11-17.md). [Disposition proposal](u1-r15-noble-disposition-proposal-2026-11-17.md)
 - The separate vulnerability check failed on all three for the newly reported High picomatch 4.0.7 advisory. No patched release is available in the checked upstream metadata. [Dependency evidence](u1-r15-new-picomatch-finding-2026-11-17.md)
-- Earlier U2 passes bind the old heads. The new heads require owner comments and reruns. The current exact approval lines were presented to the owner.
+- U2 now passes on all three published heads after verified owner comments and attempt-2 reruns. See [current U2 evidence](u2-patched-noble-pr74-76-2026-11-17.md). Earlier U2 passes remain historical.
 - Governed combined SBOM authority and attestation are outstanding. R-15 and R-16 remain open. No PR was merged, and neither U1 acceptance nor C01 release was recorded.
 
 Attempt 1 of the final PR #76 run retains independently verified raw receipts and GitHub artifact digest metadata, but its original outer ZIP was replaced by the rerun before an independent archive-byte comparison. Attempt 2 retains its archive. This limitation does not imply an outer-archive verification for attempt 1.
