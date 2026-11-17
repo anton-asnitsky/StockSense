@@ -20,7 +20,7 @@ const heads = [
 const results = [];
 for (const [pr, head] of heads) {
   const tree = join(scratch, 'pr'+pr);
-  execute('git', ['fetch', '--depth=1', 'origin', head], source);
+  execute('git', ['fetch', 'origin', head], source);
   execute('git', ['worktree', 'add', '--detach', tree, head], source);
   assert.equal(execute('git', ['rev-parse','HEAD'], tree).trim(), head);
   execute('pnpm', ['install','--frozen-lockfile'], join(tree,'tools/contracts'));

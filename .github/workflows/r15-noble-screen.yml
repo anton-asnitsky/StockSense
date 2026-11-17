@@ -27,6 +27,7 @@ jobs:
         with:
           path: candidate
           ref: 5897e4fc3e402771feb0a7dda3a7b015b52b2340
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
@@ -152,6 +153,10 @@ jobs:
         working-directory: candidate/tools/contracts
         run: |
           set -euo pipefail
+          test "$(git rev-parse --is-shallow-repository)" = false
+          git cat-file -e '402ace3b195c291a756ed230a24a73199ef8349a^{commit}'
+          git cat-file -e 'b8be1e0bbc81cf43f1ab62cda02824ce03d70720^{commit}'
+          git cat-file -e 'b8be1e0bbc81cf43f1ab62cda02824ce03d70720:contracts/samples/walking-skeleton/governance/example-fixture.json'
           pnpm install --frozen-lockfile
           dotnet tool restore
           pnpm setup:oasdiff
