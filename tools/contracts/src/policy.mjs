@@ -158,6 +158,51 @@ export function openApiInlineResponseElements(document) {
   return elements;
 }
 
+function operationExampleTargets(document) {
+  const targets = new Map();
+  for (const pathItem of Object.values(document.paths ?? {})) {
+    for (const method of ['get', 'post', 'put', 'patch', 'delete', 'options', 'head', 'trace']) {
+      const operation = pathItem?.[method];
+      if (!operation) continue;
+      const id = operation.operationId;
+      if (typeof id !== 'string' || !/^[A-Za-z][A-Za-z0-9]{0,96}$/.test(id) || targets.has(id)) {
+        fail('FIXTURE_TARGET', 'BR2.8', 'Operation examples require unique operation IDs');
+      }
+      targets.set(id, { operation, pathItem });
+    }
+  }
+  return targets;
+}
+
+function operationExampleSchema(document, id, status) {
+  const target = operationExampleTargets(document).get(id);
+  if (!target || !Object.hasOwn(target.operation.responses ?? {}, status)) {
+    fail('FIXTURE_TARGET', 'BR2.8', 'Operation example has an undeclared response status');
+  }
+  const parameters = new Map();
+  for (const parameter of [...(target.pathItem.parameters ?? []), ...(target.operation.parameters ?? [])]) {
+    if (!['header', 'path', 'query'].includes(parameter?.in) || typeof parameter.name !== 'string' ||
+        !object(parameter.schema)) {
+      fail('FIXTURE_TARGET', 'BR2.8', 'Operation example uses an unsupported parameter');
+    }
+    parameters.set(`${parameter.in}:${parameter.name}`, parameter);
+  }
+  const closedObject = () => ({ type: 'object', properties: Object.create(null),
+    required: /** @type {string[]} */ ([]), additionalProperties: false });
+  const request = closedObject();
+  for (const parameter of parameters.values()) {
+    const location = parameter.in === 'header' ? 'headers' : parameter.in;
+    const group = request.properties[location] ??= closedObject();
+    group.properties[parameter.name] = parameter.schema;
+    if (parameter.required) {
+      group.required.push(parameter.name);
+      if (!request.required.includes(location)) request.required.push(location);
+    }
+  }
+  return { type: 'object', properties: { request, responseStatus: { const: status } },
+    required: ['request', 'responseStatus'], additionalProperties: false };
+}
+
 /** Enumerate the bounded named examples that the canonical OpenAPI source actually declares. */
 export function openApiNamedExamples(document, documentPath) {
   if (document?.openapi !== '3.1.2') fail('FIXTURE_TARGET', 'BR2.8', 'OpenAPI example source has an unsupported dialect');
@@ -173,6 +218,29 @@ export function openApiNamedExamples(document, documentPath) {
     examples.push({ id, element, payload: value, expectedValid,
       ...(expectedFailures === undefined ? {} : { expectedFailures }) });
   };
+  const operations = document['x-contract-operation-examples'];
+  if (operations !== undefined) {
+    if (!Array.isArray(operations) || !operations.length) {
+      fail('FIXTURE_EXAMPLE_SHAPE', 'BR2.7', 'Operation examples must be a nonempty array');
+    }
+    const missing = new Set();
+    for (const [id, { operation }] of operationExampleTargets(document)) {
+      for (const status of Object.keys(operation.responses ?? {})) missing.add(`operation:${id}:${status}`);
+    }
+    for (const example of operations) {
+      if (!object(example) || Object.keys(example).sort().join(',') !== 'name,operationId,request,responseStatus' ||
+          typeof example.name !== 'string' || !/^[a-z][a-z0-9-]{0,95}$/.test(example.name) ||
+          typeof example.operationId !== 'string' || !/^[A-Za-z][A-Za-z0-9]{0,96}$/.test(example.operationId) ||
+          typeof example.responseStatus !== 'string' || !/^[1-5][0-9]{2}$/.test(example.responseStatus)) {
+        fail('FIXTURE_EXAMPLE_SHAPE', 'BR2.7', 'Operation example requires a named request and response status');
+      }
+      const element = `operation:${example.operationId}:${example.responseStatus}`;
+      add(`operation:${example.name}`, element,
+        { request: example.request, responseStatus: example.responseStatus }, true);
+      missing.delete(element);
+    }
+    if (missing.size) fail('FIXTURE_EXAMPLE_COVERAGE', 'BR2.7', 'A declared operation outcome lacks an example');
+  }
   const embedded = document['x-contract-fixtures'];
   if (embedded !== undefined && !Array.isArray(embedded)) {
     fail('FIXTURE_EXAMPLE_SHAPE', 'BR2.7', 'OpenAPI contract fixtures must be an array');
@@ -333,6 +401,8 @@ export function openApiFixtureSchema(document, element) {
   }
   const components = document.components?.schemas ?? {};
   let inlineResponse;
+  const operation = /^operation:([A-Za-z][A-Za-z0-9]{0,96}):([1-5][0-9]{2})$/.exec(element);
+  if (operation) inlineResponse = operationExampleSchema(document, operation[1], operation[2]);
   if (!Object.hasOwn(components, element)) {
     const match = /^response:([A-Za-z][A-Za-z0-9]{0,96}):([1-5][0-9]{2}):(application-json|application-problem-json)$/.exec(element);
     if (match) {
@@ -557,7 +627,12 @@ export async function runFixtureOracle(root, loaded) {
   }
   const allFixtures = sidecars.flatMap(sidecar => sidecar.fixtures);
   for (const entry of loaded.entries.filter(item => item.artifactKind === 'openapi')) {
-    for (const example of openApiNamedExamples(documents.get(entry.document), entry.document)) {
+    const document = documents.get(entry.document);
+    if (ALL_BOUNDARIES.every(id => loaded.boundaryIds?.includes(id)) &&
+        !fixtureBindable(entry, schemas, documents) && document['x-contract-operation-examples'] === undefined) {
+      fail('FIXTURE_EXAMPLE_COVERAGE', 'BR2.7', 'An operation-only catalogue document lacks named examples');
+    }
+    for (const example of openApiNamedExamples(document, entry.document)) {
       const matches = allFixtures.filter(fixture => fixture?.canonicalExampleId === example.id &&
         fixture?.documentRevisionId === entry.revisionId && fixture?.contractElementId === example.element);
       if (matches.length !== 1 || !isDeepStrictEqual(matches[0].payload, example.payload) ||

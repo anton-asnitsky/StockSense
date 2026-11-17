@@ -25,6 +25,14 @@ paths:
                   token_endpoint: { type: string, format: uri }
                   jwks_uri: { type: string, format: uri }
                   end_session_endpoint: { type: string, format: uri }
+              examples:
+                localIssuerDiscovery:
+                  value:
+                    issuer: https://identity.stocksense.local
+                    authorization_endpoint: https://identity.stocksense.local/connect/authorize
+                    token_endpoint: https://identity.stocksense.local/connect/token
+                    jwks_uri: https://identity.stocksense.local/.well-known/openid-configuration/jwks
+                    end_session_endpoint: https://identity.stocksense.local/connect/endsession
   /.well-known/openid-configuration/jwks:
     get:
       operationId: getJsonWebKeySet

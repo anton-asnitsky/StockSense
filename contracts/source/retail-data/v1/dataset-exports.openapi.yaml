@@ -50,3 +50,26 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+x-contract-operation-examples:
+  - operationId: requestRetailDatasetExport
+    name: export-job-accepted
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101 }
+      headers: { Idempotency-Key: synthetic-export-request-0001 }
+    responseStatus: '202'
+  - operationId: requestRetailDatasetExport
+    name: idempotency-payload-conflict
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101 }
+      headers: { Idempotency-Key: synthetic-export-request-0001 }
+    responseStatus: '409'
+  - operationId: getRetailDatasetExport
+    name: export-job-status
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101, jobId: 00000000-0000-4000-8000-000000000103 }
+    responseStatus: '200'
+  - operationId: getRetailDatasetExport
+    name: job-not-visible-in-retailer
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101, jobId: 00000000-0000-4000-8000-000000000104 }
+    responseStatus: '404'
