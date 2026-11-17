@@ -216,11 +216,14 @@ test('missing, stale, malformed and vulnerable image evidence fails closed', asy
     await imageFixture(directory, 'kiota', image);
     await expectCode(readImageEvidence(directory, { ...ids, kiota: 'sha256:' + 'b'.repeat(64) }), 'IMAGE_STALE');
     await imageFixture(directory, 'kiota', image, [{ id: 'CVE-2026-12345', severity: 'High',
-      package: 'Kiota', version: '1.0.0', type: 'dotnet', purl: 'pkg:nuget/Kiota@1.0.0',
+      package: 'Microsoft.OpenApi.Kiota', version: '1.0.0', type: 'dotnet', purl: 'pkg:nuget/Microsoft.OpenApi.Kiota@1.0.0',
       fixState: 'fixed', fixVersions: ['1.1.0'] }]);
     await expectCode(readImageEvidence(directory, ids), 'IMAGE_FINDINGS');
     const findingPath = join(directory, 'kiota.scan.json');
     const incomplete = JSON.parse(await readFile(findingPath, 'utf8'));
+    const unlisted = { ...incomplete.findings[0], package: 'Other.Kiota', purl: 'pkg:nuget/Other.Kiota@1.0.0' };
+    await writeFile(findingPath, JSON.stringify({ ...incomplete, findings: [unlisted] }));
+    await expectCode(readImageEvidence(directory, ids, { requireClean: false }), 'IMAGE_SBOM');
     delete incomplete.findings[0].fixState;
     await writeFile(findingPath, JSON.stringify(incomplete));
     await expectCode(readImageEvidence(directory, ids), 'IMAGE_SCAN');
@@ -378,7 +381,8 @@ test('a local exception file has no authority over the image evidence gate', asy
   const directory = await mkdtemp(join(tmpdir(), 'stocksense-image-exceptions-'));
   const ids = { validator: imageId, kiota: imageId };
   try {
-    await imageFixture(directory, 'validator', imageId, [imageFinding]);
+    await imageFixture(directory, 'validator', imageId, [{ ...imageFinding,
+      version: '1.0.0', purl: 'pkg:npm/yaml@1.0.0' }]);
     await imageFixture(directory, 'kiota', imageId);
     await writeFile(join(directory, 'validator.exceptions.json'), JSON.stringify([imageException]));
     await expectCode(readImageEvidence(directory, ids), 'IMAGE_FINDINGS');
