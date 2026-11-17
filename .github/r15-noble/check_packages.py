@@ -16,6 +16,13 @@ for stanza in status.strip().split("\n\n"):
         controls.append(fields)
 control_ids = {(c["Package"], c["Version"]) for c in controls}
 assert len(control_ids) == len(controls), "duplicate control identity"
+downloaded_ids = []
+for file in proof.glob("package-*.control"):
+    fields = dict(line.split(": ", 1) for line in file.read_text().splitlines()
+                  if ": " in line and not line.startswith(" "))
+    downloaded_ids.append((fields["Package"], fields["Version"]))
+assert len(downloaded_ids) == len(set(downloaded_ids)), "ambiguous downloaded versions"
+assert set(downloaded_ids) == control_ids, f"downloaded package missing from dpkg {set(downloaded_ids) ^ control_ids}"
 sbom_ids = {(c["name"], c["version"]) for c in sbom["components"]
             if c.get("purl", "").startswith("pkg:deb/")}
 assert control_ids <= sbom_ids, f"missing binaries {control_ids - sbom_ids}"

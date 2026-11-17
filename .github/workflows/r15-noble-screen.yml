@@ -48,6 +48,7 @@ jobs:
           test "$(git -C wrapper rev-parse FETCH_HEAD)" = 06863a443519f644272eddfc45e013de8dbe0cb2
           git -C wrapper show FETCH_HEAD:chisel-wrapper > context/chisel-wrapper
           sed -i -e 's|dir="$CHISEL_CACHE_DIR/chisel/sha256"|dir="$CHISEL_CACHE_DIR/chisel"|' -e 's|for f in "$dir"/\*; do|for f in "$dir"/sha*/*; do|' context/chisel-wrapper
+          python3 "$GITHUB_WORKSPACE/audit/.github/r15-noble/prepare_wrapper.py" | tee proof/wrapper-regression.txt
           python3 - <<'PY'
           import os,pathlib
           p=pathlib.Path(os.environ['GITHUB_WORKSPACE'])/'candidate/tools/contracts/Dockerfile.generator-kiota'
