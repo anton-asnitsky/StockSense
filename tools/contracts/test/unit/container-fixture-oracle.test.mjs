@@ -107,6 +107,10 @@ test('image worker accepts revision-bound inline responses and AsyncAPI messages
     await writeFile(indexPath, JSON.stringify(index));
     const result = JSON.parse(await runFixtureWorker(root, indexPath, sourceDocument));
     const inline = result.fixtureResults.filter(row => row.contractElementId.startsWith('response:'));
+    const operationCases = result.fixtureResults.filter(row => row.contractElementId.startsWith('operation:'));
+    assert.equal(operationCases.length, 33);
+    assert.ok(operationCases.every(row => row.observed === 'pass'));
+    assert.equal(new Set(operationCases.map(row => row.revisionId)).size, 7);
     assert.ok(inline.length >= 4);
     assert.ok(inline.some(row => row.observed === 'pass'));
     assert.ok(inline.some(row => row.observed === 'fail'));

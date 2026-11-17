@@ -135,7 +135,12 @@ function verifyOperationExamples(source) {
   const ajv = new Ajv2020({ strict: false });
   addFormats(ajv);
   const names = new Set();
-  const covered = new Set();
+  const missingOutcomes = new Set();
+  for (const [operationId, { operation }] of operations) {
+    for (const status of Object.keys(operation.responses)) {
+      missingOutcomes.add(`${operationId}/${status}`);
+    }
+  }
   for (const example of examples) {
     assert.deepEqual(Object.keys(example).sort(),
       ['name', 'operationId', 'request', 'responseStatus'].sort());
@@ -144,10 +149,10 @@ function verifyOperationExamples(source) {
     names.add(example.name);
     const match = operations.get(example.operationId);
     assert.ok(match, `${example.name}: operation is absent`);
-    covered.add(example.operationId);
     assert.equal(typeof example.responseStatus, 'string');
     assert.ok(Object.hasOwn(match.operation.responses, example.responseStatus),
       `${example.name}: response status is absent`);
+    missingOutcomes.delete(`${example.operationId}/${example.responseStatus}`);
     assert.ok(example.request && typeof example.request === 'object' &&
       !Array.isArray(example.request));
     assert.ok(Object.keys(example.request).every(key => ['path', 'query', 'headers'].includes(key)));
@@ -173,8 +178,9 @@ function verifyOperationExamples(source) {
     }
     assert.deepEqual([...supplied.keys()], [], `${example.name}: undeclared parameter`);
   }
-  assert.deepEqual([...covered].sort(), [...operations.keys()].sort(),
-    'every exempt operation needs a named request/status example');
+  if (missingOutcomes.size) {
+    assert.fail(`Missing named operation/status examples: ${[...missingOutcomes].sort().join(', ')}`);
+  }
   return examples;
 }
 
@@ -259,4 +265,15 @@ test('operation-only examples fail if a required parameter or declared status ch
     missingHeader.paths[`${route}/dataset-exports`].post.parameters.filter(
       parameter => parameter.name !== 'Idempotency-Key');
   assert.throws(() => verifyOperationExamples(missingHeader));
+});
+
+test('a second accepted export example cannot cover the missing conflict example', async () => {
+  const document = 'retail-data/v1/dataset-exports.openapi.yaml';
+  const source = YAML.parse(await readFile(join(sourceRoot, document), 'utf8'));
+  const conflict = source['x-contract-operation-examples']
+    .find(example => example.name === 'idempotency-payload-conflict');
+  conflict.responseStatus = '202';
+  assert.throws(() => verifyOperationExamples(source), {
+    message: 'Missing named operation/status examples: requestRetailDatasetExport/409'
+  });
 });

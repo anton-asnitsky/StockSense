@@ -394,11 +394,13 @@ test('fixture mode accepts only the governed inline response result identity', a
     const entry = options.entries.find(item => item.artifactKind === 'openapi');
     const row = { fixtureId: 'inline-response', contractElementId: 'response:getIdentity:200:application-json',
       revisionId: entry.revisionId, scenarioType: 'valid', observed: 'pass' };
-    const accepted = seam(() => ok(JSON.stringify({ version: 1, fixtureResults: [row] })));
+    const operation = { ...row, fixtureId: 'export-conflict', contractElementId: 'operation:requestRetailDatasetExport:409' };
+    const accepted = seam(() => ok(JSON.stringify({ version: 1, fixtureResults: [row, operation] })));
     assert.deepEqual((await runContainerStandardsValidator('fixture-oracle:2020-12', options.sourceDocument,
-      { ...options, spawn: accepted.spawn })).fixtureResults, [row]);
+      { ...options, spawn: accepted.spawn })).fixtureResults, [row, operation]);
     for (const contractElementId of ['response:getIdentity:200:application-json:extra',
-      'response:getIdentity:200:application-xml']) {
+      'response:getIdentity:200:application-xml', 'operation:requestRetailDatasetExport:600',
+      'operation:requestRetailDatasetExport:409:extra']) {
       const rejected = seam(() => ok(JSON.stringify({ version: 1,
         fixtureResults: [{ ...row, contractElementId }] })));
       await expectCode(runContainerStandardsValidator('fixture-oracle:2020-12', options.sourceDocument,
