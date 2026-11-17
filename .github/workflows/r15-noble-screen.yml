@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
-      CANDIDATE: a80562af82ff600c2e227f6e0e80efdc08a766e2
+      CANDIDATE: 5897e4fc3e402771feb0a7dda3a7b015b52b2340
       SDK: mcr.microsoft.com/dotnet/sdk@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa
       SYFT: ghcr.io/anchore/syft@sha256:3eb5379ba7b409c3f4069b686110527af0c47df993fa5c10d13e7cf34f49b1aa
       GRYPE: ghcr.io/anchore/grype@sha256:e4a44ef45d285b829ce6efe2642980329661bd2d18eab5fc539138d4adaebbbe
@@ -26,7 +26,7 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           path: candidate
-          ref: a80562af82ff600c2e227f6e0e80efdc08a766e2
+          ref: 5897e4fc3e402771feb0a7dda3a7b015b52b2340
           persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
