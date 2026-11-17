@@ -1,0 +1,569 @@
+{
+  "run": 44145036779,
+  "recipeCommit": "6788ce2",
+  "testedSource": "46325b340caa23f203227eae0f92a97b2c818c9c",
+  "snapshot": "20261116T000000Z",
+  "lanes": [
+    {
+      "lane": 1,
+      "imageId": "sha256:887a09d647c642d8e40e25fbbbd402b4354b5677453df259331100f2123d1b8f",
+      "runtimeDigest": "sha256:ef2c028479917be4ba3031639bd5a5ccdd43d84065834745b5aed59c9866e0d0",
+      "packageLock": [
+        {
+          "package": "base-files",
+          "version": "13ubuntu10.5",
+          "architecture": "amd64",
+          "source": "base-files",
+          "path": "pool/main/b/base-files/base-files_13ubuntu10.5_amd64.deb",
+          "bytes": 73220,
+          "sha256": "87e8c41e62f61625fb78a982d0bc0a70f40ef8375bc313b154914d1b3759c823"
+        },
+        {
+          "package": "ca-certificates",
+          "version": "20260816ubuntu0.24.04.2",
+          "architecture": "all",
+          "source": "ca-certificates",
+          "path": "pool/main/c/ca-certificates/ca-certificates_20260816ubuntu0.24.04.2_all.deb",
+          "bytes": 140064,
+          "sha256": "f9fbacd417b515450b831032cc39d18059e9874e67525679a43c16071dabf9a0"
+        },
+        {
+          "package": "gcc-14-base",
+          "version": "14.2.0-4ubuntu2~24.04.1",
+          "architecture": "amd64",
+          "source": "gcc-14",
+          "path": "pool/main/g/gcc-14/gcc-14-base_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+          "bytes": 51014,
+          "sha256": "b95c172411a7fdae70307cf33a9f5320ba5e056b556454543dd5b679d5ce1c4f"
+        },
+        {
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.12",
+          "architecture": "amd64",
+          "source": "glibc",
+          "path": "pool/main/g/glibc/libc6_2.39-0ubuntu8.12_amd64.deb",
+          "bytes": 3264258,
+          "sha256": "d821b41fc59cb4978ecd53bc83e5c964ac15d305c8d2ac4c8a35aebe55010fb9"
+        },
+        {
+          "package": "libgcc-s1",
+          "version": "14.2.0-4ubuntu2~24.04.1",
+          "architecture": "amd64",
+          "source": "gcc-14",
+          "path": "pool/main/g/gcc-14/libgcc-s1_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+          "bytes": 78392,
+          "sha256": "aa7fadbe33b78bcf99885318040601c550c208929565b179891d9a3cc2aa68cd"
+        },
+        {
+          "package": "libicu74",
+          "version": "74.2-1ubuntu3.1",
+          "architecture": "amd64",
+          "source": "icu",
+          "path": "pool/main/i/icu/libicu74_74.2-1ubuntu3.1_amd64.deb",
+          "bytes": 10860078,
+          "sha256": "c9a70989678660eed9a1e904c74fa043da8bec8e2036856fc16e31ced79b04f8"
+        },
+        {
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "architecture": "amd64",
+          "source": "openssl",
+          "path": "pool/main/o/openssl/libssl3t64_3.0.13-0ubuntu3.16_amd64.deb",
+          "bytes": 1945300,
+          "sha256": "219f43b1cd836a4da550938db5fda93160d269d39a4edcf1f1ce698a470db797"
+        },
+        {
+          "package": "libstdc++6",
+          "version": "14.2.0-4ubuntu2~24.04.1",
+          "architecture": "amd64",
+          "source": "gcc-14",
+          "path": "pool/main/g/gcc-14/libstdc++6_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+          "bytes": 792064,
+          "sha256": "a51f8de7829211db961a31f02158058ad1a95f92ac6d0a5dff6350e2821c54c0"
+        },
+        {
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "architecture": "amd64",
+          "source": "openssl",
+          "path": "pool/main/o/openssl/openssl_3.0.13-0ubuntu3.16_amd64.deb",
+          "bytes": 1003702,
+          "sha256": "675b84971ffd4467707008c25ef7520f90ea7c23ef27b7a76b0dccf1d7c4dc3f"
+        },
+        {
+          "package": "tzdata",
+          "version": "2026e-0ubuntu0.24.04.1",
+          "architecture": "all",
+          "source": "tzdata",
+          "path": "pool/main/t/tzdata/tzdata_2026e-0ubuntu0.24.04.1_all.deb",
+          "bytes": 282136,
+          "sha256": "2f6794a7f31753fc947d9ac02ff03ea46510f34864f9d132a93d7b105e3c4447"
+        }
+      ],
+      "rawHashes": {
+        "chisel-manifest.wall": "cfa0867eb088b38b4707b869225845f31dca90aef09cee4a7ec78d79e6c379bb",
+        "consumer-compile-pr74.txt": "c4a27aff0f5eaed5e50ea8bbe519efa3bcd1308f438b59dbb1b6717d11957599",
+        "consumer-compile-pr75.txt": "c4a27aff0f5eaed5e50ea8bbe519efa3bcd1308f438b59dbb1b6717d11957599",
+        "consumer-compile-pr76.txt": "c4a27aff0f5eaed5e50ea8bbe519efa3bcd1308f438b59dbb1b6717d11957599",
+        "consumer-proof.json": "4d73ce28b5d48016f04995834ff62f009f757fefc6835fcb0ccbcaa57b2e841d",
+        "control.cdx.json": "44e7133ff3f276b5b0fb0eece113047c5fd5eaff67b5f7946cdd16b6b71c50d5",
+        "control.grype.json": "4bc2c925d71392c7c36cfcad91ce230ed84074a46921805168fa6e8cc22e1942",
+        "digests.txt": "c4fcf8cf76debe16797835956e6dafe788896197d4860cc95d34a7e27a01e89c",
+        "dists_noble_InRelease": "cdb2f31d809f589719a53c6ad15f255b27569c4059542ada282aaa21b8e164b0",
+        "dists_noble-security_InRelease": "b26a00fd20bcf0f31cb3e132702958eba8d50cd81d3b20bfe7433b77ebf7f775",
+        "dists_noble-updates_InRelease": "cc12944ff54a4dfde90014a9532b6c924139a888e53e5f0cb9e010b44f81c83f",
+        "dpkg-status": "94c1be486118b59d29f2d71bb7abf5e82ca1cd7a8259e07485b468966ee63893",
+        "effective-chisel-wrapper": "cc93c612fe42969ae1105ee4f1329499fe1e17e243cce6d7472afa89e6a1dada",
+        "effective-chisel.yaml": "954a98ea87100fd0e892f2933c7f6832b8b85608e2bc55db3ee60f01de7f1ebf",
+        "elf-loader.json": "09edaefb90029823aa120cba9b70d36c22aeee0a06262a784f869e22100f491b",
+        "elf.json": "eb68f0315d68ff48a62effc7ac90196f08cce59166114250aabc313556425ffc",
+        "findings.tsv": "0d4a5934535bcd5b716e41c9addb161a02a4faaf09b1f6a56eb12336f76327dc",
+        "globalization.txt": "05a59628e0e4adb501284bf9d5661f8c7f8afe4fdf119c8a33b68de88ce61b4a",
+        "grype-db.json": "5619901ac8dd7e19defe5e3c9ba1853bdc152b7ed83096479264f6bbc8068402",
+        "grype-noble-explicit.json": "3bbb679c858879cffce54f849fd7dcfeede35b4812e7d08eb3c2b5901197fe4f",
+        "grype-raw.json": "ddafeb685fc5947c31f406f2465cb5b71d2989c401c056a4dc65aa6bb29b845f",
+        "image.json": "34a3312fb8b337ef5c73ba6338f3d3a3ba1b29c807df796fba037e43ad17ef9d",
+        "kiota-version.txt": "29c268172b224f17be864fe5d09c55b8106e70ea1f04b7212bf8ecb9226857d3",
+        "kiota.cdx.json": "c8fe038afbbba23c93a88059d5734f1ad1814d5091d8de9ac8d66c7856372dd4",
+        "Kiota.Dockerfile": "a4fcacdfb27b9300c8a7f2189cd77f6e141074438fd7976c8248a13eec7a4943",
+        "kiota.runtime.json": "9805843bc461834b598e3876a2055358142b3a3deebfa6e76cfec6808e43182e",
+        "net10.txt": "97e6ddf932d740bc5f3f01daf5ffa0ac682e7e47d17eb054303bcef721ce980c",
+        "os-release": "87458b3b1f1ca0e5c693ade771de7007c3783bdc692fa6b39eb6414bf2af2763",
+        "package-base-files_13ubuntu10.5_amd64.deb.control": "f72749e7bcdd7fd7f9e66798dbc1a6649b4544646435b49d2ee0b477a247025f",
+        "package-ca-certificates_20260816ubuntu0.24.04.2_all.deb.control": "26a2b25ff25f3b354499997095f5b234c9133e1223e93a16df3b05634580c639",
+        "package-gcc-14-base_14.2.0-4ubuntu2~24.04.1_amd64.deb.control": "8a546b3b9cfa708be2abbf6a685240a27b4dc32a4c948c179b23221d24c805e0",
+        "package-libc6_2.39-0ubuntu8.12_amd64.deb.control": "b2ebfd4b4fbe63eafa9bbaa391fdccabcbbc72a14e30ca900b4af6e5545d67ff",
+        "package-libgcc-s1_14.2.0-4ubuntu2~24.04.1_amd64.deb.control": "2f148a9218ad02c683b99076017800a49d3036d055a3f7c025a8572343a21d53",
+        "package-libicu74_74.2-1ubuntu3.1_amd64.deb.control": "23c06652cd29ee04289ac53d8e8d73bfad02adb829d5ee27544398cc88c839d0",
+        "package-libssl3t64_3.0.13-0ubuntu3.16_amd64.deb.control": "a678cfb1b9532258ed984cd7db38aec670bd3e6398141e22ae6a6852f1c90a66",
+        "package-libstdc++6_14.2.0-4ubuntu2~24.04.1_amd64.deb.control": "b1c75246670d90073087813f77f263f85bec637074f1a904ff222a82cfc7b780",
+        "package-lock.json": "743d97f98cf850293cebd42c9dbfd4f571bea70d71bdbedf2627b35ac77e9c79",
+        "package-openssl_3.0.13-0ubuntu3.16_amd64.deb.control": "b236e1b0c1facedbb47608dc81c4dcbd80351a2c3173f2fb9a0aa1174f4d18a7",
+        "package-reconciliation.json": "743d97f98cf850293cebd42c9dbfd4f571bea70d71bdbedf2627b35ac77e9c79",
+        "package-tzdata_2026e-0ubuntu0.24.04.1_all.deb.control": "b858b96575ca37067d0b90f82a286880f22999a44b96f1ff3cba84b05204f0c9",
+        "package-tzdata-legacy_2026e-0ubuntu0.24.04.1_all.deb.control": "3b3b53de9446105f7eb10b059786933a33402a3dbe95bef4949e034c0a51abbc",
+        "probe.txt": "56517131e3ee635b5e1920950a05a6840e4b79a7f5a91e0aa8085661ebc4e7fd",
+        "runtime.fragment": "04d1c44fa8f935a8ea2feacfb4f33cf6ac11a6ec5c98a77ff1099b6674617206",
+        "slices.tar": "3cb6982d62d9d3ee8d80e37d587d95bffa4ddd24854f822daf081c6e2f2d1f3a",
+        "snapshot_cut.py": "84ffa0679e72f7c06407b7bd66dc50d47c19903db6a0ef4cd3ccc7250979b5ed",
+        "snapshot-inputs.json": "92045ef3f7373118481875e963ceda9f3e22b262ebf9462a5207b07b1f39f060",
+        "tracepointprovider.cpp": "0961fc926da5e328500055f0e274cf92fb0b0a82bdcb902c799c01c2a6f06cc7"
+      },
+      "findings": [
+        {
+          "id": "CVE-2026-100290",
+          "severity": "Medium",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.12",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2025-5222",
+          "severity": "Low",
+          "package": "libicu74",
+          "version": "74.2-1ubuntu3.1",
+          "purl": "pkg:deb/ubuntu/libicu74@74.2-1ubuntu3.1?arch=amd64&distro=ubuntu-24.04&upstream=icu",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-115819",
+          "severity": "Medium",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.12",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2016-20013",
+          "severity": "Negligible",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.12",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "wont-fix",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95692",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95692",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-88822",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95691",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-88822",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95691",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-88823",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-88823",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-107496",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-107496",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        }
+      ],
+      "disabledOptionalDependencies": [
+        [
+          "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libcoreclrtraceptprovider.so",
+          "liblttng-ust.so.0"
+        ]
+      ]
+    },
+    {
+      "lane": 2,
+      "imageId": "sha256:edc392fce4df0a2eb94e6f8fd8b054b6834f5cb6535cc66bf7dacbc03b1d50a9",
+      "runtimeDigest": "sha256:ef2c028479917be4ba3031639bd5a5ccdd43d84065834745b5aed59c9866e0d0",
+      "packageLock": [
+        {
+          "package": "base-files",
+          "version": "13ubuntu10.5",
+          "architecture": "amd64",
+          "source": "base-files",
+          "path": "pool/main/b/base-files/base-files_13ubuntu10.5_amd64.deb",
+          "bytes": 73220,
+          "sha256": "87e8c41e62f61625fb78a982d0bc0a70f40ef8375bc313b154914d1b3759c823"
+        },
+        {
+          "package": "ca-certificates",
+          "version": "20260816ubuntu0.24.04.2",
+          "architecture": "all",
+          "source": "ca-certificates",
+          "path": "pool/main/c/ca-certificates/ca-certificates_20260816ubuntu0.24.04.2_all.deb",
+          "bytes": 140064,
+          "sha256": "f9fbacd417b515450b831032cc39d18059e9874e67525679a43c16071dabf9a0"
+        },
+        {
+          "package": "gcc-14-base",
+          "version": "14.2.0-4ubuntu2~24.04.1",
+          "architecture": "amd64",
+          "source": "gcc-14",
+          "path": "pool/main/g/gcc-14/gcc-14-base_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+          "bytes": 51014,
+          "sha256": "b95c172411a7fdae70307cf33a9f5320ba5e056b556454543dd5b679d5ce1c4f"
+        },
+        {
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.12",
+          "architecture": "amd64",
+          "source": "glibc",
+          "path": "pool/main/g/glibc/libc6_2.39-0ubuntu8.12_amd64.deb",
+          "bytes": 3264258,
+          "sha256": "d821b41fc59cb4978ecd53bc83e5c964ac15d305c8d2ac4c8a35aebe55010fb9"
+        },
+        {
+          "package": "libgcc-s1",
+          "version": "14.2.0-4ubuntu2~24.04.1",
+          "architecture": "amd64",
+          "source": "gcc-14",
+          "path": "pool/main/g/gcc-14/libgcc-s1_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+          "bytes": 78392,
+          "sha256": "aa7fadbe33b78bcf99885318040601c550c208929565b179891d9a3cc2aa68cd"
+        },
+        {
+          "package": "libicu74",
+          "version": "74.2-1ubuntu3.1",
+          "architecture": "amd64",
+          "source": "icu",
+          "path": "pool/main/i/icu/libicu74_74.2-1ubuntu3.1_amd64.deb",
+          "bytes": 10860078,
+          "sha256": "c9a70989678660eed9a1e904c74fa043da8bec8e2036856fc16e31ced79b04f8"
+        },
+        {
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "architecture": "amd64",
+          "source": "openssl",
+          "path": "pool/main/o/openssl/libssl3t64_3.0.13-0ubuntu3.16_amd64.deb",
+          "bytes": 1945300,
+          "sha256": "219f43b1cd836a4da550938db5fda93160d269d39a4edcf1f1ce698a470db797"
+        },
+        {
+          "package": "libstdc++6",
+          "version": "14.2.0-4ubuntu2~24.04.1",
+          "architecture": "amd64",
+          "source": "gcc-14",
+          "path": "pool/main/g/gcc-14/libstdc++6_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+          "bytes": 792064,
+          "sha256": "a51f8de7829211db961a31f02158058ad1a95f92ac6d0a5dff6350e2821c54c0"
+        },
+        {
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "architecture": "amd64",
+          "source": "openssl",
+          "path": "pool/main/o/openssl/openssl_3.0.13-0ubuntu3.16_amd64.deb",
+          "bytes": 1003702,
+          "sha256": "675b84971ffd4467707008c25ef7520f90ea7c23ef27b7a76b0dccf1d7c4dc3f"
+        },
+        {
+          "package": "tzdata",
+          "version": "2026e-0ubuntu0.24.04.1",
+          "architecture": "all",
+          "source": "tzdata",
+          "path": "pool/main/t/tzdata/tzdata_2026e-0ubuntu0.24.04.1_all.deb",
+          "bytes": 282136,
+          "sha256": "2f6794a7f31753fc947d9ac02ff03ea46510f34864f9d132a93d7b105e3c4447"
+        }
+      ],
+      "rawHashes": {
+        "chisel-manifest.wall": "cfa0867eb088b38b4707b869225845f31dca90aef09cee4a7ec78d79e6c379bb",
+        "consumer-compile-pr74.txt": "c4a27aff0f5eaed5e50ea8bbe519efa3bcd1308f438b59dbb1b6717d11957599",
+        "consumer-compile-pr75.txt": "c4a27aff0f5eaed5e50ea8bbe519efa3bcd1308f438b59dbb1b6717d11957599",
+        "consumer-compile-pr76.txt": "c4a27aff0f5eaed5e50ea8bbe519efa3bcd1308f438b59dbb1b6717d11957599",
+        "consumer-proof.json": "2046de7fdebb94b1c30f768f05db2dbff4a2d2e1a9dfe3af411bbf06e9831757",
+        "control.cdx.json": "7d65cdddf4286a48a8efacc03a314d9c665c71aa97b7bc0a0f134387c6f5d9c9",
+        "control.grype.json": "eb80d40573303ad834e950988a33a44555638d4b86e2c77a7fa9b2dacc606ae0",
+        "digests.txt": "8d03b001592d63a445aeca4a64dae4d46e983010fb22271393983b4664cfdb2c",
+        "dists_noble_InRelease": "cdb2f31d809f589719a53c6ad15f255b27569c4059542ada282aaa21b8e164b0",
+        "dists_noble-security_InRelease": "b26a00fd20bcf0f31cb3e132702958eba8d50cd81d3b20bfe7433b77ebf7f775",
+        "dists_noble-updates_InRelease": "cc12944ff54a4dfde90014a9532b6c924139a888e53e5f0cb9e010b44f81c83f",
+        "dpkg-status": "94c1be486118b59d29f2d71bb7abf5e82ca1cd7a8259e07485b468966ee63893",
+        "effective-chisel-wrapper": "cc93c612fe42969ae1105ee4f1329499fe1e17e243cce6d7472afa89e6a1dada",
+        "effective-chisel.yaml": "954a98ea87100fd0e892f2933c7f6832b8b85608e2bc55db3ee60f01de7f1ebf",
+        "elf-loader.json": "6893513b201503fd8d8d892e689ec0f7af85d79c2fd8984fd051ea31d4421348",
+        "elf.json": "eb68f0315d68ff48a62effc7ac90196f08cce59166114250aabc313556425ffc",
+        "findings.tsv": "0d4a5934535bcd5b716e41c9addb161a02a4faaf09b1f6a56eb12336f76327dc",
+        "globalization.txt": "05a59628e0e4adb501284bf9d5661f8c7f8afe4fdf119c8a33b68de88ce61b4a",
+        "grype-db.json": "5619901ac8dd7e19defe5e3c9ba1853bdc152b7ed83096479264f6bbc8068402",
+        "grype-noble-explicit.json": "9f14fab5611f97cff556ebcc23fc8d9815b0787e4204f9ee7501a5305481f82f",
+        "grype-raw.json": "cc88fa0929e71d6e8bf729d0a73af530d3819470a8b6493bfe8946e1a8923921",
+        "image.json": "5f1a15109b8e02589a0188d44362782f1c7d1c271ad25a4dab808aa610e55770",
+        "kiota-version.txt": "29c268172b224f17be864fe5d09c55b8106e70ea1f04b7212bf8ecb9226857d3",
+        "kiota.cdx.json": "bc6ec28665405999871f043daf61d395bb9f089e3d4523727b1bd43f253a1878",
+        "Kiota.Dockerfile": "a4fcacdfb27b9300c8a7f2189cd77f6e141074438fd7976c8248a13eec7a4943",
+        "kiota.runtime.json": "638a04ca67fd1c118ab81deb541789c6cafe747b7415eaf1ad7c383d7ba4756f",
+        "net10.txt": "97e6ddf932d740bc5f3f01daf5ffa0ac682e7e47d17eb054303bcef721ce980c",
+        "os-release": "87458b3b1f1ca0e5c693ade771de7007c3783bdc692fa6b39eb6414bf2af2763",
+        "package-base-files_13ubuntu10.5_amd64.deb.control": "f72749e7bcdd7fd7f9e66798dbc1a6649b4544646435b49d2ee0b477a247025f",
+        "package-ca-certificates_20260816ubuntu0.24.04.2_all.deb.control": "26a2b25ff25f3b354499997095f5b234c9133e1223e93a16df3b05634580c639",
+        "package-gcc-14-base_14.2.0-4ubuntu2~24.04.1_amd64.deb.control": "8a546b3b9cfa708be2abbf6a685240a27b4dc32a4c948c179b23221d24c805e0",
+        "package-libc6_2.39-0ubuntu8.12_amd64.deb.control": "b2ebfd4b4fbe63eafa9bbaa391fdccabcbbc72a14e30ca900b4af6e5545d67ff",
+        "package-libgcc-s1_14.2.0-4ubuntu2~24.04.1_amd64.deb.control": "2f148a9218ad02c683b99076017800a49d3036d055a3f7c025a8572343a21d53",
+        "package-libicu74_74.2-1ubuntu3.1_amd64.deb.control": "23c06652cd29ee04289ac53d8e8d73bfad02adb829d5ee27544398cc88c839d0",
+        "package-libssl3t64_3.0.13-0ubuntu3.16_amd64.deb.control": "a678cfb1b9532258ed984cd7db38aec670bd3e6398141e22ae6a6852f1c90a66",
+        "package-libstdc++6_14.2.0-4ubuntu2~24.04.1_amd64.deb.control": "b1c75246670d90073087813f77f263f85bec637074f1a904ff222a82cfc7b780",
+        "package-lock.json": "743d97f98cf850293cebd42c9dbfd4f571bea70d71bdbedf2627b35ac77e9c79",
+        "package-openssl_3.0.13-0ubuntu3.16_amd64.deb.control": "b236e1b0c1facedbb47608dc81c4dcbd80351a2c3173f2fb9a0aa1174f4d18a7",
+        "package-reconciliation.json": "743d97f98cf850293cebd42c9dbfd4f571bea70d71bdbedf2627b35ac77e9c79",
+        "package-tzdata_2026e-0ubuntu0.24.04.1_all.deb.control": "b858b96575ca37067d0b90f82a286880f22999a44b96f1ff3cba84b05204f0c9",
+        "package-tzdata-legacy_2026e-0ubuntu0.24.04.1_all.deb.control": "3b3b53de9446105f7eb10b059786933a33402a3dbe95bef4949e034c0a51abbc",
+        "probe.txt": "600c7030f217fc7ef5f7614a7608d8d325c633a1efca759ef0317c4de6f30eac",
+        "runtime.fragment": "04d1c44fa8f935a8ea2feacfb4f33cf6ac11a6ec5c98a77ff1099b6674617206",
+        "slices.tar": "14a157d733bf0d606929818b1e8511670d6b6faade4f744ecfbbfa2fe6d79927",
+        "snapshot_cut.py": "84ffa0679e72f7c06407b7bd66dc50d47c19903db6a0ef4cd3ccc7250979b5ed",
+        "snapshot-inputs.json": "92045ef3f7373118481875e963ceda9f3e22b262ebf9462a5207b07b1f39f060",
+        "tracepointprovider.cpp": "0961fc926da5e328500055f0e274cf92fb0b0a82bdcb902c799c01c2a6f06cc7"
+      },
+      "findings": [
+        {
+          "id": "CVE-2026-100290",
+          "severity": "Medium",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.12",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2025-5222",
+          "severity": "Low",
+          "package": "libicu74",
+          "version": "74.2-1ubuntu3.1",
+          "purl": "pkg:deb/ubuntu/libicu74@74.2-1ubuntu3.1?arch=amd64&distro=ubuntu-24.04&upstream=icu",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-115819",
+          "severity": "Medium",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.12",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2016-20013",
+          "severity": "Negligible",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.12",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "wont-fix",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95692",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95692",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-88822",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95691",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-88822",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95691",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-88823",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-88823",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-107496",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-107496",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        }
+      ],
+      "disabledOptionalDependencies": [
+        [
+          "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libcoreclrtraceptprovider.so",
+          "liblttng-ust.so.0"
+        ]
+      ]
+    }
+  ],
+  "status": "superseded-incomplete-tzdata-legacy-inventory"
+}

@@ -1,0 +1,1993 @@
+{
+  "run": 44153396174,
+  "source": "5897e4fc3e402771feb0a7dda3a7b015b52b2340",
+  "sourceTree": "54c472fba572fffddaa15b3e4e96edfaa6868691",
+  "workflow": "b8f5fde",
+  "result": "success",
+  "lanes": [
+    {
+      "lane": 1,
+      "imageId": "sha256:f85a75634ca0aaf663f3f5af108998c902b8ba30facee9109d33c8863cd11e52",
+      "runtimeDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "packageLock": [
+        {
+          "package": "base-files",
+          "version": "13ubuntu10.5",
+          "architecture": "amd64",
+          "source": "base-files",
+          "path": "pool/main/b/base-files/base-files_13ubuntu10.5_amd64.deb",
+          "bytes": 73220,
+          "sha256": "87e8c41e62f61625fb78a982d0bc0a70f40ef8375bc313b154914d1b3759c823"
+        },
+        {
+          "package": "ca-certificates",
+          "version": "20260816ubuntu0.24.04.2",
+          "architecture": "all",
+          "source": "ca-certificates",
+          "path": "pool/main/c/ca-certificates/ca-certificates_20260816ubuntu0.24.04.2_all.deb",
+          "bytes": 140064,
+          "sha256": "f9fbacd417b515450b831032cc39d18059e9874e67525679a43c16071dabf9a0"
+        },
+        {
+          "package": "gcc-14-base",
+          "version": "14.2.0-4ubuntu2~24.04.1",
+          "architecture": "amd64",
+          "source": "gcc-14",
+          "path": "pool/main/g/gcc-14/gcc-14-base_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+          "bytes": 51014,
+          "sha256": "b95c172411a7fdae70307cf33a9f5320ba5e056b556454543dd5b679d5ce1c4f"
+        },
+        {
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.12",
+          "architecture": "amd64",
+          "source": "glibc",
+          "path": "pool/main/g/glibc/libc6_2.39-0ubuntu8.12_amd64.deb",
+          "bytes": 3264258,
+          "sha256": "d821b41fc59cb4978ecd53bc83e5c964ac15d305c8d2ac4c8a35aebe55010fb9"
+        },
+        {
+          "package": "libgcc-s1",
+          "version": "14.2.0-4ubuntu2~24.04.1",
+          "architecture": "amd64",
+          "source": "gcc-14",
+          "path": "pool/main/g/gcc-14/libgcc-s1_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+          "bytes": 78392,
+          "sha256": "aa7fadbe33b78bcf99885318040601c550c208929565b179891d9a3cc2aa68cd"
+        },
+        {
+          "package": "libicu74",
+          "version": "74.2-1ubuntu3.1",
+          "architecture": "amd64",
+          "source": "icu",
+          "path": "pool/main/i/icu/libicu74_74.2-1ubuntu3.1_amd64.deb",
+          "bytes": 10860078,
+          "sha256": "c9a70989678660eed9a1e904c74fa043da8bec8e2036856fc16e31ced79b04f8"
+        },
+        {
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "architecture": "amd64",
+          "source": "openssl",
+          "path": "pool/main/o/openssl/libssl3t64_3.0.13-0ubuntu3.16_amd64.deb",
+          "bytes": 1945300,
+          "sha256": "219f43b1cd836a4da550938db5fda93160d269d39a4edcf1f1ce698a470db797"
+        },
+        {
+          "package": "libstdc++6",
+          "version": "14.2.0-4ubuntu2~24.04.1",
+          "architecture": "amd64",
+          "source": "gcc-14",
+          "path": "pool/main/g/gcc-14/libstdc++6_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+          "bytes": 792064,
+          "sha256": "a51f8de7829211db961a31f02158058ad1a95f92ac6d0a5dff6350e2821c54c0"
+        },
+        {
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "architecture": "amd64",
+          "source": "openssl",
+          "path": "pool/main/o/openssl/openssl_3.0.13-0ubuntu3.16_amd64.deb",
+          "bytes": 1003702,
+          "sha256": "675b84971ffd4467707008c25ef7520f90ea7c23ef27b7a76b0dccf1d7c4dc3f"
+        },
+        {
+          "package": "tzdata",
+          "version": "2026e-0ubuntu0.24.04.1",
+          "architecture": "all",
+          "source": "tzdata",
+          "path": "pool/main/t/tzdata/tzdata_2026e-0ubuntu0.24.04.1_all.deb",
+          "bytes": 282136,
+          "sha256": "2f6794a7f31753fc947d9ac02ff03ea46510f34864f9d132a93d7b105e3c4447"
+        },
+        {
+          "package": "tzdata-legacy",
+          "version": "2026e-0ubuntu0.24.04.1",
+          "architecture": "all",
+          "source": "tzdata",
+          "path": "pool/main/t/tzdata/tzdata-legacy_2026e-0ubuntu0.24.04.1_all.deb",
+          "bytes": 95356,
+          "sha256": "da66b34322e7545f12bd97f2bd31c5f78406a9a9ec0ccfe284c3f3eb791647bf"
+        }
+      ],
+      "rawHashes": {
+        "build-kiota-runtime.py": "35a6ca0c2ab6d692df8dc6d4ff39c9514bf5910215da5218a504ce91b0045e74",
+        "bundle-receipt.json": "7a6cba6630d38979d7b60734ea117ca11f80fc22ac96df8ee54835f37c2ebddd",
+        "canonical-cli.json": "d277bf9fd79e417c212e2d9e700a571fedab953a6e7decc6040d2c378b6f6236",
+        "chisel-manifest.wall": "cfa0867eb088b38b4707b869225845f31dca90aef09cee4a7ec78d79e6c379bb",
+        "consumer-compile-pr74.txt": "c4a27aff0f5eaed5e50ea8bbe519efa3bcd1308f438b59dbb1b6717d11957599",
+        "consumer-compile-pr75.txt": "c4a27aff0f5eaed5e50ea8bbe519efa3bcd1308f438b59dbb1b6717d11957599",
+        "consumer-compile-pr76.txt": "c4a27aff0f5eaed5e50ea8bbe519efa3bcd1308f438b59dbb1b6717d11957599",
+        "consumer-proof.json": "1018403aae086d51fcbaa729ae195a2056318edee7463b7383f2d0ccaaaf3f08",
+        "control.cdx.json": "4d4caf58a8c0071dc5d2b02be4bbac00f8b51407ea34b285f4d819e318315508",
+        "control.grype.json": "1672e3740bd25d931bfb77aada35ef0dc661951ee7c72e0dc18ba3171c854ab5",
+        "coverage.txt": "a174b5360131e75f2ba6de2ed343c4041c749431ecaf90bd8d7678ee83f6c14b",
+        "digests.txt": "6a040e4fbc9abf2edb301dcb313ce4b7dbb7f8165c713e864fe88febe146f3a3",
+        "dists_noble_InRelease": "cdb2f31d809f589719a53c6ad15f255b27569c4059542ada282aaa21b8e164b0",
+        "dists_noble-security_InRelease": "b26a00fd20bcf0f31cb3e132702958eba8d50cd81d3b20bfe7433b77ebf7f775",
+        "dists_noble-updates_InRelease": "cc12944ff54a4dfde90014a9532b6c924139a888e53e5f0cb9e010b44f81c83f",
+        "dpkg-status": "e9fb461f44e2dff10bc194a71dfd25607a92bdcfb7e4aacc132c7e5d4b083e55",
+        "effective-chisel-wrapper": "0470945a7478e9cb6b449f881ad8c54decd2612259d0dcc91af7e034dafd42da",
+        "effective-chisel.yaml": "954a98ea87100fd0e892f2933c7f6832b8b85608e2bc55db3ee60f01de7f1ebf",
+        "elf-loader.json": "0121d41a86423905b8760f862e4573a268df0510c6b7ac601aefe07dd5e623f3",
+        "elf.json": "eb68f0315d68ff48a62effc7ac90196f08cce59166114250aabc313556425ffc",
+        "findings.tsv": "0d4a5934535bcd5b716e41c9addb161a02a4faaf09b1f6a56eb12336f76327dc",
+        "globalization.txt": "05a59628e0e4adb501284bf9d5661f8c7f8afe4fdf119c8a33b68de88ce61b4a",
+        "grype-db.json": "5619901ac8dd7e19defe5e3c9ba1853bdc152b7ed83096479264f6bbc8068402",
+        "grype-noble-explicit.json": "020390cf58efb03c8922e5451edbbc16687679554b763c6922f5efbf4f841554",
+        "grype-raw.json": "84feaf7b21e873d9c716e286f579d20d5ba3c1b639863f4dbfcb623946b6ede0",
+        "image.json": "20bf504e304e0b18c79013a12dd53ff358fe2e8b1e5a4bba78f6558911b1e029",
+        "kiota-version.txt": "29c268172b224f17be864fe5d09c55b8106e70ea1f04b7212bf8ecb9226857d3",
+        "kiota.cdx.json": "491aa9c38f00782558d94922ce7600094ad52b3fe9d98932666c4fa6121f5321",
+        "Kiota.Dockerfile": "2dc15186ae05cd236fd657df1eb40e6cf137da3377c85b890cb2b15a30e1b5ec",
+        "kiota.runtime.json": "8fc4ab6f9f2194b4a6c1e4f86117219deea4c1f254a5b0e714f6d1b4e4df2008",
+        "lint.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "net10.txt": "97e6ddf932d740bc5f3f01daf5ffa0ac682e7e47d17eb054303bcef721ce980c",
+        "os-release": "87458b3b1f1ca0e5c693ade771de7007c3783bdc692fa6b39eb6414bf2af2763",
+        "package-base-files_13ubuntu10.5_amd64.deb.control": "f72749e7bcdd7fd7f9e66798dbc1a6649b4544646435b49d2ee0b477a247025f",
+        "package-ca-certificates_20260816ubuntu0.24.04.2_all.deb.control": "26a2b25ff25f3b354499997095f5b234c9133e1223e93a16df3b05634580c639",
+        "package-gcc-14-base_14.2.0-4ubuntu2~24.04.1_amd64.deb.control": "8a546b3b9cfa708be2abbf6a685240a27b4dc32a4c948c179b23221d24c805e0",
+        "package-libc6_2.39-0ubuntu8.12_amd64.deb.control": "b2ebfd4b4fbe63eafa9bbaa391fdccabcbbc72a14e30ca900b4af6e5545d67ff",
+        "package-libgcc-s1_14.2.0-4ubuntu2~24.04.1_amd64.deb.control": "2f148a9218ad02c683b99076017800a49d3036d055a3f7c025a8572343a21d53",
+        "package-libicu74_74.2-1ubuntu3.1_amd64.deb.control": "23c06652cd29ee04289ac53d8e8d73bfad02adb829d5ee27544398cc88c839d0",
+        "package-libssl3t64_3.0.13-0ubuntu3.16_amd64.deb.control": "a678cfb1b9532258ed984cd7db38aec670bd3e6398141e22ae6a6852f1c90a66",
+        "package-libstdc++6_14.2.0-4ubuntu2~24.04.1_amd64.deb.control": "b1c75246670d90073087813f77f263f85bec637074f1a904ff222a82cfc7b780",
+        "package-lock.json": "a64ec9a4af81ba0d804f3359e8f9fe11ffbf28388b9e0f7190180e9b8a94fabc",
+        "package-openssl_3.0.13-0ubuntu3.16_amd64.deb.control": "b236e1b0c1facedbb47608dc81c4dcbd80351a2c3173f2fb9a0aa1174f4d18a7",
+        "package-reconciliation.json": "a64ec9a4af81ba0d804f3359e8f9fe11ffbf28388b9e0f7190180e9b8a94fabc",
+        "package-tzdata_2026e-0ubuntu0.24.04.1_all.deb.control": "b858b96575ca37067d0b90f82a286880f22999a44b96f1ff3cba84b05204f0c9",
+        "package-tzdata-legacy_2026e-0ubuntu0.24.04.1_all.deb.control": "3b3b53de9446105f7eb10b059786933a33402a3dbe95bef4949e034c0a51abbc",
+        "probe.txt": "15e42e5db05eb5945fc94e41d6e1c456cb8e84d944a47afe77cc79f2ac1c1968",
+        "production-validator.txt": "638ab9822e130d0fe53775b4bdd63268488c2df265776aeee04b18b23aca59b8",
+        "runtime-inputs.json": "2481c71f1665a07d69c40404268cce949b66fa6124c5ccb1127913698b717f19",
+        "slices.tar.gz": "99f546c8c331d5f41d2d18992e4dedf7ce6077f77a925e28e84fa796ecd4796d",
+        "snapshot-inputs.json": "92045ef3f7373118481875e963ceda9f3e22b262ebf9462a5207b07b1f39f060",
+        "tracepointprovider.cpp": "0961fc926da5e328500055f0e274cf92fb0b0a82bdcb902c799c01c2a6f06cc7",
+        "types.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "findings": [
+        {
+          "id": "CVE-2026-100290",
+          "severity": "Medium",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.12",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2025-5222",
+          "severity": "Low",
+          "package": "libicu74",
+          "version": "74.2-1ubuntu3.1",
+          "purl": "pkg:deb/ubuntu/libicu74@74.2-1ubuntu3.1?arch=amd64&distro=ubuntu-24.04&upstream=icu",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-115819",
+          "severity": "Medium",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.12",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2016-20013",
+          "severity": "Negligible",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.12",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "wont-fix",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95692",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95692",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-88822",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95691",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-88822",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95691",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-88823",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-88823",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-107496",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-107496",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        }
+      ],
+      "ELF": {
+        "elf": [
+          {
+            "path": "/opt/kiota/kiota",
+            "sha256": "0a152c12f206c7199961558eeccb4fb48a8718d7926f4edba01dccc62672d133",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libdl.so.2",
+              "libpthread.so.0",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [
+              "/lib64/ld-linux-x86-64.so.2"
+            ],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libutil.so.1",
+            "sha256": "0cf9051e58789348d681a984d8e6d96334610093289b783539764a3d611921d3",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libdl.so.2",
+            "sha256": "4dbcca3c01ca84d092b5b7b2610f5835b55fc70a0288dd9d766b40ac9386e2d9",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libanl.so.1",
+            "sha256": "a1513ab18da64c4b566278751b5a0e1b8166cfdf29e4a412ddea718c92289b4c",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libBrokenLocale.so.1",
+            "sha256": "8e3552f15878f78d50580f4b0de7c10e34100149fec91113288c77b765e19261",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libicudata.so.74.2",
+            "sha256": "ddbb3718b8bd9cbd780e5ab08b4503c30a6c4fa0706ebe5d074ed6b596c1714e",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libnss_hesiod.so.2",
+            "sha256": "ba19e3303dc05d31baaf02ba5d6ca36bfbbb434414faed51b30b6f6124bf602b",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libresolv.so.2",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+            "sha256": "755a371e86cc9f564ab54f66140747700fb0a103f698f659f2060f707897e09a",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [
+              "/lib64/ld-linux-x86-64.so.2"
+            ],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libnss_compat.so.2",
+            "sha256": "362de581741de7f58da66ace1e4870a572cdaa2299051b0b480ed3f9498df1ad",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libnss_files.so.2",
+            "sha256": "d8fce7c23c3b664871d4824950312f07e8a8f5203d638e61839e6d1ad20e45ab",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33",
+            "sha256": "1fd75fe70354a416d75aef22bcae68c47bd25d20e2d0568c30b1a9838cf62f11",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libm.so.6",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2",
+              "libgcc_s.so.1"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libicuio.so.74.2",
+            "sha256": "750b18b8bd63c4b60dd346de67fee24d08cc8da3dfc4cc3f709e514dc57a8493",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libicuuc.so.74",
+              "libicui18n.so.74",
+              "libstdc++.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libicui18n.so.74.2",
+            "sha256": "3550b194eb2cf2e6f798f033eb9ca279d498c21296b4a18790ce158d2023e47b",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libicuuc.so.74",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libicutest.so.74.2",
+            "sha256": "549175dea22826a6d4c1a145d4e5796a6d38ccfd3b07f55be8e6250b5033c6e5",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libicutu.so.74",
+              "libicuuc.so.74",
+              "libstdc++.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libthread_db.so.1",
+            "sha256": "70878da3e6a196d8edfd83af921b30e7a4ecda690c85cb659ae10d3a0a4bc542",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libicutu.so.74.2",
+            "sha256": "a93f8890099fe32aa569d5fe22e0537d632b144069da8b03a67d50401434b753",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libicui18n.so.74",
+              "libicuuc.so.74",
+              "libstdc++.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libpcprofile.so",
+            "sha256": "af3a1eb6934a8f8b02af4cd68cfde492037b59f6c7c823d4e4be7bea886823d7",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libcrypto.so.3",
+            "sha256": "6866ed711dab8927e1bf82bf1cd30e828bdfc34f3cc1e83b1c9eb01ce6c37d9a",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/librt.so.1",
+            "sha256": "5a00236da5864e8d1123d74e616713110708d6e3e604188f4f256dab4c6941d4",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libssl.so.3",
+            "sha256": "a40e7b67489bbd257e432c700ff8f6a1ad796425b5eccecdc2930127fdd86624",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libcrypto.so.3",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libmvec.so.1",
+            "sha256": "0d658201b7db51447c7b860f3d9eddb04017439955f7b13d28541d609012c32d",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libm.so.6",
+              "ld-linux-x86-64.so.2",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libnsl.so.1",
+            "sha256": "e93daff608c0232b9a397d756febcd32fa41d3fd694cb8d9eccd2c4e59b451c5",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libc_malloc_debug.so.0",
+            "sha256": "0395f570a59c37c876a9e69cd06ca5d5b16650d7e3e672e22fbf49472b0f80a2",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+            "sha256": "5fc0940888e9d2e1a00e66d6b1a559c36364ee867683652e1074fa576952cc3f",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libnss_dns.so.2",
+            "sha256": "042b1959620a4974b344ba45a309f100bc6f22bffda957b276b46e8d51701f60",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+            "sha256": "5dcc4d25466e29ca390ed6fabb371c69b65dff6fa4e91c34561057a020d6994a",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libicuuc.so.74.2",
+            "sha256": "7560aadde38e5f4237a47a1ddd5891f9b36768a77a60faae30beee003ac01901",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libicudata.so.74",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libresolv.so.2",
+            "sha256": "4dcb01645dbeea5d17f28fd96a730430a808d828b3b7d6a097cfbc311501f69f",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libpthread.so.0",
+            "sha256": "cd34f895c9d2aa669d5d2654bed6b71210fc9003c3a1e96bb5311a40feb86039",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+            "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libmemusage.so",
+            "sha256": "734e4565d1fbde8ca1ef49cbb4c6453de50748135711d607cbf1279c7cee7206",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/engines-3/afalg.so",
+            "sha256": "24750fef21c3a4df0daaeb54b5faf1adbf8cbe92f5f8df574a69ab526a4ea270",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libcrypto.so.3",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/engines-3/padlock.so",
+            "sha256": "8e66cf43cc3338989830b849ef89d7efc0d800a3cdc39e230ab6753b4e016da2",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libcrypto.so.3",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/engines-3/loader_attic.so",
+            "sha256": "c8e9c33bc895b72f7f35dd69ac55337e4dc049119d6a39d4df63214c93c932d2",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libcrypto.so.3",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/ossl-modules/legacy.so",
+            "sha256": "e639c7121825222dc720bd38aa1fca3ddcedd7d1213dc72ce006b8ccf541b547",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libcrypto.so.3",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/dotnet",
+            "sha256": "99eb018192769d9964612afa04914e3c56187d87de1918426c0ade866db467a8",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libdl.so.2",
+              "libpthread.so.0",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [
+              "/lib64/ld-linux-x86-64.so.2"
+            ],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libcoreclrtraceptprovider.so",
+            "sha256": "a24105f5b272f82aa59928bf89b779f7d79388a5baaa9df01ba90473d77ca600",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "liblttng-ust.so.0",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": true,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/createdump",
+            "sha256": "3a5694ec9c405210312415fb5d171cdb4b827a0f55ffa0c4e7214152c5afa266",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libdl.so.2",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6"
+            ],
+            "interpreter": [
+              "/lib64/ld-linux-x86-64.so.2"
+            ],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libSystem.Native.so",
+            "sha256": "1b756e1225d65791e498057863503a8e0b485feb21ac496cff610ddcd45fb352",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "librt.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libSystem.Globalization.Native.so",
+            "sha256": "fc46ffb92e67affc3e882fd2412af4bf08284b3ff3c8ed0754783e0de95dea77",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libdl.so.2",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libhostpolicy.so",
+            "sha256": "7c254bba5791725917384f0fd8dbc049024182c04ab9363bc8c52537d55b5047",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libdl.so.2",
+              "libpthread.so.0",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libmscordbi.so",
+            "sha256": "c1dfa4e295a0f5aaa04fc4756605d8bbd9301984ed9aed432fbe3531b2a07e1f",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libmscordaccore.so",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libclrgcexp.so",
+            "sha256": "aceb35e7b883a0db10684c19d79cc134ebf678c050eaa59d1344349e31e927ab",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libclrgc.so",
+            "sha256": "cbcbf4e28d578c801adb220fcdf063c7b79683812cda4dcfa7dc306e047d14ee",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libcoreclr.so",
+            "sha256": "c2a641051bb6c968fa7beacaa396c6f3ff8c0e578f6bc375678464f060c8d9cc",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libgcc_s.so.1",
+              "libpthread.so.0",
+              "librt.so.1",
+              "libdl.so.2",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libSystem.Security.Cryptography.Native.OpenSsl.so",
+            "sha256": "ed43a3226b54594c582a7e51d2b8a325f5dc9e4351511dfa40bd3e955bce578c",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libdl.so.2",
+              "libpthread.so.0",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libSystem.Net.Security.Native.so",
+            "sha256": "63d9670587e12c5290eafa133328124509c1a3ab7cf614b00a09998f3736e4ec",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libdl.so.2",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libclrjit.so",
+            "sha256": "3f1734a308c4db2c3f286a6f9cb12d9ed71e7b2d37f9d5f276c123ae99646a61",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libgcc_s.so.1",
+              "libpthread.so.0",
+              "librt.so.1",
+              "libdl.so.2",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libSystem.IO.Compression.Native.so",
+            "sha256": "d8d58fa325ab2338728d90b2607afe2e6222388f908ec64f067b1370b4fc78f4",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libm.so.6",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libmscordaccore.so",
+            "sha256": "652d073af455949e7d347dc93de9068eaccd7a2c6334f1b4ed3f92b9916a487d",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libgcc_s.so.1",
+              "libpthread.so.0",
+              "librt.so.1",
+              "libdl.so.2",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/host/fxr/10.0.15/libhostfxr.so",
+            "sha256": "342ccc53ed77b71fb097f548098ea5b4190069099dfd8dfef31976d308edf32b",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libdl.so.2",
+              "libpthread.so.0",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          }
+        ],
+        "missing": [],
+        "disabledOptionalDependencies": [
+          [
+            "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libcoreclrtraceptprovider.so",
+            "liblttng-ust.so.0"
+          ]
+        ]
+      },
+      "canonical": {
+        "documents": 40,
+        "fixtures": 355,
+        "boundaries": 27,
+        "releaseReady": false
+      },
+      "bundleReceipt": {
+        "source": "5897e4fc3e402771feb0a7dda3a7b015b52b2340",
+        "bundleDigest": "sha256:dd7c548ccee8e465afb02aac1878e919c3fcaec73e4906b67638671c48c38103",
+        "receipt": {
+          "resultDigest": "sha256:2eaa6ff47236e9a662948e96b20c071c0a7a4b0fde66b8cae9823e4a95dfa406",
+          "manifestDigest": "sha256:0af0b790f81014147df37b06c60c16f149b64973036ea8bd8a0f84ce6cbd6ab3",
+          "validationLevel": "candidate-canonical-and-fixture-validation",
+          "canonicalDocuments": 40,
+          "fixtureCases": 355,
+          "coveredBoundaries": 27
+        }
+      }
+    },
+    {
+      "lane": 2,
+      "imageId": "sha256:6dc7ea7f5fdffd2064c1c3dfb8e14e58f44e676374c3e1fa7b5669d7ece95f31",
+      "runtimeDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "packageLock": [
+        {
+          "package": "base-files",
+          "version": "13ubuntu10.5",
+          "architecture": "amd64",
+          "source": "base-files",
+          "path": "pool/main/b/base-files/base-files_13ubuntu10.5_amd64.deb",
+          "bytes": 73220,
+          "sha256": "87e8c41e62f61625fb78a982d0bc0a70f40ef8375bc313b154914d1b3759c823"
+        },
+        {
+          "package": "ca-certificates",
+          "version": "20260816ubuntu0.24.04.2",
+          "architecture": "all",
+          "source": "ca-certificates",
+          "path": "pool/main/c/ca-certificates/ca-certificates_20260816ubuntu0.24.04.2_all.deb",
+          "bytes": 140064,
+          "sha256": "f9fbacd417b515450b831032cc39d18059e9874e67525679a43c16071dabf9a0"
+        },
+        {
+          "package": "gcc-14-base",
+          "version": "14.2.0-4ubuntu2~24.04.1",
+          "architecture": "amd64",
+          "source": "gcc-14",
+          "path": "pool/main/g/gcc-14/gcc-14-base_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+          "bytes": 51014,
+          "sha256": "b95c172411a7fdae70307cf33a9f5320ba5e056b556454543dd5b679d5ce1c4f"
+        },
+        {
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.12",
+          "architecture": "amd64",
+          "source": "glibc",
+          "path": "pool/main/g/glibc/libc6_2.39-0ubuntu8.12_amd64.deb",
+          "bytes": 3264258,
+          "sha256": "d821b41fc59cb4978ecd53bc83e5c964ac15d305c8d2ac4c8a35aebe55010fb9"
+        },
+        {
+          "package": "libgcc-s1",
+          "version": "14.2.0-4ubuntu2~24.04.1",
+          "architecture": "amd64",
+          "source": "gcc-14",
+          "path": "pool/main/g/gcc-14/libgcc-s1_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+          "bytes": 78392,
+          "sha256": "aa7fadbe33b78bcf99885318040601c550c208929565b179891d9a3cc2aa68cd"
+        },
+        {
+          "package": "libicu74",
+          "version": "74.2-1ubuntu3.1",
+          "architecture": "amd64",
+          "source": "icu",
+          "path": "pool/main/i/icu/libicu74_74.2-1ubuntu3.1_amd64.deb",
+          "bytes": 10860078,
+          "sha256": "c9a70989678660eed9a1e904c74fa043da8bec8e2036856fc16e31ced79b04f8"
+        },
+        {
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "architecture": "amd64",
+          "source": "openssl",
+          "path": "pool/main/o/openssl/libssl3t64_3.0.13-0ubuntu3.16_amd64.deb",
+          "bytes": 1945300,
+          "sha256": "219f43b1cd836a4da550938db5fda93160d269d39a4edcf1f1ce698a470db797"
+        },
+        {
+          "package": "libstdc++6",
+          "version": "14.2.0-4ubuntu2~24.04.1",
+          "architecture": "amd64",
+          "source": "gcc-14",
+          "path": "pool/main/g/gcc-14/libstdc++6_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+          "bytes": 792064,
+          "sha256": "a51f8de7829211db961a31f02158058ad1a95f92ac6d0a5dff6350e2821c54c0"
+        },
+        {
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "architecture": "amd64",
+          "source": "openssl",
+          "path": "pool/main/o/openssl/openssl_3.0.13-0ubuntu3.16_amd64.deb",
+          "bytes": 1003702,
+          "sha256": "675b84971ffd4467707008c25ef7520f90ea7c23ef27b7a76b0dccf1d7c4dc3f"
+        },
+        {
+          "package": "tzdata",
+          "version": "2026e-0ubuntu0.24.04.1",
+          "architecture": "all",
+          "source": "tzdata",
+          "path": "pool/main/t/tzdata/tzdata_2026e-0ubuntu0.24.04.1_all.deb",
+          "bytes": 282136,
+          "sha256": "2f6794a7f31753fc947d9ac02ff03ea46510f34864f9d132a93d7b105e3c4447"
+        },
+        {
+          "package": "tzdata-legacy",
+          "version": "2026e-0ubuntu0.24.04.1",
+          "architecture": "all",
+          "source": "tzdata",
+          "path": "pool/main/t/tzdata/tzdata-legacy_2026e-0ubuntu0.24.04.1_all.deb",
+          "bytes": 95356,
+          "sha256": "da66b34322e7545f12bd97f2bd31c5f78406a9a9ec0ccfe284c3f3eb791647bf"
+        }
+      ],
+      "rawHashes": {
+        "build-kiota-runtime.py": "35a6ca0c2ab6d692df8dc6d4ff39c9514bf5910215da5218a504ce91b0045e74",
+        "bundle-receipt.json": "7a6cba6630d38979d7b60734ea117ca11f80fc22ac96df8ee54835f37c2ebddd",
+        "canonical-cli.json": "d277bf9fd79e417c212e2d9e700a571fedab953a6e7decc6040d2c378b6f6236",
+        "chisel-manifest.wall": "cfa0867eb088b38b4707b869225845f31dca90aef09cee4a7ec78d79e6c379bb",
+        "consumer-compile-pr74.txt": "c4a27aff0f5eaed5e50ea8bbe519efa3bcd1308f438b59dbb1b6717d11957599",
+        "consumer-compile-pr75.txt": "c4a27aff0f5eaed5e50ea8bbe519efa3bcd1308f438b59dbb1b6717d11957599",
+        "consumer-compile-pr76.txt": "c4a27aff0f5eaed5e50ea8bbe519efa3bcd1308f438b59dbb1b6717d11957599",
+        "consumer-proof.json": "8aaf0c6f06fa67d5797afe213f4b33869a2c9c45572d08b99dfeb3fa3041624e",
+        "control.cdx.json": "2c6ae01d3351d7ef97793542737e066b5e7f6537d8802ab9a5ac62a6b663baff",
+        "control.grype.json": "d73cdae180380f8550959b789382b2980eaffc0948af662c7c9edd590e95f56f",
+        "coverage.txt": "9f9a4556ae22af6c1eaafd7e085e86db34135071426c5b21998d94367fbf538d",
+        "digests.txt": "b0aeefcd44495b5fc5ed365418d9175622d894fb68f1a6f869a64b369ec96ad0",
+        "dists_noble_InRelease": "cdb2f31d809f589719a53c6ad15f255b27569c4059542ada282aaa21b8e164b0",
+        "dists_noble-security_InRelease": "b26a00fd20bcf0f31cb3e132702958eba8d50cd81d3b20bfe7433b77ebf7f775",
+        "dists_noble-updates_InRelease": "cc12944ff54a4dfde90014a9532b6c924139a888e53e5f0cb9e010b44f81c83f",
+        "dpkg-status": "e9fb461f44e2dff10bc194a71dfd25607a92bdcfb7e4aacc132c7e5d4b083e55",
+        "effective-chisel-wrapper": "0470945a7478e9cb6b449f881ad8c54decd2612259d0dcc91af7e034dafd42da",
+        "effective-chisel.yaml": "954a98ea87100fd0e892f2933c7f6832b8b85608e2bc55db3ee60f01de7f1ebf",
+        "elf-loader.json": "ca7b3d139651cf088238e3dd0e428c6a045b3ccdc79d5ff1c008af1b1a31296f",
+        "elf.json": "eb68f0315d68ff48a62effc7ac90196f08cce59166114250aabc313556425ffc",
+        "findings.tsv": "0d4a5934535bcd5b716e41c9addb161a02a4faaf09b1f6a56eb12336f76327dc",
+        "globalization.txt": "05a59628e0e4adb501284bf9d5661f8c7f8afe4fdf119c8a33b68de88ce61b4a",
+        "grype-db.json": "5619901ac8dd7e19defe5e3c9ba1853bdc152b7ed83096479264f6bbc8068402",
+        "grype-noble-explicit.json": "eb477dcdb53e8b17068d3c6689e1479af70b1627416fca1ee3ba355eb8d1dffd",
+        "grype-raw.json": "2ad6722044c07b80c8125de4510ff0f307129ada069986fbc8152266ef2b9f93",
+        "image.json": "86df069f4ba9b98beb68355f2e801918bb6219e16161738dd7adcdc5e02a03c2",
+        "kiota-version.txt": "29c268172b224f17be864fe5d09c55b8106e70ea1f04b7212bf8ecb9226857d3",
+        "kiota.cdx.json": "206cd350a16b17f2f9c24903b977ad40ea2bd9363d125608949ef9a1e83c26ed",
+        "Kiota.Dockerfile": "2dc15186ae05cd236fd657df1eb40e6cf137da3377c85b890cb2b15a30e1b5ec",
+        "kiota.runtime.json": "abd659bb5beea7d457d3af70cd4d413d00dc30e8edb32bb52c5ac765c8a7d7c1",
+        "lint.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "net10.txt": "97e6ddf932d740bc5f3f01daf5ffa0ac682e7e47d17eb054303bcef721ce980c",
+        "os-release": "87458b3b1f1ca0e5c693ade771de7007c3783bdc692fa6b39eb6414bf2af2763",
+        "package-base-files_13ubuntu10.5_amd64.deb.control": "f72749e7bcdd7fd7f9e66798dbc1a6649b4544646435b49d2ee0b477a247025f",
+        "package-ca-certificates_20260816ubuntu0.24.04.2_all.deb.control": "26a2b25ff25f3b354499997095f5b234c9133e1223e93a16df3b05634580c639",
+        "package-gcc-14-base_14.2.0-4ubuntu2~24.04.1_amd64.deb.control": "8a546b3b9cfa708be2abbf6a685240a27b4dc32a4c948c179b23221d24c805e0",
+        "package-libc6_2.39-0ubuntu8.12_amd64.deb.control": "b2ebfd4b4fbe63eafa9bbaa391fdccabcbbc72a14e30ca900b4af6e5545d67ff",
+        "package-libgcc-s1_14.2.0-4ubuntu2~24.04.1_amd64.deb.control": "2f148a9218ad02c683b99076017800a49d3036d055a3f7c025a8572343a21d53",
+        "package-libicu74_74.2-1ubuntu3.1_amd64.deb.control": "23c06652cd29ee04289ac53d8e8d73bfad02adb829d5ee27544398cc88c839d0",
+        "package-libssl3t64_3.0.13-0ubuntu3.16_amd64.deb.control": "a678cfb1b9532258ed984cd7db38aec670bd3e6398141e22ae6a6852f1c90a66",
+        "package-libstdc++6_14.2.0-4ubuntu2~24.04.1_amd64.deb.control": "b1c75246670d90073087813f77f263f85bec637074f1a904ff222a82cfc7b780",
+        "package-lock.json": "a64ec9a4af81ba0d804f3359e8f9fe11ffbf28388b9e0f7190180e9b8a94fabc",
+        "package-openssl_3.0.13-0ubuntu3.16_amd64.deb.control": "b236e1b0c1facedbb47608dc81c4dcbd80351a2c3173f2fb9a0aa1174f4d18a7",
+        "package-reconciliation.json": "a64ec9a4af81ba0d804f3359e8f9fe11ffbf28388b9e0f7190180e9b8a94fabc",
+        "package-tzdata_2026e-0ubuntu0.24.04.1_all.deb.control": "b858b96575ca37067d0b90f82a286880f22999a44b96f1ff3cba84b05204f0c9",
+        "package-tzdata-legacy_2026e-0ubuntu0.24.04.1_all.deb.control": "3b3b53de9446105f7eb10b059786933a33402a3dbe95bef4949e034c0a51abbc",
+        "probe.txt": "6afb3c75de2ee7d4812bd6a89c95615b602dddfe5cd96cfdaa98f6a58868758f",
+        "production-validator.txt": "cc1ec7a0cdfd4d8df37d762a7860eb1f1481d781eb8abc10f45c26487d2af3e4",
+        "runtime-inputs.json": "2481c71f1665a07d69c40404268cce949b66fa6124c5ccb1127913698b717f19",
+        "slices.tar.gz": "99f546c8c331d5f41d2d18992e4dedf7ce6077f77a925e28e84fa796ecd4796d",
+        "snapshot-inputs.json": "92045ef3f7373118481875e963ceda9f3e22b262ebf9462a5207b07b1f39f060",
+        "tracepointprovider.cpp": "0961fc926da5e328500055f0e274cf92fb0b0a82bdcb902c799c01c2a6f06cc7",
+        "types.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "findings": [
+        {
+          "id": "CVE-2026-100290",
+          "severity": "Medium",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.12",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2025-5222",
+          "severity": "Low",
+          "package": "libicu74",
+          "version": "74.2-1ubuntu3.1",
+          "purl": "pkg:deb/ubuntu/libicu74@74.2-1ubuntu3.1?arch=amd64&distro=ubuntu-24.04&upstream=icu",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-115819",
+          "severity": "Medium",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.12",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2016-20013",
+          "severity": "Negligible",
+          "package": "libc6",
+          "version": "2.39-0ubuntu8.12",
+          "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+          "fixState": "wont-fix",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95692",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95692",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-88822",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95691",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-88822",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-95691",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-88823",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-88823",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-107496",
+          "severity": "Medium",
+          "package": "libssl3t64",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        },
+        {
+          "id": "CVE-2026-107496",
+          "severity": "Medium",
+          "package": "openssl",
+          "version": "3.0.13-0ubuntu3.16",
+          "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+          "fixState": "not-fixed",
+          "fixVersions": []
+        }
+      ],
+      "ELF": {
+        "elf": [
+          {
+            "path": "/opt/kiota/kiota",
+            "sha256": "0a152c12f206c7199961558eeccb4fb48a8718d7926f4edba01dccc62672d133",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libdl.so.2",
+              "libpthread.so.0",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [
+              "/lib64/ld-linux-x86-64.so.2"
+            ],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libutil.so.1",
+            "sha256": "0cf9051e58789348d681a984d8e6d96334610093289b783539764a3d611921d3",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libdl.so.2",
+            "sha256": "4dbcca3c01ca84d092b5b7b2610f5835b55fc70a0288dd9d766b40ac9386e2d9",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libanl.so.1",
+            "sha256": "a1513ab18da64c4b566278751b5a0e1b8166cfdf29e4a412ddea718c92289b4c",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libBrokenLocale.so.1",
+            "sha256": "8e3552f15878f78d50580f4b0de7c10e34100149fec91113288c77b765e19261",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libicudata.so.74.2",
+            "sha256": "ddbb3718b8bd9cbd780e5ab08b4503c30a6c4fa0706ebe5d074ed6b596c1714e",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libnss_hesiod.so.2",
+            "sha256": "ba19e3303dc05d31baaf02ba5d6ca36bfbbb434414faed51b30b6f6124bf602b",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libresolv.so.2",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+            "sha256": "755a371e86cc9f564ab54f66140747700fb0a103f698f659f2060f707897e09a",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [
+              "/lib64/ld-linux-x86-64.so.2"
+            ],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libnss_compat.so.2",
+            "sha256": "362de581741de7f58da66ace1e4870a572cdaa2299051b0b480ed3f9498df1ad",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libnss_files.so.2",
+            "sha256": "d8fce7c23c3b664871d4824950312f07e8a8f5203d638e61839e6d1ad20e45ab",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33",
+            "sha256": "1fd75fe70354a416d75aef22bcae68c47bd25d20e2d0568c30b1a9838cf62f11",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libm.so.6",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2",
+              "libgcc_s.so.1"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libicuio.so.74.2",
+            "sha256": "750b18b8bd63c4b60dd346de67fee24d08cc8da3dfc4cc3f709e514dc57a8493",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libicuuc.so.74",
+              "libicui18n.so.74",
+              "libstdc++.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libicui18n.so.74.2",
+            "sha256": "3550b194eb2cf2e6f798f033eb9ca279d498c21296b4a18790ce158d2023e47b",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libicuuc.so.74",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libicutest.so.74.2",
+            "sha256": "549175dea22826a6d4c1a145d4e5796a6d38ccfd3b07f55be8e6250b5033c6e5",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libicutu.so.74",
+              "libicuuc.so.74",
+              "libstdc++.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libthread_db.so.1",
+            "sha256": "70878da3e6a196d8edfd83af921b30e7a4ecda690c85cb659ae10d3a0a4bc542",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libicutu.so.74.2",
+            "sha256": "a93f8890099fe32aa569d5fe22e0537d632b144069da8b03a67d50401434b753",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libicui18n.so.74",
+              "libicuuc.so.74",
+              "libstdc++.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libpcprofile.so",
+            "sha256": "af3a1eb6934a8f8b02af4cd68cfde492037b59f6c7c823d4e4be7bea886823d7",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libcrypto.so.3",
+            "sha256": "6866ed711dab8927e1bf82bf1cd30e828bdfc34f3cc1e83b1c9eb01ce6c37d9a",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/librt.so.1",
+            "sha256": "5a00236da5864e8d1123d74e616713110708d6e3e604188f4f256dab4c6941d4",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libssl.so.3",
+            "sha256": "a40e7b67489bbd257e432c700ff8f6a1ad796425b5eccecdc2930127fdd86624",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libcrypto.so.3",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libmvec.so.1",
+            "sha256": "0d658201b7db51447c7b860f3d9eddb04017439955f7b13d28541d609012c32d",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libm.so.6",
+              "ld-linux-x86-64.so.2",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libnsl.so.1",
+            "sha256": "e93daff608c0232b9a397d756febcd32fa41d3fd694cb8d9eccd2c4e59b451c5",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libc_malloc_debug.so.0",
+            "sha256": "0395f570a59c37c876a9e69cd06ca5d5b16650d7e3e672e22fbf49472b0f80a2",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+            "sha256": "5fc0940888e9d2e1a00e66d6b1a559c36364ee867683652e1074fa576952cc3f",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libnss_dns.so.2",
+            "sha256": "042b1959620a4974b344ba45a309f100bc6f22bffda957b276b46e8d51701f60",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+            "sha256": "5dcc4d25466e29ca390ed6fabb371c69b65dff6fa4e91c34561057a020d6994a",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libicuuc.so.74.2",
+            "sha256": "7560aadde38e5f4237a47a1ddd5891f9b36768a77a60faae30beee003ac01901",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libicudata.so.74",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libresolv.so.2",
+            "sha256": "4dcb01645dbeea5d17f28fd96a730430a808d828b3b7d6a097cfbc311501f69f",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libpthread.so.0",
+            "sha256": "cd34f895c9d2aa669d5d2654bed6b71210fc9003c3a1e96bb5311a40feb86039",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+            "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/libmemusage.so",
+            "sha256": "734e4565d1fbde8ca1ef49cbb4c6453de50748135711d607cbf1279c7cee7206",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/engines-3/afalg.so",
+            "sha256": "24750fef21c3a4df0daaeb54b5faf1adbf8cbe92f5f8df574a69ab526a4ea270",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libcrypto.so.3",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/engines-3/padlock.so",
+            "sha256": "8e66cf43cc3338989830b849ef89d7efc0d800a3cdc39e230ab6753b4e016da2",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libcrypto.so.3",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/engines-3/loader_attic.so",
+            "sha256": "c8e9c33bc895b72f7f35dd69ac55337e4dc049119d6a39d4df63214c93c932d2",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libcrypto.so.3",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/lib/x86_64-linux-gnu/ossl-modules/legacy.so",
+            "sha256": "e639c7121825222dc720bd38aa1fca3ddcedd7d1213dc72ce006b8ccf541b547",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libcrypto.so.3",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/dotnet",
+            "sha256": "99eb018192769d9964612afa04914e3c56187d87de1918426c0ade866db467a8",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libdl.so.2",
+              "libpthread.so.0",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [
+              "/lib64/ld-linux-x86-64.so.2"
+            ],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libcoreclrtraceptprovider.so",
+            "sha256": "a24105f5b272f82aa59928bf89b779f7d79388a5baaa9df01ba90473d77ca600",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "liblttng-ust.so.0",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": true,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/createdump",
+            "sha256": "3a5694ec9c405210312415fb5d171cdb4b827a0f55ffa0c4e7214152c5afa266",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libdl.so.2",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6"
+            ],
+            "interpreter": [
+              "/lib64/ld-linux-x86-64.so.2"
+            ],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libSystem.Native.so",
+            "sha256": "1b756e1225d65791e498057863503a8e0b485feb21ac496cff610ddcd45fb352",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "librt.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libSystem.Globalization.Native.so",
+            "sha256": "fc46ffb92e67affc3e882fd2412af4bf08284b3ff3c8ed0754783e0de95dea77",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libdl.so.2",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libhostpolicy.so",
+            "sha256": "7c254bba5791725917384f0fd8dbc049024182c04ab9363bc8c52537d55b5047",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libdl.so.2",
+              "libpthread.so.0",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libmscordbi.so",
+            "sha256": "c1dfa4e295a0f5aaa04fc4756605d8bbd9301984ed9aed432fbe3531b2a07e1f",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libmscordaccore.so",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libclrgcexp.so",
+            "sha256": "aceb35e7b883a0db10684c19d79cc134ebf678c050eaa59d1344349e31e927ab",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libclrgc.so",
+            "sha256": "cbcbf4e28d578c801adb220fcdf063c7b79683812cda4dcfa7dc306e047d14ee",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libcoreclr.so",
+            "sha256": "c2a641051bb6c968fa7beacaa396c6f3ff8c0e578f6bc375678464f060c8d9cc",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libgcc_s.so.1",
+              "libpthread.so.0",
+              "librt.so.1",
+              "libdl.so.2",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libSystem.Security.Cryptography.Native.OpenSsl.so",
+            "sha256": "ed43a3226b54594c582a7e51d2b8a325f5dc9e4351511dfa40bd3e955bce578c",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libdl.so.2",
+              "libpthread.so.0",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libSystem.Net.Security.Native.so",
+            "sha256": "63d9670587e12c5290eafa133328124509c1a3ab7cf614b00a09998f3736e4ec",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libdl.so.2",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libclrjit.so",
+            "sha256": "3f1734a308c4db2c3f286a6f9cb12d9ed71e7b2d37f9d5f276c123ae99646a61",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libgcc_s.so.1",
+              "libpthread.so.0",
+              "librt.so.1",
+              "libdl.so.2",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libSystem.IO.Compression.Native.so",
+            "sha256": "d8d58fa325ab2338728d90b2607afe2e6222388f908ec64f067b1370b4fc78f4",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libm.so.6",
+              "libc.so.6"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libmscordaccore.so",
+            "sha256": "652d073af455949e7d347dc93de9068eaccd7a2c6334f1b4ed3f92b9916a487d",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libgcc_s.so.1",
+              "libpthread.so.0",
+              "librt.so.1",
+              "libdl.so.2",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          },
+          {
+            "path": "/usr/share/dotnet/host/fxr/10.0.15/libhostfxr.so",
+            "sha256": "342ccc53ed77b71fb097f548098ea5b4190069099dfd8dfef31976d308edf32b",
+            "machine": "Advanced Micro Devices X86-64",
+            "needed": [
+              "libdl.so.2",
+              "libpthread.so.0",
+              "libstdc++.so.6",
+              "libm.so.6",
+              "libgcc_s.so.1",
+              "libc.so.6",
+              "ld-linux-x86-64.so.2"
+            ],
+            "interpreter": [],
+            "disabledOptionalLttng": false,
+            "unsupportedArchitecture": false
+          }
+        ],
+        "missing": [],
+        "disabledOptionalDependencies": [
+          [
+            "/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libcoreclrtraceptprovider.so",
+            "liblttng-ust.so.0"
+          ]
+        ]
+      },
+      "canonical": {
+        "documents": 40,
+        "fixtures": 355,
+        "boundaries": 27,
+        "releaseReady": false
+      },
+      "bundleReceipt": {
+        "source": "5897e4fc3e402771feb0a7dda3a7b015b52b2340",
+        "bundleDigest": "sha256:dd7c548ccee8e465afb02aac1878e919c3fcaec73e4906b67638671c48c38103",
+        "receipt": {
+          "resultDigest": "sha256:2eaa6ff47236e9a662948e96b20c071c0a7a4b0fde66b8cae9823e4a95dfa406",
+          "manifestDigest": "sha256:0af0b790f81014147df37b06c60c16f149b64973036ea8bd8a0f84ce6cbd6ab3",
+          "validationLevel": "candidate-canonical-and-fixture-validation",
+          "canonicalDocuments": 40,
+          "fixtureCases": 355,
+          "coveredBoundaries": 27
+        }
+      }
+    }
+  ]
+}

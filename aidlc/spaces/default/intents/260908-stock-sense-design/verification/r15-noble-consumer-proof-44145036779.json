@@ -1,0 +1,502 @@
+{
+  "run": "44145036779",
+  "workflowRevision": "6788ce2",
+  "sourceIntegration": "46325b340caa23f203227eae0f92a97b2c818c9c",
+  "summary": "Two independently built candidate images each generated all 107 consumer output paths twice for each of the three PR baselines. Actual generated clients compiled and passed synthetic session/request/response checks. PR74 changes only kiotaVersion in kiota-lock.json from 1.35.0 to 1.38.0; all 103 C# files identical. PR75/76 outputs match exact pre-change expected manifests. Bounded generator measured each invocation within 120 seconds and 2 GiB.",
+  "lanes": [
+    {
+      "lane": 1,
+      "evidenceSha256": "sha256:4d73ce28b5d48016f04995834ff62f009f757fefc6835fcb0ccbcaa57b2e841d",
+      "imageId": "sha256:887a09d647c642d8e40e25fbbbd402b4354b5677453df259331100f2123d1b8f",
+      "prs": [
+        {
+          "pr": 74,
+          "head": "e9f326cebc1ae7212d9a0597490029ffdde45b96",
+          "profileBlob": "f22ec1348160ea2f9fd4183b0fe7096dc8bdaeb5",
+          "sourceRevision": "2227acab9321b9184944d74692f61c67f03087ad",
+          "standardsImage": "sha256:8bca453f18182bc6a3c57741c8bbb2ee419f6c61144326829d61bef212c59136",
+          "measurements": [
+            {
+              "consumerId": "web-application",
+              "generator": "openapi-typescript",
+              "image": "sha256:8bca453f18182bc6a3c57741c8bbb2ee419f6c61144326829d61bef212c59136",
+              "elapsedMs": 739,
+              "peakBytes": 130621440,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-2yR1OF/candidate74-1/web-application/browser-api.d.ts"
+            },
+            {
+              "consumerId": "web-application",
+              "generator": "openapi-typescript",
+              "image": "sha256:8bca453f18182bc6a3c57741c8bbb2ee419f6c61144326829d61bef212c59136",
+              "elapsedMs": 740,
+              "peakBytes": 129880064,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-2yR1OF/candidate74-2/web-application/browser-api.d.ts"
+            },
+            {
+              "consumerId": "dotnet-operations-client",
+              "generator": "kiota",
+              "image": "sha256:887a09d647c642d8e40e25fbbbd402b4354b5677453df259331100f2123d1b8f",
+              "elapsedMs": 1260,
+              "peakBytes": 59789312,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-2yR1OF/candidate74-1/dotnet-operations-client/dotnet-client"
+            },
+            {
+              "consumerId": "dotnet-operations-client",
+              "generator": "kiota",
+              "image": "sha256:887a09d647c642d8e40e25fbbbd402b4354b5677453df259331100f2123d1b8f",
+              "elapsedMs": 1257,
+              "peakBytes": 59731968,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-2yR1OF/candidate74-2/dotnet-operations-client/dotnet-client"
+            },
+            {
+              "consumerId": "messaging-typescript",
+              "generator": "modelina",
+              "image": "sha256:8bca453f18182bc6a3c57741c8bbb2ee419f6c61144326829d61bef212c59136",
+              "elapsedMs": 1194,
+              "peakBytes": 143724544,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-2yR1OF/candidate74-1/messaging-typescript/message-models"
+            },
+            {
+              "consumerId": "messaging-typescript",
+              "generator": "modelina",
+              "image": "sha256:8bca453f18182bc6a3c57741c8bbb2ee419f6c61144326829d61bef212c59136",
+              "elapsedMs": 1180,
+              "peakBytes": 141975552,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-2yR1OF/candidate74-2/messaging-typescript/message-models"
+            }
+          ],
+          "consumers": [
+            {
+              "consumerId": "web-application",
+              "previousVersion": "7.13.0",
+              "version": "7.13.0",
+              "outputCount": 1,
+              "outputMapSha256": "sha256:aa1b392bbeac43902c9163fddccbb4824887d8eafc4d9468808e26c3454fdef9"
+            },
+            {
+              "consumerId": "dotnet-operations-client",
+              "previousVersion": "1.35.0",
+              "version": "1.38.0",
+              "outputCount": 104,
+              "outputMapSha256": "sha256:6e6b46d4dec377ed7842db9ef2f19b0e78b05e35a1f408098b64138082cf1a1f"
+            },
+            {
+              "consumerId": "messaging-typescript",
+              "previousVersion": "5.10.1",
+              "version": "5.10.1",
+              "outputCount": 2,
+              "outputMapSha256": "sha256:db613a78c4493ae856c25ac241a74d197aa5f22baa77bfe044d463ad0654ee9d"
+            }
+          ]
+        },
+        {
+          "pr": 75,
+          "head": "c5157d34845b33c863f6e2d1c3e8f81a25fb6b21",
+          "profileBlob": "1f29b7b4f8ee590bc199bcc590f439ed1251a5b7",
+          "sourceRevision": "1820225f36f578c45d29c0c2746dc9e3e9def187",
+          "standardsImage": "sha256:e621495bc4851631041b8164c62f3ce8a3af6ef082b72ab655f28126316bcef0",
+          "measurements": [
+            {
+              "consumerId": "web-application",
+              "generator": "openapi-typescript",
+              "image": "sha256:e621495bc4851631041b8164c62f3ce8a3af6ef082b72ab655f28126316bcef0",
+              "elapsedMs": 808,
+              "peakBytes": 128110592,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-2yR1OF/candidate75-1/web-application/browser-api.d.ts"
+            },
+            {
+              "consumerId": "web-application",
+              "generator": "openapi-typescript",
+              "image": "sha256:e621495bc4851631041b8164c62f3ce8a3af6ef082b72ab655f28126316bcef0",
+              "elapsedMs": 811,
+              "peakBytes": 127754240,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-2yR1OF/candidate75-2/web-application/browser-api.d.ts"
+            },
+            {
+              "consumerId": "dotnet-operations-client",
+              "generator": "kiota",
+              "image": "sha256:887a09d647c642d8e40e25fbbbd402b4354b5677453df259331100f2123d1b8f",
+              "elapsedMs": 1368,
+              "peakBytes": 59600896,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-2yR1OF/candidate75-1/dotnet-operations-client/dotnet-client"
+            },
+            {
+              "consumerId": "dotnet-operations-client",
+              "generator": "kiota",
+              "image": "sha256:887a09d647c642d8e40e25fbbbd402b4354b5677453df259331100f2123d1b8f",
+              "elapsedMs": 1361,
+              "peakBytes": 59891712,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-2yR1OF/candidate75-2/dotnet-operations-client/dotnet-client"
+            },
+            {
+              "consumerId": "messaging-typescript",
+              "generator": "modelina",
+              "image": "sha256:e621495bc4851631041b8164c62f3ce8a3af6ef082b72ab655f28126316bcef0",
+              "elapsedMs": 1293,
+              "peakBytes": 142938112,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-2yR1OF/candidate75-1/messaging-typescript/message-models"
+            },
+            {
+              "consumerId": "messaging-typescript",
+              "generator": "modelina",
+              "image": "sha256:e621495bc4851631041b8164c62f3ce8a3af6ef082b72ab655f28126316bcef0",
+              "elapsedMs": 1288,
+              "peakBytes": 142553088,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-2yR1OF/candidate75-2/messaging-typescript/message-models"
+            }
+          ],
+          "consumers": [
+            {
+              "consumerId": "web-application",
+              "previousVersion": "7.13.0",
+              "version": "7.13.0",
+              "outputCount": 1,
+              "outputMapSha256": "sha256:aa1b392bbeac43902c9163fddccbb4824887d8eafc4d9468808e26c3454fdef9"
+            },
+            {
+              "consumerId": "dotnet-operations-client",
+              "previousVersion": "1.38.0",
+              "version": "1.38.0",
+              "outputCount": 104,
+              "outputMapSha256": "sha256:d8d7b1154a7e9e13c5e6f4b638afd8b92c6e330e9928bbf54cfcf26049bfe911"
+            },
+            {
+              "consumerId": "messaging-typescript",
+              "previousVersion": "5.10.1",
+              "version": "5.10.1",
+              "outputCount": 2,
+              "outputMapSha256": "sha256:db613a78c4493ae856c25ac241a74d197aa5f22baa77bfe044d463ad0654ee9d"
+            }
+          ]
+        },
+        {
+          "pr": 76,
+          "head": "e284f99d5629dfcbfcb2935b0005c48c40c3d2e9",
+          "profileBlob": "9c66dabb2678000a586c4d5e2fb9c782b77b8458",
+          "sourceRevision": "b8be1e0bbc81cf43f1ab62cda02824ce03d70720",
+          "standardsImage": "sha256:ded369d81b75b5ca966d6060063b28908afe302984bf1a503bbc409ac224e00c",
+          "measurements": [
+            {
+              "consumerId": "web-application",
+              "generator": "openapi-typescript",
+              "image": "sha256:ded369d81b75b5ca966d6060063b28908afe302984bf1a503bbc409ac224e00c",
+              "elapsedMs": 804,
+              "peakBytes": 126935040,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-2yR1OF/candidate76-1/web-application/browser-api.d.ts"
+            },
+            {
+              "consumerId": "web-application",
+              "generator": "openapi-typescript",
+              "image": "sha256:ded369d81b75b5ca966d6060063b28908afe302984bf1a503bbc409ac224e00c",
+              "elapsedMs": 780,
+              "peakBytes": 107429888,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-2yR1OF/candidate76-2/web-application/browser-api.d.ts"
+            },
+            {
+              "consumerId": "dotnet-operations-client",
+              "generator": "kiota",
+              "image": "sha256:887a09d647c642d8e40e25fbbbd402b4354b5677453df259331100f2123d1b8f",
+              "elapsedMs": 1361,
+              "peakBytes": 59691008,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-2yR1OF/candidate76-1/dotnet-operations-client/dotnet-client"
+            },
+            {
+              "consumerId": "dotnet-operations-client",
+              "generator": "kiota",
+              "image": "sha256:887a09d647c642d8e40e25fbbbd402b4354b5677453df259331100f2123d1b8f",
+              "elapsedMs": 1351,
+              "peakBytes": 59408384,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-2yR1OF/candidate76-2/dotnet-operations-client/dotnet-client"
+            },
+            {
+              "consumerId": "messaging-typescript",
+              "generator": "modelina",
+              "image": "sha256:ded369d81b75b5ca966d6060063b28908afe302984bf1a503bbc409ac224e00c",
+              "elapsedMs": 1287,
+              "peakBytes": 142045184,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-2yR1OF/candidate76-1/messaging-typescript/message-models"
+            },
+            {
+              "consumerId": "messaging-typescript",
+              "generator": "modelina",
+              "image": "sha256:ded369d81b75b5ca966d6060063b28908afe302984bf1a503bbc409ac224e00c",
+              "elapsedMs": 1273,
+              "peakBytes": 141832192,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-2yR1OF/candidate76-2/messaging-typescript/message-models"
+            }
+          ],
+          "consumers": [
+            {
+              "consumerId": "web-application",
+              "previousVersion": "7.13.0",
+              "version": "7.13.0",
+              "outputCount": 1,
+              "outputMapSha256": "sha256:aa1b392bbeac43902c9163fddccbb4824887d8eafc4d9468808e26c3454fdef9"
+            },
+            {
+              "consumerId": "dotnet-operations-client",
+              "previousVersion": "1.38.0",
+              "version": "1.38.0",
+              "outputCount": 104,
+              "outputMapSha256": "sha256:6e6b46d4dec377ed7842db9ef2f19b0e78b05e35a1f408098b64138082cf1a1f"
+            },
+            {
+              "consumerId": "messaging-typescript",
+              "previousVersion": "5.10.1",
+              "version": "5.10.1",
+              "outputCount": 2,
+              "outputMapSha256": "sha256:db613a78c4493ae856c25ac241a74d197aa5f22baa77bfe044d463ad0654ee9d"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "lane": 2,
+      "evidenceSha256": "sha256:2046de7fdebb94b1c30f768f05db2dbff4a2d2e1a9dfe3af411bbf06e9831757",
+      "imageId": "sha256:edc392fce4df0a2eb94e6f8fd8b054b6834f5cb6535cc66bf7dacbc03b1d50a9",
+      "prs": [
+        {
+          "pr": 74,
+          "head": "e9f326cebc1ae7212d9a0597490029ffdde45b96",
+          "profileBlob": "f22ec1348160ea2f9fd4183b0fe7096dc8bdaeb5",
+          "sourceRevision": "2227acab9321b9184944d74692f61c67f03087ad",
+          "standardsImage": "sha256:abae94453fcdcd0a7c959c70b0ed6f7ac614b713444fd6758a84d4e57620427c",
+          "measurements": [
+            {
+              "consumerId": "web-application",
+              "generator": "openapi-typescript",
+              "image": "sha256:abae94453fcdcd0a7c959c70b0ed6f7ac614b713444fd6758a84d4e57620427c",
+              "elapsedMs": 753,
+              "peakBytes": 129335296,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-kJKD6a/candidate74-1/web-application/browser-api.d.ts"
+            },
+            {
+              "consumerId": "web-application",
+              "generator": "openapi-typescript",
+              "image": "sha256:abae94453fcdcd0a7c959c70b0ed6f7ac614b713444fd6758a84d4e57620427c",
+              "elapsedMs": 769,
+              "peakBytes": 122056704,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-kJKD6a/candidate74-2/web-application/browser-api.d.ts"
+            },
+            {
+              "consumerId": "dotnet-operations-client",
+              "generator": "kiota",
+              "image": "sha256:edc392fce4df0a2eb94e6f8fd8b054b6834f5cb6535cc66bf7dacbc03b1d50a9",
+              "elapsedMs": 1307,
+              "peakBytes": 60039168,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-kJKD6a/candidate74-1/dotnet-operations-client/dotnet-client"
+            },
+            {
+              "consumerId": "dotnet-operations-client",
+              "generator": "kiota",
+              "image": "sha256:edc392fce4df0a2eb94e6f8fd8b054b6834f5cb6535cc66bf7dacbc03b1d50a9",
+              "elapsedMs": 1292,
+              "peakBytes": 59699200,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-kJKD6a/candidate74-2/dotnet-operations-client/dotnet-client"
+            },
+            {
+              "consumerId": "messaging-typescript",
+              "generator": "modelina",
+              "image": "sha256:abae94453fcdcd0a7c959c70b0ed6f7ac614b713444fd6758a84d4e57620427c",
+              "elapsedMs": 1209,
+              "peakBytes": 142696448,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-kJKD6a/candidate74-1/messaging-typescript/message-models"
+            },
+            {
+              "consumerId": "messaging-typescript",
+              "generator": "modelina",
+              "image": "sha256:abae94453fcdcd0a7c959c70b0ed6f7ac614b713444fd6758a84d4e57620427c",
+              "elapsedMs": 1178,
+              "peakBytes": 141979648,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-kJKD6a/candidate74-2/messaging-typescript/message-models"
+            }
+          ],
+          "consumers": [
+            {
+              "consumerId": "web-application",
+              "previousVersion": "7.13.0",
+              "version": "7.13.0",
+              "outputCount": 1,
+              "outputMapSha256": "sha256:aa1b392bbeac43902c9163fddccbb4824887d8eafc4d9468808e26c3454fdef9"
+            },
+            {
+              "consumerId": "dotnet-operations-client",
+              "previousVersion": "1.35.0",
+              "version": "1.38.0",
+              "outputCount": 104,
+              "outputMapSha256": "sha256:6e6b46d4dec377ed7842db9ef2f19b0e78b05e35a1f408098b64138082cf1a1f"
+            },
+            {
+              "consumerId": "messaging-typescript",
+              "previousVersion": "5.10.1",
+              "version": "5.10.1",
+              "outputCount": 2,
+              "outputMapSha256": "sha256:db613a78c4493ae856c25ac241a74d197aa5f22baa77bfe044d463ad0654ee9d"
+            }
+          ]
+        },
+        {
+          "pr": 75,
+          "head": "c5157d34845b33c863f6e2d1c3e8f81a25fb6b21",
+          "profileBlob": "1f29b7b4f8ee590bc199bcc590f439ed1251a5b7",
+          "sourceRevision": "1820225f36f578c45d29c0c2746dc9e3e9def187",
+          "standardsImage": "sha256:23ce8125201cd6d0e83d289117f464bdaf3887e5d4b25dd2296d985bda1e7a2b",
+          "measurements": [
+            {
+              "consumerId": "web-application",
+              "generator": "openapi-typescript",
+              "image": "sha256:23ce8125201cd6d0e83d289117f464bdaf3887e5d4b25dd2296d985bda1e7a2b",
+              "elapsedMs": 765,
+              "peakBytes": 127856640,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-kJKD6a/candidate75-1/web-application/browser-api.d.ts"
+            },
+            {
+              "consumerId": "web-application",
+              "generator": "openapi-typescript",
+              "image": "sha256:23ce8125201cd6d0e83d289117f464bdaf3887e5d4b25dd2296d985bda1e7a2b",
+              "elapsedMs": 746,
+              "peakBytes": 128856064,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-kJKD6a/candidate75-2/web-application/browser-api.d.ts"
+            },
+            {
+              "consumerId": "dotnet-operations-client",
+              "generator": "kiota",
+              "image": "sha256:edc392fce4df0a2eb94e6f8fd8b054b6834f5cb6535cc66bf7dacbc03b1d50a9",
+              "elapsedMs": 1321,
+              "peakBytes": 60280832,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-kJKD6a/candidate75-1/dotnet-operations-client/dotnet-client"
+            },
+            {
+              "consumerId": "dotnet-operations-client",
+              "generator": "kiota",
+              "image": "sha256:edc392fce4df0a2eb94e6f8fd8b054b6834f5cb6535cc66bf7dacbc03b1d50a9",
+              "elapsedMs": 1302,
+              "peakBytes": 59478016,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-kJKD6a/candidate75-2/dotnet-operations-client/dotnet-client"
+            },
+            {
+              "consumerId": "messaging-typescript",
+              "generator": "modelina",
+              "image": "sha256:23ce8125201cd6d0e83d289117f464bdaf3887e5d4b25dd2296d985bda1e7a2b",
+              "elapsedMs": 1191,
+              "peakBytes": 142843904,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-kJKD6a/candidate75-1/messaging-typescript/message-models"
+            },
+            {
+              "consumerId": "messaging-typescript",
+              "generator": "modelina",
+              "image": "sha256:23ce8125201cd6d0e83d289117f464bdaf3887e5d4b25dd2296d985bda1e7a2b",
+              "elapsedMs": 1184,
+              "peakBytes": 142475264,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-kJKD6a/candidate75-2/messaging-typescript/message-models"
+            }
+          ],
+          "consumers": [
+            {
+              "consumerId": "web-application",
+              "previousVersion": "7.13.0",
+              "version": "7.13.0",
+              "outputCount": 1,
+              "outputMapSha256": "sha256:aa1b392bbeac43902c9163fddccbb4824887d8eafc4d9468808e26c3454fdef9"
+            },
+            {
+              "consumerId": "dotnet-operations-client",
+              "previousVersion": "1.38.0",
+              "version": "1.38.0",
+              "outputCount": 104,
+              "outputMapSha256": "sha256:d8d7b1154a7e9e13c5e6f4b638afd8b92c6e330e9928bbf54cfcf26049bfe911"
+            },
+            {
+              "consumerId": "messaging-typescript",
+              "previousVersion": "5.10.1",
+              "version": "5.10.1",
+              "outputCount": 2,
+              "outputMapSha256": "sha256:db613a78c4493ae856c25ac241a74d197aa5f22baa77bfe044d463ad0654ee9d"
+            }
+          ]
+        },
+        {
+          "pr": 76,
+          "head": "e284f99d5629dfcbfcb2935b0005c48c40c3d2e9",
+          "profileBlob": "9c66dabb2678000a586c4d5e2fb9c782b77b8458",
+          "sourceRevision": "b8be1e0bbc81cf43f1ab62cda02824ce03d70720",
+          "standardsImage": "sha256:4ff2c94c6d3cc52b10d4a90eceee2e1d6cd15c262be460cfc151998cefd54891",
+          "measurements": [
+            {
+              "consumerId": "web-application",
+              "generator": "openapi-typescript",
+              "image": "sha256:4ff2c94c6d3cc52b10d4a90eceee2e1d6cd15c262be460cfc151998cefd54891",
+              "elapsedMs": 751,
+              "peakBytes": 127619072,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-kJKD6a/candidate76-1/web-application/browser-api.d.ts"
+            },
+            {
+              "consumerId": "web-application",
+              "generator": "openapi-typescript",
+              "image": "sha256:4ff2c94c6d3cc52b10d4a90eceee2e1d6cd15c262be460cfc151998cefd54891",
+              "elapsedMs": 757,
+              "peakBytes": 128278528,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-kJKD6a/candidate76-2/web-application/browser-api.d.ts"
+            },
+            {
+              "consumerId": "dotnet-operations-client",
+              "generator": "kiota",
+              "image": "sha256:edc392fce4df0a2eb94e6f8fd8b054b6834f5cb6535cc66bf7dacbc03b1d50a9",
+              "elapsedMs": 1306,
+              "peakBytes": 59711488,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-kJKD6a/candidate76-1/dotnet-operations-client/dotnet-client"
+            },
+            {
+              "consumerId": "dotnet-operations-client",
+              "generator": "kiota",
+              "image": "sha256:edc392fce4df0a2eb94e6f8fd8b054b6834f5cb6535cc66bf7dacbc03b1d50a9",
+              "elapsedMs": 1283,
+              "peakBytes": 59830272,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-kJKD6a/candidate76-2/dotnet-operations-client/dotnet-client"
+            },
+            {
+              "consumerId": "messaging-typescript",
+              "generator": "modelina",
+              "image": "sha256:4ff2c94c6d3cc52b10d4a90eceee2e1d6cd15c262be460cfc151998cefd54891",
+              "elapsedMs": 1197,
+              "peakBytes": 141656064,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-kJKD6a/candidate76-1/messaging-typescript/message-models"
+            },
+            {
+              "consumerId": "messaging-typescript",
+              "generator": "modelina",
+              "image": "sha256:4ff2c94c6d3cc52b10d4a90eceee2e1d6cd15c262be460cfc151998cefd54891",
+              "elapsedMs": 1192,
+              "peakBytes": 142282752,
+              "outputPath": "/home/runner/work/_temp/noble-consumers-kJKD6a/candidate76-2/messaging-typescript/message-models"
+            }
+          ],
+          "consumers": [
+            {
+              "consumerId": "web-application",
+              "previousVersion": "7.13.0",
+              "version": "7.13.0",
+              "outputCount": 1,
+              "outputMapSha256": "sha256:aa1b392bbeac43902c9163fddccbb4824887d8eafc4d9468808e26c3454fdef9"
+            },
+            {
+              "consumerId": "dotnet-operations-client",
+              "previousVersion": "1.38.0",
+              "version": "1.38.0",
+              "outputCount": 104,
+              "outputMapSha256": "sha256:6e6b46d4dec377ed7842db9ef2f19b0e78b05e35a1f408098b64138082cf1a1f"
+            },
+            {
+              "consumerId": "messaging-typescript",
+              "previousVersion": "5.10.1",
+              "version": "5.10.1",
+              "outputCount": 2,
+              "outputMapSha256": "sha256:db613a78c4493ae856c25ac241a74d197aa5f22baa77bfe044d463ad0654ee9d"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

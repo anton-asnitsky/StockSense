@@ -4,6 +4,12 @@
   "version": 1,
   "writes": [
     {
+      "path": "tools/contracts/scripts/build-kiota-runtime.py"
+    },
+    {
+      "path": "tools/contracts/kiota-runtime-inputs.json"
+    },
+    {
       "path": ".github/workflows/contracts-required.yml"
     },
     {

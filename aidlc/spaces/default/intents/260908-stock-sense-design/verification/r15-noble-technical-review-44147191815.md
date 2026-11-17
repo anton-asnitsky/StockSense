@@ -1,0 +1,18 @@
+# Independent Noble candidate technical review
+
+Review outcome is technically qualified for working-branch integration, with current vulnerability disposition and ordinary CI still pending. The review found and required repair of an omitted tzdata-legacy inventory row in prior run 44145036779. The effective wrapper used a package-prefix sed match, allowing tzdata to remove tzdata-legacy. Revision c8e8d93 anchors the complete package name and includes a prefix-collision regression. [Corrected two-lane run](https://github.com/anton-asnitsky/StockSense/actions/runs/44147191815)
+
+Both corrected artifacts were independently checked. Decoding the Chisel manifest established exact equality across its eleven package identities, eleven content-origin package names, and the eleven package-lock rows, including version, architecture and package SHA-256. tzdata-legacy 2026e-0ubuntu0.24.04.1/all is present and bound to da66b34322e7545f12bd97f2bd31c5f78406a9a9ec0ccfe284c3f3eb791647bf. The hosted check also compares original authenticated .deb controls, dpkg status and CycloneDX entries. The retained package-input, recipe, modified wrapper and configuration bytes match across builders.
+
+Each image has 51 ELF records. All 48 active objects with dynamic dependencies passed the exact image loader. Two objects have no DT_NEEDED entries. The remaining optional LTTng provider is explicitly disabled by DOTNET_LTTng=0 and COMPlus_LTTng=0. Reviewed Microsoft source commit a3788b71495457354b64ca8040b6ded5ff6ca4f9 and retained source SHA-256 0961fc926da5e328500055f0e274cf92fb0b0a82bdcb902c799c01c2a6f06cc7 establish the conditional load. The hosted runtime probe checked both environment variables and rejected either provider or liblttng-ust in its process maps. The image retains the optional library. Re-enabling its tracing feature would require the dependency.
+
+The snapshot proxy restricts initial requests to archive.ubuntu.com Ubuntu dists/pool paths without traversal, query or fragment. Redirects are constrained to the same explicit HTTPS snapshot prefix. Chisel verifies archive authenticity using the retained pinned key configuration. The recipe retains the effective wrapper, slice archive, configuration, signed InRelease files and exact downloaded-input identities. All recorded artifact file digests matched independently.
+
+| Lane | Exact image ID | Artifact |
+| --- | --- | --- |
+| 1 | sha256:b0a60b7c35bdd61c98b4dc49977eed1c24ffbe79c78d555b2e7ac444e304912a | [14357916494](https://github.com/anton-asnitsky/StockSense/actions/runs/44147191815/artifacts/14357916494), SHA-256 1a0c3ddea588ba3ca6c7a1a4258223cfc4179a59d6be7d10958c4bf375852643 |
+| 2 | sha256:b88de48b5d9792ab653695ebb9dfa97f66388efc6b56b7231b2766ad3c6820f8 | [14358510154](https://github.com/anton-asnitsky/StockSense/actions/runs/44147191815/artifacts/14358510154), SHA-256 92b52862d62feef3b41c857cce3054a5a6f512369f6f3e15f6394461363fe75b |
+
+Both complete runtime manifests normalize to sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340. Each current scan retains fourteen findings. Each builder reproduced every 107-path consumer manifest twice for all three PR baselines through the actual bounded image. Their output maps match across builders. PR #74 changes only its Kiota lock version; all 103 C# source files match the previous generator. The generated clients compiled and passed the synthetic request/response fixtures for all three heads.
+
+Full-suite replay and current per-PR CI are separate remaining checks. Fourteen undisposed findings and the obsolete protected-main ledger still prevent a green U1 result.

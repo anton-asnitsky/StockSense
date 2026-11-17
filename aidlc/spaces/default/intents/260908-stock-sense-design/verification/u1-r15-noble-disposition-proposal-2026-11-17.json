@@ -1,0 +1,836 @@
+{
+  "status": "UNAPPROVED_PROPOSAL",
+  "recordedAtUtc": "2026-11-17T18:03:42.3661478Z",
+  "scope": "Published patched Noble heads on PRs #74–#76 with current test merges and retained source-bound scan evidence. Unapproved proposal; no not-affected disposition or risk acceptance.",
+  "preliminaryEvidence": {
+    "run": "44141559840",
+    "artifact": "14354677665",
+    "artifactDigest": "sha256:2f125505de42d27eaa16c146c8bc06b714acdd87cccf0e5e91315de22ec1733c",
+    "imageId": "sha256:3bbb61674abe927c0a6ffed0c8781670735b09f08a994a1259a096e22ca10289",
+    "runtimeDigest": "sha256:1bfb9cb11e52e88b47526585ed3c910d3dac248c8ee3a24ab3b431e368de9de8",
+    "sbomDigest": "sha256:e156260752fc249aa2d51ab5a2c1defe472bc929d7c27ab211b15a82b2057a1d",
+    "runtimeManifestSha256": "ea7a7970b1823fbe2ec8c776ff8aa62f6430d12c95578ca508e09abcc5a4e968",
+    "rawScanSha256": "c2030cf208027ad81375058656e34aa703e93c7592b1bbf5d909c9eff390c515",
+    "dbArchive": "https://grype.anchore.io/databases/v6/vulnerability-db_v6.1.10_2026-11-17T00:22:24Z_1794896458.tar.zst?checksum=sha256%3A3f0cbdbc9d40fb69eaeacec1869b27a8c74f1894108804ace8b7468513e2df07",
+    "runtimeEntries": 1775,
+    "presentLibraries": [
+      {
+        "path": "rootfs/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "kind": "file",
+        "sha256": "sha256:755a371e86cc9f564ab54f66140747700fb0a103f698f659f2060f707897e09a"
+      },
+      {
+        "path": "rootfs/usr/lib/x86_64-linux-gnu/libcrypto.so.3",
+        "kind": "file",
+        "sha256": "sha256:6866ed711dab8927e1bf82bf1cd30e828bdfc34f3cc1e83b1c9eb01ce6c37d9a"
+      },
+      {
+        "path": "rootfs/usr/lib/x86_64-linux-gnu/libicudata.so.74",
+        "kind": "symlink",
+        "sha256": null
+      },
+      {
+        "path": "rootfs/usr/lib/x86_64-linux-gnu/libicudata.so.74.2",
+        "kind": "file",
+        "sha256": "sha256:ddbb3718b8bd9cbd780e5ab08b4503c30a6c4fa0706ebe5d074ed6b596c1714e"
+      },
+      {
+        "path": "rootfs/usr/lib/x86_64-linux-gnu/libicui18n.so.74",
+        "kind": "symlink",
+        "sha256": null
+      },
+      {
+        "path": "rootfs/usr/lib/x86_64-linux-gnu/libicui18n.so.74.2",
+        "kind": "file",
+        "sha256": "sha256:3550b194eb2cf2e6f798f033eb9ca279d498c21296b4a18790ce158d2023e47b"
+      },
+      {
+        "path": "rootfs/usr/lib/x86_64-linux-gnu/libicuio.so.74",
+        "kind": "symlink",
+        "sha256": null
+      },
+      {
+        "path": "rootfs/usr/lib/x86_64-linux-gnu/libicuio.so.74.2",
+        "kind": "file",
+        "sha256": "sha256:750b18b8bd63c4b60dd346de67fee24d08cc8da3dfc4cc3f709e514dc57a8493"
+      },
+      {
+        "path": "rootfs/usr/lib/x86_64-linux-gnu/libicutest.so.74",
+        "kind": "symlink",
+        "sha256": null
+      },
+      {
+        "path": "rootfs/usr/lib/x86_64-linux-gnu/libicutest.so.74.2",
+        "kind": "file",
+        "sha256": "sha256:549175dea22826a6d4c1a145d4e5796a6d38ccfd3b07f55be8e6250b5033c6e5"
+      },
+      {
+        "path": "rootfs/usr/lib/x86_64-linux-gnu/libicutu.so.74",
+        "kind": "symlink",
+        "sha256": null
+      },
+      {
+        "path": "rootfs/usr/lib/x86_64-linux-gnu/libicutu.so.74.2",
+        "kind": "file",
+        "sha256": "sha256:a93f8890099fe32aa569d5fe22e0537d632b144069da8b03a67d50401434b753"
+      },
+      {
+        "path": "rootfs/usr/lib/x86_64-linux-gnu/libicuuc.so.74",
+        "kind": "symlink",
+        "sha256": null
+      },
+      {
+        "path": "rootfs/usr/lib/x86_64-linux-gnu/libicuuc.so.74.2",
+        "kind": "file",
+        "sha256": "sha256:7560aadde38e5f4237a47a1ddd5891f9b36768a77a60faae30beee003ac01901"
+      },
+      {
+        "path": "rootfs/usr/lib/x86_64-linux-gnu/libssl.so.3",
+        "kind": "file",
+        "sha256": "sha256:a40e7b67489bbd257e432c700ff8f6a1ad796425b5eccecdc2930127fdd86624"
+      },
+      {
+        "path": "rootfs/usr/share/doc/libicu74",
+        "kind": "directory",
+        "sha256": null
+      },
+      {
+        "path": "rootfs/usr/share/dotnet/shared/Microsoft.NETCore.App/10.0.15/libSystem.Security.Cryptography.Native.OpenSsl.so",
+        "kind": "file",
+        "sha256": "sha256:ed43a3226b54594c582a7e51d2b8a325f5dc9e4351511dfa40bd3e955bce578c"
+      }
+    ],
+    "genrbPaths": [],
+    "opensslExecutablePaths": [],
+    "libcryptPaths": [],
+    "sourceRevision": "46325b340caa23f203227eae0f92a97b2c818c9c",
+    "recipeBindingPending": true,
+    "workflowCommit": "d7d8279445ff5cbcf3cd1ae788f99dfd7d135aff",
+    "publicSourceEvidence": [
+      {
+        "url": "https://github.com/unicode-org/icu/blob/2d029329c82c7792b985024b2bdab5fc7278fbc8/icu4c/source/tools/genrb/reslist.cpp",
+        "sha256": "425cea5d2d260713774a841159f07f79094fb5b47e14ca0a75ddaae9200103d6",
+        "purpose": "Defines SRBRoot::addTag in the genrb tool source"
+      },
+      {
+        "url": "https://github.com/unicode-org/icu/blob/2d029329c82c7792b985024b2bdab5fc7278fbc8/icu4c/source/tools/genrb/Makefile.in",
+        "sha256": "f06756b87f95b78bf7f2fa642aaa78ebfc3ddad38560a136770b1b6fbf22d633",
+        "purpose": "Builds genrb target from its tool sources"
+      },
+      {
+        "url": "https://github.com/dotnet/runtime/blob/a3788b71495457354b64ca8040b6ded5ff6ca4f9/src/native/libs/System.Globalization.Native/pal_icushim.c",
+        "sha256": "755e7669444a7cb553b86970e72dc9257db25aa0c38dba14d0ec863fcb64e631",
+        "purpose": "The .NET runtime loads ICU native runtime libraries"
+      },
+      {
+        "url": "https://github.com/dotnet/runtime/blob/a3788b71495457354b64ca8040b6ded5ff6ca4f9/src/native/libs/System.Security.Cryptography.Native/opensslshim.h",
+        "sha256": "bf33ca9f37e5d20ede0b764e6fecfc7588920437c85a95e4f7a53a79e2b8d9a3",
+        "purpose": "OpenSSL native API imports illustrate crypto-library dependency; full application reachability unproven"
+      }
+    ],
+    "superseded": true,
+    "supersededReason": "Historical screening retained for provenance. Corrected final screening run 44147191815 includes tzdata-legacy in the 11-package closure. Intermediate run 44145036779 omitted that package inventory and is not the current binding."
+  },
+  "finalCandidate": {
+    "base": "402ace3b195c291a756ed230a24a73199ef8349a",
+    "heads": [
+      {
+        "pr": 74,
+        "value": "edeec8b54a4ee2d019349befbb005b944dce901d"
+      },
+      {
+        "pr": 75,
+        "value": "bd0241d3313a998039cce4a37059d188e502fda2"
+      },
+      {
+        "pr": 76,
+        "value": "0f5db4d25cc9364f825eb752dad05c037c7b9944"
+      }
+    ],
+    "testMerges": [
+      {
+        "pr": 74,
+        "value": "8856f2d6c1990dd0df3bfb1ae63553e21bfb7b49"
+      },
+      {
+        "pr": 75,
+        "value": "20add1080680567a75692e857b98b2c225d81dde"
+      },
+      {
+        "pr": 76,
+        "value": "9fc0a9b55f9b0b35b483816beb67052fcb4a3581"
+      }
+    ],
+    "candidateTreeDigest": [
+      {
+        "pr": 74,
+        "value": "sha256:d6e1090487a3abb4cb411942ceca5a8d7625008281afe0f28c40681a1337b44e"
+      },
+      {
+        "pr": 75,
+        "value": "sha256:32c609467371ac1c176bc64b48907846188c8a30cbfb9f869253ae43c1eee76a"
+      },
+      {
+        "pr": 76,
+        "value": "sha256:6bcf006298f9921daf6d1f6e401925219b5172855d33e6c610eb609391373faa"
+      }
+    ],
+    "executionFingerprint": [
+      {
+        "pr": 74,
+        "value": "sha256:bd51a189ffec02685641463fac76e71e3d6adeb5bba24a3a2f3049b0d1911002"
+      },
+      {
+        "pr": 75,
+        "value": "sha256:3ab7e48bd5dd458c9191c8ce3c31ac1b6456eae9f2094a3ecb85a2a279a89dda"
+      },
+      {
+        "pr": 76,
+        "value": "sha256:125978cc7d3aedacfc15beb2255a4dc179db7a44a3ab60123cdcea87d7cb09e2"
+      }
+    ],
+    "runtimeDigest": [
+      {
+        "pr": 74,
+        "value": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340"
+      },
+      {
+        "pr": 75,
+        "value": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340"
+      },
+      {
+        "pr": 76,
+        "value": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340"
+      }
+    ],
+    "imageIds": [
+      {
+        "pr": 74,
+        "images": [
+          {
+            "name": "validator",
+            "imageId": "sha256:ab326e6f86b995128233c4c84aca5bf20d12d9a2f2c78323c118d747c4ac996d"
+          },
+          {
+            "name": "kiota",
+            "imageId": "sha256:25622a6d62c6ddc2206dba9824a1b4a318b2fbfc3dbdef0ca47aa92b2c1767cc"
+          }
+        ]
+      },
+      {
+        "pr": 75,
+        "images": [
+          {
+            "name": "validator",
+            "imageId": "sha256:30a758e3aaaa6de1fba8ee3d61410eacdd43bed48e8f55d0a53f1cd6dfc5b4de"
+          },
+          {
+            "name": "kiota",
+            "imageId": "sha256:88db7035b24d119dc5adb4438dcb2e8e5de33db5db5a01e632e75e5a5879bea9"
+          }
+        ]
+      },
+      {
+        "pr": 76,
+        "images": [
+          {
+            "name": "validator",
+            "imageId": "sha256:77d56f41c9740a4f61a4c3c00fc7c1d35085b460e3ce802ed84a3c411cbe3ca2"
+          },
+          {
+            "name": "kiota",
+            "imageId": "sha256:9bc5cebd5758b9fb6a17ea407f91ddbd17f96de2a36d7cc05a9c4c874ce04716"
+          }
+        ]
+      }
+    ],
+    "sbomDigests": [
+      {
+        "pr": 74,
+        "images": [
+          {
+            "name": "validator",
+            "digest": "sha256:e2295c6194c76eb2cbbb90c9520acfd00b2ae4ce26155d165823c24246095fca"
+          },
+          {
+            "name": "kiota",
+            "digest": "sha256:a0a02792be3edb02fdc937d703048aa388054531b81415ef7442133a3700875b"
+          }
+        ]
+      },
+      {
+        "pr": 75,
+        "images": [
+          {
+            "name": "validator",
+            "digest": "sha256:c29ea4a71913ba80494227b138fdb6f8648f194d79b6acb948d6e541b8b2cf12"
+          },
+          {
+            "name": "kiota",
+            "digest": "sha256:2074644a57a79cc40187eb405441f1260e8016168977b97583b8266cc8c6525d"
+          }
+        ]
+      },
+      {
+        "pr": 76,
+        "images": [
+          {
+            "name": "validator",
+            "digest": "sha256:bdafe02e897959761ebc6e5456ad43dcaddfa8d83a718567d7976b8ed34e85b6"
+          },
+          {
+            "name": "kiota",
+            "digest": "sha256:8e0486ee2efc391646f6c97407de7704081fb230cb96e4d1ca38f5dc8bf5f379"
+          }
+        ]
+      }
+    ],
+    "rawScanReceipts": [
+      {
+        "pr": 74,
+        "run": 44155488252,
+        "artifact": {
+          "id": 14360289112,
+          "name": "image-evidence-8856f2d6c1990dd0df3bfb1ae63553e21bfb7b49",
+          "digest": "sha256:44f1625187bf70378ae956b21e2b906292b65f10298822d32ab13a7be09c15e7"
+        },
+        "verification": "repository verifyRawImageScan; see u1-r15-final-pr-scans-2026-11-17.json",
+        "files": [
+          "kiota.grype-raw-receipt.json",
+          "validator.grype-raw-receipt.json"
+        ]
+      },
+      {
+        "pr": 75,
+        "run": 44155493632,
+        "artifact": {
+          "id": 14361007515,
+          "name": "image-evidence-20add1080680567a75692e857b98b2c225d81dde",
+          "digest": "sha256:2f676895c6bf21e079686d85bb3ef90571e1d72274cf4634aee834150fb5318d"
+        },
+        "verification": "repository verifyRawImageScan; see u1-r15-final-pr-scans-2026-11-17.json",
+        "files": [
+          "kiota.grype-raw-receipt.json",
+          "validator.grype-raw-receipt.json"
+        ]
+      },
+      {
+        "pr": 76,
+        "run": 44155502137,
+        "artifact": {
+          "id": 14361755611,
+          "name": "image-evidence-9fc0a9b55f9b0b35b483816beb67052fcb4a3581",
+          "digest": "sha256:859cc95d82be80e0784182e5a35638889c7fe8426f577e41ca5c38eb3ebf15c6"
+        },
+        "verification": "repository verifyRawImageScan; see u1-r15-final-pr-scans-2026-11-17.json",
+        "files": [
+          "kiota.grype-raw-receipt.json",
+          "validator.grype-raw-receipt.json"
+        ]
+      }
+    ],
+    "protectedMainLedgerCommit": "8cce4f8040ad0767fca1b1ab14a00bb067a66b76",
+    "ledgerBlob": "8302aa82184068e1d6f741f669362e905490b495"
+  },
+  "findings": [
+    {
+      "id": "CVE-2026-100290",
+      "image": "kiota",
+      "package": "libc6",
+      "version": "2.39-0ubuntu8.12",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+      "severity": "Medium",
+      "fixState": "not-fixed",
+      "fixVersions": [],
+      "proposedCategory": "temporary_risk_acceptance_pending_owner_review",
+      "rationale": "The installed glibc is current from the authenticated Noble snapshot. Canonical needs-triage. Regex allocation-failure paths remain potentially reachable; no complete native call-graph exclusion is available.",
+      "compensatingControl": "Candidate must execute through the reviewed bounded generator with network disabled, read-only root, numeric non-root UID, no new privileges, all capabilities dropped, bounded memory/pids/tmpfs, read-only source mount and enforced timeout/cleanup. These controls limit impact; they do not remove native-code reachability.",
+      "ownerProposed": "anton-asnitsky",
+      "ownerConfirmed": false,
+      "approvalReference": null,
+      "createdAt": null,
+      "expiresAt": null,
+      "proposedExpiry": "14 days after actual approval, subject to explicit owner confirmation",
+      "status": "unapproved"
+    },
+    {
+      "id": "CVE-2025-5222",
+      "image": "kiota",
+      "package": "libicu74",
+      "version": "74.2-1ubuntu3.1",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libicu74@74.2-1ubuntu3.1?arch=amd64&distro=ubuntu-24.04&upstream=icu",
+      "severity": "Low",
+      "fixState": "not-fixed",
+      "fixVersions": [],
+      "proposedCategory": "temporary_risk_acceptance_pending_owner_review",
+      "rationale": "Canonical needed/Low. No genrb executable appears in the complete runtime manifest. Upstream ICU puts SRBRoot::addTag in tools/genrb/reslist.cpp. ICU libraries, including tooling/test libraries, remain present; exact distro binary-symbol/source closure remains pending.",
+      "compensatingControl": "Candidate must execute through the reviewed bounded generator with network disabled, read-only root, numeric non-root UID, no new privileges, all capabilities dropped, bounded memory/pids/tmpfs, read-only source mount and enforced timeout/cleanup. These controls limit impact; they do not remove native-code reachability.",
+      "ownerProposed": "anton-asnitsky",
+      "ownerConfirmed": false,
+      "approvalReference": null,
+      "createdAt": null,
+      "expiresAt": null,
+      "proposedExpiry": "14 days after actual approval, subject to explicit owner confirmation",
+      "status": "unapproved"
+    },
+    {
+      "id": "CVE-2026-115819",
+      "image": "kiota",
+      "package": "libc6",
+      "version": "2.39-0ubuntu8.12",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+      "severity": "Medium",
+      "fixState": "not-fixed",
+      "fixVersions": [],
+      "proposedCategory": "temporary_risk_acceptance_pending_owner_review",
+      "rationale": "The installed glibc is current from the authenticated Noble snapshot. Canonical needs-triage. Wide scanf library paths remain potentially reachable; no complete native call-graph exclusion is available.",
+      "compensatingControl": "Candidate must execute through the reviewed bounded generator with network disabled, read-only root, numeric non-root UID, no new privileges, all capabilities dropped, bounded memory/pids/tmpfs, read-only source mount and enforced timeout/cleanup. These controls limit impact; they do not remove native-code reachability.",
+      "ownerProposed": "anton-asnitsky",
+      "ownerConfirmed": false,
+      "approvalReference": null,
+      "createdAt": null,
+      "expiresAt": null,
+      "proposedExpiry": "14 days after actual approval, subject to explicit owner confirmation",
+      "status": "unapproved"
+    },
+    {
+      "id": "CVE-2016-20013",
+      "image": "kiota",
+      "package": "libc6",
+      "version": "2.39-0ubuntu8.12",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+      "severity": "Negligible",
+      "fixState": "wont-fix",
+      "fixVersions": [],
+      "proposedCategory": "temporary_risk_acceptance_pending_owner_review",
+      "rationale": "Canonical ignored/negligible. Manifest has no libcrypt-named shared object or password utility identified. libc6 itself is essential and remains present. Dynamic/static symbol proof and complete call-path exclusion remain pending.",
+      "compensatingControl": "Candidate must execute through the reviewed bounded generator with network disabled, read-only root, numeric non-root UID, no new privileges, all capabilities dropped, bounded memory/pids/tmpfs, read-only source mount and enforced timeout/cleanup. These controls limit impact; they do not remove native-code reachability.",
+      "ownerProposed": "anton-asnitsky",
+      "ownerConfirmed": false,
+      "approvalReference": null,
+      "createdAt": null,
+      "expiresAt": null,
+      "proposedExpiry": "14 days after actual approval, subject to explicit owner confirmation",
+      "status": "unapproved"
+    },
+    {
+      "id": "CVE-2026-95692",
+      "image": "kiota",
+      "package": "libssl3t64",
+      "version": "3.0.13-0ubuntu3.16",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+      "severity": "Medium",
+      "fixState": "not-fixed",
+      "fixVersions": [],
+      "proposedCategory": "candidate_not_affected_pending_binary_and_distro_review",
+      "rationale": "Upstream OpenSSL explicitly excludes 3.0 from this CVE. Exact installed Ubuntu version is 3.0.13-0ubuntu3.16. Canonical still needs-triage. Verify distro source/backport feature set and binary symbols before final candidate disposition.",
+      "compensatingControl": "Candidate must execute through the reviewed bounded generator with network disabled, read-only root, numeric non-root UID, no new privileges, all capabilities dropped, bounded memory/pids/tmpfs, read-only source mount and enforced timeout/cleanup. These controls limit impact; they do not remove native-code reachability.",
+      "ownerProposed": "anton-asnitsky",
+      "ownerConfirmed": false,
+      "approvalReference": null,
+      "createdAt": null,
+      "expiresAt": null,
+      "proposedExpiry": "14 days after actual approval, subject to explicit owner confirmation",
+      "status": "unapproved"
+    },
+    {
+      "id": "CVE-2026-95692",
+      "image": "kiota",
+      "package": "openssl",
+      "version": "3.0.13-0ubuntu3.16",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+      "severity": "Medium",
+      "fixState": "not-fixed",
+      "fixVersions": [],
+      "proposedCategory": "candidate_not_affected_pending_binary_and_distro_review",
+      "rationale": "Upstream OpenSSL explicitly excludes 3.0 from this CVE. Exact installed Ubuntu version is 3.0.13-0ubuntu3.16. Canonical still needs-triage. Verify distro source/backport feature set and binary symbols before final candidate disposition.",
+      "compensatingControl": "Candidate must execute through the reviewed bounded generator with network disabled, read-only root, numeric non-root UID, no new privileges, all capabilities dropped, bounded memory/pids/tmpfs, read-only source mount and enforced timeout/cleanup. These controls limit impact; they do not remove native-code reachability.",
+      "ownerProposed": "anton-asnitsky",
+      "ownerConfirmed": false,
+      "approvalReference": null,
+      "createdAt": null,
+      "expiresAt": null,
+      "proposedExpiry": "14 days after actual approval, subject to explicit owner confirmation",
+      "status": "unapproved"
+    },
+    {
+      "id": "CVE-2026-88822",
+      "image": "kiota",
+      "package": "libssl3t64",
+      "version": "3.0.13-0ubuntu3.16",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+      "severity": "Medium",
+      "fixState": "not-fixed",
+      "fixVersions": [],
+      "proposedCategory": "candidate_not_affected_pending_binary_and_distro_review",
+      "rationale": "Upstream OpenSSL explicitly excludes 3.0 from this CVE. Exact installed Ubuntu version is 3.0.13-0ubuntu3.16. Canonical still needs-triage. Verify distro source/backport feature set and binary symbols before final candidate disposition.",
+      "compensatingControl": "Candidate must execute through the reviewed bounded generator with network disabled, read-only root, numeric non-root UID, no new privileges, all capabilities dropped, bounded memory/pids/tmpfs, read-only source mount and enforced timeout/cleanup. These controls limit impact; they do not remove native-code reachability.",
+      "ownerProposed": "anton-asnitsky",
+      "ownerConfirmed": false,
+      "approvalReference": null,
+      "createdAt": null,
+      "expiresAt": null,
+      "proposedExpiry": "14 days after actual approval, subject to explicit owner confirmation",
+      "status": "unapproved"
+    },
+    {
+      "id": "CVE-2026-95691",
+      "image": "kiota",
+      "package": "libssl3t64",
+      "version": "3.0.13-0ubuntu3.16",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+      "severity": "Medium",
+      "fixState": "not-fixed",
+      "fixVersions": [],
+      "proposedCategory": "candidate_not_affected_pending_binary_and_distro_review",
+      "rationale": "Upstream OpenSSL explicitly excludes 3.0 from this CVE. Exact installed Ubuntu version is 3.0.13-0ubuntu3.16. Canonical still needs-triage. Verify distro source/backport feature set and binary symbols before final candidate disposition.",
+      "compensatingControl": "Candidate must execute through the reviewed bounded generator with network disabled, read-only root, numeric non-root UID, no new privileges, all capabilities dropped, bounded memory/pids/tmpfs, read-only source mount and enforced timeout/cleanup. These controls limit impact; they do not remove native-code reachability.",
+      "ownerProposed": "anton-asnitsky",
+      "ownerConfirmed": false,
+      "approvalReference": null,
+      "createdAt": null,
+      "expiresAt": null,
+      "proposedExpiry": "14 days after actual approval, subject to explicit owner confirmation",
+      "status": "unapproved"
+    },
+    {
+      "id": "CVE-2026-88822",
+      "image": "kiota",
+      "package": "openssl",
+      "version": "3.0.13-0ubuntu3.16",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+      "severity": "Medium",
+      "fixState": "not-fixed",
+      "fixVersions": [],
+      "proposedCategory": "candidate_not_affected_pending_binary_and_distro_review",
+      "rationale": "Upstream OpenSSL explicitly excludes 3.0 from this CVE. Exact installed Ubuntu version is 3.0.13-0ubuntu3.16. Canonical still needs-triage. Verify distro source/backport feature set and binary symbols before final candidate disposition.",
+      "compensatingControl": "Candidate must execute through the reviewed bounded generator with network disabled, read-only root, numeric non-root UID, no new privileges, all capabilities dropped, bounded memory/pids/tmpfs, read-only source mount and enforced timeout/cleanup. These controls limit impact; they do not remove native-code reachability.",
+      "ownerProposed": "anton-asnitsky",
+      "ownerConfirmed": false,
+      "approvalReference": null,
+      "createdAt": null,
+      "expiresAt": null,
+      "proposedExpiry": "14 days after actual approval, subject to explicit owner confirmation",
+      "status": "unapproved"
+    },
+    {
+      "id": "CVE-2026-95691",
+      "image": "kiota",
+      "package": "openssl",
+      "version": "3.0.13-0ubuntu3.16",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+      "severity": "Medium",
+      "fixState": "not-fixed",
+      "fixVersions": [],
+      "proposedCategory": "candidate_not_affected_pending_binary_and_distro_review",
+      "rationale": "Upstream OpenSSL explicitly excludes 3.0 from this CVE. Exact installed Ubuntu version is 3.0.13-0ubuntu3.16. Canonical still needs-triage. Verify distro source/backport feature set and binary symbols before final candidate disposition.",
+      "compensatingControl": "Candidate must execute through the reviewed bounded generator with network disabled, read-only root, numeric non-root UID, no new privileges, all capabilities dropped, bounded memory/pids/tmpfs, read-only source mount and enforced timeout/cleanup. These controls limit impact; they do not remove native-code reachability.",
+      "ownerProposed": "anton-asnitsky",
+      "ownerConfirmed": false,
+      "approvalReference": null,
+      "createdAt": null,
+      "expiresAt": null,
+      "proposedExpiry": "14 days after actual approval, subject to explicit owner confirmation",
+      "status": "unapproved"
+    },
+    {
+      "id": "CVE-2026-88823",
+      "image": "kiota",
+      "package": "libssl3t64",
+      "version": "3.0.13-0ubuntu3.16",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+      "severity": "Medium",
+      "fixState": "not-fixed",
+      "fixVersions": [],
+      "proposedCategory": "candidate_not_affected_pending_binary_and_distro_review",
+      "rationale": "Upstream OpenSSL explicitly excludes 3.0 from this CVE. Exact installed Ubuntu version is 3.0.13-0ubuntu3.16. Canonical still needs-triage. Verify distro source/backport feature set and binary symbols before final candidate disposition.",
+      "compensatingControl": "Candidate must execute through the reviewed bounded generator with network disabled, read-only root, numeric non-root UID, no new privileges, all capabilities dropped, bounded memory/pids/tmpfs, read-only source mount and enforced timeout/cleanup. These controls limit impact; they do not remove native-code reachability.",
+      "ownerProposed": "anton-asnitsky",
+      "ownerConfirmed": false,
+      "approvalReference": null,
+      "createdAt": null,
+      "expiresAt": null,
+      "proposedExpiry": "14 days after actual approval, subject to explicit owner confirmation",
+      "status": "unapproved"
+    },
+    {
+      "id": "CVE-2026-88823",
+      "image": "kiota",
+      "package": "openssl",
+      "version": "3.0.13-0ubuntu3.16",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+      "severity": "Medium",
+      "fixState": "not-fixed",
+      "fixVersions": [],
+      "proposedCategory": "candidate_not_affected_pending_binary_and_distro_review",
+      "rationale": "Upstream OpenSSL explicitly excludes 3.0 from this CVE. Exact installed Ubuntu version is 3.0.13-0ubuntu3.16. Canonical still needs-triage. Verify distro source/backport feature set and binary symbols before final candidate disposition.",
+      "compensatingControl": "Candidate must execute through the reviewed bounded generator with network disabled, read-only root, numeric non-root UID, no new privileges, all capabilities dropped, bounded memory/pids/tmpfs, read-only source mount and enforced timeout/cleanup. These controls limit impact; they do not remove native-code reachability.",
+      "ownerProposed": "anton-asnitsky",
+      "ownerConfirmed": false,
+      "approvalReference": null,
+      "createdAt": null,
+      "expiresAt": null,
+      "proposedExpiry": "14 days after actual approval, subject to explicit owner confirmation",
+      "status": "unapproved"
+    },
+    {
+      "id": "CVE-2026-107496",
+      "image": "kiota",
+      "package": "libssl3t64",
+      "version": "3.0.13-0ubuntu3.16",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+      "severity": "Medium",
+      "fixState": "not-fixed",
+      "fixVersions": [],
+      "proposedCategory": "temporary_risk_acceptance_pending_owner_review",
+      "rationale": "Upstream affects OpenSSL 3.0 and fixes CMS encryption at 3.0.24. libcrypto/libssl and .NET crypto shim exist. No OpenSSL executable is present, but CMS library reachability has not been disproved. Canonical Noble needs-triage; no released Noble fix was found.",
+      "compensatingControl": "Candidate must execute through the reviewed bounded generator with network disabled, read-only root, numeric non-root UID, no new privileges, all capabilities dropped, bounded memory/pids/tmpfs, read-only source mount and enforced timeout/cleanup. These controls limit impact; they do not remove native-code reachability.",
+      "ownerProposed": "anton-asnitsky",
+      "ownerConfirmed": false,
+      "approvalReference": null,
+      "createdAt": null,
+      "expiresAt": null,
+      "proposedExpiry": "14 days after actual approval, subject to explicit owner confirmation",
+      "status": "unapproved"
+    },
+    {
+      "id": "CVE-2026-107496",
+      "image": "kiota",
+      "package": "openssl",
+      "version": "3.0.13-0ubuntu3.16",
+      "type": "deb",
+      "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+      "severity": "Medium",
+      "fixState": "not-fixed",
+      "fixVersions": [],
+      "proposedCategory": "temporary_risk_acceptance_pending_owner_review",
+      "rationale": "Upstream affects OpenSSL 3.0 and fixes CMS encryption at 3.0.24. libcrypto/libssl and .NET crypto shim exist. No OpenSSL executable is present, but CMS library reachability has not been disproved. Canonical Noble needs-triage; no released Noble fix was found.",
+      "compensatingControl": "Candidate must execute through the reviewed bounded generator with network disabled, read-only root, numeric non-root UID, no new privileges, all capabilities dropped, bounded memory/pids/tmpfs, read-only source mount and enforced timeout/cleanup. These controls limit impact; they do not remove native-code reachability.",
+      "ownerProposed": "anton-asnitsky",
+      "ownerConfirmed": false,
+      "approvalReference": null,
+      "createdAt": null,
+      "expiresAt": null,
+      "proposedExpiry": "14 days after actual approval, subject to explicit owner confirmation",
+      "status": "unapproved"
+    }
+  ],
+  "approval": {
+    "requested": false,
+    "granted": false,
+    "owner": "anton-asnitsky (proposed, confirmation required)",
+    "expiry": "14 days from actual approval (proposed)",
+    "conditions": [
+      "Verify final candidate and all raw report/SBOM/package identities.",
+      "Resolve exact feature/source and symbol review for eight OpenSSL not-affected proposals.",
+      "Provide explicit owner finding-specific risk decisions for every remaining row.",
+      "Construct authoritative ledger only after owner decision and separate protected-main change authority.",
+      "Any changed finding identity, severity, fix state, source/runtime, missing receipt or expiry invalidates the proposal.",
+      "Keep U1/R-15 open until actual ordinary protected checks and required artifacts pass."
+    ]
+  },
+  "updatedAtUtc": "2026-11-17T19:18:08.801Z",
+  "correctedScreenEvidence": {
+    "run": "44147191815",
+    "workflowCommit": "c8e8d93b5ea2ef6f73dcd3d05c77d8135023cf6f",
+    "laneComparison": "Distinct image IDs and equal normalized runtime digest; all 14 finding identities match this proposal.",
+    "lanes": [
+      {
+        "lane": 1,
+        "artifact": "14357916494",
+        "artifactDigest": "sha256:1a0c3ddea588ba3ca6c7a1a4258223cfc4179a59d6be7d10958c4bf375852643",
+        "imageId": "sha256:b0a60b7c35bdd61c98b4dc49977eed1c24ffbe79c78d555b2e7ac444e304912a",
+        "runtimeDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+        "sbomDigest": "sha256:f642035bc2ed4d5fe7592e11b95e04539c6d911451774588c06921086da099f7",
+        "runtimeEntries": 1775,
+        "runtimeManifestSha256": "69b852c805a4cec4d616c5bb95772f540f9b7de818dd6ebdda575bf2af210e06",
+        "rawScanSha256": "41537d7ef8ccb56223cbc49addc41c3f85cc98b0b2b2c45ed028573a4ef9a51f",
+        "explicitNobleScanSha256": "3ce09412d550fc285adc4b22e8a06cf110f5b1769708fe02f7d8fdfad442ae2a",
+        "dbArchive": "https://grype.anchore.io/databases/v6/vulnerability-db_v6.1.10_2026-11-17T00:22:24Z_1794896458.tar.zst?checksum=sha256%3A3f0cbdbc9d40fb69eaeacec1869b27a8c74f1894108804ace8b7468513e2df07",
+        "packageLockSha256": "a64ec9a4af81ba0d804f3359e8f9fe11ffbf28388b9e0f7190180e9b8a94fabc",
+        "packageReconciliationSha256": "a64ec9a4af81ba0d804f3359e8f9fe11ffbf28388b9e0f7190180e9b8a94fabc",
+        "packages": [
+          {
+            "package": "base-files",
+            "version": "13ubuntu10.5",
+            "architecture": "amd64",
+            "sha256": "87e8c41e62f61625fb78a982d0bc0a70f40ef8375bc313b154914d1b3759c823"
+          },
+          {
+            "package": "ca-certificates",
+            "version": "20260816ubuntu0.24.04.2",
+            "architecture": "all",
+            "sha256": "f9fbacd417b515450b831032cc39d18059e9874e67525679a43c16071dabf9a0"
+          },
+          {
+            "package": "gcc-14-base",
+            "version": "14.2.0-4ubuntu2~24.04.1",
+            "architecture": "amd64",
+            "sha256": "b95c172411a7fdae70307cf33a9f5320ba5e056b556454543dd5b679d5ce1c4f"
+          },
+          {
+            "package": "libc6",
+            "version": "2.39-0ubuntu8.12",
+            "architecture": "amd64",
+            "sha256": "d821b41fc59cb4978ecd53bc83e5c964ac15d305c8d2ac4c8a35aebe55010fb9"
+          },
+          {
+            "package": "libgcc-s1",
+            "version": "14.2.0-4ubuntu2~24.04.1",
+            "architecture": "amd64",
+            "sha256": "aa7fadbe33b78bcf99885318040601c550c208929565b179891d9a3cc2aa68cd"
+          },
+          {
+            "package": "libicu74",
+            "version": "74.2-1ubuntu3.1",
+            "architecture": "amd64",
+            "sha256": "c9a70989678660eed9a1e904c74fa043da8bec8e2036856fc16e31ced79b04f8"
+          },
+          {
+            "package": "libssl3t64",
+            "version": "3.0.13-0ubuntu3.16",
+            "architecture": "amd64",
+            "sha256": "219f43b1cd836a4da550938db5fda93160d269d39a4edcf1f1ce698a470db797"
+          },
+          {
+            "package": "libstdc++6",
+            "version": "14.2.0-4ubuntu2~24.04.1",
+            "architecture": "amd64",
+            "sha256": "a51f8de7829211db961a31f02158058ad1a95f92ac6d0a5dff6350e2821c54c0"
+          },
+          {
+            "package": "openssl",
+            "version": "3.0.13-0ubuntu3.16",
+            "architecture": "amd64",
+            "sha256": "675b84971ffd4467707008c25ef7520f90ea7c23ef27b7a76b0dccf1d7c4dc3f"
+          },
+          {
+            "package": "tzdata",
+            "version": "2026e-0ubuntu0.24.04.1",
+            "architecture": "all",
+            "sha256": "2f6794a7f31753fc947d9ac02ff03ea46510f34864f9d132a93d7b105e3c4447"
+          },
+          {
+            "package": "tzdata-legacy",
+            "version": "2026e-0ubuntu0.24.04.1",
+            "architecture": "all",
+            "sha256": "da66b34322e7545f12bd97f2bd31c5f78406a9a9ec0ccfe284c3f3eb791647bf"
+          }
+        ],
+        "elfSha256": "12b6d0f00be0947de5239891aa74a35a28edcd95d0a1a6650f9c171b275d53df",
+        "elfLoaderSha256": "2b905701205d095837d8582b5e39077408ddc67a1399b4f0419e9d7524a3089b",
+        "elfCount": 51,
+        "loaderRecords": 48,
+        "genrbPaths": [],
+        "opensslExecutablePaths": [],
+        "libcryptPaths": []
+      },
+      {
+        "lane": 2,
+        "artifact": "14358510154",
+        "artifactDigest": "sha256:92b52862d62feef3b41c857cce3054a5a6f512369f6f3e15f6394461363fe75b",
+        "imageId": "sha256:b88de48b5d9792ab653695ebb9dfa97f66388efc6b56b7231b2766ad3c6820f8",
+        "runtimeDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+        "sbomDigest": "sha256:eeb626dfc43ca8898b4d9e52db434dac315e242709addf686026028b552a2968",
+        "runtimeEntries": 1775,
+        "runtimeManifestSha256": "a83f03a6fe4212b7c897a7bb947e368258130ff95bfd784ead8ad8975bc91871",
+        "rawScanSha256": "ce79beff5ea7dd20cf20d4997b1d2e6c2afc518372b96334c7f4d5ad12b41f91",
+        "explicitNobleScanSha256": "a05154801d1a1ab3c2d6b6cca00db1453bc973dad505a78cbe55049e7c511ab7",
+        "dbArchive": "https://grype.anchore.io/databases/v6/vulnerability-db_v6.1.10_2026-11-17T00:22:24Z_1794896458.tar.zst?checksum=sha256%3A3f0cbdbc9d40fb69eaeacec1869b27a8c74f1894108804ace8b7468513e2df07",
+        "packageLockSha256": "a64ec9a4af81ba0d804f3359e8f9fe11ffbf28388b9e0f7190180e9b8a94fabc",
+        "packageReconciliationSha256": "a64ec9a4af81ba0d804f3359e8f9fe11ffbf28388b9e0f7190180e9b8a94fabc",
+        "packages": [
+          {
+            "package": "base-files",
+            "version": "13ubuntu10.5",
+            "architecture": "amd64",
+            "sha256": "87e8c41e62f61625fb78a982d0bc0a70f40ef8375bc313b154914d1b3759c823"
+          },
+          {
+            "package": "ca-certificates",
+            "version": "20260816ubuntu0.24.04.2",
+            "architecture": "all",
+            "sha256": "f9fbacd417b515450b831032cc39d18059e9874e67525679a43c16071dabf9a0"
+          },
+          {
+            "package": "gcc-14-base",
+            "version": "14.2.0-4ubuntu2~24.04.1",
+            "architecture": "amd64",
+            "sha256": "b95c172411a7fdae70307cf33a9f5320ba5e056b556454543dd5b679d5ce1c4f"
+          },
+          {
+            "package": "libc6",
+            "version": "2.39-0ubuntu8.12",
+            "architecture": "amd64",
+            "sha256": "d821b41fc59cb4978ecd53bc83e5c964ac15d305c8d2ac4c8a35aebe55010fb9"
+          },
+          {
+            "package": "libgcc-s1",
+            "version": "14.2.0-4ubuntu2~24.04.1",
+            "architecture": "amd64",
+            "sha256": "aa7fadbe33b78bcf99885318040601c550c208929565b179891d9a3cc2aa68cd"
+          },
+          {
+            "package": "libicu74",
+            "version": "74.2-1ubuntu3.1",
+            "architecture": "amd64",
+            "sha256": "c9a70989678660eed9a1e904c74fa043da8bec8e2036856fc16e31ced79b04f8"
+          },
+          {
+            "package": "libssl3t64",
+            "version": "3.0.13-0ubuntu3.16",
+            "architecture": "amd64",
+            "sha256": "219f43b1cd836a4da550938db5fda93160d269d39a4edcf1f1ce698a470db797"
+          },
+          {
+            "package": "libstdc++6",
+            "version": "14.2.0-4ubuntu2~24.04.1",
+            "architecture": "amd64",
+            "sha256": "a51f8de7829211db961a31f02158058ad1a95f92ac6d0a5dff6350e2821c54c0"
+          },
+          {
+            "package": "openssl",
+            "version": "3.0.13-0ubuntu3.16",
+            "architecture": "amd64",
+            "sha256": "675b84971ffd4467707008c25ef7520f90ea7c23ef27b7a76b0dccf1d7c4dc3f"
+          },
+          {
+            "package": "tzdata",
+            "version": "2026e-0ubuntu0.24.04.1",
+            "architecture": "all",
+            "sha256": "2f6794a7f31753fc947d9ac02ff03ea46510f34864f9d132a93d7b105e3c4447"
+          },
+          {
+            "package": "tzdata-legacy",
+            "version": "2026e-0ubuntu0.24.04.1",
+            "architecture": "all",
+            "sha256": "da66b34322e7545f12bd97f2bd31c5f78406a9a9ec0ccfe284c3f3eb791647bf"
+          }
+        ],
+        "elfSha256": "eb68f0315d68ff48a62effc7ac90196f08cce59166114250aabc313556425ffc",
+        "elfLoaderSha256": "e67be00eb9dd442f8da3afcf5e1ccd49db2c836bc9f76b965b31ec62823ed232",
+        "elfCount": 51,
+        "loaderRecords": 48,
+        "genrbPaths": [],
+        "opensslExecutablePaths": [],
+        "libcryptPaths": []
+      }
+    ],
+    "productionFullSuiteStatus": "Both lanes passed: 452 passes, zero failures, one release-only TODO per lane",
+    "productionRunToReconcile": "44153396174",
+    "productionRuntimeMayDiffer": false
+  }
+}
