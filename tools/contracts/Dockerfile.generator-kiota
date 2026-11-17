@@ -21,8 +21,7 @@ RUN ["/bin/sh", "-c", "mkdir -p /opt/kiota-probe-src && printf '%s\n' '<Project 
 # The final runtime image is smoke-tested and scanned as the exact CI subject.
 FROM --platform=linux/amd64 python@sha256:2784af835b90070d9d37d3aa5aa01a3e825d88436b0d58f7776d2cdcb6780f9e AS runtime-build
 COPY scripts/build-kiota-runtime.py kiota-runtime-inputs.json /recipe/
-RUN --mount=type=secret,id=nuget_ca python /recipe/build-kiota-runtime.py --self-test \
-    && python /recipe/build-kiota-runtime.py /recipe/kiota-runtime-inputs.json
+RUN --mount=type=secret,id=nuget_ca ["/bin/sh", "-c", "python /recipe/build-kiota-runtime.py --self-test && python /recipe/build-kiota-runtime.py /recipe/kiota-runtime-inputs.json"]
 
 FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/runtime@sha256:e7e90bfc3ce16f9efdf18c25c7e4876af4ffba7ea50582878f6ea05b1e04a7ec AS microsoft-payload
 FROM scratch
