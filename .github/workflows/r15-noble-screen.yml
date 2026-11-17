@@ -1,0 +1,138 @@
+name: R-15 isolated Noble Kiota screening
+on:
+  push:
+    branches: [codex/r15-noble-snapshot-20261116]
+    paths: ['.github/workflows/r15-noble-screen.yml', '.github/r15-noble/**']
+permissions:
+  contents: read
+jobs:
+  screen:
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [1, 2]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CANDIDATE: 46325b340caa23f203227eae0f92a97b2c818c9c
+      SDK: mcr.microsoft.com/dotnet/sdk@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa
+      SYFT: ghcr.io/anchore/syft@sha256:3eb5379ba7b409c3f4069b686110527af0c47df993fa5c10d13e7cf34f49b1aa
+      GRYPE: ghcr.io/anchore/grype@sha256:e4a44ef45d285b829ce6efe2642980329661bd2d18eab5fc539138d4adaebbbe
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          path: audit
+          persist-credentials: false
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          path: candidate
+          ref: 46325b340caa23f203227eae0f92a97b2c818c9c
+          persist-credentials: false
+      - name: Build single-substitution proof image in scratch
+        run: |
+          set -euo pipefail
+          test "$(git -C candidate rev-parse HEAD)" = "$CANDIDATE"
+          mkdir -p "$RUNNER_TEMP/noble"/{context,proof,io,db}
+          cd "$RUNNER_TEMP/noble"
+          cp "$GITHUB_WORKSPACE/audit/.github/r15-noble/"{snapshot_cut.py,runtime.fragment} context/
+          curl --fail --location --retry 2 -o chisel.tgz https://github.com/canonical/chisel/releases/download/v1.5.0/chisel_v1.5.0_linux_amd64.tar.gz
+          echo 'f8ba3f3d04165b50d91aae7eb3bcaca2a714f1877d2af005989617937cf2e375ab30d4a50b1308263e61a61ecb79de5c  chisel.tgz' | sha384sum -c -
+          tar -xzf chisel.tgz -C context chisel
+          git init -q slices
+          git -C slices fetch -q --depth=1 https://github.com/canonical/chisel-releases a84c5eb70f22c34212c6582f603467498061c978
+          test "$(git -C slices rev-parse FETCH_HEAD)" = a84c5eb70f22c34212c6582f603467498061c978
+          mkdir context/slices
+          git -C slices archive FETCH_HEAD | tar -xC context/slices
+          git init -q wrapper
+          git -C wrapper fetch -q --depth=1 https://github.com/canonical/rocks-toolbox 06863a443519f644272eddfc45e013de8dbe0cb2
+          test "$(git -C wrapper rev-parse FETCH_HEAD)" = 06863a443519f644272eddfc45e013de8dbe0cb2
+          git -C wrapper show FETCH_HEAD:chisel-wrapper > context/chisel-wrapper
+          sed -i -e 's|dir="$CHISEL_CACHE_DIR/chisel/sha256"|dir="$CHISEL_CACHE_DIR/chisel"|' -e 's|for f in "$dir"/\*; do|for f in "$dir"/sha*/*; do|' context/chisel-wrapper
+          python3 - <<'PY'
+          import os,pathlib
+          p=pathlib.Path(os.environ['GITHUB_WORKSPACE'])/'candidate/tools/contracts/Dockerfile.generator-kiota'
+          old='FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/runtime@sha256:e7e90bfc3ce16f9efdf18c25c7e4876af4ffba7ea50582878f6ea05b1e04a7ec'
+          text=p.read_text()
+          assert text.count(old)==1
+          pathlib.Path('context/Dockerfile').write_text(text.replace(old,pathlib.Path('context/runtime.fragment').read_text().strip()))
+          PY
+          docker build --target cut --platform linux/amd64 -t stocksense:cut context
+          cut=$(docker create stocksense:cut)
+          docker cp "$cut:/proof/." proof/
+          docker rm "$cut"
+          cp context/Dockerfile proof/Kiota.Dockerfile
+          docker build --platform linux/amd64 -t stocksense:screen-noble context
+          img=$(docker image inspect stocksense:screen-noble --format '{{.Id}}')
+          echo "IMG=$img" >> "$GITHUB_ENV"
+          docker image inspect "$img" | jq '.[0]|{Id,Architecture,Os,Config:{User:.Config.User,Entrypoint:.Config.Entrypoint,Cmd:.Config.Cmd,Env:.Config.Env}}' > proof/image.json
+          c=$(docker create "$img")
+          docker cp "$c:/var/lib/dpkg/status" proof/dpkg-status
+          docker cp "$c:/var/lib/chisel/manifest.wall" proof/chisel-manifest.wall
+          docker cp -L "$c:/etc/os-release" proof/os-release
+          docker cp "$c:/opt/kiota/.store/microsoft.openapi.kiota/1.38.0/microsoft.openapi.kiota/1.38.0/microsoft.openapi.kiota.1.38.0.nupkg" io/tool.nupkg
+          docker rm "$c"
+          echo 'ec934c391c94e156543ce63cb497d6944180105b2b794b8b3a53a89b89cd4d82  io/tool.nupkg' | sha256sum -c -
+          docker save -o io/kiota.tar "$img"
+      - name: Exercise assembled runtime under offline limits
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/noble"
+          guard=(--rm --pull=never --network none --user 65532:65532 --read-only --cap-drop ALL --security-opt no-new-privileges --cpus=1 --memory=2g --memory-swap=2g --pids-limit=128)
+          docker run "${guard[@]}" "$IMG" --version | tee proof/kiota-version.txt
+          grep -E '^1\.38\.0(\+|$)' proof/kiota-version.txt
+          docker run "${guard[@]}" --entrypoint /usr/share/dotnet/dotnet "$IMG" /opt/kiota-probe/kiota-probe.dll --version 2>&1 | tee proof/probe.txt
+          grep -E '^STOCKSENSE_GENERATOR_PEAK=[1-9][0-9]+$' proof/probe.txt
+          docker run "${guard[@]}" --entrypoint /usr/share/dotnet/dotnet "$IMG" --list-runtimes | tee proof/net10.txt
+          mkdir probe
+          echo '<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><UseAppHost>false</UseAppHost></PropertyGroup></Project>' > probe/Smoke.csproj
+          cat > probe/Program.cs <<'CS'
+          using System;
+          using System.Globalization;
+          var jan = new DateTime(2026,1,15,12,0,0,DateTimeKind.Utc);
+          var tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Jerusalem");
+          var month = jan.ToString("MMMM",CultureInfo.GetCultureInfo("fr-FR"));
+          if(month!="janvier" || tz.GetUtcOffset(jan).TotalHours!=2 || tz.GetUtcOffset(jan.AddMonths(6)).TotalHours!=3) return 1;
+          Console.WriteLine("fr-FR janvier; Jerusalem January +02, July +03"); return 0;
+          CS
+          docker run --rm --network none -v "$PWD/probe:/probe" -w /probe "$SDK" dotnet publish -c Release -o /probe/out -p:RestoreIgnoreFailedSources=true
+          docker run "${guard[@]}" -v "$PWD/probe:/probe:ro" --entrypoint /usr/share/dotnet/dotnet "$IMG" /probe/out/Smoke.dll | tee proof/globalization.txt
+      - name: Inventory exact archived image and scan exact inventory bytes
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/noble"
+          docker pull --platform linux/amd64 "$SYFT"
+          docker pull --platform linux/amd64 "$GRYPE"
+          mkdir io/temp && chmod 777 io/temp
+          docker run --rm --network none --read-only --cpus=1 --memory=2g -v "$PWD/io/temp:/tmp" -e SYFT_CACHE_DIR=/tmp/cache -e SYFT_CHECK_FOR_APP_UPDATE=false -v "$PWD/io:/scan:ro" "$SYFT" docker-archive:/scan/kiota.tar -o cyclonedx-json@1.6 > io/syft.cdx.json
+          jq --arg id "$IMG" --arg scanner "$SYFT" '.metadata.properties += [{name:"stocksense:imageId",value:$id},{name:"stocksense:scanner",value:$scanner}]' io/syft.cdx.json > proof/kiota.cdx.json
+          grype=(docker run --rm --read-only --cpus=1 --memory=2g --tmpfs /tmp -e GRYPE_CHECK_FOR_APP_UPDATE=false -e GRYPE_DB_CACHE_DIR=/db -v "$PWD/db:/db" -v "$PWD/proof:/proof:ro")
+          chmod 777 db
+          "${grype[@]}" "$GRYPE" db update
+          "${grype[@]}" --network none -e GRYPE_DB_AUTO_UPDATE=false "$GRYPE" db status -o json > proof/grype-db.json
+          jq -e '.valid==true and (.error|not)' proof/grype-db.json
+          "${grype[@]}" --network none -e GRYPE_DB_AUTO_UPDATE=false "$GRYPE" sbom:/proof/kiota.cdx.json -o json > proof/grype-raw.json
+          "${grype[@]}" --network none -e GRYPE_DB_AUTO_UPDATE=false "$GRYPE" sbom:/proof/kiota.cdx.json --distro ubuntu:24.04 -o json > proof/grype-noble-explicit.json
+          jq -r '.matches[]|[.vulnerability.id,.vulnerability.severity,.artifact.name,.artifact.version,.vulnerability.fix.state, (.vulnerability.fix.versions|join(","))]|@tsv' proof/grype-raw.json > proof/findings.tsv
+          python3 - <<'PY'
+          import json, pathlib
+          doc=json.loads(pathlib.Path('proof/kiota.cdx.json').read_text())
+          src=json.loads(pathlib.Path('proof/snapshot-inputs.json').read_text())
+          assert any('libc6_2.39-0ubuntu8.12_amd64.deb' in k for k in src)
+          pkgs=[(c['name'],c['version']) for c in doc['components'] if c.get('purl','').startswith('pkg:deb/')]
+          assert ('libc6','2.39-0ubuntu8.12') in pkgs
+          assert any(c.get('purl')=='pkg:nuget/MessagePack@2.5.307' for c in doc['components'])
+          print(sorted(pkgs))
+          PY
+          MOD="file://$GITHUB_WORKSPACE/candidate/tools/contracts/src/kiota-runtime-manifest.mjs" node --input-type=module -e "import fs from 'node:fs/promises'; const {collectKiotaRuntimeManifest}=await import(process.env.MOD); const sbom=JSON.parse(await fs.readFile('proof/kiota.cdx.json')); const m=await collectKiotaRuntimeManifest({imageId:process.env.IMG,sbom}); await fs.writeFile('proof/kiota.runtime.json',JSON.stringify(m,null,2));"
+          jq '(.components[]|select(.name=="libc6" and (.purl|startswith("pkg:deb/ubuntu/libc6@"))))|=. + {version:"2.39-0ubuntu8.9",purl:(.purl|sub("2.39-0ubuntu8.12";"2.39-0ubuntu8.9"))}' proof/kiota.cdx.json > proof/control.cdx.json
+          "${grype[@]}" --network none -e GRYPE_DB_AUTO_UPDATE=false "$GRYPE" sbom:/proof/control.cdx.json -o json > proof/control.grype.json
+          jq -e 'any(.matches[]; .artifact.name=="libc6" and .artifact.version=="2.39-0ubuntu8.9" and (.vulnerability.fix.versions|index("2.39-0ubuntu8.12")!=null))' proof/control.grype.json
+          cat proof/findings.tsv
+          sha256sum proof/* > io/digests.txt
+          cp io/digests.txt proof/
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: noble-kiota-screen-${{ matrix.lane }}
+          path: ${{ runner.temp }}/noble/proof/
+          retention-days: 30
