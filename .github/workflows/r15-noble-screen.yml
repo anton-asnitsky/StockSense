@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     env:
-      CANDIDATE: 46325b340caa23f203227eae0f92a97b2c818c9c
+      CANDIDATE: a80562af82ff600c2e227f6e0e80efdc08a766e2
       SDK: mcr.microsoft.com/dotnet/sdk@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa
       SYFT: ghcr.io/anchore/syft@sha256:3eb5379ba7b409c3f4069b686110527af0c47df993fa5c10d13e7cf34f49b1aa
       GRYPE: ghcr.io/anchore/grype@sha256:e4a44ef45d285b829ce6efe2642980329661bd2d18eab5fc539138d4adaebbbe
@@ -26,46 +26,27 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           path: candidate
-          ref: 46325b340caa23f203227eae0f92a97b2c818c9c
+          ref: a80562af82ff600c2e227f6e0e80efdc08a766e2
           persist-credentials: false
-      - name: Build single-substitution proof image in scratch
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24.22.2
+      - name: Build production recipe through normal entrypoint
         run: |
           set -euo pipefail
           test "$(git -C candidate rev-parse HEAD)" = "$CANDIDATE"
-          mkdir -p "$RUNNER_TEMP/noble"/{context,proof,io,db}
-          cd "$RUNNER_TEMP/noble"
-          cp "$GITHUB_WORKSPACE/audit/.github/r15-noble/"{snapshot_cut.py,runtime.fragment} context/
-          curl --fail --location --retry 2 -o chisel.tgz https://github.com/canonical/chisel/releases/download/v1.5.0/chisel_v1.5.0_linux_amd64.tar.gz
-          echo 'f8ba3f3d04165b50d91aae7eb3bcaca2a714f1877d2af005989617937cf2e375ab30d4a50b1308263e61a61ecb79de5c  chisel.tgz' | sha384sum -c -
-          tar -xzf chisel.tgz -C context chisel
-          git init -q slices
-          git -C slices fetch -q --depth=1 https://github.com/canonical/chisel-releases a84c5eb70f22c34212c6582f603467498061c978
-          test "$(git -C slices rev-parse FETCH_HEAD)" = a84c5eb70f22c34212c6582f603467498061c978
-          mkdir context/slices
-          git -C slices archive FETCH_HEAD | tar -xC context/slices
-          git init -q wrapper
-          git -C wrapper fetch -q --depth=1 https://github.com/canonical/rocks-toolbox 06863a443519f644272eddfc45e013de8dbe0cb2
-          test "$(git -C wrapper rev-parse FETCH_HEAD)" = 06863a443519f644272eddfc45e013de8dbe0cb2
-          git -C wrapper show FETCH_HEAD:chisel-wrapper > context/chisel-wrapper
-          sed -i -e 's|dir="$CHISEL_CACHE_DIR/chisel/sha256"|dir="$CHISEL_CACHE_DIR/chisel"|' -e 's|for f in "$dir"/\*; do|for f in "$dir"/sha*/*; do|' context/chisel-wrapper
-          python3 "$GITHUB_WORKSPACE/audit/.github/r15-noble/prepare_wrapper.py" | tee proof/wrapper-regression.txt
-          python3 - <<'PY'
-          import os,pathlib
-          p=pathlib.Path(os.environ['GITHUB_WORKSPACE'])/'candidate/tools/contracts/Dockerfile.generator-kiota'
-          old='FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/runtime@sha256:e7e90bfc3ce16f9efdf18c25c7e4876af4ffba7ea50582878f6ea05b1e04a7ec'
-          text=p.read_text()
-          assert text.count(old)==1
-          pathlib.Path('context/Dockerfile').write_text(text.replace(old,pathlib.Path('context/runtime.fragment').read_text().strip()))
-          PY
-          docker build --target cut --platform linux/amd64 -t stocksense:cut context
-          cut=$(docker create stocksense:cut)
-          docker cp "$cut:/proof/." proof/
-          docker rm "$cut"
-          cp context/Dockerfile proof/Kiota.Dockerfile
-          cp context/runtime.fragment proof/runtime.fragment
-          docker build --platform linux/amd64 -t stocksense:screen-noble context
-          img=$(docker image inspect stocksense:screen-noble --format '{{.Id}}')
+          mkdir -p "$RUNNER_TEMP/noble"/{proof,io,db}
+          cd "$GITHUB_WORKSPACE/candidate/tools/contracts"
+          img=$(node scripts/build-kiota-image.mjs)
+          [[ "$img" =~ ^sha256:[a-f0-9]{64}$ ]]
           echo "IMG=$img" >> "$GITHUB_ENV"
+          echo "STOCKSENSE_KIOTA_IMAGE=$img" >> "$GITHUB_ENV"
+          docker build --platform linux/amd64 --target runtime-build -f Dockerfile.generator-kiota -t stocksense:runtime-proof .
+          cut=$(docker create stocksense:runtime-proof)
+          docker cp "$cut:/proof/." "$RUNNER_TEMP/noble/proof/"
+          docker rm "$cut"
+          cp Dockerfile.generator-kiota "$RUNNER_TEMP/noble/proof/Kiota.Dockerfile"
+          cd "$RUNNER_TEMP/noble"
           docker image inspect "$img" | jq '.[0]|{Id,Architecture,Os,Config:{User:.Config.User,Entrypoint:.Config.Entrypoint,Cmd:.Config.Cmd,Env:.Config.Env}}' > proof/image.json
           c=$(docker create "$img")
           docker cp "$c:/var/lib/dpkg/status" proof/dpkg-status
@@ -167,6 +148,43 @@ jobs:
           node-version: 24.22.2
       - name: Verify all three consumer baselines and compile actual outputs
         run: node audit/.github/r15-noble/consumer-proof.mjs
+      - name: Verify production lint types and full coverage
+        working-directory: candidate/tools/contracts
+        run: |
+          set -euo pipefail
+          pnpm install --frozen-lockfile
+          dotnet tool restore
+          pnpm setup:oasdiff
+          validator=$(node scripts/build-standards-image.mjs)
+          [[ "$validator" =~ ^sha256:[a-f0-9]{64}$ ]]
+          export STOCKSENSE_STANDARDS_IMAGE="$validator"
+          echo "STOCKSENSE_STANDARDS_IMAGE=$validator" >> "$GITHUB_ENV"
+          echo "$validator" > "$RUNNER_TEMP/noble/proof/production-validator.txt"
+          pnpm lint | tee "$RUNNER_TEMP/noble/proof/lint.txt"
+          pnpm type-check | tee "$RUNNER_TEMP/noble/proof/types.txt"
+          node --experimental-test-coverage --test --test-concurrency=1 --test-coverage-include='src/**/*.mjs' --test-coverage-lines=80 test/unit/*.test.mjs test/integration/*.test.mjs 2>&1 | tee "$RUNNER_TEMP/noble/proof/coverage.txt"
+      - name: Record production canonical C01 through C27 CLI and bundle
+        working-directory: candidate/tools/contracts
+        run: |
+          set -euo pipefail
+          export PKG=$(mktemp -d)
+          export ROOT="$GITHUB_WORKSPACE/candidate"
+          node --input-type=module -e "import {buildFullPackage} from './src/full-package.mjs'; const r=await buildFullPackage(process.env.ROOT,process.env.PKG); if(!r.manifest||r.problems.length) throw Error(JSON.stringify(r.problems));"
+          node src/cli.mjs validate "$PKG" --repo-root ../.. > "$RUNNER_TEMP/noble/proof/canonical-cli.json"
+          node --input-type=module <<'JS'
+          import fs from 'node:fs/promises'; import assert from 'node:assert/strict';
+          import {ALL_BOUNDARIES,canonicalJson,digest} from './src/package-loader.mjs';
+          import {buildPackageBundle,verifyPackageBundle} from './src/package-bundle.mjs';
+          import {validateBundledCandidate} from './src/candidate-provenance.mjs';
+          const p=process.env.RUNNER_TEMP+'/noble/proof/';
+          const result=JSON.parse(await fs.readFile(p+'canonical-cli.json'));
+          assert.deepEqual(result.coveredBoundaries,ALL_BOUNDARIES);
+          assert.equal(result.releaseReady,false);
+          const bundle=verifyPackageBundle(await buildPackageBundle(process.env.PKG));
+          const receipt=await validateBundledCandidate(bundle,process.env.ROOT,process.env.STOCKSENSE_STANDARDS_IMAGE);
+          assert.equal(receipt.resultDigest,digest(Buffer.from(canonicalJson(result))));
+          await fs.writeFile(p+'bundle-receipt.json',JSON.stringify({source:process.env.CANDIDATE,bundleDigest:bundle.artifactDigest,receipt},null,2));
+          JS
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: noble-kiota-image-${{ matrix.lane }}
