@@ -45,14 +45,14 @@ const c18Revision = deriveIdentity('openapi', c18.provider, c18.document,
 const c18FixtureBytes = await readFile(join(root, fixtureSourcePath));
 const c18Fixtures = JSON.parse(c18FixtureBytes.toString('utf8'));
 if (c18Fixtures.syntheticOnly !== true || !Array.isArray(c18Fixtures.fixtures) ||
-    c18Fixtures.fixtures.length !== 6 || c18Fixtures.fixtures.some(fixture =>
+    c18Fixtures.fixtures.length !== 7 || c18Fixtures.fixtures.some(fixture =>
       fixture.boundaryIds?.join(',') !== 'C18' || fixture.documentRevisionId !== c18Revision)) {
   throw new Error('C18 fixtures must bind the current immutable OpenAPI revision');
 }
 const fixturePath = join(sampleRoot, 'governance/example-fixture.json');
 const sampleFixtures = JSON.parse(await readFile(fixturePath, 'utf8'));
 const c01Fixtures = sampleFixtures.fixtures.filter(fixture => fixture.boundaryIds?.join(',') === 'C01');
-if (c01Fixtures.length !== 4 || new Set([...c01Fixtures, ...c18Fixtures.fixtures].map(fixture => fixture.fixtureId)).size !== 10) {
+if (c01Fixtures.length !== 4 || new Set([...c01Fixtures, ...c18Fixtures.fixtures].map(fixture => fixture.fixtureId)).size !== 11) {
   throw new Error('The thin candidate fixture inventory has missing or duplicate examples');
 }
 const expectedFixtureBytes = Buffer.from(JSON.stringify({ fixtureVersion: '1.1.0', syntheticOnly: true,

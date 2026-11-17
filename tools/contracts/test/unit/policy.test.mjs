@@ -270,9 +270,9 @@ test('BR2.7-BR2.9: the sample fixture oracle requires exact positive and negativ
   } finally {
     await rm(root, { recursive: true, force: true });
   }
-  assert.equal(results.length, 10);
+  assert.equal(results.length, 11);
   assert.deepEqual(results.map(row => row.observed),
-    ['pass', 'pass', 'fail', 'fail', 'pass', 'fail', 'pass', 'fail', 'pass', 'fail']);
+    ['pass', 'pass', 'fail', 'fail', 'pass', 'fail', 'pass', 'fail', 'pass', 'fail', 'pass']);
   assert.ok(results.every(row => row.revisionId.startsWith('sha256:')));
   // The tenant envelope requires retailerId; the global identity-audit envelope forbids it.
   assert.deepEqual(

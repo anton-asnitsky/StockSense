@@ -360,3 +360,30 @@ servers:
   - url: /
 security:
   - serviceToken: []
+x-contract-fixtures:
+  - name: assistant-status-partial-coverage
+    schemaRef: '#/components/schemas/AssistantForecastStatusCoverage'
+    expectedValid: true
+    value:
+      requestedProductIds: [00000000-0000-4000-8000-000000000101, 00000000-0000-4000-8000-000000000102]
+      coveredProductIds: [00000000-0000-4000-8000-000000000101]
+      unavailableProductIds: [00000000-0000-4000-8000-000000000102]
+      publicationStatus: partial
+      freshnessStatus: fresh
+      freshnessBoundary: '2026-09-29T00:00:00Z'
+      freshnessReason: within-window
+      currentPublicationId: 00000000-0000-4000-8000-000000000103
+      forecastRunId: 00000000-0000-4000-8000-000000000104
+      latestRunId: 00000000-0000-4000-8000-000000000104
+      generatedAt: '2026-09-28T00:00:00Z'
+      sourceRevision: source-v4
+      calendarVersion: calendar-v2
+      modelVersion: model-v3
+      configurationVersion: config-v2
+      inputSnapshotDigest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      modelManifestDigest: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+      configurationDigest: sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+      placementGeneration: 2
+      products:
+        - { productId: 00000000-0000-4000-8000-000000000101, coverageStatus: covered, reason: usable }
+        - { productId: 00000000-0000-4000-8000-000000000102, coverageStatus: unavailable, reason: no-series }

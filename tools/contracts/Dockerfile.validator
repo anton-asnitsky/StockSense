@@ -7,7 +7,10 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     NODE_ENV=production
 WORKDIR /opt/contracts
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
-RUN corepack enable \
+# Optional local HTTPS inspection CA, visible only to the dependency download.
+RUN --mount=type=secret,id=npm_ca \
+    if [ -f /run/secrets/npm_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/npm_ca; fi \
+    && corepack enable \
     && corepack prepare pnpm@11.25.0 --activate \
     && pnpm install --prod --frozen-lockfile --ignore-scripts \
     && node node_modules/@redocly/cli/bin/cli.js --version
@@ -28,7 +31,7 @@ RUN node --check src/container-schema-validator.mjs \
 # Pin the immutable Linux/amd64 Chainguard glibc runtime. It supplies the
 # dynamic C/C++ libraries without a shell; retain the reviewed Node 24.22.2
 # binary from the immutable build image and verify it in the image build step.
-FROM --platform=linux/amd64 cgr.dev/chainguard/glibc-dynamic@sha256:6169708f3c53a6fab9c8911bc6c91f7a8425c2f529d8a92b731c1a47e24f0e67
+FROM --platform=linux/amd64 cgr.dev/chainguard/glibc-dynamic@sha256:3d6b3b0d4dfb6dceb5f0ce1db5143b4de8658b89578a911cadba5ed39ef61633
 ENV NODE_ENV=production \
     NO_UPDATE_NOTIFIER=1 \
     SUPPRESS_NO_CONFIG_WARNING=1 \

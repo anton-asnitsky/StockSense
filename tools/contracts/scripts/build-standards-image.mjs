@@ -23,8 +23,10 @@ function run(args, label, timeout = 120_000) {
 
 try {
   const expected = Buffer.from(await sourceTreeDigest() + '\n');
+  const caFile = process.env.STOCKSENSE_BUILD_CA_FILE;
+  const caOptions = caFile ? ['--secret', `id=npm_ca,src=${resolve(caFile)}`] : [];
   run(['build', '--platform=linux/amd64', '--file', 'Dockerfile.validator', '--tag', tag,
-    '.'], 'docker build', 12 * 60_000);
+    ...caOptions, '.'], 'docker build', 12 * 60_000);
   const id = run(['image', 'inspect', tag, '--format', '{{.Id}}'], 'docker image inspect');
   if (!SHA.test(id)) throw new Error('Unexpected image ID');
   if (run(['image', 'inspect', id, '--format', '{{.Architecture}}'], 'image architecture') !== 'amd64') {
