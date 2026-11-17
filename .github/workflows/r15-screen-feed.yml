@@ -38,7 +38,9 @@ jobs:
           jq '(.components[]|select(.name=="icu" and (.purl//""|startswith("pkg:rpm/")))) |= (.version="72.1.0.3-1.azl3" | .purl |= sub("@72.1.0.3-2.azl3";"@72.1.0.3-1.azl3") | ."bom-ref" |= sub("@72.1.0.3-2.azl3";"@72.1.0.3-1.azl3"))' input/kiota.cdx.json > input/positive-control.json
           grype=ghcr.io/anchore/grype@sha256:e4a44ef45d285b829ce6efe2642980329661bd2d18eab5fc539138d4adaebbbe
           docker pull "$grype"
-          docker run --rm --network none --read-only --tmpfs /tmp -e GRYPE_DB_AUTO_UPDATE=false -e GRYPE_CHECK_FOR_APP_UPDATE=false -e GRYPE_DB_CACHE_DIR=/db -v "$PWD/db:/db:ro" -v "$PWD/input:/input:ro" "$grype" sbom:/input/positive-control.json --distro azurelinux:3.0 -o json > evidence/positive-control-grype.json
+          mkdir cache
+          docker run --rm --network none --tmpfs /tmp -e GRYPE_DB_CACHE_DIR=/db -v "$PWD/cache:/db" -v "$PWD/db.tar.zst:/archive.tar.zst:ro" "$grype" db import /archive.tar.zst
+          docker run --rm --network none --read-only --tmpfs /tmp -e GRYPE_DB_AUTO_UPDATE=false -e GRYPE_CHECK_FOR_APP_UPDATE=false -e GRYPE_DB_CACHE_DIR=/db -v "$PWD/cache:/db:ro" -v "$PWD/input:/input:ro" "$grype" sbom:/input/positive-control.json --distro azurelinux:3.0 -o json > evidence/positive-control-grype.json
           jq -e '[.matches[]|select(.artifact.name=="icu" and (.vulnerability.id=="CVE-2025-5222" or any(.relatedVulnerabilities[]?; .id=="CVE-2025-5222")))]|length>0' evidence/positive-control-grype.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
