@@ -19,7 +19,21 @@ RUN ["/bin/sh", "-c", "test -d /opt/kiota/.store/microsoft.openapi.kiota/1.38.0/
 RUN ["/bin/sh", "-c", "mkdir -p /opt/kiota-probe-src && printf '%s\n' '<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><UseAppHost>false</UseAppHost></PropertyGroup></Project>' > /opt/kiota-probe-src/kiota-probe.csproj && printf '%s\n' 'using System;' 'using System.Diagnostics;' 'using System.IO;' 'try {' '  var start = new ProcessStartInfo(\"/opt/kiota/kiota\") { UseShellExecute = false };' '  foreach (var arg in args) start.ArgumentList.Add(arg);' '  using var child = Process.Start(start);' '  if (child is null) return 125;' '  child.WaitForExit();' '  Console.Error.WriteLine(\"STOCKSENSE_GENERATOR_PEAK=\" + File.ReadAllText(\"/sys/fs/cgroup/memory.peak\").Trim());' '  return child.ExitCode;' '} catch { return 125; }' > /opt/kiota-probe-src/Program.cs && dotnet publish /opt/kiota-probe-src/kiota-probe.csproj -c Release -o /opt/kiota-probe -p:RestoreIgnoreFailedSources=true"]
 # Run the pinned Kiota tool without build-only SDK and PowerShell packages.
 # The final runtime image is smoke-tested and scanned as the exact CI subject.
-FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/runtime@sha256:e7e90bfc3ce16f9efdf18c25c7e4876af4ffba7ea50582878f6ea05b1e04a7ec
+FROM --platform=linux/amd64 python@sha256:2784af835b90070d9d37d3aa5aa01a3e825d88436b0d58f7776d2cdcb6780f9e AS runtime-build
+COPY scripts/build-kiota-runtime.py kiota-runtime-inputs.json /recipe/
+RUN --mount=type=secret,id=nuget_ca python /recipe/build-kiota-runtime.py --self-test \
+    && python /recipe/build-kiota-runtime.py /recipe/kiota-runtime-inputs.json
+
+FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/runtime@sha256:e7e90bfc3ce16f9efdf18c25c7e4876af4ffba7ea50582878f6ea05b1e04a7ec AS microsoft-payload
+FROM scratch
+COPY --from=runtime-build /rootfs/ /
+COPY --from=microsoft-payload /usr/share/dotnet /usr/share/dotnet
+COPY --from=microsoft-payload /etc/passwd /etc/passwd
+COPY --from=microsoft-payload /etc/group /etc/group
+# .NET's optional LTTng provider targets ABI .so.0, unavailable in Noble.
+# Preserve its signed bytes and disable loading through the documented setting.
+ENV APP_UID=1654 ASPNETCORE_HTTP_PORTS=8080 DOTNET_RUNNING_IN_CONTAINER=true \
+    DOTNET_VERSION=10.0.15 DOTNET_LTTng=0 COMPlus_LTTng=0
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_NOLOGO=1 \
     HOME=/tmp
