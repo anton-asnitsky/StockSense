@@ -142,6 +142,47 @@ function utcTime(value) {
   return canonical === value || canonical.replace('.000Z', 'Z') === value ? time : NaN;
 }
 
+/** Validate one baseline's records without inventing a scan for another baseline.
+ * The returned identities are not approval evidence; current scans must still match.
+ * @param {{now?: Date}} [options]
+ */
+export function validateImageExceptions(exceptions, options = {}) {
+  const { now = new Date() } = options;
+  if (!Array.isArray(exceptions) || !(now instanceof Date) || !Number.isFinite(now.getTime())) {
+    fail('IMAGE_EXCEPTION', 'Image disposition input is invalid');
+  }
+  const identities = new Set();
+  for (const exception of exceptions) {
+    if (!exception || typeof exception !== 'object' || Array.isArray(exception) ||
+        Object.keys(exception).length !== EXCEPTION_FIELDS.size ||
+        Object.keys(exception).some(field => !EXCEPTION_FIELDS.has(field)) ||
+        !ADVISORY.test(exception.id ?? '') || !IMAGE_NAMES.includes(exception.image) ||
+        !exactIdentityText(exception.package, 256) || !exactIdentityText(exception.version, 256) ||
+        !exactIdentityText(exception.type, 128) || !purlMatches(exception) ||
+        !['Negligible', 'Low', 'Medium', 'High', 'Critical'].includes(exception.severity) ||
+        !['fixed', 'not-fixed', 'wont-fix'].includes(exception.fixState) ||
+        ['owner', 'rationale', 'compensatingControl', 'approvalReference']
+          .some(field => !exactText(exception[field]))) {
+      fail('IMAGE_EXCEPTION', 'Image exception is malformed or broad');
+    }
+    const created = utcTime(exception.createdAt);
+    const expires = utcTime(exception.expiresAt);
+    if (!Number.isFinite(created) || !Number.isFinite(expires) ||
+        created > now.getTime() || expires <= now.getTime() || created >= expires) {
+      fail('IMAGE_EXCEPTION', 'Image exception is future, expired or has invalid times');
+    }
+    if (exception.fixState === 'fixed' && ['High', 'Critical'].includes(exception.severity)) {
+      fail('IMAGE_FINDINGS', 'A fixed High or Critical image finding blocks the gate');
+    }
+    const key = identity(exception, exception.image);
+    if (identities.has(key)) {
+      fail('IMAGE_EXCEPTION', 'Image exception is unmatched or duplicates a disposition');
+    }
+    identities.add(key);
+  }
+  return identities;
+}
+
 /** Validate current scan findings against candidate records; approval provenance is caller-owned.
  * @param {{image?: string, imageId?: string, sbomDigest?: string, now?: Date}} [options]
  */
@@ -167,31 +208,11 @@ export function verifyImageDispositions(report, exceptions, options = {}) {
       fail('IMAGE_FINDINGS', 'A fixed High or Critical image finding blocks the gate');
     }
   }
-  const disposed = new Set();
-  for (const exception of exceptions) {
-    if (!exception || typeof exception !== 'object' || Array.isArray(exception) ||
-        Object.keys(exception).length !== EXCEPTION_FIELDS.size ||
-        Object.keys(exception).some(field => !EXCEPTION_FIELDS.has(field)) ||
-        !ADVISORY.test(exception.id ?? '') || !IMAGE_NAMES.includes(exception.image) ||
-        !exactIdentityText(exception.package, 256) || !exactIdentityText(exception.version, 256) ||
-        !exactIdentityText(exception.type, 128) || !purlMatches(exception) ||
-        !['Negligible', 'Low', 'Medium', 'High', 'Critical'].includes(exception.severity) ||
-        !['fixed', 'not-fixed', 'wont-fix'].includes(exception.fixState) ||
-        ['owner', 'rationale', 'compensatingControl', 'approvalReference']
-          .some(field => !exactText(exception[field]))) {
-      fail('IMAGE_EXCEPTION', 'Image exception is malformed or broad');
-    }
-    const created = utcTime(exception.createdAt);
-    const expires = utcTime(exception.expiresAt);
-    if (!Number.isFinite(created) || !Number.isFinite(expires) ||
-        created > now.getTime() || expires <= now.getTime() || created >= expires) {
-      fail('IMAGE_EXCEPTION', 'Image exception is future, expired or has invalid times');
-    }
-    const key = identity(exception, exception.image);
-    if (!current.has(key) || disposed.has(key)) {
+  const disposed = validateImageExceptions(exceptions, { now });
+  for (const key of disposed) {
+    if (!current.has(key)) {
       fail('IMAGE_EXCEPTION', 'Image exception is unmatched or duplicates a disposition');
     }
-    disposed.add(key);
   }
   if (disposed.size !== current.size) {
     fail('IMAGE_FINDINGS', 'Current image findings lack a permitted disposition');
