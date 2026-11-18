@@ -8,6 +8,7 @@ import YAML from 'yaml';
 import { buildSbom, parsePackageKey } from '../../src/sbom.mjs';
 import { SCANNERS, readImageEvidence, sha256, verifyImageDispositions } from '../../src/image-evidence.mjs';
 import { sourceTreeDigest } from '../../src/source-digest.mjs';
+import { normalizeKiotaRuntimeManifest } from '../../src/kiota-runtime-manifest.mjs';
 import { assertScanGates } from '../../src/evidence.mjs';
 
 const lockfile = fileURLToPath(new URL('../../pnpm-lock.yaml', import.meta.url));
@@ -96,7 +97,24 @@ async function imageFixture(directory, name, imageId, findings = []) {
   }) + '\n');
 }
 
+async function runtimeFixture(directory, imageId) {
+  const bytes = await readFile(join(directory, 'kiota.cdx.json'));
+  const runtime = normalizeKiotaRuntimeManifest({
+    entries: [{ path: 'rootfs', kind: 'directory', mode: 0o755 },
+      { path: 'rootfs/kiota', kind: 'file', mode: 0o755, size: 5, sha256: sha256('kiota') }],
+    config: { Entrypoint: ['/kiota'], Cmd: null, Env: [], User: '65532', WorkingDir: '/' },
+    sbom: JSON.parse(bytes.toString('utf8'))
+  });
+  await writeFile(join(directory, 'kiota.runtime.json'), JSON.stringify({ imageId,
+    sbomDigest: sha256(bytes), ...runtime }, null, 2) + '\n');
+  return runtime.digest;
+}
+
+const sourceContext = { candidateRevision, candidateGitTreeSha: 'd'.repeat(40),
+  candidateTreeDigest: 'sha256:' + 'e'.repeat(64), executionFingerprint: 'sha256:' + 'b'.repeat(64) };
+
 async function imageReceipt(directory, ids, version = 'v1') {
+  const runtimeManifestDigest = version === 'v2' ? await runtimeFixture(directory, ids.kiota) : null;
   const { records } = await readImageEvidence(directory, ids, { requireClean: false });
   const receipt = { schema: `stocksense-image-ledger-verification-${version}`, candidateRevision,
     candidateGitTreeSha: 'd'.repeat(40), candidateTreeDigest: 'sha256:' + 'e'.repeat(64),
@@ -105,7 +123,7 @@ async function imageReceipt(directory, ids, version = 'v1') {
       image: record.name, imageId: record.imageId, sbomDigest: record.sbomDigest,
       scanDigest: record.scanDigest, findings: record.findings, disposed: record.findings
     })), ...(version === 'v2' ? { executionFingerprint: 'sha256:' + 'b'.repeat(64),
-      runtimeManifestDigest: 'sha256:' + 'c'.repeat(64),
+      runtimeManifestDigest,
       ledgerSchema: 'stocksense-image-exceptions-v2' } : {}) };
   await writeFile(join(directory, 'ledger-verification.json'), JSON.stringify(receipt) + '\n');
   return receipt;
@@ -180,7 +198,7 @@ test('SBOM retains strict v2 image-ledger binding and rejects malformed v2 recei
   const image = 'sha256:' + 'a'.repeat(64);
   const ids = { validator: image, kiota: image };
   const input = { ...subject, validatorImageDigest: image, kiotaImageDigest: image,
-    imageEvidenceDirectory: directory, candidateRevision };
+    imageEvidenceDirectory: directory, candidateRevision, sourceContext };
   try {
     await imageFixture(directory, 'validator', image);
     await imageFixture(directory, 'kiota', image);
@@ -193,12 +211,34 @@ test('SBOM retains strict v2 image-ledger binding and rejects malformed v2 recei
     for (const changed of [
       { ledgerSchema: 'stocksense-image-exceptions-v1' },
       { executionFingerprint: 'invalid' },
+      { executionFingerprint: 'sha256:' + '1'.repeat(64) },
+      { runtimeManifestDigest: 'sha256:' + '1'.repeat(64) },
+      { candidateGitTreeSha: '1'.repeat(40) },
+      { candidateTreeDigest: 'sha256:' + '1'.repeat(64) },
+      { extra: 'field' },
       { runtimeManifestDigest: 'sha256:' + '0'.repeat(63) },
       { images: receipt.images.map((row, index) => index ? row : { ...row, disposed: 1 }) }
     ]) {
       await writeFile(path, JSON.stringify({ ...receipt, ...changed }) + '\n');
       await expectCode(buildSbom(lockfile, input), 'IMAGE_LEDGER');
     }
+    await writeFile(path, JSON.stringify(receipt) + '\n');
+    await expectCode(buildSbom(lockfile, { ...input, sourceContext: undefined }), 'IMAGE_LEDGER');
+    await expectCode(buildSbom(lockfile, { ...input, sourceContext: { ...sourceContext,
+      candidateRevision: '1'.repeat(40) } }), 'IMAGE_LEDGER');
+    const runtimePath = join(directory, 'kiota.runtime.json');
+    const runtime = JSON.parse(await readFile(runtimePath, 'utf8'));
+    for (const change of [
+      { ...runtime, imageId: 'sha256:' + '1'.repeat(64) },
+      { ...runtime, sbomDigest: 'sha256:' + '1'.repeat(64) },
+      { ...runtime, config: { ...runtime.config, User: '0' } },
+      { ...runtime, entries: runtime.entries.map(entry => entry.kind === 'file'
+        ? { ...entry, sha256: 'sha256:' + '1'.repeat(64) } : entry) }
+    ]) {
+      await writeFile(runtimePath, JSON.stringify(change, null, 2) + '\n');
+      await expectCode(buildSbom(lockfile, input), 'IMAGE_LEDGER');
+    }
+    await writeFile(runtimePath, JSON.stringify(runtime, null, 2) + '\n');
     const missing = { ...receipt };
     delete missing.runtimeManifestDigest;
     await writeFile(path, JSON.stringify(missing) + '\n');
