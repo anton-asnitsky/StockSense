@@ -1,8 +1,8 @@
-name: R-15 isolated Noble Kiota screening
+name: U1 isolated ledger and SBOM proof
 on:
   push:
-    branches: [codex/r15-noble-snapshot-20261116]
-    paths: ['.github/workflows/r15-noble-screen.yml', '.github/r15-noble/**']
+    branches: [codex/u1-ledger-proof]
+    paths: ['.github/workflows/r15-noble-screen.yml', '.github/r15-noble/**', '.github/u1-ledger/**']
 permissions:
   contents: read
 jobs:
@@ -12,9 +12,9 @@ jobs:
       matrix:
         lane: [1, 2]
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 90
     env:
-      CANDIDATE: 5897e4fc3e402771feb0a7dda3a7b015b52b2340
+      CANDIDATE: 3fef097f5a7f87885d6453dfd3017ec23751a1b1
       SDK: mcr.microsoft.com/dotnet/sdk@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa
       SYFT: ghcr.io/anchore/syft@sha256:3eb5379ba7b409c3f4069b686110527af0c47df993fa5c10d13e7cf34f49b1aa
       GRYPE: ghcr.io/anchore/grype@sha256:e4a44ef45d285b829ce6efe2642980329661bd2d18eab5fc539138d4adaebbbe
@@ -26,7 +26,7 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           path: candidate
-          ref: 5897e4fc3e402771feb0a7dda3a7b015b52b2340
+          ref: 3fef097f5a7f87885d6453dfd3017ec23751a1b1
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
@@ -190,14 +190,27 @@ jobs:
           assert.equal(receipt.resultDigest,digest(Buffer.from(canonicalJson(result))));
           await fs.writeFile(p+'bundle-receipt.json',JSON.stringify({source:process.env.CANDIDATE,bundleDigest:bundle.artifactDigest,receipt},null,2));
           JS
+      - name: Retain normal production image and security scans
+        working-directory: candidate
+        env:
+          GITHUB_SHA: ${{ env.CANDIDATE }}
+        run: |
+          set -euo pipefail
+          node tools/contracts/scripts/image-evidence.mjs build "$RUNNER_TEMP/noble/proof/images"
+          node tools/contracts/scripts/security-reports.mjs secret-scan "$RUNNER_TEMP/noble/proof/security"
+          node tools/contracts/scripts/security-reports.mjs vulnerability-scan "$RUNNER_TEMP/noble/proof/security"
+          node "$GITHUB_WORKSPACE/audit/.github/u1-ledger/check-security.mjs"
+      - name: Exercise simulated three-baseline ledger and independently bound SBOM
+        working-directory: candidate/tools/contracts
+        run: node "$GITHUB_WORKSPACE/audit/.github/u1-ledger/simulate-ledger.mjs"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: noble-kiota-image-${{ matrix.lane }}
+          name: u1-ledger-image-${{ matrix.lane }}
           path: ${{ runner.temp }}/noble/io/kiota.tar
           retention-days: 7
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: noble-kiota-screen-${{ matrix.lane }}
+          name: u1-ledger-proof-${{ matrix.lane }}
           path: ${{ runner.temp }}/noble/proof/
           retention-days: 30
