@@ -2,7 +2,8 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { TextDecoder } from 'node:util';
-import { IMAGE_NAMES, readImageEvidence, sha256, verifyImageDispositions } from './image-evidence.mjs';
+import { IMAGE_NAMES, readImageEvidence, sha256,
+  validateImageExceptions, verifyImageDispositions } from './image-evidence.mjs';
 import { normalizeKiotaRuntimeManifest } from './kiota-runtime-manifest.mjs';
 import { sourceTreeDigest } from './source-digest.mjs';
 
@@ -179,18 +180,37 @@ export async function verifyBoundImageEvidence({ directory, imageIds, ledger,
     requireValue(DIGEST.test(executionFingerprint ?? '') && DIGEST.test(runtimeManifestDigest ?? ''),
       'execution fingerprint or final runtime manifest is missing');
   }
+  const rowFields = version === 'stocksense-image-exceptions-v1'
+    ? ['candidateTreeDigest', 'finding']
+    : ['executionFingerprint', 'runtimeManifestDigest', 'finding'];
   requireValue(ledger.exceptions.every(item => item && !Array.isArray(item) &&
-    typeof item === 'object' && item.finding && typeof item.finding === 'object' &&
+    typeof item === 'object' && Object.keys(item).length === rowFields.length &&
+    rowFields.every(field => Object.hasOwn(item, field)) &&
+    item.finding && typeof item.finding === 'object' &&
     IMAGE_NAMES.includes(item.finding.image) &&
     (version === 'stocksense-image-exceptions-v1'
-      ? Object.keys(item).length === 2 && DIGEST.test(item.candidateTreeDigest ?? '') &&
+      ? DIGEST.test(item.candidateTreeDigest ?? '') &&
         item.candidateTreeDigest === candidateTreeDigest
-      : Object.keys(item).length === 3 &&
-        DIGEST.test(item.executionFingerprint ?? '') &&
-        item.executionFingerprint === executionFingerprint &&
-        DIGEST.test(item.runtimeManifestDigest ?? '') &&
-        item.runtimeManifestDigest === runtimeManifestDigest)),
+      : DIGEST.test(item.executionFingerprint ?? '') &&
+        DIGEST.test(item.runtimeManifestDigest ?? ''))),
     'ledger row is malformed, names an unknown image or belongs to a different candidate tree or execution baseline');
+  let selected = ledger.exceptions;
+  if (version === 'stocksense-image-exceptions-v2') {
+    const groups = new Map();
+    const baselineKey = item => JSON.stringify([item.executionFingerprint, item.runtimeManifestDigest]);
+    for (const item of ledger.exceptions) {
+      const key = baselineKey(item);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(item.finding);
+    }
+    // Validate every baseline before filtering: a stale or malformed policy row
+    // must not disappear merely because this checkout selects another baseline.
+    for (const findings of groups.values()) validateImageExceptions(findings, { now });
+    const selectedKey = baselineKey({ executionFingerprint, runtimeManifestDigest });
+    selected = ledger.exceptions.filter(item => baselineKey(item) === selectedKey);
+    requireValue(ledger.exceptions.length === 0 || selected.length > 0,
+      'ledger has no matching execution baseline and runtime manifest');
+  }
   const evidence = await readImageEvidence(directory, imageIds, { requireClean: false });
   const sourceDigest = await sourceTreeDigest();
   const rows = [];
@@ -202,14 +222,14 @@ export async function verifyBoundImageEvidence({ directory, imageIds, ledger,
     let report;
     try { report = JSON.parse(bytes.toString('utf8')); }
     catch { throw new Error(`Image ledger refused: ${name} scan is malformed`); }
-    const dispositions = ledger.exceptions.filter(item => item.finding.image === name)
+    const dispositions = selected.filter(item => item.finding.image === name)
       .map(item => item.finding);
     const result = verifyImageDispositions(report, dispositions,
       { image: name, imageId: record.imageId, sbomDigest: record.sbomDigest, now });
     rows.push({ image: name, imageId: record.imageId, sbomDigest: record.sbomDigest,
       scanDigest: record.scanDigest, ...result });
   }
-  requireValue(ledger.exceptions.length === rows.reduce((count, row) => count + row.disposed, 0),
+  requireValue(selected.length === rows.reduce((count, row) => count + row.disposed, 0),
     'ledger contains a row for an unknown image');
   const common = { candidateRevision: expectedRevision,
     candidateGitTreeSha: ledger.candidateGitTreeSha, candidateTreeDigest,

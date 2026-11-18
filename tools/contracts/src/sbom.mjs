@@ -6,6 +6,7 @@ import YAML from 'yaml';
 import { ContractError, canonicalJson } from './package-loader.mjs';
 import { IMAGE_NAMES, readImageEvidence, SCANNERS } from './image-evidence.mjs';
 import { sourceTreeDigest } from './source-digest.mjs';
+import { readKiotaRuntimeEvidence } from './image-ledger.mjs';
 
 // A CycloneDX 1.6 SBOM built from the pnpm lockfile and pinned tool recipes.
 //
@@ -30,7 +31,7 @@ const exactFields = (value, fields) => value && typeof value === 'object' &&
   fields.every(field => Object.hasOwn(value, field));
 
 /** The receipt is produced by the protected-main verifier in this same CI job. */
-async function verifyImageLedgerReceipt(directory, candidateRevision, records) {
+async function verifyImageLedgerReceipt(directory, candidateRevision, records, sourceContext) {
   if (!COMMIT.test(candidateRevision ?? '')) {
     fail('IMAGE_LEDGER', 'BR6.5', 'Candidate revision is required for image evidence');
   }
@@ -68,6 +69,26 @@ async function verifyImageLedgerReceipt(directory, candidateRevision, records) {
       fail('IMAGE_LEDGER', 'BR6.5', `${name} image evidence lacks a matching successful ledger verification`);
     }
   }
+  if (v2) {
+    if (!exactFields(sourceContext, ['candidateRevision', 'candidateGitTreeSha',
+      'candidateTreeDigest', 'executionFingerprint']) ||
+        sourceContext.candidateRevision !== candidateRevision ||
+        sourceContext.candidateGitTreeSha !== receipt.candidateGitTreeSha ||
+        sourceContext.candidateTreeDigest !== receipt.candidateTreeDigest ||
+        sourceContext.executionFingerprint !== receipt.executionFingerprint) {
+      fail('IMAGE_LEDGER', 'BR6.5', 'Image ledger receipt differs from independent Git context');
+    }
+    let runtimeDigest;
+    try {
+      runtimeDigest = await readKiotaRuntimeEvidence(directory,
+        records.find(record => record.name === 'kiota').imageId);
+    } catch {
+      fail('IMAGE_LEDGER', 'BR6.5', 'Image ledger runtime evidence is missing or inconsistent');
+    }
+    if (receipt.runtimeManifestDigest !== runtimeDigest) {
+      fail('IMAGE_LEDGER', 'BR6.5', 'Image ledger receipt differs from independent runtime evidence');
+    }
+  }
   return receipt;
 }
 
@@ -94,7 +115,7 @@ const purl = (name, version) =>
 
 /**
  * @param {string} lockfilePath
- * @param {{ name: string, version: string, generator: string, validatorImageDigest?: string, kiotaImageDigest?: string, imageEvidenceDirectory?: string, candidateRevision?: string }} subject
+ * @param {{ name: string, version: string, generator: string, validatorImageDigest?: string, kiotaImageDigest?: string, imageEvidenceDirectory?: string, candidateRevision?: string, sourceContext?: { candidateRevision: string, candidateGitTreeSha: string, candidateTreeDigest: string, executionFingerprint: string } }} subject
  * @returns {Promise<{ document: object, bytes: Buffer, digest: string, components: number }>}
  */
 export async function buildSbom(lockfilePath, subject) {
@@ -207,7 +228,7 @@ export async function buildSbom(lockfilePath, subject) {
       validator: subject.validatorImageDigest, kiota: subject.kiotaImageDigest
     }, { requireClean: false });
     imageLedgerReceipt = await verifyImageLedgerReceipt(
-      subject.imageEvidenceDirectory, subject.candidateRevision, images.records);
+      subject.imageEvidenceDirectory, subject.candidateRevision, images.records, subject.sourceContext);
     imageRecords = images.records;
     components.push(...images.components);
     add('container', 'syft-image-scanner', 'v1.54.1', SCANNERS.syft.split('@sha256:')[1], 'image-evidence.mjs');
