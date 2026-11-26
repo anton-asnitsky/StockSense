@@ -1,0 +1,31 @@
+# U1 validator security and scan reporting remediation
+
+Status: proposed; requires a fresh protected plan receipt before implementation. This is a bounded repair plan, not merge readiness or authorization to change the ledger trust policy.
+
+## Evidence and scope
+
+Current PR heads: #74 edeec8b54a4ee2d019349befbb005b944dce901d; #75 bd0241d3313a998039cce4a37059d188e502fda2; #76 0f5db4d25cc9364f825eb752dad05c037c7b9944. The reviewed ledger/SBOM candidate is 3fef097f5a7f87885d6453dfd3017ec23751a1b1. Preserve unrelated work and story separation.
+
+Read verification/u1-validator-scan-review-2026-11-26.md and verification/u1-security-remediation-plan-inputs-2026-11-26.md. Fresh diagnostic run 45851142043 found 15 Node 24.22.2 binary findings (seven High, all with a fixed version) and five unresolved Wolfi glibc findings. Normalization failed before emitting the normal scan receipt. The older PR vulnerability failures concern picomatch; its advisory was withdrawn, so rerun ordinary audit before changing dependencies. Never classify a diagnostic result as an ordinary U1 pass.
+
+## Authorized implementation after approval
+
+1. Work in an isolated successor of the reviewed candidate. Upgrade the validator Node binary and relevant builder, CI and test version expectations consistently to Node 24.22.3. Verify official release metadata and downloaded Linux x64 archive bytes against published SHA256 4f2b175a6d53a5c617a80dba2676238a0688cef28c6da4eba35c7d844e66fcfb. Verify the immutable builder image's actual binary, platform and provenance; never invent an image digest or substitute a moving tag. Bind the actual copied image binary to the verified archive distribution by byte hash, or equivalent independently verified provenance, and record the applicable signature verification policy and results. Retain provenance evidence. Stop if the selected distribution cannot be independently verified.
+2. Update only relevant tools/contracts Dockerfile.validator, build/scan scripts and source constants, tests, and U1/proof workflow Node pins. Keep pnpm and application dependencies unchanged under this plan. Any dependency change needs a concrete separately reviewed protected amendment, not inferred authority from this plan. Preserve distroless non-root operation, offline behavior, exact source/image bindings, frozen installation and secret handling. Do not change the Kiota runtime under this plan.
+3. Repair image scan normalization for the observed binary Node identity with strict generic PURL/name/version agreement and exact SBOM membership. Do not generally accept arbitrary binary identities. Represent an explicit scanner empty fix state as unknown without dropping the finding, inventing a fix, or making unknown eligible for an exception. Missing/malformed identity remains fatal. Preserve raw bytes and database receipts even when verification fails. Fixed High/Critical findings must remain blocking.
+4. Reconcile every fresh validator and Kiota raw finding against exact image SBOMs and vendor data. No Wolfi upgrade is assumed clean; do not add suppressions, broad not-affected conclusions, exceptions or owner approvals. If unresolved findings remain, retain a failing ordinary gate and prepare an evidence-specific proposal. Runtime replacement or risk acceptance requires a separate reviewed decision.
+5. Independently review code and retained evidence before committing/pushing the isolated repair branch. Roll out reviewed changes to the three story branches only after technical validation passes; retain each story's changes. Refresh source manifests and traceability without closing security/release gaps prematurely. Any new PR heads require fresh genuine owner U2 approvals; supply exact required comments and never post them on the owner's behalf.
+
+## Required tests and evidence
+
+- Retain the old vulnerable raw Node scan as a positive detection control; it must still fail fixed High/Critical policy. Test real raw binary/generic Node normalization and malformed PURL, name/version mismatch, absent SBOM membership, wrong image/source/hash, missing fix object, empty fix state, unknown disposition rejection and fixed High/Critical rejection. Prove zero raw matches disappear during normalization. Preserve existing package-type and v1/v2 receipt regressions.
+- Run complete explicit U1 unit/integration suites, lint, type checks and the existing 80% line coverage floor. No policy exclusions or threshold reduction.
+- Run two independent hosted clean builds with verified Node 24.22.3, exact SBOM and raw/current database receipts, normal image scans and honest pass/fail results. Compare normalized runtime identities where applicable. Both lanes must retain complete artifacts even on failures.
+- Run pinned C01-C27 validation, actual generated consumers and drift comparisons against all three branch baselines. Verify the reviewed ledger/SBOM production call paths; synthetic ledger tests stay explicitly simulation-only.
+- Re-run ordinary vulnerability and U1 checks after any authorized rollout, recheck U2 for exact heads, record run/attempt/job/artifact hashes and source revisions. Do not claim readiness from a stale check, skipped step, diagnostic success or local-only pass.
+
+## Blocking publication dependency and exclusions
+
+The current protected main ledger is expired and candidate-incompatible. Ordinary U1 unconditionally reads that authority; even zero image findings cannot consume its obsolete row. A compatibility PR cannot publish its own policy before merge. Thus this plan alone cannot make all three PRs green. The historical temporary-protection bootstraps are not reusable authority.
+
+A separately reviewed ledger-authority transition design is being prepared. It must specify genuine independent owner authorization and preserve truthful ordinary status reporting. This plan does not authorize implementing that transition, changing required checks, changing U2 policy, trusting candidate-supplied approval, modifying protected main, granting exceptions, merging any PR, accepting U1, releasing C01 or advancing to the next gate. Keep NFR13.2/NFR13.5/NFR15.2 open until their full evidence obligations pass. The owner performs all merges, after actual merge readiness is established.

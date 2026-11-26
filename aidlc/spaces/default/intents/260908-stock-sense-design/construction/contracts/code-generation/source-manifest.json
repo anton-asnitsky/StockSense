@@ -4,6 +4,15 @@
   "version": 1,
   "writes": [
     {
+      "path": "tools/contracts/test/unit/image-evidence.test.mjs"
+    },
+    {
+      "path": "tools/contracts/test/fixtures/image-evidence/validator-node-24.22.2.grype-raw.json"
+    },
+    {
+      "path": "tools/contracts/test/fixtures/image-evidence/README.md"
+    },
+    {
       "path": "tools/contracts/test/integration/sbom-context.test.mjs"
     },
     {
