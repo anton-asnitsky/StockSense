@@ -1,6 +1,9 @@
 # Build context: tools/contracts from a clean checkout. Keep the approved,
 # immutable Node build image; the final Linux/amd64 runtime is distroless.
-FROM docker.io/library/node@sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c AS dependencies
+FROM docker.io/library/node@sha256:e0e989b967dacc279681ed81774b2ce9eeebbb0efb8e0c427573235bebf1eda1 AS dependencies
+
+# Exact binary from the signed Node 24.22.3 Linux x64 distribution.
+RUN printf '%s  %s\n' 'a7ec1b37e6ff9d187e4198c5b6df9a4eb1c74dd31804fb3bac55cc4ceca1ac01' '/usr/local/bin/node' | sha256sum --check --strict
 
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     NO_UPDATE_NOTIFIER=1 \
@@ -26,7 +29,7 @@ RUN node --check src/container-schema-validator.mjs \
     && node src/source-digest.mjs > source-digest.txt
 
 # Pin the immutable Linux/amd64 Chainguard glibc runtime. It supplies the
-# dynamic C/C++ libraries without a shell; retain the reviewed Node 24.22.2
+# dynamic C/C++ libraries without a shell; retain the reviewed Node 24.22.3
 # binary from the immutable build image and verify it in the image build step.
 FROM --platform=linux/amd64 cgr.dev/chainguard/glibc-dynamic@sha256:3d6b3b0d4dfb6dceb5f0ce1db5143b4de8658b89578a911cadba5ed39ef61633
 ENV NODE_ENV=production \

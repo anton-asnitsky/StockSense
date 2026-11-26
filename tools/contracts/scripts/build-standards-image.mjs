@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { lstatSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -41,6 +42,12 @@ try {
     if (!lstatSync(target).isFile() || !readFileSync(target).equals(expected)) {
       throw new Error('Built image has a different tool-source digest');
     }
+    const binary = join(directory, 'node');
+    run(['cp', `${container}:/nodejs/bin/node`, binary], 'copy final Node binary');
+    if (!lstatSync(binary).isFile() || createHash('sha256').update(readFileSync(binary)).digest('hex') !==
+        'a7ec1b37e6ff9d187e4198c5b6df9a4eb1c74dd31804fb3bac55cc4ceca1ac01') {
+      throw new Error('Validator Node binary differs from the verified release');
+    }
   } finally {
     let localCleanupError;
     try { if (directory) rmSync(directory, { recursive: true, force: true }); }
@@ -52,7 +59,7 @@ try {
     '--security-opt=no-new-privileges=true', '--cap-drop=ALL', '--pids-limit=64',
     '--memory=2147483648', '--memory-swap=2147483648', '--user=65532:65532',
     '--entrypoint=/nodejs/bin/node', id, '--version'], 'runtime smoke');
-  if (version !== 'v24.22.2') throw new Error('Validator runtime Node version differs from the pin');
+  if (version !== 'v24.22.3') throw new Error('Validator runtime Node version differs from the pin');
   process.stderr.write(`tool sources ${expected.toString().trim()}\n`);
   process.stdout.write(id + '\n');
 } catch (error) {
