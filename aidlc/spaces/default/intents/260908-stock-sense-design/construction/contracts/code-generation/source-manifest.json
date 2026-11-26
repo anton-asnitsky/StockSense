@@ -4,6 +4,12 @@
   "version": 1,
   "writes": [
     {
+      "path": "tools/contracts/test/integration/sbom-context.test.mjs"
+    },
+    {
+      "path": "tools/contracts/src/sbom-context.mjs"
+    },
+    {
       "path": "tools/contracts/scripts/build-kiota-runtime.py"
     },
     {
