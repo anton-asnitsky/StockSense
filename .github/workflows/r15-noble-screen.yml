@@ -192,11 +192,14 @@ jobs:
           JS
       - name: Retain normal production image and security scans
         working-directory: candidate
-        env:
-          GITHUB_SHA: ${{ env.CANDIDATE }}
         run: |
           set -euo pipefail
-          node tools/contracts/scripts/image-evidence.mjs build "$RUNNER_TEMP/noble/proof/images"
+          actual=$(git rev-parse HEAD)
+          echo "Scan source: $actual; expected: $CANDIDATE"
+          test "$actual" = "$CANDIDATE"
+          # The diagnostic workflow SHA differs from the pinned source checkout.
+          # Bind only this child process after independently checking its Git HEAD.
+          GITHUB_SHA="$CANDIDATE" node tools/contracts/scripts/image-evidence.mjs build "$RUNNER_TEMP/noble/proof/images"
           node tools/contracts/scripts/security-reports.mjs secret-scan "$RUNNER_TEMP/noble/proof/security"
           node tools/contracts/scripts/security-reports.mjs vulnerability-scan "$RUNNER_TEMP/noble/proof/security"
           node "$GITHUB_WORKSPACE/audit/.github/u1-ledger/check-security.mjs"
