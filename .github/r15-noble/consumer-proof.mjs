@@ -37,6 +37,7 @@ for (const [pr, head] of heads) {
   for(const original of profile.consumers) {
     const candidate=structuredClone(original);
     if(candidate.generator==='kiota') {
+      assert.equal(original.generatorVersion, '1.38.0', 'Current PR baselines already use reviewed Kiota');
       candidate.generatorVersion='1.38.0';
       candidate.configurationDigest=generatorConfigurationDigest('kiota','dotnet-client');
     }
@@ -56,15 +57,9 @@ for (const [pr, head] of heads) {
       const after=await digestDirectory(folder);
       assert.deepEqual(Object.keys(after).sort(),Object.keys(before).sort());
       const differences=Object.keys(before).filter(p=>before[p]!==after[p]);
-      if(pr===74 && candidate.generator==='kiota'){
-        assert.deepEqual(differences,['dotnet-client/kiota-lock.json']);
-        const oldLock=JSON.parse(await readFile(join(baseline,differences[0])));
-        const newLock=JSON.parse(await readFile(join(folder,differences[0])));
-        assert.equal(oldLock.kiotaVersion,'1.35.0');
-        assert.equal(newLock.kiotaVersion,'1.38.0');
-        newLock.kiotaVersion=oldLock.kiotaVersion;
-        assert.deepEqual(newLock,oldLock);
-      }else{assert.deepEqual(differences,[]);}
+      // The selected current heads all contain the completed Kiota upgrade.
+      // A validator-only repair must change no generated output, including locks.
+      assert.deepEqual(differences,[]);
       runs.push(after);
       candidateTree=folder;
     }
