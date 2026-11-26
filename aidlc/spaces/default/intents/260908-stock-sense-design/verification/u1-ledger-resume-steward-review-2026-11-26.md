@@ -1,0 +1,38 @@
+# U1 ledger implementation resume review
+
+Review date: 2026-11-26. Independent StockSense process-steward review; no new approval gate and no implementation changes. Exclusive output is this document. Unrelated root/worktree changes, state, audit, questions and approval records were not edited.
+
+## Verdict and authority
+
+The existing protected implementation approval remains the applicable authority for conditional working-branch rollout. No extra owner plan approval is required merely to resume that approved scope. The coordinator's native testing-posture verification on resume returned approved, contractValid, fingerprintValid and receiptValid all true for `sha256:f6e34edf4a0333f3763f257b64f41cb41bcdcb130f2d1a2410b10878616cdef7`. Independently located the native audit event `PLAN_APPROVAL_RECORDED` at 2026-11-18T08:35:30Z, target unit:contracts, session `01a1e957-9445-7512-895e-1f6860e35c76`, directive epoch `sha256:3e1d31ecbbfb588883dafdd444d610228f4cf2a56db871d10037580c116711dd`, with the same fingerprint and exact answer Approve Plan. The audit event is corroboration; the coordinator's protected receipt verification supplies runtime authority.
+
+The [normative plan](u1-ledger-remediation-plan-2026-11-17.md) still hashes to `14399b2d0d29f1e3ae52af73bfe7195ddbb057e9608b98414152fbc9091d3429`. Its pre-approval proposed label is historical authoring context and must not be rewritten solely to change that label. The separate [approval receipt](u1-ledger-plan-approval-2026-11-18.md) records the later owner decision. The current stage remains Contracts Code Generation; neither stage completion nor acceptance is implied.
+
+The [implementation review](u1-ledger-implementation-review-2026-11-18.md) resolved its major v1 regression and records 57 independent passing focused tests. All ten recorded file SHA-256 values independently match the current remediation worktree at commit `3fef097f5a7f87885d6453dfd3017ec23751a1b1`. Its tracked tree is clean; the unrelated untracked tools/contracts/aidlc directory remains present. This establishes no drift from the independently reviewed implementation, not a new full test run by this steward.
+
+## Findings and required follow-through
+
+- **Blocking for a green-CI or completed-U1 claim — all three current PRs remain red.** Live check snapshots below show U1 and Vulnerability failures and U2 successes on unchanged heads. Assign the ledger/protected-main dependency and retained scan findings to the coordinator for repair or separately governed decisions. The current approved scope does not authorize main changes, finding exceptions or a merge. A passing diagnostic proof cannot clear these ordinary PR failures.
+- **Blocking for final technical proof — repaired hosted run still requires completion and evidence verification.** Run [44270921213](https://github.com/anton-asnitsky/StockSense/actions/runs/44270921213) passed its earlier full coverage/consumer/canonical steps but failed before the normal image/security scan sequence and skipped simulated SBOM verification. The diagnostic-only environment correction at 4b1ddb6 preserves the pinned production candidate and source guard; the coordinator must follow its replacement run through completion, retain raw evidence and validate both lanes. Do not convert the old partial result into a complete proof. Branch-specific validation and exact final source bindings also remain coordinator-owned.
+- **Blocking for authoritative policy — protected-main ledger is obsolete and expired.** Live main remains `8cce4f8040ad0767fca1b1ab14a00bb067a66b76`; the historical v1 MessagePack row expires at 2026-11-25T00:00:00Z. On this review date it cannot authorize a fresh run, in addition to the previously identified candidate/schema mismatch. Expiry is not permission to extend dates. Main's own verifier/runtime compatibility and measured baseline cannot be inferred from the three PR candidates.
+- **Advisory — final publication changes approval identities.** After each approved working-branch push, recompute the actual head, integration revision and execution/runtime bindings. Existing U2 owner comments apply only to the recorded old base/head. Obtain new exact-head owner comments when needed, then rerun and follow U2. No agent-authored comment may impersonate the owner.
+
+## Live PR check snapshot
+
+Shared base: `402ace3b195c291a756ed230a24a73199ef8349a`. These results were independently fetched on November 26 before rollout; a later push supersedes this snapshot.
+
+| PR | Current head | U1 contracts | Vulnerability scan | U2 protected-base policy |
+| --- | --- | --- | --- | --- |
+| #74 | edeec8b54a4ee2d019349befbb005b944dce901d | [FAILURE](https://github.com/anton-asnitsky/StockSense/actions/runs/44155488252/job/134294978016) | [FAILURE](https://github.com/anton-asnitsky/StockSense/actions/runs/44155488252/job/134294978611) | [SUCCESS](https://github.com/anton-asnitsky/StockSense/actions/runs/44155484901/job/134306278951) |
+| #75 | bd0241d3313a998039cce4a37059d188e502fda2 | [FAILURE](https://github.com/anton-asnitsky/StockSense/actions/runs/44155493632/job/134294996369) | [FAILURE](https://github.com/anton-asnitsky/StockSense/actions/runs/44155493632/job/134294996908) | [SUCCESS](https://github.com/anton-asnitsky/StockSense/actions/runs/44155490435/job/134306284968) |
+| #76 | 0f5db4d25cc9364f825eb752dad05c037c7b9944 | [FAILURE](https://github.com/anton-asnitsky/StockSense/actions/runs/44155502137/job/134298533448) | [FAILURE](https://github.com/anton-asnitsky/StockSense/actions/runs/44155502137/job/134298533800) | [SUCCESS](https://github.com/anton-asnitsky/StockSense/actions/runs/44155501472/job/134306294528) |
+
+The historical failure evidence assigns U1 to protected-ledger verification and the dependency check to picomatch. Fresh scans may change identities, fix states or applicable actions; do not claim the old scan is current merely because its check remains attached to an unchanged head.
+
+## Traceability and follow-up proposal
+
+The source manifest contains 197 unique entries, up from 195 by the two approved new files tools/contracts/src/sbom-context.mjs and tools/contracts/test/integration/sbom-context.test.mjs. The traceability ledger retains 95 unique upstream IDs; NFR13.2, NFR13.5 and NFR15.2 remain GAP. Preserve R-15/R-16 and the other existing gaps. Record final implementation, branch validation, raw scans, two-lane proof and ordinary-check outcomes against US8.2/US8.7 and their relevant acceptance criteria; count and structure checks do not prove requirement completion.
+
+The [protected-main follow-up proposal](u1-protected-main-followup-proposal-2026-11-18.md) is sufficiently concrete as the assessment requested by the current plan: it names the shared verifier/SBOM/runtime-evidence paths, the distinct main-runtime assessment, exact-baseline ledger reconciliation, tests and separate decisions. It correctly rejects a ledger-only publication, forbids silently importing the Bolt, and acknowledges main's own candidate group and green-CI feasibility. It is not yet a protected implementation plan or executable ledger: the exact main candidate/diff, fresh findings, measured fingerprints and real disposition decisions must exist before that later gate/publication. This incompleteness is explicit and does not reopen the approved working-branch plan.
+
+No new risk acceptance, protected-main publication, PR merge, U1 acceptance or C01 release was found or granted by this review. No sensors or lifecycle mutation commands were run; this bounded resume audit used file/hash/traceability checks and live read-only GitHub status queries. Final stage sensors and acceptance review remain separate.
