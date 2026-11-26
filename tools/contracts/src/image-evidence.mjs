@@ -92,8 +92,14 @@ export function normalizeImageScan(raw, db, name, imageId, sbomDigest) {
     findings: raw.matches.map(match => ({ id: match.vulnerability?.id,
       severity: match.vulnerability?.severity, package: match.artifact?.name,
       version: match.artifact?.version, type: match.artifact?.type,
-      purl: match.artifact?.purl ?? null, fixState: match.vulnerability?.fix?.state,
-      fixVersions: match.vulnerability?.fix?.versions ?? [] })) };
+      purl: match.artifact?.purl ?? null,
+      // Grype reports some unresolved CPE matches with an explicit empty state.
+      // Preserve them as unknown; missing/malformed fix metadata still fails
+      // inspection, and unknown remains ineligible for disposition.
+      fixState: match.vulnerability?.fix?.state === '' &&
+        Array.isArray(match.vulnerability.fix.versions) && match.vulnerability.fix.versions.length === 0
+        ? 'unknown' : match.vulnerability?.fix?.state,
+      fixVersions: match.vulnerability?.fix?.versions })) };
 }
 const exactText = (value, limit = 512) => typeof value === 'string' && value.length > 0 &&
   value.length <= limit && value === value.trim() && !/[\x00-\x1f\x7f*]/.test(value);
@@ -107,6 +113,13 @@ function purlMatches(record) {
   const match = PURL.exec(record.purl);
   if (!match) return false;
   const [, type, path, qualifiers, subpath] = match;
+  // Only the observed Node binary identity is supported, with one canonical
+  // spelling. Do not admit arbitrary generic packages, namespaces or aliases.
+  if (record.type === 'binary') {
+    return type === 'generic' && record.package === 'node' &&
+      /^\d+\.\d+\.\d+$/.test(record.version) &&
+      record.purl === `pkg:generic/node@${record.version}`;
+  }
   if ({ apk: 'apk', deb: 'deb', npm: 'npm', dotnet: 'nuget' }[record.type] !== type) return false;
   const versionAt = path.lastIndexOf('@');
   if (versionAt < 1 || versionAt === path.length - 1) return false;
@@ -288,6 +301,13 @@ export async function readImageEvidence(directory, imageIds, { requireClean = tr
     const inventory = new Set(packages.map(component => JSON.stringify([component.purl, component.version])));
     if (findings.some(finding => !inventory.has(JSON.stringify([finding.purl, finding.version])))) {
       fail('IMAGE_SBOM', `${name} finding is absent from its bound image inventory`);
+    }
+    for (const finding of findings.filter(finding => finding.type === 'binary')) {
+      const matches = packages.filter(component => component.purl === finding.purl);
+      if (matches.length !== 1 || matches[0].name !== finding.package ||
+          matches[0].version !== finding.version) {
+        fail('IMAGE_SBOM', `${name} binary finding has no unique exact inventory identity`);
+      }
     }
     records.push({ name, imageId, sbomDigest, scanDigest: digest(scanBytes), packages: packages.length,
       findings: findings.length });
