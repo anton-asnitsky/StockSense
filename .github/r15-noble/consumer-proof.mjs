@@ -13,9 +13,9 @@ const { createBoundedGeneratorRunner } = await imported(source, 'bounded-generat
 const { generatorConfigurationDigest } = await imported(source, 'generators.mjs');
 const { normalizeGeneratedConsumer, digestDirectory } = await imported(source, 'generation.mjs');
 const heads = [
-  [74, 'e9f326cebc1ae7212d9a0597490029ffdde45b96'],
-  [75, 'c5157d34845b33c863f6e2d1c3e8f81a25fb6b21'],
-  [76, 'e284f99d5629dfcbfcb2935b0005c48c40c3d2e9']
+  [74, 'edeec8b54a4ee2d019349befbb005b944dce901d'],
+  [75, 'bd0241d3313a998039cce4a37059d188e502fda2'],
+  [76, '0f5db4d25cc9364f825eb752dad05c037c7b9944']
 ];
 const results = [];
 for (const [pr, head] of heads) {

@@ -1,7 +1,7 @@
-name: U1 isolated ledger and SBOM proof
+name: U1 isolated validator repair proof
 on:
   push:
-    branches: [codex/u1-ledger-proof]
+    branches: [codex/u1-validator-proof]
     paths: ['.github/workflows/r15-noble-screen.yml', '.github/r15-noble/**', '.github/u1-ledger/**']
 permissions:
   contents: read
@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     env:
-      CANDIDATE: 3fef097f5a7f87885d6453dfd3017ec23751a1b1
+      CANDIDATE: 59c34bae1e031c0db032f99f2ea1d12f67715e76
       SDK: mcr.microsoft.com/dotnet/sdk@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa
       SYFT: ghcr.io/anchore/syft@sha256:3eb5379ba7b409c3f4069b686110527af0c47df993fa5c10d13e7cf34f49b1aa
       GRYPE: ghcr.io/anchore/grype@sha256:e4a44ef45d285b829ce6efe2642980329661bd2d18eab5fc539138d4adaebbbe
@@ -26,12 +26,12 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           path: candidate
-          ref: 3fef097f5a7f87885d6453dfd3017ec23751a1b1
+          ref: 59c34bae1e031c0db032f99f2ea1d12f67715e76
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
-          node-version: 24.22.2
+          node-version: 24.22.3
       - name: Build production recipe through normal entrypoint
         run: |
           set -euo pipefail
@@ -146,7 +146,7 @@ jobs:
           version: 11.25.0
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
-          node-version: 24.22.2
+          node-version: 24.22.3
       - name: Verify all three consumer baselines and compile actual outputs
         run: node audit/.github/r15-noble/consumer-proof.mjs
       - name: Verify production lint types and full coverage

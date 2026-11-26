@@ -12,7 +12,7 @@ const directory = join(proof, 'SIMULATION-ONLY/evidence');
 await mkdir(directory, { recursive: true });
 await cp(join(proof, 'images'), directory, { recursive: true });
 const ledgerModule = await import(pathToFileURL(join(packageRoot, 'src/image-ledger.mjs')));
-const { IMAGE_NAMES, readImageEvidence, sha256, verifyRawImageScan } =
+const { IMAGE_NAMES, readImageEvidence, sha256, verifyRawImageScan, validateImageExceptions } =
   await import(pathToFileURL(join(packageRoot, 'src/image-evidence.mjs')));
 const git = (args, binary = false) => {
   const result = spawnSync('git', args, { cwd: root, shell: false,
@@ -55,6 +55,33 @@ const ledger = { schema: 'stocksense-image-exceptions-v2', mainSha: '1'.repeat(4
     findings.map(finding => ({ executionFingerprint: fingerprint, runtimeManifestDigest, finding }))) };
 const args = { directory, imageIds, ledger, expectedRevision: revision, actualRevision: revision,
   candidateTreeDigest, executionFingerprint, runtimeManifestDigest, now };
+// Unknown fix metadata is reportable but never disposition-eligible. Exercise
+// that rejection against the real scans without inventing acceptable findings.
+assert.equal(findings.filter(row => ['High', 'Critical'].includes(row.severity)
+  && row.fixState === 'fixed').length, 0, 'Fixed High/Critical findings still block this repair proof');
+const unknown = findings.filter(row => row.fixState === 'unknown');
+if (unknown.length) {
+  for (const finding of unknown) {
+    // In-memory schema control only, never written or used to verify evidence:
+    // establish that the unknown state alone prevents this test row's admission.
+    assert.doesNotThrow(() => validateImageExceptions([{ ...finding, fixState: 'not-fixed' }], { now }));
+    assert.throws(() => validateImageExceptions([finding], { now }),
+      error => error.code === 'IMAGE_EXCEPTION' && error.message === 'Image exception is malformed or broad');
+  }
+  await assert.rejects(ledgerModule.verifyBoundImageEvidence(args),
+    error => error.code === 'IMAGE_EXCEPTION' && error.message === 'Image exception is malformed or broad');
+  await writeFile(join(proof, 'SIMULATION-ONLY/result.json'), JSON.stringify({
+    simulationOnly: true, protectedReceipt: false, ordinaryU1Passed: false,
+    ownerApproval: false, candidateRevision: revision, candidateGitTreeSha: tree,
+    candidateTreeDigest, executionFingerprint, runtimeManifestDigest, imageIds,
+    findingCount: findings.length, unknownFindings: unknown.map(({ id, image, package: name, version, purl }) =>
+      ({ id, image, package: name, version, purl })),
+    unknownDispositionRejected: true, positiveLedgerSbomProofCompleted: false,
+    reason: 'Real unresolved findings correctly block positive ledger and SBOM approval'
+  }, null, 2) + '\n');
+  console.log('SIMULATION ONLY: complete real scans retained; unknown dispositions rejected; ordinary U1 remains blocked.');
+  process.exit(0);
+}
 const receipt = await ledgerModule.verifyBoundImageEvidence(args);
 assert.equal(receipt.images.reduce((sum, row) => sum + row.disposed, 0), findings.length);
 await assert.rejects(ledgerModule.verifyBoundImageEvidence({ ...args,
