@@ -1,0 +1,152 @@
+name: U1 integrated candidate technical proof (diagnostic only)
+on:
+  push:
+    branches: [codex/u1-integrated-hosted-proof]
+    paths: ['.github/workflows/u1-integrated-hosted-proof.yml', '.github/u1-integrated-proof/**']
+permissions:
+  contents: read
+jobs:
+  technical-proof:
+    name: Diagnostic technical proof lane ${{ matrix.lane }}
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [1, 2]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      PROOF_LANE: ${{ matrix.lane }}
+      CANDIDATE: 4805da7edb746b955ab4efd04012fb01b4a959dd
+      SDK: mcr.microsoft.com/dotnet/sdk@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa
+    steps:
+      - name: Check out diagnostic harness
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          path: audit
+          persist-credentials: false
+      - name: Independently check out immutable production candidate
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          path: candidate
+          ref: 4805da7edb746b955ab4efd04012fb01b4a959dd
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          version: 11.25.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24.22.3
+      - name: Bind diagnostic and production identities and install pinned tools
+        run: |
+          set -euo pipefail
+          test "$(git -C candidate rev-parse HEAD)" = "$CANDIDATE"
+          test "$(git -C candidate rev-parse --is-shallow-repository)" = false
+          mkdir -p "$RUNNER_TEMP/u1-integrated"/{proof,images}
+          proof="$RUNNER_TEMP/u1-integrated/proof"
+          git -C audit rev-parse HEAD > "$proof/harness-revision.txt"
+          git -C candidate rev-parse HEAD > "$proof/candidate-revision.txt"
+          git -C candidate rev-parse 'HEAD^{tree}' > "$proof/candidate-tree.txt"
+          printf '%s\n' 'Diagnostic technical evidence only. No accepted finding, owner authorization, positive production combined SBOM, or ordinary PR check is asserted.' > "$proof/LIMITATIONS.txt"
+          test "$(node --version)" = v24.22.3
+          test "$(pnpm --version)" = 11.25.0
+          pnpm --dir candidate/tools/contracts install --frozen-lockfile 2>&1 | tee "$proof/host-install.txt"
+          (cd candidate && dotnet --info && dotnet tool restore && dotnet tool run kiota -- --version) > "$proof/host-dotnet.txt"
+          grep -E '^1\.38\.0(\+|$)' "$proof/host-dotnet.txt"
+          pnpm --dir candidate/tools/contracts setup:oasdiff
+          docker pull --platform linux/amd64 "$SDK"
+      - name: Build both actual production images through their normal entrypoints
+        working-directory: candidate/tools/contracts
+        run: |
+          set -euo pipefail
+          proof="$RUNNER_TEMP/u1-integrated/proof"
+          export STOCKSENSE_STANDARDS_RUNTIME_EVIDENCE="$proof/validator-runtime.json"
+          node scripts/build-standards-image.mjs > "$proof/validator-image.txt" 2> "$proof/validator-build.txt"
+          validator=$(cat "$proof/validator-image.txt")
+          [[ "$validator" =~ ^sha256:[a-f0-9]{64}$ ]]
+          node scripts/build-kiota-image.mjs > "$proof/kiota-image.txt" 2> "$proof/kiota-build.txt"
+          kiota=$(cat "$proof/kiota-image.txt")
+          [[ "$kiota" =~ ^sha256:[a-f0-9]{64}$ ]]
+          echo "STOCKSENSE_STANDARDS_IMAGE=$validator" >> "$GITHUB_ENV"
+          echo "STOCKSENSE_KIOTA_IMAGE=$kiota" >> "$GITHUB_ENV"
+      - name: Retain actual image bytes and verify runtime compatibility
+        run: node audit/.github/u1-integrated-proof/runtime-proof.mjs
+      - name: Scan both actual images with unchanged production scanners
+        working-directory: candidate
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE"
+          # Only this child process binds the checked-out production revision.
+          # The run's real GitHub identity remains the diagnostic harness SHA.
+          GITHUB_SHA="$CANDIDATE" node tools/contracts/scripts/image-evidence.mjs build "$RUNNER_TEMP/u1-integrated/proof/images" 2>&1 | tee "$RUNNER_TEMP/u1-integrated/proof/image-scan.txt"
+          node "$GITHUB_WORKSPACE/audit/.github/u1-integrated-proof/verify-evidence.mjs"
+      - name: Run production lint types unit integration and enforced coverage
+        working-directory: candidate/tools/contracts
+        run: |
+          set -euo pipefail
+          proof="$RUNNER_TEMP/u1-integrated/proof"
+          pnpm lint 2>&1 | tee "$proof/lint.txt"
+          pnpm type-check 2>&1 | tee "$proof/types.txt"
+          pnpm test:unit 2>&1 | tee "$proof/unit.txt"
+          pnpm test:integration 2>&1 | tee "$proof/integration.txt"
+          pnpm test:coverage 2>&1 | tee "$proof/coverage.txt"
+      - name: Reproduce two clean 107-output generations and compile actual C# consumers
+        run: node audit/.github/u1-integrated-proof/consumer-proof.mjs
+      - name: Record full C01 through C27 CLI and bound bundle
+        working-directory: candidate/tools/contracts
+        run: |
+          set -euo pipefail
+          export PKG=$(mktemp -d)
+          export ROOT="$GITHUB_WORKSPACE/candidate"
+          node --input-type=module -e "import {buildFullPackage} from './src/full-package.mjs'; const r=await buildFullPackage(process.env.ROOT,process.env.PKG); if(!r.manifest||r.problems.length) throw Error(JSON.stringify(r.problems));"
+          node --input-type=module <<'JS'
+          import {spawnSync} from 'node:child_process'; import fs from 'node:fs'; import assert from 'node:assert/strict';
+          const start=performance.now();
+          const run=spawnSync(process.execPath,['src/cli.mjs','validate',process.env.PKG,'--repo-root','../..'],
+            {encoding:'utf8',timeout:180000,maxBuffer:4*1024*1024});
+          const p=process.env.RUNNER_TEMP+'/u1-integrated/proof/';
+          fs.writeFileSync(p+'canonical-cli.json',run.stdout??''); fs.writeFileSync(p+'canonical-cli.stderr.txt',run.stderr??'');
+          fs.writeFileSync(p+'canonical-cli-execution.json',JSON.stringify({elapsedMs:performance.now()-start,
+            timeoutMs:180000,status:run.status,signal:run.signal,error:run.error?.code??null},null,2));
+          assert.ifError(run.error); assert.equal(run.signal,null); assert.equal(run.status,0,run.stderr);
+          JS
+          node --input-type=module <<'JS'
+          import fs from 'node:fs/promises'; import assert from 'node:assert/strict';
+          import {ALL_BOUNDARIES,canonicalJson,digest} from './src/package-loader.mjs';
+          import {buildPackageBundle,verifyPackageBundle} from './src/package-bundle.mjs';
+          import {validateBundledCandidate} from './src/candidate-provenance.mjs';
+          const p=process.env.RUNNER_TEMP+'/u1-integrated/proof/';
+          const result=JSON.parse(await fs.readFile(p+'canonical-cli.json'));
+          assert.deepEqual(result.coveredBoundaries,ALL_BOUNDARIES);
+          assert.deepEqual(result.uncoveredBoundaries,[]); assert.equal(result.releaseReady,false);
+          assert.equal(result.validatedCanonical.length,40); assert.equal(result.fixtureResults.length,355);
+          const bundle=verifyPackageBundle(await buildPackageBundle(process.env.PKG));
+          const receipt=await validateBundledCandidate(bundle,process.env.ROOT,process.env.STOCKSENSE_STANDARDS_IMAGE);
+          assert.equal(receipt.resultDigest,digest(Buffer.from(canonicalJson(result))));
+          await fs.writeFile(p+'bundle-receipt.json',JSON.stringify({diagnosticOnly:true,source:process.env.CANDIDATE,bundleDigest:bundle.artifactDigest,receipt},null,2));
+          JS
+      - name: Run and verify genuine production secret and dependency reports
+        working-directory: candidate
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/u1-integrated/proof/security"
+          node tools/contracts/scripts/security-reports.mjs secret-scan "$output"
+          node tools/contracts/scripts/security-reports.mjs vulnerability-scan "$output"
+          node tools/contracts/scripts/security-reports.mjs verify "$output"
+      - name: Bind retained artifacts to immutable candidate
+        if: always()
+        run: node audit/.github/u1-integrated-proof/artifact-manifest.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: u1-integrated-proof-${{ matrix.lane }}
+          path: ${{ runner.temp }}/u1-integrated/proof/
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: u1-integrated-images-${{ matrix.lane }}
+          path: ${{ runner.temp }}/u1-integrated/images/
+          if-no-files-found: error
+          retention-days: 7
