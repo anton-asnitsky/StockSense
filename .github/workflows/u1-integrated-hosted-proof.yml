@@ -1,7 +1,7 @@
 name: U1 policy candidate technical proof (diagnostic only)
 on:
   push:
-    branches: [codex/u1-policy-hosted-proof]
+    branches: [codex/u1-policy-pr75-proof]
     paths: ['.github/workflows/u1-integrated-hosted-proof.yml', '.github/u1-integrated-proof/**']
 permissions:
   contents: read
@@ -18,7 +18,7 @@ jobs:
       PROOF_LANE: ${{ matrix.lane }}
       # Frozen production candidate; diagnostic harness is a separate checkout.
       CANDIDATE_READY: 'true'
-      CANDIDATE: c1375dcaa03bec40f7915a2117ad0614856579b3
+      CANDIDATE: 8861ef6de43e96a876f4756064e571c3ffc251c2
       SDK: mcr.microsoft.com/dotnet/sdk@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa
     steps:
       - name: Check out diagnostic harness
@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           path: candidate
-          ref: c1375dcaa03bec40f7915a2117ad0614856579b3
+          ref: 8861ef6de43e96a876f4756064e571c3ffc251c2
           fetch-depth: 0
           persist-credentials: false
       - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
@@ -126,7 +126,7 @@ jobs:
           const result=JSON.parse(await fs.readFile(p+'canonical-cli.json'));
           assert.deepEqual(result.coveredBoundaries,ALL_BOUNDARIES);
           assert.deepEqual(result.uncoveredBoundaries,[]); assert.equal(result.releaseReady,false);
-          assert.equal(result.validatedCanonical.length,40); assert.equal(result.fixtureResults.length,355);
+          assert.equal(result.validatedCanonical.length,40); assert.equal(result.fixtureResults.length,315);
           const bundle=verifyPackageBundle(await buildPackageBundle(process.env.PKG));
           const receipt=await validateBundledCandidate(bundle,process.env.ROOT,process.env.STOCKSENSE_STANDARDS_IMAGE);
           assert.equal(receipt.resultDigest,digest(Buffer.from(canonicalJson(result))));
