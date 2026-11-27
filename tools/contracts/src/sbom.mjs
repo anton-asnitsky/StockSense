@@ -2,11 +2,14 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isDeepStrictEqual } from 'node:util';
 import YAML from 'yaml';
 import { ContractError, canonicalJson } from './package-loader.mjs';
-import { IMAGE_NAMES, readImageEvidence, SCANNERS } from './image-evidence.mjs';
+import { IMAGE_NAMES, readImageEvidence, SCANNERS, verifyRawImageScan } from './image-evidence.mjs';
 import { sourceTreeDigest } from './source-digest.mjs';
-import { readKiotaRuntimeEvidence } from './image-ledger.mjs';
+import { readKiotaRuntimeEvidence, verifyBoundImageEvidence } from './image-ledger.mjs';
+import { verifyRetainedPrLedgerAuthority } from './pr-ledger-authority.mjs';
+import { readPrLedgerReceipt } from './pr-ledger-context.mjs';
 
 // A CycloneDX 1.6 SBOM built from the pnpm lockfile and pinned tool recipes.
 //
@@ -30,29 +33,35 @@ const exactFields = (value, fields) => value && typeof value === 'object' &&
   !Array.isArray(value) && Object.keys(value).length === fields.length &&
   fields.every(field => Object.hasOwn(value, field));
 
-/** The receipt is produced by the protected-main verifier in this same CI job. */
-async function verifyImageLedgerReceipt(directory, candidateRevision, records, sourceContext) {
+/** PR receipts require independently fetched live authority in this exact CI execution. */
+async function verifyImageLedgerReceipt(directory, candidateRevision, records, sourceContext, prAuthorityInput) {
   if (!COMMIT.test(candidateRevision ?? '')) {
     fail('IMAGE_LEDGER', 'BR6.5', 'Candidate revision is required for image evidence');
   }
   let receipt;
   try {
-    receipt = JSON.parse(await readFile(join(directory, 'ledger-verification.json'), 'utf8'));
+    receipt = prAuthorityInput
+      ? await readPrLedgerReceipt(join(directory, 'ledger-verification.json'))
+      : JSON.parse(await readFile(join(directory, 'ledger-verification.json'), 'utf8'));
   } catch {
     fail('IMAGE_LEDGER', 'BR6.5', 'Successful image ledger verification is missing or malformed');
   }
-  const v2 = receipt?.schema === 'stocksense-image-ledger-verification-v2';
+  const pr = receipt?.schema === 'stocksense-image-ledger-verification-pr-v1';
+  const v2 = pr || receipt?.schema === 'stocksense-image-ledger-verification-v2';
+  if (Boolean(prAuthorityInput) !== pr) {
+    fail('IMAGE_LEDGER', 'BR6.5', 'Image ledger authority differs from the explicitly selected context');
+  }
   if (!exactFields(receipt, ['schema', 'candidateRevision', 'candidateGitTreeSha',
-    'candidateTreeDigest', 'sourceDigest', 'mainSha', 'ledgerBlobSha', 'images',
+    'candidateTreeDigest', 'sourceDigest', ...(pr ? ['authority'] : ['mainSha']), 'ledgerBlobSha', 'images',
     ...(v2 ? ['executionFingerprint', 'runtimeManifestDigest', 'ledgerSchema'] : [])]) ||
     !['stocksense-image-ledger-verification-v1',
-      'stocksense-image-ledger-verification-v2'].includes(receipt.schema) ||
+      'stocksense-image-ledger-verification-v2', 'stocksense-image-ledger-verification-pr-v1'].includes(receipt.schema) ||
     v2 && (receipt.ledgerSchema !== 'stocksense-image-exceptions-v2' ||
       !DIGEST.test(receipt.executionFingerprint) ||
       !DIGEST.test(receipt.runtimeManifestDigest)) ||
     receipt.candidateRevision !== candidateRevision ||
     !COMMIT.test(receipt.candidateGitTreeSha) || !DIGEST.test(receipt.candidateTreeDigest) ||
-    !DIGEST.test(receipt.sourceDigest) || !COMMIT.test(receipt.mainSha) ||
+    !DIGEST.test(receipt.sourceDigest) || !pr && !COMMIT.test(receipt.mainSha) ||
     !COMMIT.test(receipt.ledgerBlobSha) ||
     receipt.sourceDigest !== await sourceTreeDigest() ||
     !Array.isArray(receipt.images) || receipt.images.length !== IMAGE_NAMES.length) {
@@ -88,6 +97,38 @@ async function verifyImageLedgerReceipt(directory, candidateRevision, records, s
     if (receipt.runtimeManifestDigest !== runtimeDigest) {
       fail('IMAGE_LEDGER', 'BR6.5', 'Image ledger receipt differs from independent runtime evidence');
     }
+    if (pr) {
+      if (prAuthorityInput.sourceRevision !== sourceContext.candidateRevision ||
+          prAuthorityInput.candidateGitTreeSha !== sourceContext.candidateGitTreeSha ||
+          prAuthorityInput.candidateTreeDigest !== sourceContext.candidateTreeDigest ||
+          prAuthorityInput.executionFingerprint !== sourceContext.executionFingerprint ||
+          prAuthorityInput.runtimeManifestDigest !== runtimeDigest) {
+        fail('IMAGE_LEDGER', 'BR6.5', 'PR authority expectations differ from independent source/runtime evidence');
+      }
+      const live = await verifyRetainedPrLedgerAuthority(prAuthorityInput, receipt.authority);
+      const imageIds = Object.fromEntries(records.map(record => [record.name, record.imageId]));
+      for (const record of records) {
+        await verifyRawImageScan(directory, { name: record.name, imageId: record.imageId,
+          sbomDigest: record.sbomDigest, revision: candidateRevision });
+      }
+      const expected = await verifyBoundImageEvidence({ directory, imageIds, ledger: live.ledger,
+        authority: live.authority, expectedRevision: candidateRevision, actualRevision: candidateRevision,
+        candidateTreeDigest: sourceContext.candidateTreeDigest,
+        executionFingerprint: sourceContext.executionFingerprint, runtimeManifestDigest: runtimeDigest,
+        now: prAuthorityInput.now?.() ?? new Date() });
+      if (!('authority' in expected)) {
+        fail('IMAGE_LEDGER', 'BR6.5', 'Independent PR verification returned a different authority mode');
+      }
+      const bindings = value => Object.fromEntries(Object.entries(value).filter(([key]) => key !== 'authority'));
+      const expectedBindings = bindings(expected);
+      const retainedBindings = bindings(receipt);
+      if (!isDeepStrictEqual(expectedBindings, retainedBindings)) {
+        fail('IMAGE_LEDGER', 'BR6.5', 'PR receipt differs from independently reverified ledger and scans');
+      }
+      // A new valid comment/attempt cannot revive this receipt: live retains the
+      // original strong identities and refuses changes, including revocation.
+      await live.revalidate();
+    }
   }
   return receipt;
 }
@@ -115,7 +156,7 @@ const purl = (name, version) =>
 
 /**
  * @param {string} lockfilePath
- * @param {{ name: string, version: string, generator: string, validatorImageDigest?: string, kiotaImageDigest?: string, imageEvidenceDirectory?: string, candidateRevision?: string, sourceContext?: { candidateRevision: string, candidateGitTreeSha: string, candidateTreeDigest: string, executionFingerprint: string } }} subject
+ * @param {{ name: string, version: string, generator: string, validatorImageDigest?: string, kiotaImageDigest?: string, imageEvidenceDirectory?: string, candidateRevision?: string, sourceContext?: { candidateRevision: string, candidateGitTreeSha: string, candidateTreeDigest: string, executionFingerprint: string }, prAuthorityInput?: object }} subject
  * @returns {Promise<{ document: object, bytes: Buffer, digest: string, components: number }>}
  */
 export async function buildSbom(lockfilePath, subject) {
@@ -222,13 +263,13 @@ export async function buildSbom(lockfilePath, subject) {
       add('container', name, 'local-build', value.slice(7), 'verified CI build');
     }
   }
-  if (subject.validatorImageDigest || subject.kiotaImageDigest || subject.imageEvidenceDirectory) {
+  if (subject.validatorImageDigest || subject.kiotaImageDigest || subject.imageEvidenceDirectory || subject.prAuthorityInput) {
     if (!subject.imageEvidenceDirectory) fail('IMAGE_MISSING', 'Built image inventory and scan directory is required');
     const images = await readImageEvidence(subject.imageEvidenceDirectory, {
       validator: subject.validatorImageDigest, kiota: subject.kiotaImageDigest
     }, { requireClean: false });
     imageLedgerReceipt = await verifyImageLedgerReceipt(
-      subject.imageEvidenceDirectory, subject.candidateRevision, images.records, subject.sourceContext);
+      subject.imageEvidenceDirectory, subject.candidateRevision, images.records, subject.sourceContext, subject.prAuthorityInput);
     imageRecords = images.records;
     components.push(...images.components);
     add('container', 'syft-image-scanner', 'v1.54.1', SCANNERS.syft.split('@sha256:')[1], 'image-evidence.mjs');
@@ -265,11 +306,18 @@ export async function buildSbom(lockfilePath, subject) {
         { name: 'stocksense:pnpmComponentsWithoutHash', value: String(withoutHash) },
         { name: 'stocksense:componentsWithoutHash', value: String(components.filter(item => !item.hashes?.length).length) },
         ...(imageLedgerReceipt ? [
-          { name: 'stocksense:imageLedgerMainSha', value: imageLedgerReceipt.mainSha },
+          ...(imageLedgerReceipt.schema === 'stocksense-image-ledger-verification-pr-v1'
+            ? [{ name: 'stocksense:imageLedgerAuthority', value: imageLedgerReceipt.authority.type },
+              { name: 'stocksense:imageLedgerOwnerComment', value: String(imageLedgerReceipt.authority.authorization.commentId) },
+              { name: 'stocksense:imageLedgerCommit', value: imageLedgerReceipt.authority.ledger.commit },
+              { name: 'stocksense:imageLedgerSha256', value: imageLedgerReceipt.authority.ledger.sha256 },
+              { name: 'stocksense:imageLedgerRun', value: String(imageLedgerReceipt.authority.currentRunId) },
+              { name: 'stocksense:imageLedgerRunAttempt', value: String(imageLedgerReceipt.authority.currentRunAttempt) }]
+            : [{ name: 'stocksense:imageLedgerMainSha', value: imageLedgerReceipt.mainSha }]),
           { name: 'stocksense:imageLedgerBlobSha', value: imageLedgerReceipt.ledgerBlobSha },
           { name: 'stocksense:imageLedgerCandidateRevision', value: imageLedgerReceipt.candidateRevision },
           { name: 'stocksense:imageLedgerCandidateTreeDigest', value: imageLedgerReceipt.candidateTreeDigest },
-          ...(imageLedgerReceipt.schema === 'stocksense-image-ledger-verification-v2' ? [
+          ...(['stocksense-image-ledger-verification-v2', 'stocksense-image-ledger-verification-pr-v1'].includes(imageLedgerReceipt.schema) ? [
             { name: 'stocksense:imageLedgerExecutionFingerprint', value: imageLedgerReceipt.executionFingerprint },
             { name: 'stocksense:imageLedgerRuntimeManifestDigest', value: imageLedgerReceipt.runtimeManifestDigest }
           ] : [])

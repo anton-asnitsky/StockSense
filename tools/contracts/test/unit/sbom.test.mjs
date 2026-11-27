@@ -71,6 +71,7 @@ test('release evidence verifies and retains the main ledger before building the 
   const workflow = YAML.parse(await readFile(fileURLToPath(
     new URL('../../../../.github/workflows/release-evidence.yml', import.meta.url)), 'utf8'));
   const steps = workflow.jobs.evidence.steps;
+  assert.equal(workflow.jobs.evidence.env.STOCKSENSE_LEDGER_AUTHORITY, 'protected-main');
   const verify = steps.findIndex(step => step.run === 'node tools/contracts/scripts/image-evidence.mjs verify');
   const retain = steps.findIndex(step => step.with?.path ===
     'tools/contracts/dist/image-evidence/ledger-verification.json');
@@ -80,6 +81,24 @@ test('release evidence verifies and retains the main ledger before building the 
   assert.ok(retain > verify && sbom > retain);
   assert.equal(steps[retain].with['if-no-files-found'], 'error');
   assert.equal(steps[sbom].env.STOCKSENSE_CANDIDATE_REVISION, '${{ github.sha }}');
+});
+
+test('ordinary PR SBOM checks revalidate authority with only read permissions', async () => {
+  const workflow = YAML.parse(await readFile(fileURLToPath(
+    new URL('../../../../.github/workflows/contracts-required.yml', import.meta.url)), 'utf8'));
+  const job = workflow.jobs.contracts;
+  assert.ok(Object.values(job.permissions).every(value => value === 'read'));
+  for (const scope of ['contents', 'actions', 'checks', 'pull-requests']) assert.equal(job.permissions[scope], 'read');
+  assert.match(job.env.STOCKSENSE_LEDGER_AUTHORITY, /github\.event_name == 'pull_request'/);
+  for (const number of [74, 75, 76]) assert.ok(job.env.STOCKSENSE_LEDGER_AUTHORITY.includes(`github.event.number == ${number}`));
+  assert.match(job.env.STOCKSENSE_LEDGER_AUTHORITY, /\|\| 'protected-main'/);
+  const verify = job.steps.findIndex(step => step.run === 'node tools/contracts/scripts/image-evidence.mjs verify');
+  const build = job.steps.findIndex(step => step.run === 'pnpm --silent --dir tools/contracts build:sbom');
+  assert.ok(verify >= 0 && build > verify);
+  assert.equal(job.steps[build].env.GITHUB_TOKEN, '${{ github.token }}');
+  assert.equal(job.steps[build].env.STOCKSENSE_CANDIDATE_REVISION, '${{ github.sha }}');
+  const retained = job.steps.findIndex(step => step.with?.path === 'tools/contracts/sbom.cdx.json');
+  assert.ok(retained > build);
 });
 
 async function imageFixture(directory, name, imageId, findings = []) {

@@ -6,6 +6,9 @@ import { IMAGE_NAMES, readImageEvidence, sha256,
   validateImageExceptions, verifyImageDispositions } from './image-evidence.mjs';
 import { normalizeKiotaRuntimeManifest } from './kiota-runtime-manifest.mjs';
 import { sourceTreeDigest } from './source-digest.mjs';
+import { assertPrLedgerAuthorityBinding } from './pr-ledger-authority.mjs';
+
+export const PR_RECEIPT_SCHEMA = 'stocksense-image-ledger-verification-pr-v1';
 
 const SHA = /^[0-9a-f]{40}$/;
 const REVISION = /^[0-9a-f]{40}$/;
@@ -167,15 +170,26 @@ export async function fetchImageLedger({ repository, token, candidateRevision,
 /** Bind the current checkout, exact built IDs and retained scan bytes to main's rows. */
 export async function verifyBoundImageEvidence({ directory, imageIds, ledger,
   expectedRevision, actualRevision, candidateTreeDigest, executionFingerprint,
-  runtimeManifestDigest, now = new Date() }) {
+  runtimeManifestDigest,
+  authority = /** @type {Awaited<ReturnType<typeof import('./pr-ledger-authority.mjs').fetchPrLedgerAuthority>>['authority'] | null} */ (null),
+  now = new Date() }) {
   requireValue(REVISION.test(expectedRevision ?? '') && actualRevision === expectedRevision,
     'candidate source revision differs from the hosted checkout');
-  requireValue(SHA.test(ledger?.mainSha ?? '') && SHA.test(ledger?.blobSha ?? '') &&
+  const pr = authority !== null;
+  requireValue((pr || SHA.test(ledger?.mainSha ?? '')) && SHA.test(ledger?.blobSha ?? '') &&
     SHA.test(ledger?.candidateGitTreeSha ?? '') && Array.isArray(ledger.exceptions) &&
     DIGEST.test(candidateTreeDigest ?? ''), 'trusted ledger or candidate tree provenance is missing');
   const version = ledger.schema ?? 'stocksense-image-exceptions-v1';
   requireValue(['stocksense-image-exceptions-v1', 'stocksense-image-exceptions-v2'].includes(version),
     'ledger schema is invalid');
+  if (pr) {
+    requireValue(version === 'stocksense-image-exceptions-v2' &&
+      Object.keys(ledger).length === 4 && ['schema', 'exceptions', 'blobSha', 'candidateGitTreeSha']
+        .every(key => Object.hasOwn(ledger, key)), 'PR ledger requires the closed v2 authority shape');
+    assertPrLedgerAuthorityBinding(authority, { sourceRevision: expectedRevision,
+      candidateGitTreeSha: ledger.candidateGitTreeSha, candidateTreeDigest, executionFingerprint,
+      runtimeManifestDigest, ledgerBlobSha: ledger.blobSha, now });
+  }
   if (version === 'stocksense-image-exceptions-v2') {
     requireValue(DIGEST.test(executionFingerprint ?? '') && DIGEST.test(runtimeManifestDigest ?? ''),
       'execution fingerprint or final runtime manifest is missing');
@@ -233,7 +247,9 @@ export async function verifyBoundImageEvidence({ directory, imageIds, ledger,
     'ledger contains a row for an unknown image');
   const common = { candidateRevision: expectedRevision,
     candidateGitTreeSha: ledger.candidateGitTreeSha, candidateTreeDigest,
-    sourceDigest, mainSha: ledger.mainSha, ledgerBlobSha: ledger.blobSha, images: rows };
+    sourceDigest, ...(pr ? {} : { mainSha: ledger.mainSha }), ledgerBlobSha: ledger.blobSha, images: rows };
+  if (pr) return { schema: PR_RECEIPT_SCHEMA, ...common, executionFingerprint,
+    runtimeManifestDigest, ledgerSchema: version, authority };
   return version === 'stocksense-image-exceptions-v1'
     ? { schema: 'stocksense-image-ledger-verification-v1', ...common }
     : { schema: 'stocksense-image-ledger-verification-v2', ...common,
