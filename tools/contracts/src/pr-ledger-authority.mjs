@@ -485,6 +485,39 @@ function identity(authority) {
   return JSON.stringify(bound);
 }
 
+/** Pure receipt-binding check only. This is NOT live owner authorization. */
+export function assertPrLedgerAuthorityBinding(authority, { sourceRevision, candidateGitTreeSha,
+  candidateTreeDigest, executionFingerprint, runtimeManifestDigest, ledgerBlobSha, now = new Date() }) {
+  identity(authority);
+  const comment = authority.authorization;
+  const u2Comment = authority.u2.ownerComment;
+  const created = instant(comment.createdAt), expiry = instant(comment.expires);
+  requireValue(authority.type === TAG && authority.repository === REPOSITORY &&
+    authority.repositoryId === REPOSITORY_ID && authority.ownerId === OWNER_ID &&
+    [74, 75, 76].includes(authority.pullNumber) && authority.baseSha === BASE &&
+    SHA.test(authority.headSha ?? '') && authority.sourceRevision === sourceRevision && SHA.test(sourceRevision ?? '') &&
+    authority.candidateGitTreeSha === candidateGitTreeSha && SHA.test(candidateGitTreeSha ?? '') &&
+    authority.mergeParents[0] === BASE && authority.mergeParents[1] === authority.headSha &&
+    authority.candidateTreeDigest === candidateTreeDigest && DIGEST.test(candidateTreeDigest ?? '') &&
+    authority.executionFingerprint === executionFingerprint && DIGEST.test(executionFingerprint ?? '') &&
+    authority.runtimeManifestDigest === runtimeManifestDigest && DIGEST.test(runtimeManifestDigest ?? '') &&
+    positive(authority.currentRunId) && positive(authority.currentRunAttempt) &&
+    authority.ledger.blobSha === ledgerBlobSha && SHA.test(ledgerBlobSha ?? '') &&
+    SHA.test(authority.ledger.commit ?? '') && DIGEST.test(authority.ledger.sha256 ?? '') && authority.ledger.path === PATH &&
+    positive(comment.commentId) && DIGEST.test(comment.bodyDigest ?? '') && comment.createdAt === comment.updatedAt &&
+    positive(u2Comment.commentId) && DIGEST.test(u2Comment.bodyDigest ?? '') &&
+    u2Comment.createdAt === u2Comment.updatedAt && instant(u2Comment.createdAt) <= Date.parse(authority.retrievedAt) &&
+    positive(authority.u2.runId) && positive(authority.u2.attempt) && positive(authority.u2.jobId) &&
+    authority.u2.jobId === authority.u2.checkId && positive(authority.u2.suiteId) &&
+    authority.u2.policyCommit === POLICY && authority.u2.workflowBlob === WORKFLOW_BLOB &&
+    authority.u2.policyBlob === POLICY_BLOB && DIGEST.test(authority.u2.logDigest ?? '') &&
+    authority.protectedMain.commit === POLICY && SHA.test(authority.protectedMain.ledgerBlob ?? '') &&
+    now instanceof Date && Number.isFinite(now.getTime()) && created <= now.getTime() &&
+    expiry > now.getTime() && expiry - created <= WEEK && expiry <= SUNSET &&
+    Date.parse(authority.retrievedAt) <= now.getTime(),
+  'PR_AUTH_BINDING', 'PR authority receipt differs from independent evidence or policy');
+}
+
 /** Caller must verify every ledger row/scan, then call revalidate immediately before receipt issuance. */
 export async function fetchPrLedgerAuthority(input) {
   assertInput(input);

@@ -17,6 +17,8 @@ parsing supplies live authorization; production independently verifies current
 repository, PR, comments, workflow, run, attempt, job, check and immutable blobs.
 
 Do not execute the policy fixture or install the workflow fixture.
+The raw log retains timestamp-only lines ending in a space; Git's whitespace
+checker reports those authentic log bytes. They are intentionally preserved.
 
 The same read-only probe observed this GitHub pagination form (requested with
 `per_page=1` to expose a continuation):

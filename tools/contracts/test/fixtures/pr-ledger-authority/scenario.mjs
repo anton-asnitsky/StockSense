@@ -19,40 +19,41 @@ const context = () => ({ eventName: 'pull_request', repository: REPO, pullNumber
   candidateTreeDigest: digest('candidate'), executionFingerprint: digest('execution'),
   runtimeManifestDigest: digest('runtime'), currentRunId: 111, currentRunAttempt: 1,
   token: 'synthetic-unit-token', now: () => new Date('2026-11-28T00:00:00Z') });
-function fixture({ ledgerText = '{"schema":"stocksense-image-exceptions-v2","exceptions":[]}', extras = 0 } = {}) {
-  const input = context(); const bytes = Buffer.from(ledgerText); const bid = blobId(bytes);
-  const body = `StockSense PR ledger authority v1: repository=1361237685 pr=74 base=${BASE} head=${sha(1)} candidate=${input.candidateTreeDigest} execution=${input.executionFingerprint} runtime=${input.runtimeManifestDigest} ledgerCommit=${sha(4)} ledgerBlob=${bid} ledgerSha256=${digest(bytes)} policyCommit=${sha(1)} expires=2026-11-30T00:00:00Z`;
+function fixture({ ledgerText = '{"schema":"stocksense-image-exceptions-v2","exceptions":[]}', extras = 0, contextOverride = {} } = {}) {
+  const input = { ...context(), ...contextOverride }; const bytes = Buffer.from(ledgerText); const bid = blobId(bytes);
+  const body = `StockSense PR ledger authority v1: repository=1361237685 pr=74 base=${BASE} head=${input.headSha} candidate=${input.candidateTreeDigest} execution=${input.executionFingerprint} runtime=${input.runtimeManifestDigest} ledgerCommit=${sha(4)} ledgerBlob=${bid} ledgerSha256=${digest(bytes)} policyCommit=${input.headSha} expires=2026-11-30T00:00:00Z`;
   const comment = (id, text) => ({ id, body: text, user: { id: 8492824, login: 'anton-asnitsky', type: 'User' },
     author_association: 'OWNER', issue_url: `https://api.github.com${P}/issues/74`,
     created_at: '2026-11-27T00:00:00Z', updated_at: '2026-11-27T00:00:00Z' });
-  const allComments = [comment(501, body), comment(502, `StockSense protected CI approval: ${BASE} ${sha(1)}`),
+  const allComments = [comment(501, body), comment(502, `StockSense protected CI approval: ${BASE} ${input.headSha}`),
     ...Array.from({ length: extras }, (_, i) => ({ ...comment(600 + i, 'ordinary comment'),
       user: { id: 999, login: 'someone', type: 'User' }, author_association: 'NONE' }))];
   const repo = { id: 1361237685, full_name: REPO, default_branch: 'main',
     owner: { id: 8492824, login: 'anton-asnitsky', type: 'User' } };
   const association = { number: 74, base: { repo: { id: repo.id } }, head: { repo: { id: repo.id }, sha: sha(999) } };
   const run = { id: 222, workflow_id: 386489834, path: '.github/workflows/public-pr-policy.yml',
-    event: 'pull_request_target', head_sha: sha(1), repository: repo, head_repository: repo,
+    event: 'pull_request_target', head_sha: input.headSha, repository: repo, head_repository: repo,
     run_attempt: 2, check_suite_id: 444, status: 'completed', conclusion: 'success', pull_requests: [association] };
   const job = { id: 333, name: 'U2 protected-base PR policy', run_id: 222, run_attempt: 2,
-    head_sha: sha(1), status: 'completed', conclusion: 'success',
+    head_sha: input.headSha, status: 'completed', conclusion: 'success',
     check_run_url: `https://api.github.com${P}/check-runs/333`,
     steps: ['Check out only the protected base revision', 'Test the protected-base policy',
       'Check complete PR metadata without executing PR code', 'Complete job']
       .map(name => ({ name, status: 'completed', conclusion: 'success' })) };
-  const check = { id: 333, name: job.name, head_sha: sha(1), check_suite: { id: 444 },
+  const check = { id: 333, name: job.name, head_sha: input.headSha, check_suite: { id: 444 },
     status: 'completed', conclusion: 'success', app: { id: 15368, slug: 'github-actions', owner: { id: 9919, login: 'github' } } };
   const data = new Map([
     [P, repo], [`${P}/pulls/74`, { number: 74, state: 'open', merged: false, comments: allComments.length,
-      base: { sha: BASE, ref: 'bolt/u1-candidate-ready', repo }, head: { sha: sha(1), repo }, merge_commit_sha: sha(2) }],
-    [`${P}/git/commits/${sha(2)}`, { sha: sha(2), tree: { sha: sha(3) }, parents: [{ sha: BASE }, { sha: sha(1) }] }],
-    [`${P}/actions/runs/111`, { id: 111, run_attempt: 1, event: 'pull_request',
-      path: '.github/workflows/contracts-required.yml', head_sha: sha(1), repository: repo,
+      base: { sha: BASE, ref: 'bolt/u1-candidate-ready', repo }, head: { sha: input.headSha, repo }, merge_commit_sha: input.sourceRevision }],
+    [`${P}/git/commits/${input.sourceRevision}`, { sha: input.sourceRevision, tree: { sha: input.candidateGitTreeSha }, parents: [{ sha: BASE }, { sha: input.headSha }] }],
+    [`${P}/actions/runs/${input.currentRunId}`, { id: input.currentRunId,
+      run_attempt: input.currentRunAttempt, event: 'pull_request',
+      path: '.github/workflows/contracts-required.yml', head_sha: input.headSha, repository: repo,
       head_repository: repo, pull_requests: [association] }],
     [`${P}/git/ref/heads/main`, { ref: 'refs/heads/main', object: { type: 'commit', sha: POLICY } }],
     [`${P}/actions/workflows/386489834`, { id: 386489834, path: run.path, state: 'active' }],
     [`${P}/actions/runs/222`, run], [`${P}/actions/runs/222/attempts/2`, run],
-    [`${P}/check-runs/333`, check], [`${P}/actions/jobs/333/logs`, log],
+    [`${P}/check-runs/333`, check], [`${P}/actions/jobs/333/logs`, log.replaceAll(sha(1), input.headSha)],
     [`${P}/issues/comments/501`, allComments[0]], [`${P}/issues/comments/502`, allComments[1]],
     [`${P}/git/commits/${POLICY}`, { sha: POLICY, tree: { sha: sha(10) } }],
     [`${P}/git/commits/${sha(4)}`, { sha: sha(4), tree: { sha: sha(15) } }]

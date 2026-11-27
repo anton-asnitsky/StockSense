@@ -2,9 +2,30 @@ import { P, BASE, POLICY, WB, PB, sha, digest, blobId, wb, pb, realLog, log, con
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fetchPrLedgerAuthority, verifyRetainedPrLedgerAuthority, parsePrLedgerAuthorization,
-  parseAuthorityJson, verifyU2LogProvenance, githubAuthorityRequest } from '../../src/pr-ledger-authority.mjs';
+  parseAuthorityJson, verifyU2LogProvenance, githubAuthorityRequest,
+  assertPrLedgerAuthorityBinding } from '../../src/pr-ledger-authority.mjs';
 
 const refuses = (promise, code) => assert.rejects(promise, error => error.code === code);
+
+test('pure binding guard preserves exact independent source/runtime/blob and closed authority policy', async () => {
+  const f = fixture(); const { authority } = await fetchPrLedgerAuthority(f.input);
+  const binding = { ...f.input, ledgerBlobSha: f.bid, now: f.input.now() };
+  assertPrLedgerAuthorityBinding(authority, binding);
+  for (const [key, changed] of [['sourceRevision', sha(9)], ['candidateGitTreeSha', sha(9)],
+    ['candidateTreeDigest', digest('other')], ['executionFingerprint', digest('other')],
+    ['runtimeManifestDigest', digest('other')], ['ledgerBlobSha', sha(9)]]) {
+    assert.throws(() => assertPrLedgerAuthorityBinding(authority, { ...binding, [key]: changed }),
+      { code: 'PR_AUTH_BINDING' });
+  }
+  for (const change of [a => { a.type = 'protected-main'; }, a => { a.repositoryId = 7; },
+    a => { a.u2.policyCommit = sha(9); }, a => { a.ledger.path = '../image-exceptions.json'; },
+    a => { a.currentRunId = 0; }, a => { a.mergeParents.reverse(); }]) {
+    const altered = globalThis.structuredClone(authority); change(altered);
+    assert.throws(() => assertPrLedgerAuthorityBinding(altered, binding), { code: 'PR_AUTH_BINDING' });
+  }
+  assert.throws(() => assertPrLedgerAuthorityBinding(authority,
+    { ...binding, now: new Date('2026-11-30T00:00:00Z') }), { code: 'PR_AUTH_BINDING' });
+});
 
 test('authentic pinned test blobs and actual U2 log prove trusted source distinct from compared base', () => {
   assert.equal(blobId(wb), WB); assert.equal(blobId(pb), PB);
