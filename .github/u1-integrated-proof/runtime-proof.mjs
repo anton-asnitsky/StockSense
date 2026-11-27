@@ -56,7 +56,7 @@ var jan=new DateTime(2026,1,15,12,0,0,DateTimeKind.Utc);var tz=TimeZoneInfo.Find
 if(jan.ToString("MMMM",CultureInfo.GetCultureInfo("fr-FR"))!="janvier"||tz.GetUtcOffset(jan).TotalHours!=2||tz.GetUtcOffset(jan.AddMonths(6)).TotalHours!=3)return 1;
 Console.WriteLine("fr-FR janvier; Jerusalem January +02, July +03; optional LTTng disabled");return 0;`);
 run(['run', '--rm', '--pull=never', '--network=none', '--user', `${process.getuid()}:${process.getgid()}`,
-  '--cpus=1', '--memory=2g', '-e', 'DOTNET_CLI_HOME=/tmp', '-v', `${probe}:/probe`, '-w', '/probe',
+  '--cpus=1', '--memory=2g', '-e', 'HOME=/tmp', '-e', 'DOTNET_CLI_HOME=/tmp', '-v', `${probe}:/probe`, '-w', '/probe',
   process.env.SDK, 'dotnet', 'publish', '-c', 'Release', '-o', '/probe/out', '-p:RestoreIgnoreFailedSources=true']);
 const globalization = run([...guard, '-v', `${probe}:/probe:ro`, '--entrypoint=/usr/share/dotnet/dotnet', ids.kiota, '/probe/out/Smoke.dll']);
 assert.match(globalization, /fr-FR janvier; Jerusalem January \+02, July \+03; optional LTTng disabled/);
