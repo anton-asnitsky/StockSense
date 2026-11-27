@@ -158,11 +158,21 @@ jobs:
       # executed as shell.
       - name: Enforce the CI policy
         env:
+          GITHUB_TOKEN: ${{ github.token }}
+          STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
+          STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
+          STOCKSENSE_IMAGE_EVIDENCE_DIR: tools/contracts/dist/image-evidence
+          STOCKSENSE_CANDIDATE_REVISION: ${{ github.sha }}
           EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
           policy() { node tools/contracts/scripts/check-ci-policy.mjs .github/workflows "$@"; }
+          if [ "$STOCKSENSE_LEDGER_AUTHORITY" = owner-authorized-pr-ledger-v1 ]; then
+            # The checker derives bounded NUL-delimited paths from Git itself.
+            policy
+            exit 0
+          fi
           if [ "$EVENT_NAME" != pull_request ]; then
             policy
             exit 0
