@@ -1,0 +1,54 @@
+name: Current repository quota observation (diagnostic only)
+on:
+  push:
+    branches: [codex/u1-current-quota-proof]
+    paths: ['.github/workflows/u1-current-quota-proof.yml']
+permissions:
+  contents: read
+jobs:
+  technical-proof:
+    name: Observe normal diagnostic job token quota
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      PROOF_LANE: '1'
+      # Target context only: this workflow does not build or approve the candidate.
+      CANDIDATE: a9f44242e3428bb163509357ac2038e9c76ee35e
+    steps:
+      - name: Check out reviewed diagnostic helper
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 24.22.3
+      - name: Verify unchanged helper and test its bounded output
+        run: |
+          set -euo pipefail
+          test "$(node --version)" = v24.22.3
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo 'b699aa420bf3bdc5ebc98e7d4baa09e784e2885c163c6024f479e7f3db4c535d  .github/u1-integrated-proof/quota-probe.mjs' | sha256sum -c -
+          node --test .github/u1-integrated-proof/quota-probe.test.mjs
+          mkdir -p "$RUNNER_TEMP/u1-integrated/proof"
+          printf '%s\n' 'Fresh observation from this diagnostic normal job token only. Not the ordinary PR job token. Repository/core budget scheduling requires conservative review; no production authority demand is measured. No candidate validation, acceptance, owner approval or ordinary CI success is asserted.' > "$RUNNER_TEMP/u1-integrated/proof/LIMITATIONS.txt"
+      - name: Observe start quota with ordinary diagnostic job token
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node .github/u1-integrated-proof/quota-probe.mjs start
+      - name: Observe end quota with ordinary diagnostic job token
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node .github/u1-integrated-proof/quota-probe.mjs end
+      - name: Retain only sanitized quota evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: current-job-token-quota-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/u1-integrated/proof/quota-start.json
+            ${{ runner.temp }}/u1-integrated/proof/quota-end.json
+            ${{ runner.temp }}/u1-integrated/proof/quota-summary.json
+            ${{ runner.temp }}/u1-integrated/proof/LIMITATIONS.txt
+          if-no-files-found: error
+          retention-days: 7
