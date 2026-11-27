@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import { ContractError } from './package-loader.mjs';
 
 // Linux/amd64 is the hosted ubuntu-24.04 runner architecture. These are OCI
@@ -67,7 +68,38 @@ export async function verifyRawImageScan(directory, { name, imageId, sbomDigest,
       scanBytes.length > 64 * 1024 * 1024 || databaseBytes.length > 1024 * 1024) {
     fail('IMAGE_RAW', 'Raw image scan does not match its source-bound receipt');
   }
+  let normalized, raw, db;
+  try {
+    normalized = JSON.parse(await readFile(join(directory, `${name}.scan.json`), 'utf8'));
+    raw = JSON.parse(scanBytes.toString('utf8'));
+    db = JSON.parse(databaseBytes.toString('utf8'));
+  } catch { fail('IMAGE_RAW', 'Retained image scan reports are missing or malformed'); }
+  if (!isDeepStrictEqual(normalized, normalizeImageScan(raw, db, name, imageId, sbomDigest))) {
+    fail('IMAGE_RAW', 'Normalized image scan differs from the source-bound raw evidence');
+  }
   return receipt;
+}
+
+export function normalizeImageScan(raw, db, name, imageId, sbomDigest) {
+  if (!Array.isArray(raw?.matches) || (raw.ignoredMatches !== undefined &&
+      (!Array.isArray(raw.ignoredMatches) || raw.ignoredMatches.length !== 0))) {
+    fail('IMAGE_SCAN', 'Grype scan returned incomplete or suppressed matches');
+  }
+  return { schema: 'stocksense-image-scan-v2', image: name, imageId, sbomDigest,
+    scanner: SCANNERS.grype, status: 'completed',
+    database: { built: db.built, source: db.from, schemaVersion: db.schemaVersion,
+      status: db.valid === true && !db.error ? 'valid' : 'invalid' },
+    findings: raw.matches.map(match => ({ id: match.vulnerability?.id,
+      severity: match.vulnerability?.severity, package: match.artifact?.name,
+      version: match.artifact?.version, type: match.artifact?.type,
+      purl: match.artifact?.purl ?? null,
+      // Grype reports some unresolved CPE matches with an explicit empty state.
+      // Preserve them as unknown; missing/malformed fix metadata still fails
+      // inspection, and unknown remains ineligible for disposition.
+      fixState: match.vulnerability?.fix?.state === '' &&
+        Array.isArray(match.vulnerability.fix.versions) && match.vulnerability.fix.versions.length === 0
+        ? 'unknown' : match.vulnerability?.fix?.state,
+      fixVersions: match.vulnerability?.fix?.versions })) };
 }
 const exactText = (value, limit = 512) => typeof value === 'string' && value.length > 0 &&
   value.length <= limit && value === value.trim() && !/[\x00-\x1f\x7f*]/.test(value);
@@ -81,7 +113,14 @@ function purlMatches(record) {
   const match = PURL.exec(record.purl);
   if (!match) return false;
   const [, type, path, qualifiers, subpath] = match;
-  if ({ deb: 'deb', npm: 'npm', dotnet: 'nuget' }[record.type] !== type) return false;
+  // Only the observed Node binary identity is supported, with one canonical
+  // spelling. Do not admit arbitrary generic packages, namespaces or aliases.
+  if (record.type === 'binary') {
+    return type === 'generic' && record.package === 'node' &&
+      /^\d+\.\d+\.\d+$/.test(record.version) &&
+      record.purl === `pkg:generic/node@${record.version}`;
+  }
+  if ({ apk: 'apk', deb: 'deb', npm: 'npm', dotnet: 'nuget' }[record.type] !== type) return false;
   const versionAt = path.lastIndexOf('@');
   if (versionAt < 1 || versionAt === path.length - 1) return false;
   try {
@@ -95,6 +134,7 @@ function purlMatches(record) {
       ? segments.join('/') : (segments.at(-1) ?? '');
     if (type === 'npm' && segments.length !== (segments[0].startsWith('@') ? 2 : 1)) return false;
     if (type === 'nuget' && segments.length !== 1) return false;
+    if (type === 'apk' && segments.length !== 2) return false;
     const agrees = type === 'nuget'
       ? packageName.toLowerCase() === record.package.toLowerCase()
       : packageName === record.package;
@@ -113,6 +153,47 @@ function utcTime(value) {
   if (!Number.isFinite(time)) return NaN;
   const canonical = new Date(time).toISOString();
   return canonical === value || canonical.replace('.000Z', 'Z') === value ? time : NaN;
+}
+
+/** Validate one baseline's records without inventing a scan for another baseline.
+ * The returned identities are not approval evidence; current scans must still match.
+ * @param {{now?: Date}} [options]
+ */
+export function validateImageExceptions(exceptions, options = {}) {
+  const { now = new Date() } = options;
+  if (!Array.isArray(exceptions) || !(now instanceof Date) || !Number.isFinite(now.getTime())) {
+    fail('IMAGE_EXCEPTION', 'Image disposition input is invalid');
+  }
+  const identities = new Set();
+  for (const exception of exceptions) {
+    if (!exception || typeof exception !== 'object' || Array.isArray(exception) ||
+        Object.keys(exception).length !== EXCEPTION_FIELDS.size ||
+        Object.keys(exception).some(field => !EXCEPTION_FIELDS.has(field)) ||
+        !ADVISORY.test(exception.id ?? '') || !IMAGE_NAMES.includes(exception.image) ||
+        !exactIdentityText(exception.package, 256) || !exactIdentityText(exception.version, 256) ||
+        !exactIdentityText(exception.type, 128) || !purlMatches(exception) ||
+        !['Negligible', 'Low', 'Medium', 'High', 'Critical'].includes(exception.severity) ||
+        !['fixed', 'not-fixed', 'wont-fix'].includes(exception.fixState) ||
+        ['owner', 'rationale', 'compensatingControl', 'approvalReference']
+          .some(field => !exactText(exception[field]))) {
+      fail('IMAGE_EXCEPTION', 'Image exception is malformed or broad');
+    }
+    const created = utcTime(exception.createdAt);
+    const expires = utcTime(exception.expiresAt);
+    if (!Number.isFinite(created) || !Number.isFinite(expires) ||
+        created > now.getTime() || expires <= now.getTime() || created >= expires) {
+      fail('IMAGE_EXCEPTION', 'Image exception is future, expired or has invalid times');
+    }
+    if (exception.fixState === 'fixed' && ['High', 'Critical'].includes(exception.severity)) {
+      fail('IMAGE_FINDINGS', 'A fixed High or Critical image finding blocks the gate');
+    }
+    const key = identity(exception, exception.image);
+    if (identities.has(key)) {
+      fail('IMAGE_EXCEPTION', 'Image exception is unmatched or duplicates a disposition');
+    }
+    identities.add(key);
+  }
+  return identities;
 }
 
 /** Validate current scan findings against candidate records; approval provenance is caller-owned.
@@ -140,31 +221,11 @@ export function verifyImageDispositions(report, exceptions, options = {}) {
       fail('IMAGE_FINDINGS', 'A fixed High or Critical image finding blocks the gate');
     }
   }
-  const disposed = new Set();
-  for (const exception of exceptions) {
-    if (!exception || typeof exception !== 'object' || Array.isArray(exception) ||
-        Object.keys(exception).length !== EXCEPTION_FIELDS.size ||
-        Object.keys(exception).some(field => !EXCEPTION_FIELDS.has(field)) ||
-        !ADVISORY.test(exception.id ?? '') || !IMAGE_NAMES.includes(exception.image) ||
-        !exactIdentityText(exception.package, 256) || !exactIdentityText(exception.version, 256) ||
-        !exactIdentityText(exception.type, 128) || !purlMatches(exception) ||
-        !['Negligible', 'Low', 'Medium', 'High', 'Critical'].includes(exception.severity) ||
-        !['fixed', 'not-fixed', 'wont-fix'].includes(exception.fixState) ||
-        ['owner', 'rationale', 'compensatingControl', 'approvalReference']
-          .some(field => !exactText(exception[field]))) {
-      fail('IMAGE_EXCEPTION', 'Image exception is malformed or broad');
-    }
-    const created = utcTime(exception.createdAt);
-    const expires = utcTime(exception.expiresAt);
-    if (!Number.isFinite(created) || !Number.isFinite(expires) ||
-        created > now.getTime() || expires <= now.getTime() || created >= expires) {
-      fail('IMAGE_EXCEPTION', 'Image exception is future, expired or has invalid times');
-    }
-    const key = identity(exception, exception.image);
-    if (!current.has(key) || disposed.has(key)) {
+  const disposed = validateImageExceptions(exceptions, { now });
+  for (const key of disposed) {
+    if (!current.has(key)) {
       fail('IMAGE_EXCEPTION', 'Image exception is unmatched or duplicates a disposition');
     }
-    disposed.add(key);
   }
   if (disposed.size !== current.size) {
     fail('IMAGE_FINDINGS', 'Current image findings lack a permitted disposition');
@@ -237,6 +298,17 @@ export async function readImageEvidence(directory, imageIds, { requireClean = tr
     const packages = inspectImageSbom(sbom, name, imageId);
     const sbomDigest = digest(sbomBytes);
     const findings = inspectImageScan(scan, name, imageId, sbomDigest);
+    const inventory = new Set(packages.map(component => JSON.stringify([component.purl, component.version])));
+    if (findings.some(finding => !inventory.has(JSON.stringify([finding.purl, finding.version])))) {
+      fail('IMAGE_SBOM', `${name} finding is absent from its bound image inventory`);
+    }
+    for (const finding of findings.filter(finding => finding.type === 'binary')) {
+      const matches = packages.filter(component => component.purl === finding.purl);
+      if (matches.length !== 1 || matches[0].name !== finding.package ||
+          matches[0].version !== finding.version) {
+        fail('IMAGE_SBOM', `${name} binary finding has no unique exact inventory identity`);
+      }
+    }
     records.push({ name, imageId, sbomDigest, scanDigest: digest(scanBytes), packages: packages.length,
       findings: findings.length });
     for (const component of sbom.components) {

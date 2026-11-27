@@ -54,14 +54,15 @@ export async function inputDigest(root, paths = sourcePaths(root)) {
 export async function toolchainDigest(root) {
   const paths = ['tools/contracts/package.json', 'tools/contracts/pnpm-lock.yaml',
     'tools/contracts/Dockerfile.validator', 'tools/contracts/Dockerfile.generator-kiota',
-    'tools/contracts/scripts/setup-oasdiff.mjs', '.github/workflows/contracts-required.yml',
+    'tools/contracts/scripts/setup-oasdiff.mjs', 'tools/contracts/scripts/build-kiota-runtime.py',
+    'tools/contracts/kiota-runtime-inputs.json', '.github/workflows/contracts-required.yml',
     '.github/workflows/release-evidence.yml'];
   return inputDigest(root, paths);
 }
 
 export async function assertPinnedScanner(root) {
   const manifest = JSON.parse(await readFile(resolve(root, 'tools/contracts/package.json'), 'utf8'));
-  if (manifest.packageManager !== 'pnpm@11.25.0' || manifest.engines?.node !== '24.22.2' ||
+  if (manifest.packageManager !== 'pnpm@11.25.0' || manifest.engines?.node !== '24.22.3' ||
       manifest.devDependencies?.secretlint !== '13.0.6') {
     fail('SCAN_SCANNER', 'Scanner, package manager or Node pin has changed');
   }

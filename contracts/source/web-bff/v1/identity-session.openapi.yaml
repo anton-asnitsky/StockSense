@@ -68,3 +68,41 @@ components:
       type: apiKey
       in: cookie
       name: __Host-stocksense-session
+x-contract-operation-examples:
+  - operationId: beginLogin
+    name: local-login-redirect
+    request:
+      query: { returnUrl: /dashboard }
+    responseStatus: '302'
+  - operationId: completeLogin
+    name: validated-continuation
+    request: {}
+    responseStatus: '302'
+  - operationId: completeLogin
+    name: replayed-continuation
+    request: {}
+    responseStatus: '400'
+  - operationId: receiveRegisteredOidcRedirect
+    name: validated-oidc-response
+    request: {}
+    responseStatus: '302'
+  - operationId: receiveRegisteredOidcRedirect
+    name: replayed-oidc-response
+    request: {}
+    responseStatus: '400'
+  - operationId: receiveRegisteredOidcLogoutCallback
+    name: signed-out-callback
+    request: {}
+    responseStatus: '302'
+  - operationId: logout
+    name: session-invalidated
+    request: {}
+    responseStatus: '204'
+  - operationId: getCurrentSession
+    name: authorized-session
+    request: {}
+    responseStatus: '200'
+  - operationId: getCurrentSession
+    name: expired-session
+    request: {}
+    responseStatus: '401'

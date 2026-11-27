@@ -8,7 +8,7 @@
         "C18"
       ],
       "contractElementId": "ManualReviewRequest",
-      "documentRevisionId": "sha256:a82fcd75d567085c01b69b2132ebc4e9c291e07f34598fd6ea107f4e259d1d6c",
+      "documentRevisionId": "sha256:d17389efa04cd943c6c3c52a6d6594ef6276efb042607373747aeb00ae32597c",
       "scenarioType": "valid",
       "expectedOutcome": "pass",
       "payload": {
@@ -22,7 +22,7 @@
         "C18"
       ],
       "contractElementId": "ManualReviewRequest",
-      "documentRevisionId": "sha256:a82fcd75d567085c01b69b2132ebc4e9c291e07f34598fd6ea107f4e259d1d6c",
+      "documentRevisionId": "sha256:d17389efa04cd943c6c3c52a6d6594ef6276efb042607373747aeb00ae32597c",
       "scenarioType": "invalid",
       "expectedOutcome": "fail",
       "expectedFailureCode": "SCHEMA_REQUIRED",
@@ -38,7 +38,7 @@
         "C18"
       ],
       "contractElementId": "ReconciliationRequest",
-      "documentRevisionId": "sha256:a82fcd75d567085c01b69b2132ebc4e9c291e07f34598fd6ea107f4e259d1d6c",
+      "documentRevisionId": "sha256:d17389efa04cd943c6c3c52a6d6594ef6276efb042607373747aeb00ae32597c",
       "scenarioType": "valid",
       "expectedOutcome": "pass",
       "payload": {
@@ -52,7 +52,7 @@
         "C18"
       ],
       "contractElementId": "ReconciliationRequest",
-      "documentRevisionId": "sha256:a82fcd75d567085c01b69b2132ebc4e9c291e07f34598fd6ea107f4e259d1d6c",
+      "documentRevisionId": "sha256:d17389efa04cd943c6c3c52a6d6594ef6276efb042607373747aeb00ae32597c",
       "scenarioType": "invalid",
       "expectedOutcome": "fail",
       "expectedFailureCode": "SCHEMA_ENUM",
@@ -69,7 +69,7 @@
         "C18"
       ],
       "contractElementId": "AssistantTurnRequest",
-      "documentRevisionId": "sha256:a82fcd75d567085c01b69b2132ebc4e9c291e07f34598fd6ea107f4e259d1d6c",
+      "documentRevisionId": "sha256:d17389efa04cd943c6c3c52a6d6594ef6276efb042607373747aeb00ae32597c",
       "scenarioType": "valid",
       "expectedOutcome": "pass",
       "payload": {
@@ -83,7 +83,7 @@
         "C18"
       ],
       "contractElementId": "AssistantTurnRequest",
-      "documentRevisionId": "sha256:a82fcd75d567085c01b69b2132ebc4e9c291e07f34598fd6ea107f4e259d1d6c",
+      "documentRevisionId": "sha256:d17389efa04cd943c6c3c52a6d6594ef6276efb042607373747aeb00ae32597c",
       "scenarioType": "invalid",
       "expectedOutcome": "fail",
       "expectedFailureCode": "SCHEMA_MIN_LENGTH",
@@ -93,6 +93,56 @@
         "expectedConversationVersion": 0
       },
       "expectedFailurePath": "/message"
+    },
+    {
+      "fixtureId": "c18-dashboard-partial-unavailable-section",
+      "boundaryIds": [
+        "C18"
+      ],
+      "contractElementId": "AggregateResponse",
+      "documentRevisionId": "sha256:d17389efa04cd943c6c3c52a6d6594ef6276efb042607373747aeb00ae32597c",
+      "scenarioType": "valid",
+      "expectedOutcome": "pass",
+      "canonicalExampleId": "x:dashboard-partial-unavailable-section",
+      "payload": {
+        "metadata": {
+          "contractVersion": "1.0.0",
+          "responseSchema": "AggregateResponse",
+          "generatedAt": "2026-09-28T10:00:00Z",
+          "correlationId": "00000000-0000-4000-8000-000000000502"
+        },
+        "aggregateVersion": "dashboard-v4",
+        "aggregateState": "partial",
+        "sections": [
+          {
+            "name": "inventory",
+            "state": "ready",
+            "observedAt": "2026-09-28T09:59:00Z",
+            "sourceVersion": "inventory-v3",
+            "data": {
+              "lowStockCount": 2
+            },
+            "problem": null
+          },
+          {
+            "name": "forecast",
+            "state": "unavailable",
+            "observedAt": "2026-09-28T10:00:00Z",
+            "sourceVersion": null,
+            "retryAfter": "2026-09-28T10:05:00Z",
+            "data": null,
+            "problem": {
+              "type": "about:blank",
+              "title": "Dependency unavailable",
+              "status": 503,
+              "detail": "Forecast data is temporarily unavailable.",
+              "instance": "/api/v1/retailers/00000000-0000-4000-8000-000000000503/dashboard",
+              "code": "DEPENDENCY_UNAVAILABLE",
+              "correlationId": "00000000-0000-4000-8000-000000000502"
+            }
+          }
+        ]
+      }
     }
   ]
 }

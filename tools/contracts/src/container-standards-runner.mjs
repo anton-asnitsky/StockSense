@@ -22,7 +22,7 @@ const TOOL = Object.freeze({
 // resolves a mutable tag, and --pull=never requires the exact image locally.
 const IMAGE = /^(?:sha256:[0-9a-f]{64}|[a-z0-9]+(?:[.-][a-z0-9]+)+(?:\/[a-z0-9]+(?:[._-][a-z0-9]+)*)+@sha256:[0-9a-f]{64})$/;
 const SHA = /^sha256:[0-9a-f]{64}$/;
-const FIXTURE_ELEMENT = /^(?:[A-Za-z][A-Za-z0-9_.-]{0,127}|response:[A-Za-z][A-Za-z0-9]{0,96}:[1-5][0-9]{2}:application-json|message:[A-Za-z][A-Za-z0-9_.-]*(?::[A-Za-z][A-Za-z0-9_.-]*)?)$/;
+const FIXTURE_ELEMENT = /^(?:[A-Za-z][A-Za-z0-9_.-]{0,127}|operation:[A-Za-z][A-Za-z0-9]{0,96}:[1-5][0-9]{2}|response:[A-Za-z][A-Za-z0-9]{0,96}:[1-5][0-9]{2}:application-json|message:[A-Za-z][A-Za-z0-9_.-]*(?::[A-Za-z][A-Za-z0-9_.-]*)?)$/;
 const VERSION = /^[1-9][0-9]*\.[0-9]+\.[0-9]+$/;
 const CANONICAL = new Set(['schema', 'openapi', 'asyncapi']);
 // Avoid PATH and current-directory executable search for untrusted checkouts.
@@ -318,7 +318,9 @@ export async function runContainerStandardsValidator(dialect, sourceDocument, op
       : ['unix:///var/run/docker.sock', 'unix:///run/docker.sock'].includes(context))) {
       fail('STANDARDS_ENGINE', 'NFR6.2', 'Docker context must use a local engine');
     }
-    if (checkedResult(dockerCall(spawn, ['info', '--format', '{{.OSType}}'], 5_000),
+    // Only the server OS is needed here. Keep this check per invocation, but
+    // avoid collecting the full daemon/client inventory for every document.
+    if (checkedResult(dockerCall(spawn, ['version', '--format', '{{.Server.Os}}'], 5_000),
       'STANDARDS_ENGINE', 'NFR6.2') !== 'linux') {
       fail('STANDARDS_ENGINE', 'NFR6.2', 'Standards image requires Linux containers');
     }
