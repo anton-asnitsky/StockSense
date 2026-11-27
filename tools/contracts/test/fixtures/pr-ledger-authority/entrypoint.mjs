@@ -26,7 +26,7 @@ function git(root, args) {
 }
 
 /** Creates only isolated test refs/objects, actual ordered merge parents and inert HTTP evidence. */
-export async function createPrEntrypointFixture() {
+export async function createPrEntrypointFixture({ workflows = {}, pullNumber = 74 } = {}) {
   const root = await mkdtemp(join(tmpdir(), 'stocksense-pr-entrypoint-'));
   const repoRoot = join(root, 'repo');
   const contracts = join(repoRoot, 'tools/contracts');
@@ -47,7 +47,11 @@ export async function createPrEntrypointFixture() {
     }
     await symlink(join(packageRoot, 'node_modules'), join(contracts, 'node_modules'),
       process.platform === 'win32' ? 'junction' : 'dir');
-    git(repoRoot, ['add', 'tools/contracts']);
+    for (const [name, content] of Object.entries(workflows)) {
+      if (!/^[a-z0-9-]+\.ya?ml$/.test(name)) throw new Error('Unsafe fixture workflow name');
+      await writeFile(join(repoRoot, '.github/workflows', name), content);
+    }
+    git(repoRoot, ['add', 'tools/contracts', '.github/workflows']);
     git(repoRoot, ['commit', '--quiet', '-m', 'synthetic reviewed PR head']);
     const head = git(repoRoot, ['rev-parse', 'HEAD']);
     const tree = git(repoRoot, ['rev-parse', 'HEAD^{tree}']);
@@ -81,7 +85,7 @@ export async function createPrEntrypointFixture() {
     }
     const configurationPath = join(root, 'http-fixture.json');
     const requestLog = join(root, 'http-requests.jsonl');
-    const configuration = { contextOverride: { sourceRevision: revision, candidateGitTreeSha: context.candidateGitTreeSha,
+    const configuration = { contextOverride: { pullNumber, sourceRevision: revision, candidateGitTreeSha: context.candidateGitTreeSha,
       headSha: head, candidateTreeDigest: context.candidateTreeDigest,
       executionFingerprint: context.executionFingerprint, runtimeManifestDigest }, scenario: 'success' };
     const updateScenario = async changes => {
@@ -90,13 +94,25 @@ export async function createPrEntrypointFixture() {
     await updateScenario({});
     const preload = join(root, 'http-preload.mjs');
     await writeFile(preload, `import {fixture,P} from ${JSON.stringify(fixtureModule)};
-import {readFileSync,appendFileSync} from 'node:fs';
+import {readFileSync,appendFileSync,writeFileSync} from 'node:fs';
 import fsp from 'node:fs/promises';
+import childProcess from 'node:child_process';
 import {syncBuiltinESMExports} from 'node:module';
 const NativeDate=Date;
-globalThis.Date=class extends NativeDate { constructor(...args){super(...(args.length?args:[${JSON.stringify(fixtureTime)}]));} static now(){return NativeDate.parse(${JSON.stringify(fixtureTime)});} };
+let fixtureNow=${JSON.stringify(fixtureTime)};
+globalThis.Date=class extends NativeDate { constructor(...args){super(...(args.length?args:[fixtureNow]));} static now(){return NativeDate.parse(fixtureNow);} };
 const cfg=JSON.parse(readFileSync(${JSON.stringify(configurationPath)},'utf8'));
 const f=fixture(cfg);
+let terminalAuthority=false;
+if(cfg.scenario==='expiry-after-source'){
+ const spawn=childProcess.spawnSync;
+ childProcess.spawnSync=(file,args,options)=>{
+  const result=spawn(file,args,options);
+  if(terminalAuthority&&file==='git'&&args[0]==='status')fixtureNow='2026-11-30T00:00:00.000Z';
+  return result;
+ };
+ syncBuiltinESMExports();
+}
 if(cfg.scenario==='missing-u2')f.comments[1].body='not an approval';
 if(cfg.scenario==='rename-failure'){const original=fsp.rename;fsp.rename=async(...args)=>{if(['ledger-verification.json','combined-sbom.json'].some(name=>String(args[1]).endsWith(name))){const error=new Error('synthetic rename failure');error.code='EACCES';throw error;}return original(...args);};syncBuiltinESMExports();}
 const counts=new Map();
@@ -106,6 +122,10 @@ globalThis.fetch=async(url,options)=>{
  if(u.hostname==='logs.blob.core.windows.net'){if(options.headers)throw new Error('Credential leak to storage');return new Response(f.data.get(P+'/actions/jobs/333/logs'));}
  if(u.hostname!=='api.github.com'||options.headers.Authorization!=='Bearer synthetic-unit-token')throw new Error('Unexpected HTTP boundary');
  const count=(counts.get(path)||0)+1;counts.set(path,count);
+ if(path===P+'/issues/comments/501'&&count===3)terminalAuthority=true;
+ if(cfg.scenario==='u2-attempt-final'&&path===P+'/issues/comments/501'&&count===3)f.run.run_attempt=3;
+ if(cfg.scenario==='workflow-race-final'&&path===P+'/issues/comments/501'&&count===3)appendFileSync(${JSON.stringify(join(repoRoot, '.github/workflows/contracts-required.yml'))},'\\n# changed during terminal authority retrieval\\n');
+ if(cfg.scenario==='workflow-added-final'&&path===P+'/issues/comments/501'&&count===3)writeFileSync(${JSON.stringify(join(repoRoot, '.github/workflows/added.yml'))},'jobs: {}\\n');
  if(cfg.scenario==='revoked-final'&&path===P+'/issues/comments/501'&&count>=3)return new Response('',{status:404});
  if(path.endsWith('/actions/jobs/333/logs'))return new Response(null,{status:302,headers:{location:'https://logs.blob.core.windows.net/log?sig=synthetic'}});
  const format=u.searchParams.has('per_page')?'page':'json';
@@ -115,7 +135,7 @@ globalThis.fetch=async(url,options)=>{
 `);
     const env = { ...process.env, GITHUB_EVENT_NAME: 'pull_request', GITHUB_REPOSITORY: REPO,
       GITHUB_SHA: revision, GITHUB_RUN_ID: '111', GITHUB_RUN_ATTEMPT: '1', GITHUB_TOKEN: 'synthetic-unit-token',
-      STOCKSENSE_LEDGER_AUTHORITY: 'owner-authorized-pr-ledger-v1', STOCKSENSE_PR_NUMBER: '74',
+      STOCKSENSE_LEDGER_AUTHORITY: 'owner-authorized-pr-ledger-v1', STOCKSENSE_PR_NUMBER: String(pullNumber),
       STOCKSENSE_PR_BASE_SHA: BASE, STOCKSENSE_PR_HEAD_SHA: head,
       STOCKSENSE_STANDARDS_IMAGE: image, STOCKSENSE_KIOTA_IMAGE: image,
       STOCKSENSE_IMAGE_EVIDENCE_DIR: directory, STOCKSENSE_CANDIDATE_REVISION: revision };

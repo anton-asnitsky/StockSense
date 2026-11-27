@@ -34,7 +34,7 @@ const exactFields = (value, fields) => value && typeof value === 'object' &&
   fields.every(field => Object.hasOwn(value, field));
 
 /** PR receipts require independently fetched live authority in this exact CI execution. */
-async function verifyImageLedgerReceipt(directory, candidateRevision, records, sourceContext, prAuthorityInput) {
+export async function verifyImageLedgerSession(directory, candidateRevision, records, sourceContext, prAuthorityInput) {
   if (!COMMIT.test(candidateRevision ?? '')) {
     fail('IMAGE_LEDGER', 'BR6.5', 'Candidate revision is required for image evidence');
   }
@@ -127,10 +127,18 @@ async function verifyImageLedgerReceipt(directory, candidateRevision, records, s
       }
       // A new valid comment/attempt cannot revive this receipt: live retains the
       // original strong identities and refuses changes, including revocation.
-      await live.revalidate();
+      return { receipt, revalidate: live.revalidate };
     }
   }
-  return receipt;
+  return { receipt, revalidate: async () => {} };
+}
+
+// Preserve the existing SBOM lifecycle: no receipt is returned before the
+// retained live authority has been checked again at the terminal boundary.
+async function verifyImageLedgerReceipt(directory, candidateRevision, records, sourceContext, prAuthorityInput) {
+  const session = await verifyImageLedgerSession(directory, candidateRevision, records, sourceContext, prAuthorityInput);
+  await session.revalidate();
+  return session.receipt;
 }
 
 /** CycloneDX wants hex; npm integrity is base64. */

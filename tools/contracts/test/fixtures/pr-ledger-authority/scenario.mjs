@@ -21,16 +21,16 @@ const context = () => ({ eventName: 'pull_request', repository: REPO, pullNumber
   token: 'synthetic-unit-token', now: () => new Date('2026-11-28T00:00:00Z') });
 function fixture({ ledgerText = '{"schema":"stocksense-image-exceptions-v2","exceptions":[]}', extras = 0, contextOverride = {} } = {}) {
   const input = { ...context(), ...contextOverride }; const bytes = Buffer.from(ledgerText); const bid = blobId(bytes);
-  const body = `StockSense PR ledger authority v1: repository=1361237685 pr=74 base=${BASE} head=${input.headSha} candidate=${input.candidateTreeDigest} execution=${input.executionFingerprint} runtime=${input.runtimeManifestDigest} ledgerCommit=${sha(4)} ledgerBlob=${bid} ledgerSha256=${digest(bytes)} policyCommit=${input.headSha} expires=2026-11-30T00:00:00Z`;
+  const body = `StockSense PR ledger authority v1: repository=1361237685 pr=${input.pullNumber} base=${BASE} head=${input.headSha} candidate=${input.candidateTreeDigest} execution=${input.executionFingerprint} runtime=${input.runtimeManifestDigest} ledgerCommit=${sha(4)} ledgerBlob=${bid} ledgerSha256=${digest(bytes)} policyCommit=${input.headSha} expires=2026-11-30T00:00:00Z`;
   const comment = (id, text) => ({ id, body: text, user: { id: 8492824, login: 'anton-asnitsky', type: 'User' },
-    author_association: 'OWNER', issue_url: `https://api.github.com${P}/issues/74`,
+    author_association: 'OWNER', issue_url: `https://api.github.com${P}/issues/${input.pullNumber}`,
     created_at: '2026-11-27T00:00:00Z', updated_at: '2026-11-27T00:00:00Z' });
   const allComments = [comment(501, body), comment(502, `StockSense protected CI approval: ${BASE} ${input.headSha}`),
     ...Array.from({ length: extras }, (_, i) => ({ ...comment(600 + i, 'ordinary comment'),
       user: { id: 999, login: 'someone', type: 'User' }, author_association: 'NONE' }))];
   const repo = { id: 1361237685, full_name: REPO, default_branch: 'main',
     owner: { id: 8492824, login: 'anton-asnitsky', type: 'User' } };
-  const association = { number: 74, base: { repo: { id: repo.id } }, head: { repo: { id: repo.id }, sha: sha(999) } };
+  const association = { number: input.pullNumber, base: { repo: { id: repo.id } }, head: { repo: { id: repo.id }, sha: sha(999) } };
   const run = { id: 222, workflow_id: 386489834, path: '.github/workflows/public-pr-policy.yml',
     event: 'pull_request_target', head_sha: input.headSha, repository: repo, head_repository: repo,
     run_attempt: 2, check_suite_id: 444, status: 'completed', conclusion: 'success', pull_requests: [association] };
@@ -43,7 +43,7 @@ function fixture({ ledgerText = '{"schema":"stocksense-image-exceptions-v2","exc
   const check = { id: 333, name: job.name, head_sha: input.headSha, check_suite: { id: 444 },
     status: 'completed', conclusion: 'success', app: { id: 15368, slug: 'github-actions', owner: { id: 9919, login: 'github' } } };
   const data = new Map([
-    [P, repo], [`${P}/pulls/74`, { number: 74, state: 'open', merged: false, comments: allComments.length,
+    [P, repo], [`${P}/pulls/${input.pullNumber}`, { number: input.pullNumber, state: 'open', merged: false, comments: allComments.length,
       base: { sha: BASE, ref: 'bolt/u1-candidate-ready', repo }, head: { sha: input.headSha, repo }, merge_commit_sha: input.sourceRevision }],
     [`${P}/git/commits/${input.sourceRevision}`, { sha: input.sourceRevision, tree: { sha: input.candidateGitTreeSha }, parents: [{ sha: BASE }, { sha: input.headSha }] }],
     [`${P}/actions/runs/${input.currentRunId}`, { id: input.currentRunId,
