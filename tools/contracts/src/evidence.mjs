@@ -232,6 +232,16 @@ export function assertEvidenceContentSafe(record) {
  *   pull request cannot describe itself as touching nothing
  */
 export function assertCiPolicy(workflow, { changedPaths = [] } = {}) {
+  assertCiWorkflowStaticPolicy(workflow);
+  // Default callers cannot authorize a change to their own policy.
+  if (changedPaths.some(path => path.startsWith('.github/workflows/'))) {
+    fail('CI_WORKFLOW_CHANGE', 'BR6.7', 'A pull request changing workflow configuration needs the protected base workflow to decide');
+  }
+  return true;
+}
+
+/** Shared static checks; this function grants no change authority. @param {any} workflow */
+export function assertCiWorkflowStaticPolicy(workflow) {
   if (!object(workflow) || !object(workflow.jobs)) fail('CI_POLICY_SHAPE', 'BR6.7', 'Workflow needs a jobs map');
   const triggers = Array.isArray(workflow.on) ? workflow.on : Object.keys(workflow.on ?? {});
   // `permissions: write-all` and `read-all` are strings, not maps, so they
@@ -288,10 +298,6 @@ export function assertCiPolicy(workflow, { changedPaths = [] } = {}) {
         fail('CI_UNPINNED_ACTION', 'BR6.7', `Job ${name} uses an action that is not pinned to a commit`);
       }
     }
-  }
-  // A pull request editing the policy cannot be the run that credits it.
-  if (changedPaths.some(path => path.startsWith('.github/workflows/'))) {
-    fail('CI_WORKFLOW_CHANGE', 'BR6.7', 'A pull request changing workflow configuration needs the protected base workflow to decide');
   }
   return true;
 }
