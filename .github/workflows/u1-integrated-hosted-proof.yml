@@ -1,7 +1,7 @@
-name: U1 integrated candidate technical proof (diagnostic only)
+name: U1 policy candidate technical proof (diagnostic only)
 on:
   push:
-    branches: [codex/u1-integrated-hosted-proof]
+    branches: [codex/u1-policy-hosted-proof]
     paths: ['.github/workflows/u1-integrated-hosted-proof.yml', '.github/u1-integrated-proof/**']
 permissions:
   contents: read
@@ -16,7 +16,9 @@ jobs:
     timeout-minutes: 90
     env:
       PROOF_LANE: ${{ matrix.lane }}
-      CANDIDATE: 4805da7edb746b955ab4efd04012fb01b4a959dd
+      # Frozen production candidate; diagnostic harness is a separate checkout.
+      CANDIDATE_READY: 'true'
+      CANDIDATE: c1375dcaa03bec40f7915a2117ad0614856579b3
       SDK: mcr.microsoft.com/dotnet/sdk@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa
     steps:
       - name: Check out diagnostic harness
@@ -28,7 +30,7 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           path: candidate
-          ref: 4805da7edb746b955ab4efd04012fb01b4a959dd
+          ref: c1375dcaa03bec40f7915a2117ad0614856579b3
           fetch-depth: 0
           persist-credentials: false
       - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
@@ -40,6 +42,7 @@ jobs:
       - name: Bind diagnostic and production identities and install pinned tools
         run: |
           set -euo pipefail
+          test "$CANDIDATE_READY" = true
           test "$(git -C candidate rev-parse HEAD)" = "$CANDIDATE"
           test "$(git -C candidate rev-parse --is-shallow-repository)" = false
           mkdir -p "$RUNNER_TEMP/u1-integrated"/{proof,images}
@@ -55,6 +58,10 @@ jobs:
           grep -E '^1\.38\.0(\+|$)' "$proof/host-dotnet.txt"
           pnpm --dir candidate/tools/contracts setup:oasdiff
           docker pull --platform linux/amd64 "$SDK"
+      - name: Observe ordinary job token quota at start
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node audit/.github/u1-integrated-proof/quota-probe.mjs start
       - name: Build both actual production images through their normal entrypoints
         working-directory: candidate/tools/contracts
         run: |
@@ -133,6 +140,11 @@ jobs:
           node tools/contracts/scripts/security-reports.mjs secret-scan "$output"
           node tools/contracts/scripts/security-reports.mjs vulnerability-scan "$output"
           node tools/contracts/scripts/security-reports.mjs verify "$output"
+      - name: Observe ordinary job token quota at end
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node audit/.github/u1-integrated-proof/quota-probe.mjs end
       - name: Bind retained artifacts to immutable candidate
         if: always()
         run: node audit/.github/u1-integrated-proof/artifact-manifest.mjs
