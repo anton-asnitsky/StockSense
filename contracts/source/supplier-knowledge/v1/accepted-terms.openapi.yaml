@@ -223,3 +223,27 @@ servers:
   - url: /
 security:
   - serviceToken: []
+x-contract-fixtures:
+  - name: sealed-accepted-terms-selection
+    schemaRef: '#/components/schemas/AcceptedTermSelection'
+    expectedValid: true
+    value:
+      selectionId: 00000000-0000-4000-8000-000000000301
+      retailerId: 00000000-0000-4000-8000-000000000302
+      productId: 00000000-0000-4000-8000-000000000303
+      requesterSubject: synthetic-requester
+      payloadReference:
+        storeId: supplier-selections-v1
+        contentKey: sha256/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        sha256: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        lengthBytes: 256
+      payloadDigest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      sourceVersion: source-v4
+      acceptedTermVersion: terms-v7
+      authorityRevision: 9
+      authorityHeadDigest: sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+      signerKeyId: synthetic-key-v1
+      algorithm: Ed25519
+      signature: c3ludGhldGljLXNpZ25hdHVyZQ==
+      sealedAt: '2026-09-28T10:00:00Z'
+      expiresAt: '2026-09-28T10:05:00Z'

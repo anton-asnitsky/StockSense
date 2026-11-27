@@ -9,6 +9,7 @@ import { assertGenerationProfile, regenerateConsumer } from './generation.mjs';
 import { createBoundedGeneratorRunner } from './bounded-generators.mjs';
 import { createPinnedGeneratorRunner, DOTNET_HOST, GENERATORS, generatorConfigurationDigest } from './generators.mjs';
 import { buildSbom } from './sbom.mjs';
+import { readSbomSourceContext } from './sbom-context.mjs';
 import { readImageEvidence, IMAGE_NAMES } from './image-evidence.mjs';
 import { candidateTreeDigestFromGit, executionFingerprintFromGit,
   fetchImageLedger, readKiotaRuntimeEvidence, verifyBoundImageEvidence } from './image-ledger.mjs';
@@ -363,27 +364,34 @@ export async function buildCandidateEvidence({ repoRoot, bundlePath, sbomPath, i
   for (const name of ['secret-scan', 'vulnerability-scan']) {
     await boundedFile(join(securityDirectory, `${name}.json`), 16 * 1024 * 1024);
   }
-  await boundedFile(join(imageDirectory, 'ledger-verification.json'), 1024 * 1024);
+  const ledgerBytes = await boundedFile(join(imageDirectory, 'ledger-verification.json'), 1024 * 1024);
+  let ledger;
+  try { ledger = JSON.parse(ledgerBytes.toString('utf8')); } catch { fail('IMAGE_LEDGER', 'BR6.5', 'Image ledger receipt is malformed'); }
   const image = await readImageEvidence(imageDirectory, imageIds, { requireClean: false });
+  const sourceContext = ledger.schema === 'stocksense-image-ledger-verification-v2'
+    ? readSbomSourceContext(repoRoot, candidateRevision) : undefined;
   const sbom = await buildSbom(join(repoRoot, 'tools/contracts/pnpm-lock.yaml'), {
     name: '@stocksense/contracts-governance', version: '0.1.0', generator: 'stocksense-contracts-sbom',
     validatorImageDigest: validatorImageId, kiotaImageDigest: kiotaImageId,
-    imageEvidenceDirectory: imageDirectory, candidateRevision
+    imageEvidenceDirectory: imageDirectory, candidateRevision, sourceContext
   });
   const sbomBytes = await boundedFile(sbomPath, 64 * 1024 * 1024);
   if (!sbom.bytes.equals(sbomBytes)) fail('CANDIDATE_SBOM', 'BR6.5', 'Candidate CycloneDX bytes differ from the pinned toolchain and image evidence');
-  const ledgerBytes = await readFile(join(imageDirectory, 'ledger-verification.json'));
-  let ledger;
-  try { ledger = JSON.parse(ledgerBytes.toString('utf8')); } catch { fail('IMAGE_LEDGER', 'BR6.5', 'Image ledger receipt is malformed'); }
-  const tree = run('git', ['rev-parse', `${candidateRevision}^{tree}`], repoRoot, 'IMAGE_LEDGER');
-  const listing = spawnSync('git', ['ls-tree', '-r', '-z', '--full-tree', candidateRevision],
-    { cwd: repoRoot, shell: false, windowsHide: true, timeout: 10_000, maxBuffer: 32 * 1024 * 1024 });
-  if (!COMMIT.test(tree) || listing.error || listing.status !== 0) {
-    fail('IMAGE_LEDGER', 'BR6.5', 'Protected-main receipt differs from the candidate Git tree');
+  let tree, treeDigest, executionFingerprint;
+  if (sourceContext) {
+    ({ candidateGitTreeSha: tree, candidateTreeDigest: treeDigest, executionFingerprint } = sourceContext);
+  } else {
+    // Keep v1's existing immutable Git bindings without adding v2's clean-source restriction.
+    tree = run('git', ['rev-parse', `${candidateRevision}^{tree}`], repoRoot, 'IMAGE_LEDGER');
+    const listing = spawnSync('git', ['ls-tree', '-r', '-z', '--full-tree', candidateRevision],
+      { cwd: repoRoot, shell: false, windowsHide: true, timeout: 10_000, maxBuffer: 32 * 1024 * 1024 });
+    if (!COMMIT.test(tree) || listing.error || listing.status !== 0) {
+      fail('IMAGE_LEDGER', 'BR6.5', 'Protected-main receipt differs from the candidate Git tree');
+    }
+    treeDigest = candidateTreeDigestFromGit(listing.stdout);
+    executionFingerprint = executionFingerprintFromGit(listing.stdout);
   }
   const sourceDigest = await sourceTreeDigest();
-  const treeDigest = candidateTreeDigestFromGit(listing.stdout);
-  const executionFingerprint = executionFingerprintFromGit(listing.stdout);
   const runtimeManifestDigest = ledger.schema === 'stocksense-image-ledger-verification-v2'
     ? await readKiotaRuntimeEvidence(imageDirectory, kiotaImageId) : null;
   assertLedgerBinding(ledger, { candidateRevision, treeSha: tree,

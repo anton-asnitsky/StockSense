@@ -10,7 +10,7 @@ import { launchTool } from '../../src/container-tool-launcher.mjs';
 const repoRoot = fileURLToPath(new URL('../../../../', import.meta.url));
 const profile = JSON.parse(await readFile(new URL('../../../../contracts/samples/walking-skeleton/governance/generation-profile.json', import.meta.url)));
 const image = 'sha256:' + 'a'.repeat(64);
-const kiotaSha = '5e75f6adf161717be8d9f39eb596f93d52535e7b8cbcc00cffdcef3d0d3c3486';
+const kiotaSha = 'ec934c391c94e156543ce63cb497d6944180105b2b794b8b3a53a89b89cd4d82';
 const containerId = 'b'.repeat(64);
 
 function fixture(runResult, inspectStatus = 1, removeStatus = 0, copyStatus = 0) {
@@ -170,8 +170,8 @@ test('all Kiota Dockerfile RUN instructions use exec form and pin the minimal ru
   const dockerfile = await readFile(new URL('../../Dockerfile.generator-kiota', import.meta.url), 'utf8');
   const runs = dockerfile.split(/\r?\n/).filter(line => line.startsWith('RUN '));
   assert.ok(runs.length > 0);
-  for (const line of runs) assert.ok(Array.isArray(JSON.parse(line.slice(4))), line);
-  assert.match(dockerfile, /dotnet-runtime:latest@sha256:e09b08bbe55a530fa08c5131a22c62a2ab35da8c7ab93791115d6d3ce8b804a6/);
+  for (const line of runs) assert.ok(Array.isArray(JSON.parse(line.replace(/^RUN (?:--mount=\S+ )*/, ''))), line);
+  assert.match(dockerfile, /mcr\.microsoft\.com\/dotnet\/runtime@sha256:e7e90bfc3ce16f9efdf18c25c7e4876af4ffba7ea50582878f6ea05b1e04a7ec/);
   assert.match(dockerfile, /<TargetFramework>net10\.0<\/TargetFramework>/);
   assert.match(dockerfile, /COPY --from=build \/opt\/kiota-probe \/opt\/kiota-probe/);
 });

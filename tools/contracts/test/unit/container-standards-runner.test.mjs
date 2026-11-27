@@ -80,7 +80,7 @@ function seam(run = () => ok(''), digest = hostSourceDigest) {
     if (argv[0] === 'rm' && argv[2] === digestContainerId) return ok('');
     calls.push({ command, argv, options });
     if (argv[0] === 'context') return ok(localContext + '\n');
-    if (argv[0] === 'info') return ok('linux\n');
+    if (argv[0] === 'version') return ok('linux\n');
     if (argv[0] === 'rm') return ok('');
     return run(argv, options);
   };
@@ -104,7 +104,10 @@ test('OpenAPI launches the exact constrained Docker profile and binds only snaps
       { ...options, spawn: fake.spawn }), { dialect: 'openapi:3.1.2', valid: true });
     assert.equal(fake.calls.length, 4);
     assert.ok(fake.calls.every(call => call.command === docker));
-    assert.deepEqual(fake.calls.map(call => call.argv[0]), ['context', 'info', 'run', 'rm']);
+    assert.deepEqual(fake.calls.map(call => call.argv[0]), ['context', 'version', 'run', 'rm']);
+    assert.deepEqual(fake.calls[1].argv, ['version', '--format', '{{.Server.Os}}']);
+    assert.equal(fake.calls[1].options.timeout, 5_000);
+    assert.equal(fake.calls[1].options.maxBuffer, 1_048_576);
     const name = fake.calls[2].argv[3];
     assert.match(name, /^stocksense-standards-[0-9a-f-]{36}$/);
     assert.deepEqual(fake.calls[2].argv, ['run', '--pull=never', '--name', name, '--network=none', '--read-only',
@@ -280,13 +283,46 @@ test('symlinked graph member is refused', async t => {
 
 test('remote or Windows-container engine fails closed', async () => {
   await withGraph(async options => {
-    for (const [phase, stdout] of [['context', 'tcp://example.org:2376\n'], ['info', 'windows\n']]) {
+    for (const [phase, stdout] of [['context', 'tcp://example.org:2376\n'], ['version', 'windows\n']]) {
       const fake = seam();
       const spawn = (command, argv, opts) => argv[0] === phase ? ok(stdout) : fake.spawn(command, argv, opts);
       await expectCode(runContainerStandardsValidator('openapi:3.1.2', options.sourceDocument,
         { ...options, spawn }), 'STANDARDS_ENGINE', 'NFR6.2');
       assert.equal(fake.calls.some(call => call.argv[0] === 'run'), false);
     }
+  });
+});
+
+test('server OS query rejects missing, malformed and failed responses before running a container', async () => {
+  await withGraph(async options => {
+    for (const result of [ok(''), ok('<no value>\n'), ok('Linux\n'), ok('linux\nwindows\n'),
+      { ...ok('linux\n'), status: 1 },
+      { ...ok('linux\n'), status: null, error: { code: 'ETIMEDOUT' } },
+      { ...ok('linux\n'), signal: 'SIGTERM' }]) {
+      const fake = seam();
+      const spawn = (command, argv, opts) => argv[0] === 'version'
+        ? result : fake.spawn(command, argv, opts);
+      await expectCode(runContainerStandardsValidator('openapi:3.1.2', options.sourceDocument,
+        { ...options, spawn }), 'STANDARDS_ENGINE', 'NFR6.2');
+      assert.equal(fake.calls.some(call => call.argv[0] === 'run'), false);
+    }
+  });
+});
+
+test('server OS is checked again for the same image on every validator invocation', async () => {
+  await withGraph(async options => {
+    const fake = seam();
+    let probes = 0;
+    const spawn = (command, argv, opts) => {
+      if (argv[0] === 'version') return ok(++probes === 1 ? 'linux\n' : 'windows\n');
+      return fake.spawn(command, argv, opts);
+    };
+    await runContainerStandardsValidator('openapi:3.1.2', options.sourceDocument, { ...options, spawn });
+    await expectCode(runContainerStandardsValidator('openapi:3.1.2', options.sourceDocument,
+      { ...options, spawn }), 'STANDARDS_ENGINE', 'NFR6.2');
+    assert.equal(probes, 2);
+    assert.equal(fake.calls.filter(call => call.argv[0] === 'context').length, 2);
+    assert.equal(fake.calls.filter(call => call.argv[0] === 'run').length, 1);
   });
 });
 
@@ -394,11 +430,13 @@ test('fixture mode accepts only the governed inline response result identity', a
     const entry = options.entries.find(item => item.artifactKind === 'openapi');
     const row = { fixtureId: 'inline-response', contractElementId: 'response:getIdentity:200:application-json',
       revisionId: entry.revisionId, scenarioType: 'valid', observed: 'pass' };
-    const accepted = seam(() => ok(JSON.stringify({ version: 1, fixtureResults: [row] })));
+    const operation = { ...row, fixtureId: 'export-conflict', contractElementId: 'operation:requestRetailDatasetExport:409' };
+    const accepted = seam(() => ok(JSON.stringify({ version: 1, fixtureResults: [row, operation] })));
     assert.deepEqual((await runContainerStandardsValidator('fixture-oracle:2020-12', options.sourceDocument,
-      { ...options, spawn: accepted.spawn })).fixtureResults, [row]);
+      { ...options, spawn: accepted.spawn })).fixtureResults, [row, operation]);
     for (const contractElementId of ['response:getIdentity:200:application-json:extra',
-      'response:getIdentity:200:application-xml']) {
+      'response:getIdentity:200:application-xml', 'operation:requestRetailDatasetExport:600',
+      'operation:requestRetailDatasetExport:409:extra']) {
       const rejected = seam(() => ok(JSON.stringify({ version: 1,
         fixtureResults: [{ ...row, contractElementId }] })));
       await expectCode(runContainerStandardsValidator('fixture-oracle:2020-12', options.sourceDocument,
@@ -444,7 +482,7 @@ test('the standards image must carry exact source bytes without a shell', async 
       const spawn = (_command, argv) => {
         calls.push(argv);
         if (argv[0] === 'context') return ok(localContext + '\n');
-        if (argv[0] === 'info') return ok('linux\n');
+        if (argv[0] === 'version') return ok('linux\n');
         if (argv[0] === 'create') return failure === 'create' ? { status: 125 } : ok(digestContainerId + '\n');
         if (argv[0] === 'cp') {
           if (failure === 'cp') return { status: 1 };
@@ -473,7 +511,7 @@ test('the standards image must carry exact source bytes without a shell', async 
     }
     const matching = reading(hostSourceDigest + '\n');
     assert.deepEqual(await run(subject('2'), matching.spawn), { dialect: 'openapi:3.1.2', valid: true });
-    assert.deepEqual(matching.calls.map(argv => argv[0]), ['context', 'info', 'create', 'cp', 'rm', 'run', 'rm']);
+    assert.deepEqual(matching.calls.map(argv => argv[0]), ['context', 'version', 'create', 'cp', 'rm', 'run', 'rm']);
     assert.ok(matching.calls[2].includes('--network=none'));
     assert.ok(matching.calls[2].includes('--pull=never'));
     assert.ok(matching.calls[2].includes('--read-only'));

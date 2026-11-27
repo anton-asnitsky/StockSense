@@ -39,9 +39,9 @@ test('image worker runs the real policy fixture oracle over the verified sample 
   await withSample(async ({ root, indexPath, sourceDocument }) => {
     const result = JSON.parse(await runFixtureWorker(root, indexPath, sourceDocument));
     assert.equal(result.version, 1);
-    assert.equal(result.fixtureResults.length, 10);
+    assert.equal(result.fixtureResults.length, 11);
     assert.deepEqual(result.fixtureResults.map(row => row.observed),
-      ['pass', 'pass', 'fail', 'fail', 'pass', 'fail', 'pass', 'fail', 'pass', 'fail']);
+      ['pass', 'pass', 'fail', 'fail', 'pass', 'fail', 'pass', 'fail', 'pass', 'fail', 'pass']);
   });
 });
 
@@ -58,7 +58,7 @@ test('image worker accepts post-materialization canonical digest with original r
     index.files.find(file => file.document === canonical.document).digest = snapshotDigest;
     await writeIndex();
     const result = JSON.parse(await runFixtureWorker(root, indexPath, sourceDocument));
-    assert.equal(result.fixtureResults.length, 10);
+    assert.equal(result.fixtureResults.length, 11);
     assert.equal(canonical.revisionId, originalRevisionId);
   });
 });
@@ -107,6 +107,10 @@ test('image worker accepts revision-bound inline responses and AsyncAPI messages
     await writeFile(indexPath, JSON.stringify(index));
     const result = JSON.parse(await runFixtureWorker(root, indexPath, sourceDocument));
     const inline = result.fixtureResults.filter(row => row.contractElementId.startsWith('response:'));
+    const operationCases = result.fixtureResults.filter(row => row.contractElementId.startsWith('operation:'));
+    assert.equal(operationCases.length, 33);
+    assert.ok(operationCases.every(row => row.observed === 'pass'));
+    assert.equal(new Set(operationCases.map(row => row.revisionId)).size, 7);
     assert.ok(inline.length >= 4);
     assert.ok(inline.some(row => row.observed === 'pass'));
     assert.ok(inline.some(row => row.observed === 'fail'));

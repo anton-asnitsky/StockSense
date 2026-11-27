@@ -36,7 +36,7 @@ export const GENERATORS = Object.freeze({
   // --output names. Class and namespace are fixed here with every other
   // argument, so a consumer profile cannot steer the generated surface.
   kiota: Object.freeze({
-    version: '1.35.0',
+    version: '1.38.0',
     command: DOTNET_HOST,
     cwd: 'repository',
     outputPath: 'dotnet-client',

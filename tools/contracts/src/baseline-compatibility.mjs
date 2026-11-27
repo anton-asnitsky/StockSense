@@ -6,7 +6,8 @@ import { mkdir } from 'node:fs/promises';
 import { ContractError, assertSafePath, deriveIdentity, digest } from './package-loader.mjs';
 import { readBlob } from './provenance.mjs';
 import { buildSourceInventory, OWNER_BY_AREA } from './catalogue.mjs';
-import { assertIntegrationBaseline, assessCompatibility, bindPredecessors } from './compatibility.mjs';
+import { assertIntegrationBaseline, assessCompatibility, bindPredecessors,
+  createPreflightedSnapshotDiffer } from './compatibility.mjs';
 
 // Compare the whole canonical catalogue against an immutable baseline commit.
 //
@@ -98,16 +99,17 @@ export async function assessCatalogueAgainstBaseline(repoRoot, baselineCommit,
   // materialised once into a scratch tree that is removed again. Nothing is
   // fetched and nothing is written inside the repository.
   const scratch = await mkdtemp(join(tmpdir(), 'stocksense-baseline-'));
-  const baselineBytes = new Map(previous.map(entry => [entry.document, entry.bytes]));
+  const baselineRoot = join(scratch, 'baseline');
   try {
-    const resolveSource = async binding => {
-      const bytes = baselineBytes.get(binding.predecessorDocument ?? binding.document);
-      if (!bytes) fail('DIFF_SOURCE', 'BR4.3', 'The baseline bytes for a bound document are unavailable');
-      const predecessorPath = join(scratch, binding.predecessorDocument ?? binding.document);
-      await mkdir(dirname(predecessorPath), { recursive: true });
-      await writeFile(predecessorPath, bytes);
-      return { predecessorPath, candidatePath: join(repoRoot, 'contracts/source', binding.document) };
-    };
+    for (const entry of previous) {
+      const path = join(baselineRoot, entry.document);
+      await mkdir(dirname(path), { recursive: true });
+      await writeFile(path, entry.bytes);
+    }
+    const snapshot = await createPreflightedSnapshotDiffer({
+      predecessorRoot: baselineRoot, predecessorEntries: previous,
+      candidateRoot: join(repoRoot, 'contracts/source'), candidateEntries: inventory.entries
+    });
 
     // oasdiff judges OpenAPI only. Changed AsyncAPI and schema documents are
     // assessed only under explicit predecessor-bound approval. An exploratory
@@ -117,7 +119,12 @@ export async function assessCatalogueAgainstBaseline(repoRoot, baselineCommit,
       Object.hasOwn(approvals, binding.logicalId));
     const undiffable = bindings.filter(binding => !diffable.includes(binding));
 
-    const assessments = await assessCompatibility({ bindings: diffable, approvals, resolveSource });
+    let assessments;
+    try {
+      assessments = await assessCompatibility({ bindings: diffable, approvals, runDiff: snapshot.runDiff });
+    } finally {
+      await snapshot.cleanup();
+    }
     /** @type {Record<string, number>} */
     const tally = {};
     for (const assessment of assessments) tally[assessment.outcome] = (tally[assessment.outcome] ?? 0) + 1;

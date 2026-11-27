@@ -18,7 +18,7 @@ const profilePath = join(repoRoot, 'contracts/samples/walking-skeleton/governanc
 const CONSUMERS = [
   { consumerId: 'web-application', generator: 'openapi-typescript', generatorVersion: '7.13.0',
     sourceDocument: 'web-bff/v1/browser-api.openapi.yaml', output: 'browser-api.d.ts' },
-  { consumerId: 'dotnet-operations-client', generator: 'kiota', generatorVersion: '1.35.0',
+  { consumerId: 'dotnet-operations-client', generator: 'kiota', generatorVersion: '1.38.0',
     sourceDocument: 'web-bff/v1/browser-api.openapi.yaml', output: 'dotnet-client' },
   { consumerId: 'messaging-typescript', generator: 'modelina', generatorVersion: '5.10.1',
     sourceDocument: 'messaging-platform/v1/transport-conformance.asyncapi.yaml', output: 'message-models' }

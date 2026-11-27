@@ -1,11 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  applyExceptions, assertCheckResult, assertCiPolicy, assertEvidenceContentSafe, assertException,
+  applyExceptions, assertCheckResult, assertCiPolicy, assertCiWorkflowStaticPolicy, assertEvidenceContentSafe, assertException,
   assertScanGates, buildEvidenceRecord, C19_OUTCOMES, REQUIRED_GATES, verifyAttestation, verifyReceipt
 } from '../../src/evidence.mjs';
 
 const expectCode = (fn, code) => assert.throws(fn, error => error.code === code);
+
+test('shared static workflow checks preserve the default change refusal and reject unsafe shapes', () => {
+  const workflow = { on: ['pull_request'], permissions: { contents: 'read' },
+    jobs: { check: { 'runs-on': 'ubuntu-latest', steps: [{ uses: `actions/checkout@${'a'.repeat(40)}` }] } } };
+  assert.equal(assertCiWorkflowStaticPolicy(workflow), true);
+  assert.equal(assertCiPolicy(workflow), true);
+  expectCode(() => assertCiPolicy(workflow, { changedPaths: ['.github/workflows/contracts-required.yml'] }), 'CI_WORKFLOW_CHANGE');
+  for (const [changed, code] of [
+    [{ ...workflow, on: ['pull_request_target'] }, 'CI_UNTRUSTED_TRIGGER'],
+    [{ ...workflow, permissions: 'write-all' }, 'CI_EXCESSIVE_PERMISSIONS'],
+    [{ ...workflow, jobs: 'missing map' }, 'CI_POLICY_SHAPE']
+  ]) {
+    expectCode(() => assertCiWorkflowStaticPolicy(changed), code);
+    expectCode(() => assertCiPolicy(changed), code);
+  }
+});
 const sha = char => {
   if (!/^[0-9a-f]$/.test(char)) throw new Error('digest fill must be a hex character');
   return 'sha256:' + char.repeat(64);

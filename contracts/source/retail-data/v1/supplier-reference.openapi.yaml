@@ -35,3 +35,20 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+x-contract-operation-examples:
+  - operationId: getSupplierReferenceData
+    name: authorized-products
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101 }
+      query: { productIds: [00000000-0000-4000-8000-000000000102] }
+    responseStatus: '200'
+  - operationId: getSupplierReferenceData
+    name: retailer-authority-denied
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101 }
+    responseStatus: '403'
+  - operationId: getSupplierReferenceData
+    name: stale-source-version
+    request:
+      path: { retailerId: 00000000-0000-4000-8000-000000000101 }
+    responseStatus: '409'
