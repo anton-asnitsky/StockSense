@@ -1,23 +1,1364 @@
 {
-  "schema": "stocksense-image-exceptions-v1",
+  "schema": "stocksense-image-exceptions-v2",
   "exceptions": [
     {
-      "candidateTreeDigest": "sha256:24d34f5394aaedb15d768ecbedc93ac760c0861b8eacb3b52a765da66ae17b76",
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
       "finding": {
-        "id": "GHSA-qhrr-8q5h-9q3h",
+        "id": "CVE-2026-124709",
         "image": "kiota",
-        "package": "MessagePack",
-        "version": "2.5.302",
-        "type": "dotnet",
-        "purl": "pkg:nuget/MessagePack@2.5.302",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
         "severity": "Medium",
-        "fixState": "fixed",
-        "owner": "StockSense repository owner",
-        "rationale": "Kiota 1.35.0 bundles affected MessagePack. The pinned generation path invokes only kiota generate; no route to untrusted MessagePack object deserialization was identified. This is a time-limited reachability assessment, not proof that the library is safe.",
-        "compensatingControl": "Verify exact Kiota package SHA-256 5e75f6adf161717be8d9f39eb596f93d52535e7b8cbcc00cffdcef3d0d3c3486; fixed generate arguments; immutable image and source-bound scan; network-disabled, read-only, non-root container; 2 GiB memory and 120-second limits. Reassess on upstream fix or invocation change.",
-        "approvalReference": "AI-DLC QUESTION_ANSWERED 2026-10-29T16:47:09Z, after DECISION_RECORDED 2026-10-29T16:14:54Z and HUMAN_TURN 2026-10-29T16:46:52Z; immutable decision https://github.com/anton-asnitsky/StockSense/blob/1dfc0fd4bbc46735a1fc144e6d829fc74b395937/aidlc/spaces/default/intents/260908-stock-sense-design/construction/contracts/code-generation/pr66-image-exception-questions.md; retained scan https://github.com/anton-asnitsky/StockSense/actions/runs/40907744878",
-        "createdAt": "2026-10-29T16:48:21Z",
-        "expiresAt": "2026-11-25T00:00:00Z"
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-124709",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-107494",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-107494",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-121481",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. Near-INT_MAX EVP_EncodeBlock size can overflow; input bounds alone do not prove every native intermediate encoding size.",
+        "compensatingControl": "1 MiB source/32 MiB package bounds, 2 GiB memory and timeout reduce exposure; retain uncertainty about native intermediates. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-121481",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. Near-INT_MAX EVP_EncodeBlock size can overflow; input bounds alone do not prove every native intermediate encoding size.",
+        "compensatingControl": "1 MiB source/32 MiB package bounds, 2 GiB memory and timeout reduce exposure; retain uncertainty about native intermediates. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-121482",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-84786",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. DANE-enabled TLS client trigger; actual offline invocation blocks external connectivity, but complete absence of native DANE calls is not proven.",
+        "compensatingControl": "Network none, no host networking or sockets, fixed input/profile and isolated process; do not claim package immunity. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-121482",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-84786",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. DANE-enabled TLS client trigger; actual offline invocation blocks external connectivity, but complete absence of native DANE calls is not proven.",
+        "compensatingControl": "Network none, no host networking or sockets, fixed input/profile and isolated process; do not claim package immunity. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-95692",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-95692",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-126765",
+        "image": "kiota",
+        "package": "libc6",
+        "version": "2.39-0ubuntu8.12",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. glob allocation-failure double free remains potentially reachable; fixed paths do not prove native glob absence.",
+        "compensatingControl": "Keep fixed paths and isolated disposable process; timeout/memory controls bound consequences but memory pressure may trigger failure. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-100290",
+        "image": "kiota",
+        "package": "libc6",
+        "version": "2.39-0ubuntu8.12",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. POSIX regcomp/regexec allocation-failure cleanup remains potentially reachable in native dependencies; no complete native-call proof.",
+        "compensatingControl": "120-second timeout and 2 GiB bound limit effects, but memory pressure can trigger the bug; retain process isolation and reviewed input. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-121758",
+        "image": "kiota",
+        "package": "libc6",
+        "version": "2.39-0ubuntu8.12",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. Complete binary/build-link exclusion has not been established. The following absence evidence reduces exposure but does not prove non-applicability: Upstream glibc maps ISO-2022-CN-EXT to a separate module; both payloads lack gconv and ISO-2022-CN-EXT.so.",
+        "compensatingControl": "Retain immutable filesystem/no network/no additional mounts; do not generalize to other libc conversion routines. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-124024",
+        "image": "kiota",
+        "package": "libc6",
+        "version": "2.39-0ubuntu8.12",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. Complete binary/build-link exclusion has not been established. The following absence evidence reduces exposure but does not prove non-applicability: Upstream glibc builds IBM1390/1399 conversions as separate modules; both payloads lack gconv and IBM1390.so/IBM1399.so.",
+        "compensatingControl": "Retain immutable filesystem/no network/no additional mounts; source evidence and payload absence are not an exhaustive static call graph. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-121757",
+        "image": "kiota",
+        "package": "libc6",
+        "version": "2.39-0ubuntu8.12",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. Complete binary/build-link exclusion has not been established. The following absence evidence reduces exposure but does not prove non-applicability: Upstream glibc maps CP949 to the separate UHC gconv module; both payloads lack gconv and UHC.so.",
+        "compensatingControl": "Retain immutable filesystem/no network/no additional mounts; a custom embedded conversion implementation was not exhaustively disproved. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-107496",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. OpenSSL 3.0 is affected by CMS encryption with abnormal EC group order; absence of CMS calls is not proven.",
+        "compensatingControl": "No intended CMS encryption input, no network, 120-second kill/cleanup and resource limits bound denial-of-service impact. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-107496",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. OpenSSL 3.0 is affected by CMS encryption with abnormal EC group order; absence of CMS calls is not proven.",
+        "compensatingControl": "No intended CMS encryption input, no network, 120-second kill/cleanup and resource limits bound denial-of-service impact. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-95690",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. DTLS fragment buffering trigger; offline invocation reduces practical exposure, but no exhaustive proof excludes internally constructed DTLS data.",
+        "compensatingControl": "Network none, fixed contract input, timeout/cleanup and memory bounds; source-level no-DTLS intent is not a full call graph. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-95690",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. DTLS fragment buffering trigger; offline invocation reduces practical exposure, but no exhaustive proof excludes internally constructed DTLS data.",
+        "compensatingControl": "Network none, fixed contract input, timeout/cleanup and memory bounds; source-level no-DTLS intent is not a full call graph. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-115819",
+        "image": "kiota",
+        "package": "libc6",
+        "version": "2.39-0ubuntu8.12",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. Specific wide-scanf conversion overflow remains potentially reachable; absence of a CLI does not exclude libc calls.",
+        "compensatingControl": "Fixed generation profile, bounded source input, non-root/no capabilities/read-only filesystem limit exposure and impact, not memory-corruption possibility. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-95691",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-95691",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-88823",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-88823",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-35190",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-35190",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-88822",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-88822",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2016-20013",
+        "image": "kiota",
+        "package": "libc6",
+        "version": "2.39-0ubuntu8.12",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+        "severity": "Negligible",
+        "fixState": "wont-fix",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. Complete binary/build-link exclusion has not been established. The following absence evidence reduces exposure but does not prove non-applicability: glibc 2.39 removed libcrypt; both complete payloads lack libcrypt/libxcrypt. No corresponding library file was found, but statically embedded implementation has not been excluded.",
+        "compensatingControl": "Preserve exact payload and prohibit adding crypt providers; absence inspection does not exhaustively rule out embedded third-party implementations. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2025-5222",
+        "image": "kiota",
+        "package": "libicu74",
+        "version": "74.2-1ubuntu3.1",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libicu74@74.2-1ubuntu3.1?arch=amd64&distro=ubuntu-24.04&upstream=icu",
+        "severity": "Low",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. Complete binary/build-link exclusion has not been established. The following absence evidence reduces exposure but does not prove non-applicability: Official ICU corrective commit changes only tools/genrb/parse.cpp; both complete payloads lack genrb. ICU runtime libraries remain present and are not declared fixed.",
+        "compensatingControl": "Keep build tools out of runtime and retain exact inventory; this is a tool-specific conclusion, not package-wide immunity. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-107493",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. OpenSSL 3.0 is affected by caller-supplied non-null PEM X509_INFO stack reuse; native PEM call paths are not fully proven absent.",
+        "compensatingControl": "No intentional attacker PEM input; fixed reviewed contracts, no network and isolated process reduce exposure. libcrypto remains present. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-107493",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. OpenSSL 3.0 is affected by caller-supplied non-null PEM X509_INFO stack reuse; native PEM call paths are not fully proven absent.",
+        "compensatingControl": "No intentional attacker PEM input; fixed reviewed contracts, no network and isolated process reduce exposure. libcrypto remains present. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-124709",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-124709",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-107494",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-107494",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-121481",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. Near-INT_MAX EVP_EncodeBlock size can overflow; input bounds alone do not prove every native intermediate encoding size.",
+        "compensatingControl": "1 MiB source/32 MiB package bounds, 2 GiB memory and timeout reduce exposure; retain uncertainty about native intermediates. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-121481",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. Near-INT_MAX EVP_EncodeBlock size can overflow; input bounds alone do not prove every native intermediate encoding size.",
+        "compensatingControl": "1 MiB source/32 MiB package bounds, 2 GiB memory and timeout reduce exposure; retain uncertainty about native intermediates. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-121482",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-84786",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. DANE-enabled TLS client trigger; actual offline invocation blocks external connectivity, but complete absence of native DANE calls is not proven.",
+        "compensatingControl": "Network none, no host networking or sockets, fixed input/profile and isolated process; do not claim package immunity. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-121482",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-84786",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. DANE-enabled TLS client trigger; actual offline invocation blocks external connectivity, but complete absence of native DANE calls is not proven.",
+        "compensatingControl": "Network none, no host networking or sockets, fixed input/profile and isolated process; do not claim package immunity. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-95692",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-95692",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-126765",
+        "image": "kiota",
+        "package": "libc6",
+        "version": "2.39-0ubuntu8.12",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. glob allocation-failure double free remains potentially reachable; fixed paths do not prove native glob absence.",
+        "compensatingControl": "Keep fixed paths and isolated disposable process; timeout/memory controls bound consequences but memory pressure may trigger failure. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-100290",
+        "image": "kiota",
+        "package": "libc6",
+        "version": "2.39-0ubuntu8.12",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. POSIX regcomp/regexec allocation-failure cleanup remains potentially reachable in native dependencies; no complete native-call proof.",
+        "compensatingControl": "120-second timeout and 2 GiB bound limit effects, but memory pressure can trigger the bug; retain process isolation and reviewed input. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-121758",
+        "image": "kiota",
+        "package": "libc6",
+        "version": "2.39-0ubuntu8.12",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. Complete binary/build-link exclusion has not been established. The following absence evidence reduces exposure but does not prove non-applicability: Upstream glibc maps ISO-2022-CN-EXT to a separate module; both payloads lack gconv and ISO-2022-CN-EXT.so.",
+        "compensatingControl": "Retain immutable filesystem/no network/no additional mounts; do not generalize to other libc conversion routines. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-124024",
+        "image": "kiota",
+        "package": "libc6",
+        "version": "2.39-0ubuntu8.12",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. Complete binary/build-link exclusion has not been established. The following absence evidence reduces exposure but does not prove non-applicability: Upstream glibc builds IBM1390/1399 conversions as separate modules; both payloads lack gconv and IBM1390.so/IBM1399.so.",
+        "compensatingControl": "Retain immutable filesystem/no network/no additional mounts; source evidence and payload absence are not an exhaustive static call graph. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-121757",
+        "image": "kiota",
+        "package": "libc6",
+        "version": "2.39-0ubuntu8.12",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. Complete binary/build-link exclusion has not been established. The following absence evidence reduces exposure but does not prove non-applicability: Upstream glibc maps CP949 to the separate UHC gconv module; both payloads lack gconv and UHC.so.",
+        "compensatingControl": "Retain immutable filesystem/no network/no additional mounts; a custom embedded conversion implementation was not exhaustively disproved. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-107496",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. OpenSSL 3.0 is affected by CMS encryption with abnormal EC group order; absence of CMS calls is not proven.",
+        "compensatingControl": "No intended CMS encryption input, no network, 120-second kill/cleanup and resource limits bound denial-of-service impact. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-107496",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. OpenSSL 3.0 is affected by CMS encryption with abnormal EC group order; absence of CMS calls is not proven.",
+        "compensatingControl": "No intended CMS encryption input, no network, 120-second kill/cleanup and resource limits bound denial-of-service impact. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-95690",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. DTLS fragment buffering trigger; offline invocation reduces practical exposure, but no exhaustive proof excludes internally constructed DTLS data.",
+        "compensatingControl": "Network none, fixed contract input, timeout/cleanup and memory bounds; source-level no-DTLS intent is not a full call graph. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-95690",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. DTLS fragment buffering trigger; offline invocation reduces practical exposure, but no exhaustive proof excludes internally constructed DTLS data.",
+        "compensatingControl": "Network none, fixed contract input, timeout/cleanup and memory bounds; source-level no-DTLS intent is not a full call graph. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-115819",
+        "image": "kiota",
+        "package": "libc6",
+        "version": "2.39-0ubuntu8.12",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. Specific wide-scanf conversion overflow remains potentially reachable; absence of a CLI does not exclude libc calls.",
+        "compensatingControl": "Fixed generation profile, bounded source input, non-root/no capabilities/read-only filesystem limit exposure and impact, not memory-corruption possibility. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-95691",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-95691",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-88823",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-88823",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-35190",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-35190",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-88822",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-88822",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific non-applicability; not a claim that the package is fixed. The applicable retained OpenSSL advisory explicitly lists the 3.0 series as unaffected. Actual package is 3.0.13-0ubuntu3.16 and both runtime payloads preserve the reviewed library objects. This is version-specific, not inferred from Ubuntu Needs evaluation.",
+        "compensatingControl": "Preserve exact OpenSSL package/object hashes; invalidate on version, feature, vendor-status or finding changes. No missing-CLI argument is used. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2016-20013",
+        "image": "kiota",
+        "package": "libc6",
+        "version": "2.39-0ubuntu8.12",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libc6@2.39-0ubuntu8.12?arch=amd64&distro=ubuntu-24.04&upstream=glibc",
+        "severity": "Negligible",
+        "fixState": "wont-fix",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. Complete binary/build-link exclusion has not been established. The following absence evidence reduces exposure but does not prove non-applicability: glibc 2.39 removed libcrypt; both complete payloads lack libcrypt/libxcrypt. No corresponding library file was found, but statically embedded implementation has not been excluded.",
+        "compensatingControl": "Preserve exact payload and prohibit adding crypt providers; absence inspection does not exhaustively rule out embedded third-party implementations. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2025-5222",
+        "image": "kiota",
+        "package": "libicu74",
+        "version": "74.2-1ubuntu3.1",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libicu74@74.2-1ubuntu3.1?arch=amd64&distro=ubuntu-24.04&upstream=icu",
+        "severity": "Low",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. Complete binary/build-link exclusion has not been established. The following absence evidence reduces exposure but does not prove non-applicability: Official ICU corrective commit changes only tools/genrb/parse.cpp; both complete payloads lack genrb. ICU runtime libraries remain present and are not declared fixed.",
+        "compensatingControl": "Keep build tools out of runtime and retain exact inventory; this is a tool-specific conclusion, not package-wide immunity. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-107493",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. OpenSSL 3.0 is affected by caller-supplied non-null PEM X509_INFO stack reuse; native PEM call paths are not fully proven absent.",
+        "compensatingControl": "No intentional attacker PEM input; fixed reviewed contracts, no network and isolated process reduce exposure. libcrypto remains present. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-107493",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved temporary risk; non-applicability is not proven. OpenSSL 3.0 is affected by caller-supplied non-null PEM X509_INFO stack reuse; native PEM call paths are not fully proven absent.",
+        "compensatingControl": "No intentional attacker PEM input; fixed reviewed contracts, no network and isolated process reduce exposure. libcrypto remains present. Kiota1.38.0 fixed generate; no network; non-root; no capabilities; no-new-privileges; read-only root; bounded mounts;128PIDs;1MiB source/32MiB package;2GiB/120s cleanup. Recheck vendor fixes; identity changes invalidate.",
+        "approvalReference": "Owner anton-asnitsky finding decision: https://github.com/anton-asnitsky/StockSense/blob/8304b42748911a722ebf05e5d7f2ee5b11d2e2da/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-ci-finding-approval-2026-11-27.md; approved proposal SHA256 753346d0b1ec5cf8e9f6badb7ebf6640b49a71f4b79462d3e98a374d378f101e. QUESTION_ANSWERED 2026-11-27T09:16:27Z audit/anton-pc-bdb2a6a5dca8.md:1084; separate PR publication authority required.",
+        "createdAt": "2026-11-27T09:20:02.153Z",
+        "expiresAt": "2026-11-30T00:00:00Z"
       }
     }
   ]
