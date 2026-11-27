@@ -190,7 +190,7 @@ uses the inspected immutable image ID. The current C01/C18 sample is not the
 full C01-C27 resource-acceptance proof.
 
 Kiota is pinned separately as the local .NET tool
-`Microsoft.OpenApi.Kiota` 1.35.0 in `.config/dotnet-tools.json`. Restore it
+`Microsoft.OpenApi.Kiota` 1.38.0 in `.config/dotnet-tools.json`. Restore it
 from the repository root with
 `dotnet tool restore --configfile tools/contracts/nuget.config`, then check
 `dotnet tool run kiota -- --version`. This installs the generator for

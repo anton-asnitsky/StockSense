@@ -318,7 +318,9 @@ export async function runContainerStandardsValidator(dialect, sourceDocument, op
       : ['unix:///var/run/docker.sock', 'unix:///run/docker.sock'].includes(context))) {
       fail('STANDARDS_ENGINE', 'NFR6.2', 'Docker context must use a local engine');
     }
-    if (checkedResult(dockerCall(spawn, ['info', '--format', '{{.OSType}}'], 5_000),
+    // Only the server OS is needed here. Keep this check per invocation, but
+    // avoid collecting the full daemon/client inventory for every document.
+    if (checkedResult(dockerCall(spawn, ['version', '--format', '{{.Server.Os}}'], 5_000),
       'STANDARDS_ENGINE', 'NFR6.2') !== 'linux') {
       fail('STANDARDS_ENGINE', 'NFR6.2', 'Standards image requires Linux containers');
     }

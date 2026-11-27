@@ -1,6 +1,9 @@
 # Build context: tools/contracts from a clean checkout. Keep the approved,
-# immutable Node build image; the final Linux/amd64 runtime is distroless.
-FROM docker.io/library/node@sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c AS dependencies
+# immutable Node build image; the final Linux/amd64 runtime is shell-free.
+FROM docker.io/library/node@sha256:d8d97e479cdc64f052f81f129362168717c59783ade8dcc1abd22e1cca8dbd7c AS dependencies
+
+# Exact binary from the signed Node 24.22.3 Linux x64 musl distribution.
+RUN printf '%s  %s\n' '7e027679034844bb06f53bead732673553cf5bb0de424bbbd257b35c989d34b0' '/usr/local/bin/node' | sha256sum -c
 
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
     NO_UPDATE_NOTIFIER=1 \
@@ -25,12 +28,34 @@ RUN node --check src/container-schema-validator.mjs \
     && node --check src/container-tool-launcher.mjs \
     && node src/source-digest.mjs > source-digest.txt
 
-# Pin the immutable Linux/amd64 Chainguard glibc runtime. It supplies the
-# dynamic C/C++ libraries without a shell; retain the reviewed Node 24.22.2
-# binary from the immutable build image and verify it in the image build step.
-FROM --platform=linux/amd64 cgr.dev/chainguard/glibc-dynamic@sha256:6169708f3c53a6fab9c8911bc6c91f7a8425c2f529d8a92b731c1a47e24f0e67
+# Install only the authenticated, checksum-pinned dynamic-library closure in
+# a separate root. APK verifies signatures using keys from the immutable input;
+# no package manager, shell, compiler or compatibility layer enters that root.
+FROM docker.io/library/node@sha256:d8d97e479cdc64f052f81f129362168717c59783ade8dcc1abd22e1cca8dbd7c AS runtime-root
+RUN mkdir -p /runtime-apks /runtime/etc/apk/keys /runtime/usr/share/stocksense /runtime/tmp \
+    && apk fetch --no-cache --recursive --output /runtime-apks \
+         musl=1.2.6-r3 libgcc=15.2.0-r5 'libstdc++=15.2.0-r5' \
+    && apk verify /runtime-apks/*.apk \
+    && cd /runtime-apks \
+    && printf '%s\n' \
+         '393dcd32629f06d7d85409c272d142d0c082772d10b87ef55ee82f47de3be637  libgcc-15.2.0-r5.apk' \
+         '14c987b556f5385a5db18376e788c75f37d85321b8dc1920d926ea7daac1d6f6  libstdc++-15.2.0-r5.apk' \
+         'e142255d0fa397f14318996bc10378093dcc069dc3dd1b6818c8f28a789c21da  musl-1.2.6-r3.apk' \
+         > /runtime/usr/share/stocksense/runtime-apks.sha256 \
+    && sha256sum -c /runtime/usr/share/stocksense/runtime-apks.sha256 \
+    && cp /etc/apk/keys/*.pub /runtime/etc/apk/keys/ \
+    && apk --root /runtime --initdb --no-scripts --no-network add /runtime-apks/*.apk \
+    && cp -L /etc/os-release /runtime/etc/os-release \
+    && printf '%s\n' 'node:x:65532:65532:Node runtime:/tmp:/sbin/nologin' > /runtime/etc/passwd \
+    && printf '%s\n' 'node:x:65532:' > /runtime/etc/group \
+    && chmod 1777 /runtime/tmp
+
+FROM scratch
+COPY --from=runtime-root /runtime/ /
 ENV NODE_ENV=production \
     NO_UPDATE_NOTIFIER=1 \
+    REDOCLY_SUPPRESS_UPDATE_NOTICE=true \
+    REDOCLY_TELEMETRY=off \
     SUPPRESS_NO_CONFIG_WARNING=1 \
     HOME=/tmp
 WORKDIR /opt/contracts

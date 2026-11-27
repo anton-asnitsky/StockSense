@@ -5,9 +5,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { candidateTreeDigestFromGit, executionFingerprintFromGit,
-  fetchImageLedger, readKiotaRuntimeEvidence, verifyBoundImageEvidence } from '../../src/image-ledger.mjs';
+  fetchImageLedger, readKiotaRuntimeEvidence, verifyBoundImageEvidence, PR_RECEIPT_SCHEMA } from '../../src/image-ledger.mjs';
 import { SCANNERS, sha256 } from '../../src/image-evidence.mjs';
 import { normalizeKiotaRuntimeManifest } from '../../src/kiota-runtime-manifest.mjs';
+import { fetchPrLedgerAuthority } from '../../src/pr-ledger-authority.mjs';
+import { fixture as prFixture } from '../fixtures/pr-ledger-authority/scenario.mjs';
 
 const repository = 'owner/StockSense';
 const mainSha = 'a'.repeat(40);
@@ -38,6 +40,45 @@ const exception = { id: finding.id, image: 'validator', package: finding.package
   compensatingControl: 'Restricted execution', approvalReference: 'OWNER-42',
   createdAt: new Date(now.getTime() - 86_400_000).toISOString(),
   expiresAt: new Date(now.getTime() + 86_400_000).toISOString() };
+
+test('PR-tagged receipt binds live-authorized v2 ledger without claiming protected-main publication', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'stocksense-ledger-pr-'));
+  try {
+    await evidenceFiles(directory, []);
+    const f = prFixture(); const { ledger, authority } = await fetchPrLedgerAuthority(f.input);
+    const args = { directory, imageIds: { validator: imageId, kiota: imageId }, ledger, authority,
+      expectedRevision: f.input.sourceRevision, actualRevision: f.input.sourceRevision,
+      candidateTreeDigest: f.input.candidateTreeDigest, executionFingerprint: f.input.executionFingerprint,
+      runtimeManifestDigest: f.input.runtimeManifestDigest, now: f.input.now() };
+    const result = await verifyBoundImageEvidence(args);
+    assert.equal(result.schema, PR_RECEIPT_SCHEMA);
+    assert.equal(Object.hasOwn(result, 'mainSha'), false);
+    assert.equal(result.authority.currentRunId, f.input.currentRunId);
+    assert.deepEqual(result.images.map(row => row.findings), [0, 0]);
+    await assert.rejects(verifyBoundImageEvidence({ ...args, authority: null }), /trusted ledger/);
+    await assert.rejects(verifyBoundImageEvidence({ ...args, ledger: { ...ledger,
+      schema: 'stocksense-image-exceptions-v1' } }), /closed v2/);
+    await assert.rejects(verifyBoundImageEvidence({ ...args, ledger: { ...ledger, mainSha } }), /closed v2/);
+    await assert.rejects(verifyBoundImageEvidence({ ...args, candidateTreeDigest: `sha256:${'f'.repeat(64)}` }),
+      { code: 'PR_AUTH_BINDING' });
+    await assert.rejects(verifyBoundImageEvidence({ ...args,
+      authority: { ...authority, extra: true } }), { code: 'PR_AUTH_RECEIPT' });
+    await evidenceFiles(directory);
+    await assert.rejects(verifyBoundImageEvidence(args), { code: 'IMAGE_FINDINGS' });
+    for (const changed of [{ ...finding, fixState: 'unknown' },
+      { ...finding, severity: 'High', fixState: 'fixed', fixVersions: ['2.8.4'] }]) {
+      await evidenceFiles(directory, [changed]);
+      await assert.rejects(verifyBoundImageEvidence(args),
+        { code: changed.fixState === 'unknown' ? 'IMAGE_SCAN' : 'IMAGE_FINDINGS' });
+    }
+    await evidenceFiles(directory, []);
+    const badRow = { executionFingerprint: `sha256:${'f'.repeat(64)}`,
+      runtimeManifestDigest: `sha256:${'e'.repeat(64)}`, finding: { ...exception,
+        createdAt: '2026-11-20T00:00:00.000Z', expiresAt: '2026-11-21T00:00:00.000Z' } };
+    await assert.rejects(verifyBoundImageEvidence({ ...args,
+      ledger: { ...ledger, exceptions: [badRow] } }), { code: 'IMAGE_EXCEPTION' });
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
 
 function fakeGithub(ledger = { schema: 'stocksense-image-exceptions-v1', exceptions: [] }) {
   const bytes = Buffer.from(JSON.stringify(ledger));
@@ -241,6 +282,135 @@ test('v2 ledger binds execution and runtime baselines without binding unrelated 
       fixVersions: ['2.8.4'] }]);
     await assert.rejects(verifyBoundImageEvidence(args), error => error.code === 'IMAGE_FINDINGS');
   } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+function v2Ledger(exceptions) {
+  return { schema: 'stocksense-image-exceptions-v2', mainSha,
+    blobSha: 'd'.repeat(40), candidateGitTreeSha: treeSha, exceptions };
+}
+const v2Row = (overrides = {}) => ({ executionFingerprint, runtimeManifestDigest,
+  finding: { ...exception }, ...overrides });
+const v2Binding = directory => ({ directory, imageIds: { validator: imageId, kiota: imageId },
+  expectedRevision: revision, actualRevision: revision, candidateTreeDigest,
+  executionFingerprint, runtimeManifestDigest, now });
+const otherExecution = 'sha256:' + '8'.repeat(64);
+const otherRuntime = 'sha256:' + '9'.repeat(64);
+
+test('v2 selects exactly one of three approved pairs and retains whole-ledger provenance', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'stocksense-ledger-groups-'));
+  const groups = [v2Row(), v2Row({ executionFingerprint: otherExecution }),
+    v2Row({ runtimeManifestDigest: otherRuntime })];
+  const ledger = v2Ledger(groups);
+  try {
+    await evidenceFiles(directory);
+    for (const group of groups) {
+      const result = await verifyBoundImageEvidence({ ...v2Binding(directory), ledger,
+        executionFingerprint: group.executionFingerprint,
+        runtimeManifestDigest: group.runtimeManifestDigest });
+      assert.equal(result.images[0].findings, 1);
+      assert.equal(result.images[0].disposed, 1);
+      assert.equal(result.images[1].disposed, 0);
+      assert.equal(result.ledgerBlobSha, ledger.blobSha);
+      assert.equal(result.executionFingerprint, group.executionFingerprint);
+      assert.equal(result.runtimeManifestDigest, group.runtimeManifestDigest);
+    }
+    // Both values appear elsewhere, but there is no authority for this pair.
+    await assert.rejects(verifyBoundImageEvidence({ ...v2Binding(directory), ledger,
+      executionFingerprint: otherExecution, runtimeManifestDigest: otherRuntime }),
+    /no matching execution baseline/);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('v2 rejects invalid unrelated rows before reading any candidate evidence', async () => {
+  const mutations = [
+    { label: 'extra row field', row: { unknown: true } },
+    { label: 'aliased execution field', row: { executionFingerprint: undefined, execution: otherExecution } },
+    { label: 'unknown image', finding: { image: 'unknown' } },
+    { label: 'extra finding field', finding: { unknown: true } },
+    { label: 'missing owner', finding: { owner: '' } },
+    { label: 'missing rationale', finding: { rationale: '' } },
+    { label: 'missing control', finding: { compensatingControl: '' } },
+    { label: 'missing approval', finding: { approvalReference: '' } },
+    { label: 'wildcard identity', finding: { package: '*' } },
+    { label: 'mismatched PURL', finding: { purl: 'pkg:npm/yaml@9.0.0' } },
+    { label: 'unknown severity', finding: { severity: 'Unknown' } },
+    { label: 'unknown fix state', finding: { fixState: 'unknown' } },
+    { label: 'invalid timestamp', finding: { createdAt: 'yesterday' } },
+    { label: 'nonexistent date', finding: { createdAt: '2026-02-30T00:00:00Z' } },
+    { label: 'expired', finding: { expiresAt: new Date(now.getTime() - 1).toISOString() } },
+    { label: 'future', finding: { createdAt: new Date(now.getTime() + 1).toISOString() } },
+    { label: 'fixed High', finding: { severity: 'High', fixState: 'fixed' } },
+    { label: 'fixed Critical', finding: { severity: 'Critical', fixState: 'fixed' } }
+  ];
+  for (const mutation of mutations) {
+    const unrelated = v2Row({ executionFingerprint: otherExecution, ...mutation.row,
+      finding: { ...exception, ...mutation.finding } });
+    await assert.rejects(verifyBoundImageEvidence({ ...v2Binding('evidence-must-not-be-read'),
+      ledger: v2Ledger([v2Row(), unrelated]) }),
+    error => error.message.startsWith('Image ledger refused: ledger row') ||
+      ['IMAGE_EXCEPTION', 'IMAGE_FINDINGS'].includes(error.code), mutation.label);
+  }
+});
+
+test('v2 rejects duplicate dispositions in selected and unrelated baselines', async () => {
+  for (const repeated of [v2Row(), v2Row({ executionFingerprint: otherExecution })]) {
+    await assert.rejects(verifyBoundImageEvidence({ ...v2Binding('evidence-must-not-be-read'),
+      ledger: v2Ledger([v2Row(), repeated, { ...repeated, finding: { ...repeated.finding } }]) }),
+    error => error.code === 'IMAGE_EXCEPTION' && /duplicates/.test(error.message));
+  }
+});
+
+test('v2 never borrows another baseline finding and rejects current finding drift', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'stocksense-ledger-selection-'));
+  try {
+    await evidenceFiles(directory);
+    // The current finding is approved only under the other fingerprint.
+    const differentFinding = { ...exception, id: 'CVE-2026-99999' };
+    await assert.rejects(verifyBoundImageEvidence({ ...v2Binding(directory),
+      ledger: v2Ledger([v2Row({ finding: differentFinding }),
+        v2Row({ executionFingerprint: otherExecution })]) }),
+    error => error.code === 'IMAGE_EXCEPTION');
+    for (const changes of [
+      { id: 'CVE-2026-99999' },
+      { package: 'other', purl: 'pkg:npm/other@2.8.3' },
+      { version: '2.8.4', purl: 'pkg:npm/yaml@2.8.4' },
+      { severity: 'Low' }, { fixState: 'wont-fix' }
+    ]) {
+      await assert.rejects(verifyBoundImageEvidence({ ...v2Binding(directory),
+        ledger: v2Ledger([v2Row({ finding: { ...exception, ...changes } })]) }),
+      error => error.code === 'IMAGE_EXCEPTION');
+    }
+    await assert.rejects(verifyBoundImageEvidence({ ...v2Binding(directory),
+      ledger: v2Ledger([v2Row(), v2Row({ finding: differentFinding })]) }),
+    error => error.code === 'IMAGE_EXCEPTION');
+    await assert.rejects(verifyBoundImageEvidence({ ...v2Binding(directory), ledger: v2Ledger([]) }),
+      error => error.code === 'IMAGE_FINDINGS');
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('empty clean ledgers remain valid for v1 and v2; nonempty unmatched v2 fails', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'stocksense-ledger-clean-'));
+  try {
+    await evidenceFiles(directory, []);
+    for (const schema of ['stocksense-image-exceptions-v1', 'stocksense-image-exceptions-v2']) {
+      const result = await verifyBoundImageEvidence({ ...v2Binding(directory),
+        ledger: { ...v2Ledger([]), schema } });
+      assert.ok(result.images.every(row => row.findings === 0 && row.disposed === 0));
+    }
+    await assert.rejects(verifyBoundImageEvidence({ ...v2Binding(directory),
+      ledger: v2Ledger([v2Row({ executionFingerprint: otherExecution })]) }),
+    /no matching execution baseline/);
+    await assert.rejects(verifyBoundImageEvidence({ ...v2Binding(directory),
+      ledger: v2Ledger([v2Row()]) }), error => error.code === 'IMAGE_EXCEPTION');
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('v1 still refuses a ledger mixing candidate trees', async () => {
+  await assert.rejects(verifyBoundImageEvidence({ ...v2Binding('evidence-must-not-be-read'),
+    ledger: { ...v2Ledger([]), schema: 'stocksense-image-exceptions-v1', exceptions: [
+      { candidateTreeDigest, finding: exception },
+      { candidateTreeDigest: otherExecution, finding: exception }
+    ] } }), /different candidate tree/);
 });
 
 test('retained runtime record must be canonical and bound to the exact SBOM and image ID', async () => {

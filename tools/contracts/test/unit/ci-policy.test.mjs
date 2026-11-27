@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile, mkdir, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { assertPinnedScanner, hashBytes, inputDigest, scannerFindings, toolchainDigest,
@@ -150,4 +150,28 @@ test('report reader refuses missing, stale and failed exact report files', async
     await writeFile(join(directory, 'vulnerability-scan.json'), JSON.stringify(base('vulnerability-scan', { inputDigest: digest, toolchainDigest: toolchain })));
     await assert.rejects(verifySecurityReports(root, revision, directory), error => error.code === 'SCAN_STALE');
   } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('runtime recipe and lock changes each invalidate CI toolchain evidence', async () => {
+  const root = fileURLToPath(new URL('../../../../', import.meta.url));
+  const copy = await mkdtemp(join(tmpdir(), 'stocksense-runtime-digest-'));
+  const paths = ['tools/contracts/package.json', 'tools/contracts/pnpm-lock.yaml',
+    'tools/contracts/Dockerfile.validator', 'tools/contracts/Dockerfile.generator-kiota',
+    'tools/contracts/scripts/setup-oasdiff.mjs', 'tools/contracts/scripts/build-kiota-runtime.py',
+    'tools/contracts/kiota-runtime-inputs.json', '.github/workflows/contracts-required.yml',
+    '.github/workflows/release-evidence.yml'];
+  try {
+    for (const path of paths) {
+      await mkdir(dirname(join(copy, path)), { recursive: true });
+      await writeFile(join(copy, path), await readFile(join(root, path)));
+    }
+    const baseline = await toolchainDigest(copy);
+    assert.equal(baseline, await toolchainDigest(root));
+    for (const path of ['tools/contracts/scripts/build-kiota-runtime.py', 'tools/contracts/kiota-runtime-inputs.json']) {
+      const original = await readFile(join(copy, path));
+      await writeFile(join(copy, path), Buffer.concat([original, Buffer.from('\n')]));
+      assert.notEqual(await toolchainDigest(copy), baseline, path);
+      await writeFile(join(copy, path), original);
+    }
+  } finally { await rm(copy, { recursive: true, force: true }); }
 });

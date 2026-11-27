@@ -11,8 +11,8 @@ import { LIMITS } from './preflight.mjs';
 const DOCKER = process.platform === 'win32'
   ? 'C:\\Program Files\\Docker\\Docker\\resources\\bin\\docker.exe' : '/usr/bin/docker';
 const IMAGE = /^sha256:[0-9a-f]{64}$/;
-const KIOTA_PACKAGE = '/opt/kiota/.store/microsoft.openapi.kiota/1.35.0/microsoft.openapi.kiota/1.35.0/microsoft.openapi.kiota.1.35.0.nupkg';
-const KIOTA_SHA = '5e75f6adf161717be8d9f39eb596f93d52535e7b8cbcc00cffdcef3d0d3c3486';
+const KIOTA_PACKAGE = '/opt/kiota/.store/microsoft.openapi.kiota/1.38.0/microsoft.openapi.kiota/1.38.0/microsoft.openapi.kiota.1.38.0.nupkg';
+const KIOTA_SHA = 'ec934c391c94e156543ce63cb497d6944180105b2b794b8b3a53a89b89cd4d82';
 const CONTAINER_ID = /^[0-9a-f]{64}$/;
 const PEAK = /(?:^|\n)STOCKSENSE_GENERATOR_PEAK=(\d+)\r?\n?$/;
 /** @returns {never} */

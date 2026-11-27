@@ -8,6 +8,7 @@ import YAML from 'yaml';
 import { buildSbom, parsePackageKey } from '../../src/sbom.mjs';
 import { SCANNERS, readImageEvidence, sha256, verifyImageDispositions } from '../../src/image-evidence.mjs';
 import { sourceTreeDigest } from '../../src/source-digest.mjs';
+import { normalizeKiotaRuntimeManifest } from '../../src/kiota-runtime-manifest.mjs';
 import { assertScanGates } from '../../src/evidence.mjs';
 
 const lockfile = fileURLToPath(new URL('../../pnpm-lock.yaml', import.meta.url));
@@ -70,6 +71,7 @@ test('release evidence verifies and retains the main ledger before building the 
   const workflow = YAML.parse(await readFile(fileURLToPath(
     new URL('../../../../.github/workflows/release-evidence.yml', import.meta.url)), 'utf8'));
   const steps = workflow.jobs.evidence.steps;
+  assert.equal(workflow.jobs.evidence.env.STOCKSENSE_LEDGER_AUTHORITY, 'protected-main');
   const verify = steps.findIndex(step => step.run === 'node tools/contracts/scripts/image-evidence.mjs verify');
   const retain = steps.findIndex(step => step.with?.path ===
     'tools/contracts/dist/image-evidence/ledger-verification.json');
@@ -79,6 +81,24 @@ test('release evidence verifies and retains the main ledger before building the 
   assert.ok(retain > verify && sbom > retain);
   assert.equal(steps[retain].with['if-no-files-found'], 'error');
   assert.equal(steps[sbom].env.STOCKSENSE_CANDIDATE_REVISION, '${{ github.sha }}');
+});
+
+test('ordinary PR SBOM checks revalidate authority with only read permissions', async () => {
+  const workflow = YAML.parse(await readFile(fileURLToPath(
+    new URL('../../../../.github/workflows/contracts-required.yml', import.meta.url)), 'utf8'));
+  const job = workflow.jobs.contracts;
+  assert.ok(Object.values(job.permissions).every(value => value === 'read'));
+  for (const scope of ['contents', 'actions', 'checks', 'pull-requests']) assert.equal(job.permissions[scope], 'read');
+  assert.match(job.env.STOCKSENSE_LEDGER_AUTHORITY, /github\.event_name == 'pull_request'/);
+  for (const number of [74, 75, 76]) assert.ok(job.env.STOCKSENSE_LEDGER_AUTHORITY.includes(`github.event.number == ${number}`));
+  assert.match(job.env.STOCKSENSE_LEDGER_AUTHORITY, /\|\| 'protected-main'/);
+  const verify = job.steps.findIndex(step => step.run === 'node tools/contracts/scripts/image-evidence.mjs verify');
+  const build = job.steps.findIndex(step => step.run === 'pnpm --silent --dir tools/contracts build:sbom');
+  assert.ok(verify >= 0 && build > verify);
+  assert.equal(job.steps[build].env.GITHUB_TOKEN, '${{ github.token }}');
+  assert.equal(job.steps[build].env.STOCKSENSE_CANDIDATE_REVISION, '${{ github.sha }}');
+  const retained = job.steps.findIndex(step => step.with?.path === 'tools/contracts/sbom.cdx.json');
+  assert.ok(retained > build);
 });
 
 async function imageFixture(directory, name, imageId, findings = []) {
@@ -96,15 +116,34 @@ async function imageFixture(directory, name, imageId, findings = []) {
   }) + '\n');
 }
 
-async function imageReceipt(directory, ids) {
+async function runtimeFixture(directory, imageId) {
+  const bytes = await readFile(join(directory, 'kiota.cdx.json'));
+  const runtime = normalizeKiotaRuntimeManifest({
+    entries: [{ path: 'rootfs', kind: 'directory', mode: 0o755 },
+      { path: 'rootfs/kiota', kind: 'file', mode: 0o755, size: 5, sha256: sha256('kiota') }],
+    config: { Entrypoint: ['/kiota'], Cmd: null, Env: [], User: '65532', WorkingDir: '/' },
+    sbom: JSON.parse(bytes.toString('utf8'))
+  });
+  await writeFile(join(directory, 'kiota.runtime.json'), JSON.stringify({ imageId,
+    sbomDigest: sha256(bytes), ...runtime }, null, 2) + '\n');
+  return runtime.digest;
+}
+
+const sourceContext = { candidateRevision, candidateGitTreeSha: 'd'.repeat(40),
+  candidateTreeDigest: 'sha256:' + 'e'.repeat(64), executionFingerprint: 'sha256:' + 'b'.repeat(64) };
+
+async function imageReceipt(directory, ids, version = 'v1') {
+  const runtimeManifestDigest = version === 'v2' ? await runtimeFixture(directory, ids.kiota) : null;
   const { records } = await readImageEvidence(directory, ids, { requireClean: false });
-  const receipt = { schema: 'stocksense-image-ledger-verification-v1', candidateRevision,
+  const receipt = { schema: `stocksense-image-ledger-verification-${version}`, candidateRevision,
     candidateGitTreeSha: 'd'.repeat(40), candidateTreeDigest: 'sha256:' + 'e'.repeat(64),
     sourceDigest: await sourceTreeDigest(), mainSha: 'f'.repeat(40),
     ledgerBlobSha: 'a'.repeat(40), images: records.map(record => ({
       image: record.name, imageId: record.imageId, sbomDigest: record.sbomDigest,
       scanDigest: record.scanDigest, findings: record.findings, disposed: record.findings
-    })) };
+    })), ...(version === 'v2' ? { executionFingerprint: 'sha256:' + 'b'.repeat(64),
+      runtimeManifestDigest,
+      ledgerSchema: 'stocksense-image-exceptions-v2' } : {}) };
   await writeFile(join(directory, 'ledger-verification.json'), JSON.stringify(receipt) + '\n');
   return receipt;
 }
@@ -173,6 +212,59 @@ test('SBOM accepts a disposed finding only with the matching retained ledger rec
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
 
+test('SBOM retains strict v2 image-ledger binding and rejects malformed v2 receipts', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'stocksense-sbom-v2-'));
+  const image = 'sha256:' + 'a'.repeat(64);
+  const ids = { validator: image, kiota: image };
+  const input = { ...subject, validatorImageDigest: image, kiotaImageDigest: image,
+    imageEvidenceDirectory: directory, candidateRevision, sourceContext };
+  try {
+    await imageFixture(directory, 'validator', image);
+    await imageFixture(directory, 'kiota', image);
+    const receipt = await imageReceipt(directory, ids, 'v2');
+    const { document } = await buildSbom(lockfile, input);
+    const properties = Object.fromEntries(document.metadata.properties.map(row => [row.name, row.value]));
+    assert.equal(properties['stocksense:imageLedgerExecutionFingerprint'], receipt.executionFingerprint);
+    assert.equal(properties['stocksense:imageLedgerRuntimeManifestDigest'], receipt.runtimeManifestDigest);
+    const path = join(directory, 'ledger-verification.json');
+    for (const changed of [
+      { ledgerSchema: 'stocksense-image-exceptions-v1' },
+      { executionFingerprint: 'invalid' },
+      { executionFingerprint: 'sha256:' + '1'.repeat(64) },
+      { runtimeManifestDigest: 'sha256:' + '1'.repeat(64) },
+      { candidateGitTreeSha: '1'.repeat(40) },
+      { candidateTreeDigest: 'sha256:' + '1'.repeat(64) },
+      { extra: 'field' },
+      { runtimeManifestDigest: 'sha256:' + '0'.repeat(63) },
+      { images: receipt.images.map((row, index) => index ? row : { ...row, disposed: 1 }) }
+    ]) {
+      await writeFile(path, JSON.stringify({ ...receipt, ...changed }) + '\n');
+      await expectCode(buildSbom(lockfile, input), 'IMAGE_LEDGER');
+    }
+    await writeFile(path, JSON.stringify(receipt) + '\n');
+    await expectCode(buildSbom(lockfile, { ...input, sourceContext: undefined }), 'IMAGE_LEDGER');
+    await expectCode(buildSbom(lockfile, { ...input, sourceContext: { ...sourceContext,
+      candidateRevision: '1'.repeat(40) } }), 'IMAGE_LEDGER');
+    const runtimePath = join(directory, 'kiota.runtime.json');
+    const runtime = JSON.parse(await readFile(runtimePath, 'utf8'));
+    for (const change of [
+      { ...runtime, imageId: 'sha256:' + '1'.repeat(64) },
+      { ...runtime, sbomDigest: 'sha256:' + '1'.repeat(64) },
+      { ...runtime, config: { ...runtime.config, User: '0' } },
+      { ...runtime, entries: runtime.entries.map(entry => entry.kind === 'file'
+        ? { ...entry, sha256: 'sha256:' + '1'.repeat(64) } : entry) }
+    ]) {
+      await writeFile(runtimePath, JSON.stringify(change, null, 2) + '\n');
+      await expectCode(buildSbom(lockfile, input), 'IMAGE_LEDGER');
+    }
+    await writeFile(runtimePath, JSON.stringify(runtime, null, 2) + '\n');
+    const missing = { ...receipt };
+    delete missing.runtimeManifestDigest;
+    await writeFile(path, JSON.stringify(missing) + '\n');
+    await expectCode(buildSbom(lockfile, input), 'IMAGE_LEDGER');
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
 test('missing, stale, malformed and vulnerable image evidence fails closed', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'stocksense-images-'));
   const image = 'sha256:' + 'a'.repeat(64);
@@ -183,11 +275,14 @@ test('missing, stale, malformed and vulnerable image evidence fails closed', asy
     await imageFixture(directory, 'kiota', image);
     await expectCode(readImageEvidence(directory, { ...ids, kiota: 'sha256:' + 'b'.repeat(64) }), 'IMAGE_STALE');
     await imageFixture(directory, 'kiota', image, [{ id: 'CVE-2026-12345', severity: 'High',
-      package: 'Kiota', version: '1.0.0', type: 'dotnet', purl: 'pkg:nuget/Kiota@1.0.0',
+      package: 'Microsoft.OpenApi.Kiota', version: '1.0.0', type: 'dotnet', purl: 'pkg:nuget/Microsoft.OpenApi.Kiota@1.0.0',
       fixState: 'fixed', fixVersions: ['1.1.0'] }]);
     await expectCode(readImageEvidence(directory, ids), 'IMAGE_FINDINGS');
     const findingPath = join(directory, 'kiota.scan.json');
     const incomplete = JSON.parse(await readFile(findingPath, 'utf8'));
+    const unlisted = { ...incomplete.findings[0], package: 'Other.Kiota', purl: 'pkg:nuget/Other.Kiota@1.0.0' };
+    await writeFile(findingPath, JSON.stringify({ ...incomplete, findings: [unlisted] }));
+    await expectCode(readImageEvidence(directory, ids, { requireClean: false }), 'IMAGE_SBOM');
     delete incomplete.findings[0].fixState;
     await writeFile(findingPath, JSON.stringify(incomplete));
     await expectCode(readImageEvidence(directory, ids), 'IMAGE_SCAN');
@@ -345,7 +440,8 @@ test('a local exception file has no authority over the image evidence gate', asy
   const directory = await mkdtemp(join(tmpdir(), 'stocksense-image-exceptions-'));
   const ids = { validator: imageId, kiota: imageId };
   try {
-    await imageFixture(directory, 'validator', imageId, [imageFinding]);
+    await imageFixture(directory, 'validator', imageId, [{ ...imageFinding,
+      version: '1.0.0', purl: 'pkg:npm/yaml@1.0.0' }]);
     await imageFixture(directory, 'kiota', imageId);
     await writeFile(join(directory, 'validator.exceptions.json'), JSON.stringify([imageException]));
     await expectCode(readImageEvidence(directory, ids), 'IMAGE_FINDINGS');
@@ -390,4 +486,27 @@ test('a component without an integrity hash is counted rather than hidden', asyn
       const property = document.metadata.properties.find(item => item.name === 'stocksense:pnpmComponentsWithoutHash');
       assert.equal(property.value, '1');
     });
+});
+
+test('the SBOM binds the runtime recipe, snapshot lock and every downloaded tool', async () => {
+  const { document } = await buildSbom(lockfile, subject);
+  const component = name => {
+    const found = document.components.find(item => item.name === name);
+    assert.ok(found, `missing ${name}`);
+    return found;
+  };
+  const lockBytes = await readFile(new URL('../../kiota-runtime-inputs.json', import.meta.url));
+  const lock = JSON.parse(lockBytes);
+  const recipe = await readFile(new URL('../../scripts/build-kiota-runtime.py', import.meta.url));
+  assert.equal(component('kiota-runtime-input-lock').hashes[0].content, sha256(lockBytes).slice(7));
+  assert.equal(component('kiota-runtime-input-lock').version, lock.snapshot);
+  assert.equal(component('kiota-runtime-build-recipe').hashes[0].content, sha256(recipe).slice(7));
+  assert.match(component('kiota-runtime-builder-image').hashes[0].content, /^[0-9a-f]{64}$/);
+  assert.match(component('kiota-microsoft-runtime-payload-image').hashes[0].content, /^[0-9a-f]{64}$/);
+  for (const [name, pin] of Object.entries(lock.tools)) {
+    const found = component(`kiota-runtime-${name}`);
+    assert.equal(found.hashes[0].content, pin.digest);
+    assert.equal(found.hashes[0].alg, pin.algorithm === 'sha384' ? 'SHA-384' : 'SHA-256');
+    assert.equal(found.externalReferences[0].url, pin.url);
+  }
 });

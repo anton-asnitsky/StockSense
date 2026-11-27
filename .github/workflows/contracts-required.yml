@@ -32,6 +32,16 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: read
+      actions: read
+      checks: read
+      pull-requests: read
+    env:
+      # Temporary authority is selected explicitly; any failed PR verification
+      # is terminal and never falls back to the protected-main ledger.
+      STOCKSENSE_LEDGER_AUTHORITY: ${{ github.event_name == 'pull_request' && (github.event.number == 74 || github.event.number == 75 || github.event.number == 76) && 'owner-authorized-pr-ledger-v1' || 'protected-main' }}
+      STOCKSENSE_PR_NUMBER: ${{ github.event.number }}
+      STOCKSENSE_PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      STOCKSENSE_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
     steps:
       - name: Check out the pull-request merge revision
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -55,7 +65,7 @@ jobs:
       - name: Pin Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: 24.22.2
+          node-version: 24.22.3
           cache: pnpm
           cache-dependency-path: tools/contracts/pnpm-lock.yaml
 
@@ -94,7 +104,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Verify current findings against protected main ledger
+      - name: Verify current findings against explicit ledger authority
         env:
           GITHUB_TOKEN: ${{ github.token }}
           STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
@@ -112,6 +122,23 @@ jobs:
 
       - name: Install from the frozen lockfile
         run: pnpm --dir tools/contracts install --frozen-lockfile
+
+      - name: Independently verify and build the combined SBOM
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
+          STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
+          STOCKSENSE_IMAGE_EVIDENCE_DIR: dist/image-evidence
+          STOCKSENSE_CANDIDATE_REVISION: ${{ github.sha }}
+        run: pnpm --silent --dir tools/contracts build:sbom
+
+      - name: Retain the independently verified combined SBOM
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: contracts-sbom-${{ github.sha }}
+          path: tools/contracts/sbom.cdx.json
+          if-no-files-found: error
+          retention-days: 30
 
       # U1 defines assertCiPolicy but, until now, nothing ran it against this
       # repository's own workflows: the policy described a rule the repository
@@ -131,11 +158,21 @@ jobs:
       # executed as shell.
       - name: Enforce the CI policy
         env:
+          GITHUB_TOKEN: ${{ github.token }}
+          STOCKSENSE_STANDARDS_IMAGE: ${{ steps.standards-image.outputs.id }}
+          STOCKSENSE_KIOTA_IMAGE: ${{ steps.kiota-image.outputs.id }}
+          STOCKSENSE_IMAGE_EVIDENCE_DIR: tools/contracts/dist/image-evidence
+          STOCKSENSE_CANDIDATE_REVISION: ${{ github.sha }}
           EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
           policy() { node tools/contracts/scripts/check-ci-policy.mjs .github/workflows "$@"; }
+          if [ "$STOCKSENSE_LEDGER_AUTHORITY" = owner-authorized-pr-ledger-v1 ]; then
+            # The checker derives bounded NUL-delimited paths from Git itself.
+            policy
+            exit 0
+          fi
           if [ "$EVENT_NAME" != pull_request ]; then
             policy
             exit 0
@@ -223,7 +260,7 @@ jobs:
       - name: Pin Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: 24.22.2
+          node-version: 24.22.3
           cache: pnpm
           cache-dependency-path: tools/contracts/pnpm-lock.yaml
 

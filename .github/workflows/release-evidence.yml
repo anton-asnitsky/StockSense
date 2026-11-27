@@ -29,6 +29,8 @@ jobs:
     name: Release evidence
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    env:
+      STOCKSENSE_LEDGER_AUTHORITY: protected-main
     permissions:
       # The three scopes assertCiPolicy allows on a trusted trigger, and no
       # others: contents to read the tree, id-token to mint the OIDC token the
@@ -53,7 +55,7 @@ jobs:
       - name: Pin Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: 24.22.2
+          node-version: 24.22.3
           cache: pnpm
           cache-dependency-path: tools/contracts/pnpm-lock.yaml
 
