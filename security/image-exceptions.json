@@ -1360,6 +1360,86 @@
         "createdAt": "2026-11-27T09:20:02.153Z",
         "expiresAt": "2026-11-30T00:00:00Z"
       }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-84785",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific version-based non-applicability for CVE-2026-84785. The official OpenSSL November 24 advisory explicitly excludes 3.0; the exact installed package is 3.0.13-0ubuntu3.16. This is not a claim that the package is fixed or free of other vulnerabilities. Ubuntu Needs evaluation is retained; changed vendor applicability or package/runtime/execution/finding identity invalidates this decision.",
+        "compensatingControl": "Keep exact package/runtime/execution and Kiota1.38.0 fixed generate profile; network none, non-root, dropped capabilities, no-new-privileges, read-only root, bounded mounts,128PIDs,1MiB source/32MiB package,2GiB memory/120-second cleanup. Version evidence is the basis, not absence of a CLI or an incomplete native call graph. Reassess on vendor/package changes; no extension of old temporary-risk expiry.",
+        "approvalReference": "Owner contextual decision 'Unblock it.': https://github.com/anton-asnitsky/StockSense/blob/f93489e5293f5c954acbea704c894151d826e8ba/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-kiota-new-finding-approval-2026-11-27.md; approved proposal SHA256 64671762eb7a0f7066eeb578a3563ea000b089f760a64fc92c59233095ac20da. Separate immutable PR publication authority required.",
+        "createdAt": "2026-11-27T10:32:38.008Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:0c1a93a688ce84661656de6dd3ae45de661521a6a368f26e4c326e54802489f9",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-84785",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific version-based non-applicability for CVE-2026-84785. The official OpenSSL November 24 advisory explicitly excludes 3.0; the exact installed package is 3.0.13-0ubuntu3.16. This is not a claim that the package is fixed or free of other vulnerabilities. Ubuntu Needs evaluation is retained; changed vendor applicability or package/runtime/execution/finding identity invalidates this decision.",
+        "compensatingControl": "Keep exact package/runtime/execution and Kiota1.38.0 fixed generate profile; network none, non-root, dropped capabilities, no-new-privileges, read-only root, bounded mounts,128PIDs,1MiB source/32MiB package,2GiB memory/120-second cleanup. Version evidence is the basis, not absence of a CLI or an incomplete native call graph. Reassess on vendor/package changes; no extension of old temporary-risk expiry.",
+        "approvalReference": "Owner contextual decision 'Unblock it.': https://github.com/anton-asnitsky/StockSense/blob/f93489e5293f5c954acbea704c894151d826e8ba/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-kiota-new-finding-approval-2026-11-27.md; approved proposal SHA256 64671762eb7a0f7066eeb578a3563ea000b089f760a64fc92c59233095ac20da. Separate immutable PR publication authority required.",
+        "createdAt": "2026-11-27T10:32:38.008Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-84785",
+        "image": "kiota",
+        "package": "libssl3t64",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/libssl3t64@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04&upstream=openssl",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific version-based non-applicability for CVE-2026-84785. The official OpenSSL November 24 advisory explicitly excludes 3.0; the exact installed package is 3.0.13-0ubuntu3.16. This is not a claim that the package is fixed or free of other vulnerabilities. Ubuntu Needs evaluation is retained; changed vendor applicability or package/runtime/execution/finding identity invalidates this decision.",
+        "compensatingControl": "Keep exact package/runtime/execution and Kiota1.38.0 fixed generate profile; network none, non-root, dropped capabilities, no-new-privileges, read-only root, bounded mounts,128PIDs,1MiB source/32MiB package,2GiB memory/120-second cleanup. Version evidence is the basis, not absence of a CLI or an incomplete native call graph. Reassess on vendor/package changes; no extension of old temporary-risk expiry.",
+        "approvalReference": "Owner contextual decision 'Unblock it.': https://github.com/anton-asnitsky/StockSense/blob/f93489e5293f5c954acbea704c894151d826e8ba/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-kiota-new-finding-approval-2026-11-27.md; approved proposal SHA256 64671762eb7a0f7066eeb578a3563ea000b089f760a64fc92c59233095ac20da. Separate immutable PR publication authority required.",
+        "createdAt": "2026-11-27T10:32:38.008Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
+    },
+    {
+      "executionFingerprint": "sha256:6d197e6749e73469c0944ebdbfade4f6668726e092801fe8ea02d4794a6796ef",
+      "runtimeManifestDigest": "sha256:1c7fc5fd4df187a3571460bf807e860f1be6bfd704c3fd9fe037c641adea5340",
+      "finding": {
+        "id": "CVE-2026-84785",
+        "image": "kiota",
+        "package": "openssl",
+        "version": "3.0.13-0ubuntu3.16",
+        "type": "deb",
+        "purl": "pkg:deb/ubuntu/openssl@3.0.13-0ubuntu3.16?arch=amd64&distro=ubuntu-24.04",
+        "severity": "Medium",
+        "fixState": "not-fixed",
+        "owner": "anton-asnitsky",
+        "rationale": "Owner-approved finding-specific version-based non-applicability for CVE-2026-84785. The official OpenSSL November 24 advisory explicitly excludes 3.0; the exact installed package is 3.0.13-0ubuntu3.16. This is not a claim that the package is fixed or free of other vulnerabilities. Ubuntu Needs evaluation is retained; changed vendor applicability or package/runtime/execution/finding identity invalidates this decision.",
+        "compensatingControl": "Keep exact package/runtime/execution and Kiota1.38.0 fixed generate profile; network none, non-root, dropped capabilities, no-new-privileges, read-only root, bounded mounts,128PIDs,1MiB source/32MiB package,2GiB memory/120-second cleanup. Version evidence is the basis, not absence of a CLI or an incomplete native call graph. Reassess on vendor/package changes; no extension of old temporary-risk expiry.",
+        "approvalReference": "Owner contextual decision 'Unblock it.': https://github.com/anton-asnitsky/StockSense/blob/f93489e5293f5c954acbea704c894151d826e8ba/aidlc/spaces/default/intents/260908-stock-sense-design/verification/u1-kiota-new-finding-approval-2026-11-27.md; approved proposal SHA256 64671762eb7a0f7066eeb578a3563ea000b089f760a64fc92c59233095ac20da. Separate immutable PR publication authority required.",
+        "createdAt": "2026-11-27T10:32:38.008Z",
+        "expiresAt": "2026-12-04T00:00:00Z"
+      }
     }
   ]
 }
