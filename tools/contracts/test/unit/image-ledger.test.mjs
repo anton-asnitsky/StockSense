@@ -5,9 +5,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { candidateTreeDigestFromGit, executionFingerprintFromGit,
-  fetchImageLedger, readKiotaRuntimeEvidence, verifyBoundImageEvidence } from '../../src/image-ledger.mjs';
+  fetchImageLedger, readKiotaRuntimeEvidence, verifyBoundImageEvidence, PR_RECEIPT_SCHEMA } from '../../src/image-ledger.mjs';
 import { SCANNERS, sha256 } from '../../src/image-evidence.mjs';
 import { normalizeKiotaRuntimeManifest } from '../../src/kiota-runtime-manifest.mjs';
+import { fetchPrLedgerAuthority } from '../../src/pr-ledger-authority.mjs';
+import { fixture as prFixture } from '../fixtures/pr-ledger-authority/scenario.mjs';
 
 const repository = 'owner/StockSense';
 const mainSha = 'a'.repeat(40);
@@ -38,6 +40,45 @@ const exception = { id: finding.id, image: 'validator', package: finding.package
   compensatingControl: 'Restricted execution', approvalReference: 'OWNER-42',
   createdAt: new Date(now.getTime() - 86_400_000).toISOString(),
   expiresAt: new Date(now.getTime() + 86_400_000).toISOString() };
+
+test('PR-tagged receipt binds live-authorized v2 ledger without claiming protected-main publication', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'stocksense-ledger-pr-'));
+  try {
+    await evidenceFiles(directory, []);
+    const f = prFixture(); const { ledger, authority } = await fetchPrLedgerAuthority(f.input);
+    const args = { directory, imageIds: { validator: imageId, kiota: imageId }, ledger, authority,
+      expectedRevision: f.input.sourceRevision, actualRevision: f.input.sourceRevision,
+      candidateTreeDigest: f.input.candidateTreeDigest, executionFingerprint: f.input.executionFingerprint,
+      runtimeManifestDigest: f.input.runtimeManifestDigest, now: f.input.now() };
+    const result = await verifyBoundImageEvidence(args);
+    assert.equal(result.schema, PR_RECEIPT_SCHEMA);
+    assert.equal(Object.hasOwn(result, 'mainSha'), false);
+    assert.equal(result.authority.currentRunId, f.input.currentRunId);
+    assert.deepEqual(result.images.map(row => row.findings), [0, 0]);
+    await assert.rejects(verifyBoundImageEvidence({ ...args, authority: null }), /trusted ledger/);
+    await assert.rejects(verifyBoundImageEvidence({ ...args, ledger: { ...ledger,
+      schema: 'stocksense-image-exceptions-v1' } }), /closed v2/);
+    await assert.rejects(verifyBoundImageEvidence({ ...args, ledger: { ...ledger, mainSha } }), /closed v2/);
+    await assert.rejects(verifyBoundImageEvidence({ ...args, candidateTreeDigest: `sha256:${'f'.repeat(64)}` }),
+      { code: 'PR_AUTH_BINDING' });
+    await assert.rejects(verifyBoundImageEvidence({ ...args,
+      authority: { ...authority, extra: true } }), { code: 'PR_AUTH_RECEIPT' });
+    await evidenceFiles(directory);
+    await assert.rejects(verifyBoundImageEvidence(args), { code: 'IMAGE_FINDINGS' });
+    for (const changed of [{ ...finding, fixState: 'unknown' },
+      { ...finding, severity: 'High', fixState: 'fixed', fixVersions: ['2.8.4'] }]) {
+      await evidenceFiles(directory, [changed]);
+      await assert.rejects(verifyBoundImageEvidence(args),
+        { code: changed.fixState === 'unknown' ? 'IMAGE_SCAN' : 'IMAGE_FINDINGS' });
+    }
+    await evidenceFiles(directory, []);
+    const badRow = { executionFingerprint: `sha256:${'f'.repeat(64)}`,
+      runtimeManifestDigest: `sha256:${'e'.repeat(64)}`, finding: { ...exception,
+        createdAt: '2026-11-20T00:00:00.000Z', expiresAt: '2026-11-21T00:00:00.000Z' } };
+    await assert.rejects(verifyBoundImageEvidence({ ...args,
+      ledger: { ...ledger, exceptions: [badRow] } }), { code: 'IMAGE_EXCEPTION' });
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
 
 function fakeGithub(ledger = { schema: 'stocksense-image-exceptions-v1', exceptions: [] }) {
   const bytes = Buffer.from(JSON.stringify(ledger));

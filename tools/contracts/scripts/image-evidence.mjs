@@ -1,11 +1,13 @@
 import { spawnSync } from 'node:child_process';
-import { chmod, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdtemp, mkdir, readFile, rename, rm, rmdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { IMAGE_NAMES, SCANNERS, inspectImageSbom, inspectImageScan, normalizeImageScan, readImageEvidence, retainRawImageScan, sha256, verifyRawImageScan } from '../src/image-evidence.mjs';
 import { candidateTreeDigestFromGit, executionFingerprintFromGit,
   fetchImageLedger, readKiotaRuntimeEvidence, verifyBoundImageEvidence } from '../src/image-ledger.mjs';
 import { collectKiotaRuntimeManifest } from '../src/kiota-runtime-manifest.mjs';
+import { fetchPrLedgerAuthority } from '../src/pr-ledger-authority.mjs';
+import { readLedgerAuthorityMode, readPrLedgerInput } from '../src/pr-ledger-context.mjs';
 
 // Usage: image-evidence.mjs build|verify [output-directory]. Build scans the
 // exact local IDs supplied by the two image build steps. No tag is a subject.
@@ -34,6 +36,11 @@ const env = ['-e', 'GRYPE_DB_AUTO_UPDATE=true', '-e', 'GRYPE_DB_REQUIRE_UPDATE_C
   '-e', 'TMPDIR=/work/tmp'];
 
 if (command === 'verify') {
+  const receiptPath = join(directory, 'ledger-verification.json');
+  const authorityMode = readLedgerAuthorityMode();
+  // A failed PR rerun must not leave an older PR success artifact at the path.
+  // Protected-main retains its existing output behavior.
+  if (authorityMode === 'owner-authorized-pr-ledger-v1') await rm(receiptPath, { force: true });
   const source = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8', shell: false,
     windowsHide: true, timeout: 10_000 });
   if (source.error || source.status !== 0) throw new Error('Candidate Git revision is unavailable');
@@ -62,16 +69,41 @@ if (command === 'verify') {
     await verifyRawImageScan(directory, { name, imageId: imageIds[name], sbomDigest, revision });
   }
   process.stdout.write(`Candidate ${revision}, tree ${tree.stdout.trim()}, source manifest ${candidateTreeDigest}\n`);
-  const ledger = await fetchImageLedger({ repository: process.env.GITHUB_REPOSITORY,
-    token: process.env.GITHUB_TOKEN, candidateRevision: process.env.GITHUB_SHA,
-    candidateGitTreeSha: tree.stdout.trim() });
-  const runtimeManifestDigest = ledger.schema === 'stocksense-image-exceptions-v2'
-    ? await readKiotaRuntimeEvidence(directory, imageIds.kiota) : null;
+  let ledger, runtimeManifestDigest = null, prAuthority = null;
+  if (authorityMode === 'owner-authorized-pr-ledger-v1') {
+    runtimeManifestDigest = await readKiotaRuntimeEvidence(directory, imageIds.kiota);
+    const input = readPrLedgerInput({ sourceContext: { candidateRevision: revision,
+      candidateGitTreeSha: tree.stdout.trim(), candidateTreeDigest, executionFingerprint }, runtimeManifestDigest });
+    prAuthority = await fetchPrLedgerAuthority(input);
+    ledger = prAuthority.ledger;
+  } else {
+    ledger = await fetchImageLedger({ repository: process.env.GITHUB_REPOSITORY,
+      token: process.env.GITHUB_TOKEN, candidateRevision: process.env.GITHUB_SHA,
+      candidateGitTreeSha: tree.stdout.trim() });
+    runtimeManifestDigest = ledger.schema === 'stocksense-image-exceptions-v2'
+      ? await readKiotaRuntimeEvidence(directory, imageIds.kiota) : null;
+  }
   const result = await verifyBoundImageEvidence({ directory, imageIds, ledger,
     expectedRevision: process.env.GITHUB_SHA, actualRevision: revision,
-    candidateTreeDigest, executionFingerprint, runtimeManifestDigest });
-  await writeFile(join(directory, 'ledger-verification.json'), JSON.stringify(result, null, 2) + '\n');
-  process.stdout.write(`Verified image scans against main ${result.mainSha}, ledger blob ${result.ledgerBlobSha}\n`);
+    candidateTreeDigest, executionFingerprint, runtimeManifestDigest, authority: prAuthority?.authority ?? null });
+  if (prAuthority) {
+    if (!('authority' in result)) throw new Error('PR image verification did not produce a tagged authority receipt');
+    result.authority = await prAuthority.revalidate();
+  }
+  if (prAuthority) {
+    const temporary = await mkdtemp(join(directory, '.ledger-verification-'));
+    const staged = join(temporary, 'receipt.json');
+    try {
+      await writeFile(staged, JSON.stringify(result, null, 2) + '\n', { flag: 'wx', flush: true });
+      await rename(staged, receiptPath);
+    } finally {
+      await rm(staged, { force: true });
+      await rmdir(temporary);
+    }
+  } else await writeFile(receiptPath, JSON.stringify(result, null, 2) + '\n');
+  process.stdout.write(prAuthority
+    ? `Verified image scans against exact owner-authorized PR ledger ${result.ledgerBlobSha}\n`
+    : `Verified image scans against main ${result.mainSha}, ledger blob ${result.ledgerBlobSha}\n`);
 } else if (command === 'build') {
   await mkdir(directory, { recursive: true });
   const source = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8', shell: false,

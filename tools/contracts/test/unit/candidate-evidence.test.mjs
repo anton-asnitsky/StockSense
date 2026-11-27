@@ -174,6 +174,12 @@ test('v2 protected-main receipt binds execution and runtime baselines', () => {
   const context = { candidateRevision: commit, treeSha: commit, treeDigest: sha,
     sourceDigest: sha, images, executionFingerprint: fingerprint, runtimeManifestDigest: runtime };
   assert.equal(assertLedgerBinding(receipt, context), true);
+  const prReceipt = { ...receipt, schema: 'stocksense-image-ledger-verification-pr-v1',
+    authority: { type: 'owner-authorized-pr-ledger-v1' } };
+  delete prReceipt.mainSha;
+  assert.throws(() => assertLedgerBinding(prReceipt, context), { code: 'IMAGE_LEDGER' });
+  assert.throws(() => assertLedgerBinding({ ...prReceipt, mainSha: commit }, context), { code: 'IMAGE_LEDGER' });
+  assert.throws(() => assertLedgerBinding({ ...receipt, authority: prReceipt.authority }, context), { code: 'IMAGE_LEDGER' });
   for (const change of [
     { executionFingerprint: 'sha256:' + 'c'.repeat(64) },
     { runtimeManifestDigest: 'sha256:' + 'c'.repeat(64) },
